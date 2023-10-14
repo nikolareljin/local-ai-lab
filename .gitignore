@@ -1,0 +1,17 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+.localrag/
+.playwright-mcp/
+
+# Jekyll (GitHub Pages) build output
+docs/_site/
+docs/.jekyll-cache/
+
+# The RAG corpus: keep the committed samples, ignore everything users drop in.
+documents/*
+!documents/.gitkeep
+!documents/sample_manual.md
+!documents/rag_tutorial.md
