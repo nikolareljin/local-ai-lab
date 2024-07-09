@@ -1,0 +1,133 @@
+/* local-ai-lab course site — shared styles */
+:root {
+  --bg: #0f1115; --panel: #1a1d24; --panel2: #11141a; --edge: #2a2f3a;
+  --txt: #e6e8ee; --muted: #8b93a7; --accent: #5b9dff; --accent2: #3a6fd8;
+  --ok: #3fb950; --warn: #d29922; --code: #0c0e13;
+  --maxw: 920px;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--txt);
+  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code, pre, kbd { font-family: "SF Mono", ui-monospace, "Cascadia Code", Menlo, Consolas, monospace; }
+
+/* ---- top bar ---- */
+.topbar {
+  position: sticky; top: 0; z-index: 20; backdrop-filter: blur(8px);
+  background: rgba(15,17,21,.85); border-bottom: 1px solid var(--edge);
+}
+.topbar .inner {
+  max-width: var(--maxw); margin: 0 auto; padding: 12px 20px;
+  display: flex; align-items: center; gap: 16px;
+}
+.brand { font-weight: 700; font-size: 16px; color: var(--txt); }
+.brand .dot { color: var(--accent); }
+.topbar nav { margin-left: auto; display: flex; gap: 16px; flex-wrap: wrap; font-size: 14px; }
+
+.wrap { max-width: var(--maxw); margin: 0 auto; padding: 28px 20px 64px; }
+
+/* ---- hero / landing ---- */
+.hero { padding: 56px 0 24px; }
+.hero h1 { font-size: 44px; line-height: 1.1; margin: 0 0 12px; }
+.hero .tag { color: var(--muted); font-size: 20px; max-width: 640px; }
+.btn {
+  display: inline-block; background: var(--accent2); color: #fff; border: none;
+  padding: 11px 20px; border-radius: 10px; font-weight: 600; cursor: pointer;
+}
+.btn:hover { background: var(--accent); text-decoration: none; }
+.btn.ghost { background: transparent; border: 1px solid var(--edge); color: var(--txt); }
+.cta { margin: 26px 0 8px; display: flex; gap: 12px; flex-wrap: wrap; }
+
+.cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin: 28px 0; }
+.card { background: var(--panel); border: 1px solid var(--edge); border-radius: 14px; padding: 20px; }
+.card h3 { margin: 0 0 6px; font-size: 17px; }
+.card .num { color: var(--accent); font-weight: 700; }
+.card .status { font-size: 12px; color: var(--muted); margin-top: 10px; }
+.badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--edge); }
+.badge.ok { color: var(--ok); border-color: #1f5130; }
+.badge.soon { color: var(--warn); border-color: #5a4a1a; }
+
+table { border-collapse: collapse; width: 100%; margin: 18px 0; }
+th, td { border: 1px solid var(--edge); padding: 9px 12px; text-align: left; font-size: 14px; }
+th { background: var(--panel); }
+
+/* ---- slider / deck ---- */
+.lesson-head { padding: 18px 0 8px; }
+.lesson-head .eyebrow { color: var(--accent); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; font-size: 13px; }
+.lesson-head h1 { margin: 6px 0 6px; font-size: 30px; }
+.lesson-head p { color: var(--muted); margin: 0; }
+
+.progress { height: 4px; background: var(--edge); border-radius: 999px; overflow: hidden; margin: 18px 0 8px; }
+.progress > span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent2), var(--accent)); transition: width .35s ease; }
+
+.dots { display: flex; flex-wrap: wrap; gap: 7px; margin: 0 0 14px; }
+.dots button {
+  width: 11px; height: 11px; padding: 0; border-radius: 50%; cursor: pointer;
+  border: 1px solid var(--edge); background: transparent; transition: .2s;
+}
+.dots button.on { background: var(--accent); border-color: var(--accent); transform: scale(1.15); }
+.dots button:hover { border-color: var(--accent); }
+
+.deck { position: relative; transition: height .35s ease; }
+.slide {
+  position: absolute; top: 0; left: 0; width: 100%;
+  opacity: 0; transform: translateX(28px); pointer-events: none; visibility: hidden;
+  transition: opacity .35s ease, transform .35s ease, visibility 0s linear .35s;
+}
+.slide.active {
+  opacity: 1; transform: none; pointer-events: auto; visibility: visible;
+  transition: opacity .35s ease, transform .35s ease, visibility 0s;
+}
+
+.slide .step-no { color: var(--accent); font-weight: 700; font-size: 14px; }
+.slide h2 { margin: 4px 0 6px; font-size: 24px; }
+.slide .why {
+  background: rgba(91,157,255,.07); border-left: 3px solid var(--accent2);
+  padding: 12px 16px; border-radius: 0 10px 10px 0; margin: 14px 0; color: #d7dcea;
+}
+.slide .why b { color: var(--txt); }
+.note { background: rgba(210,153,34,.08); border-left: 3px solid var(--warn); padding: 12px 16px; border-radius: 0 10px 10px 0; margin: 14px 0; }
+.slide p { margin: 12px 0; }
+
+/* command + code blocks */
+.block { position: relative; margin: 14px 0; }
+.block .label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 6px; }
+pre {
+  background: var(--code); border: 1px solid var(--edge); border-radius: 10px;
+  padding: 14px 16px; overflow-x: auto; margin: 0; font-size: 13.5px; line-height: 1.55;
+}
+pre.cmd { border-color: #244; }
+pre.cmd::before { content: "$ "; color: var(--ok); }
+pre code { color: #d7dcea; white-space: pre; }
+.copy {
+  position: absolute; top: 8px; right: 8px; font-size: 11px; padding: 4px 9px;
+  border-radius: 7px; border: 1px solid var(--edge); background: var(--panel);
+  color: var(--muted); cursor: pointer;
+}
+.copy:hover { color: var(--txt); border-color: var(--accent); }
+.copy.done { color: var(--ok); border-color: #1f5130; }
+
+/* nav controls */
+.controls { display: flex; align-items: center; gap: 12px; margin-top: 22px; }
+.controls .spacer { flex: 1; }
+.nav-btn {
+  background: var(--panel); border: 1px solid var(--edge); color: var(--txt);
+  padding: 9px 16px; border-radius: 10px; cursor: pointer; font: inherit; font-weight: 600;
+}
+.nav-btn:hover:not(:disabled) { border-color: var(--accent); }
+.nav-btn:disabled { opacity: .4; cursor: default; }
+.counter { color: var(--muted); font-size: 13px; }
+.kbd-hint { color: var(--muted); font-size: 12px; margin-top: 12px; text-align: center; }
+kbd { background: var(--panel); border: 1px solid var(--edge); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; font-size: 12px; }
+
+footer.site { border-top: 1px solid var(--edge); color: var(--muted); font-size: 13px; }
+footer.site .inner { max-width: var(--maxw); margin: 0 auto; padding: 22px 20px; }
+
+@media (max-width: 600px) {
+  .hero h1 { font-size: 32px; }
+  .slide h2 { font-size: 20px; }
+}

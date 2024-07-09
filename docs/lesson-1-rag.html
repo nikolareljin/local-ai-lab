@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lesson 1 · RAG from scratch — local-ai-lab</title>
+  <meta name="description" content="Build a complete Retrieval-Augmented Generation system from scratch: extract, chunk, retrieve (BM25 + embeddings), ground, and answer with citations." />
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+  <div class="topbar"><div class="inner">
+    <span class="brand"><a href="./index.html" style="color:inherit">local-ai<span class="dot">·</span>lab</a></span>
+    <nav>
+      <a href="./index.html">Home</a>
+      <a href="./lesson-1-rag.html">Lesson 1: RAG</a>
+      <a href="./lesson-2-mcp.html">Lesson 2: MCP</a>
+      <a href="https://github.com/nikolareljin/local-ai-lab" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </div></div>
+
+  <div class="wrap">
+    <div class="lesson-head">
+      <div class="eyebrow">Lesson 1</div>
+      <h1>Build a RAG system from scratch</h1>
+      <p>Drag in a document, ask a question, get an answer grounded in it — with citations.
+         A few hundred lines of readable Python, no heavyweight frameworks.</p>
+    </div>
+
+    <div class="progress"><span></span></div>
+    <div class="dots"></div>
+
+    <div class="deck">
+
+      <!-- 1 -->
+      <section class="slide">
+        <div class="step-no">Overview</div>
+        <h2>What you'll build</h2>
+        <p>Retrieval-Augmented Generation (RAG) makes a language model answer questions about
+           <i>your</i> documents instead of guessing from its training data. Here's the whole
+           pipeline you'll build, stage by stage:</p>
+        <div class="block"><pre><code>          ┌─────────────┐
+ drop ───▶│ documents/  │   PDF · DOCX · TXT · MD
+ files    └──────┬──────┘
+                 │  extract text (per page)
+                 ▼
+            ┌─────────┐
+            │  chunk  │   ~1000 chars, 200 overlap, keep source+page
+            └────┬────┘
+                 │  build + cache index (.localrag/)
+                 ▼
+         ┌────────────────┐
+         │   retriever    │   BM25 (keyword)  —or—  embeddings (semantic)
+         └───────┬────────┘
+                 │  top-k chunks for the question
+                 ▼
+         ┌────────────────┐     ┌───────────────────────────────┐
+ ask ───▶│ grounding      │───▶ │ provider                      │──▶ answer
+ question│ prompt         │     │ Claude Code · Ollama · Gemini │    + sources
+         └────────────────┘     │ · OpenAI                      │
+                                └───────────────────────────────┘</code></pre></div>
+        <div class="why"><b>Why it matters:</b> an LLM alone hallucinates facts about your
+          private data. RAG grounds it: retrieve the relevant text first, then make the model
+          answer <i>from that text</i> and cite it. That's the difference between a demo and
+          something you can trust.</div>
+        <p>Press <kbd>→</kbd> to begin.</p>
+      </section>
+
+      <!-- 2 -->
+      <section class="slide">
+        <div class="step-no">Setup</div>
+        <h2>Prerequisites</h2>
+        <p>Create a virtual environment and install the handful of libraries we'll use:</p>
+        <div class="block"><div class="label">Type this</div><pre class="cmd"><code>python -m venv venv &amp;&amp; source venv/bin/activate
+pip install pypdf python-docx rank-bm25 numpy requests python-dotenv flask</code></pre></div>
+        <div class="why"><b>The only AI you need to start</b> is the <b>Claude Code CLI</b>. If you
+          can run <code>claude</code> in your terminal, you're set — no API key. We'll wire in
+          Ollama, Gemini, and OpenAI later, all behind the same interface.</div>
+      </section>
+
+      <!-- 3 -->
+      <section class="slide">
+        <div class="step-no">Step 1</div>
+        <h2>Extract text from documents</h2>
+        <p>RAG starts by turning files into plain text. We dispatch on file extension and
+           normalize everything to a list of <b>pages</b> — each carrying its text, a page number,
+           and the source filename (we need those for citations).</p>
+        <div class="block"><div class="label">localrag/extract.py</div><pre><code>from pathlib import Path
+from typing import List, TypedDict
+
+SUPPORTED_EXTS = {".pdf", ".docx", ".txt", ".md", ".markdown"}
+
+class Page(TypedDict):
+    source: str
+    page_number: int
+    text: str
+
+def _extract_pdf(path: Path) -&gt; List[Page]:
+    from pypdf import PdfReader
+    reader = PdfReader(str(path))
+    pages = []
+    for i, page in enumerate(reader.pages, start=1):
+        text = (page.extract_text() or "").strip()
+        if text:
+            pages.append(Page(source=path.name, page_number=i, text=text))
+    return pages
+
+def extract_pages(path: Path) -&gt; List[Page]:
+    ext = path.suffix.lower()
+    if ext == ".pdf":
+        return _extract_pdf(path)
+    if ext == ".docx":
+        from docx import Document
+        doc = Document(str(path))
+        text = "\n".join(p.text for p in doc.paragraphs if p.text.strip())
+        return [Page(source=path.name, page_number=1, text=text)] if text else []
+    if ext in {".txt", ".md", ".markdown"}:
+        text = path.read_text(encoding="utf-8", errors="replace").strip()
+        return [Page(source=path.name, page_number=1, text=text)] if text else []
+    return []</code></pre></div>
+        <div class="why"><b>Why pages?</b> PDFs have real pages, so a citation like
+          <code>manual.pdf:4</code> points to the exact spot. Extraction is the unglamorous 80% of
+          real RAG — garbage text in, garbage answers out.</div>
+      </section>
+
+      <!-- 4 -->
+      <section class="slide">
+        <div class="step-no">Step 2</div>
+        <h2>Split text into overlapping chunks</h2>
+        <p>A whole document is too big to feed the model and too coarse to retrieve precisely. We
+           split it into ~1000-character <b>chunks</b>. The key trick is <b>overlap</b>: each chunk
+           repeats the tail of the previous one, so a sentence split across a boundary still
+           appears intact somewhere.</p>
+        <div class="block"><div class="label">localrag/chunk.py</div><pre><code>def _split_text(text, size, overlap):
+    text = " ".join(text.split())            # normalize whitespace
+    if len(text) &lt;= size:
+        return [text] if text else []
+    chunks, start, n = [], 0, len(text)
+    while start &lt; n:
+        end = min(start + size, n)
+        if end &lt; n:                          # prefer a clean break near the limit
+            window = text[start:end]
+            for sep in (". ", "! ", "? ", "\n", " "):
+                pos = window.rfind(sep)
+                if pos &gt; size // 2:
+                    end = start + pos + len(sep)
+                    break
+        chunk = text[start:end].strip()
+        if chunk:
+            chunks.append(chunk)
+        if end &gt;= n:
+            break
+        start = max(end - overlap, start + 1)   # step back to create overlap
+    return chunks</code></pre></div>
+        <div class="why"><b>Chunk size is a dial.</b> Too large → imprecise retrieval; too small →
+          lost context. 800–1200 chars with 10–20% overlap is a sane default. Each chunk keeps its
+          <code>source</code> and <code>page_number</code> so we can cite it later.</div>
+      </section>
+
+      <!-- 5 -->
+      <section class="slide">
+        <div class="step-no">Step 3</div>
+        <h2>Index and cache</h2>
+        <p>Extract + chunk every file in <code>documents/</code>, then cache the result so we don't
+           redo the work on every question. We fingerprint each file by
+           <code>(path, mtime, size)</code>; if nothing changed, we reuse the cache.</p>
+        <div class="block"><div class="label">localrag/store.py</div><pre><code>def is_stale(config):
+    """True if the cache is missing or the documents folder changed."""
+    index_path = config.cache_dir / "index.json"
+    if not index_path.exists():
+        return True
+    data = json.loads(index_path.read_text())
+    return data.get("fingerprint") != _fingerprint(discover_files(config.docs_dir))
+
+def build_index(config):
+    files = discover_files(config.docs_dir)
+    chunks = []
+    for path in files:
+        chunks.extend(chunk_pages(extract_pages(path)))
+    config.cache_dir.mkdir(parents=True, exist_ok=True)
+    (config.cache_dir / "index.json").write_text(
+        json.dumps({"fingerprint": _fingerprint(files), "chunks": chunks}))
+    return chunks, len(files)</code></pre></div>
+        <div class="why"><b>This is the "drop a file and ask again" loop.</b> The index is just a
+          JSON file — no database, no vector server to run. Perfect for a local demo and trivial to
+          inspect.</div>
+      </section>
+
+      <!-- 6 -->
+      <section class="slide">
+        <div class="step-no">Step 4</div>
+        <h2>Retrieve with BM25 (zero setup)</h2>
+        <p>Given a question, which chunks are relevant? The simplest robust answer is <b>BM25</b>, a
+           classic keyword-ranking algorithm. It needs no model and no embedding service, so it
+           works with <i>any</i> provider — including Claude Code, which can't embed.</p>
+        <div class="block"><div class="label">localrag/retriever.py</div><pre><code>import re
+from rank_bm25 import BM25Okapi
+
+def _tokenize(text):
+    return re.findall(r"[a-z0-9]+", text.lower())
+
+class Bm25Retriever:
+    name = "bm25"
+    def __init__(self, chunks):
+        self.chunks = chunks
+        self.bm25 = BM25Okapi([_tokenize(c["text"]) for c in chunks] or [[""]])
+
+    def search(self, query, k):
+        if not self.chunks:
+            return []
+        scores = self.bm25.get_scores(_tokenize(query))
+        ranked = sorted(range(len(self.chunks)),
+                        key=lambda i: scores[i], reverse=True)
+        return [self.chunks[i] for i in ranked[:k]]</code></pre></div>
+        <div class="note">⚠️ <b>A real bug worth knowing.</b> BM25's IDF goes <i>negative</i> when a
+          word appears in every chunk — common on a tiny corpus. An early version filtered with
+          <code>score &gt; 0</code> and returned <b>nothing</b>. The fix: don't apply an absolute
+          cutoff — return top-k by rank and let the grounding prompt judge relevance. Retrieval
+          retrieves; the LLM decides.</div>
+      </section>
+
+      <!-- 7 -->
+      <section class="slide">
+        <div class="step-no">Step 5</div>
+        <h2>The grounding prompt (anti-hallucination)</h2>
+        <p>This is the heart of RAG. We hand the model the retrieved chunks as <b>context</b> and
+           instruct it to answer <i>from that context</i>, cite sources, and clearly label anything
+           it adds from general knowledge.</p>
+        <div class="block"><div class="label">localrag/prompts.py</div><pre><code>SYSTEM_PROMPT = """You are a careful assistant answering questions over a set
+of the user's own documents. Follow these rules exactly:
+
+1. Answer from the DOCUMENT CONTEXT below FIRST. For every claim that comes
+   from the documents, cite the source like [filename:page].
+2. If the answer is not contained in the document context, say so plainly:
+   "This is not covered in your documents." You may then add general
+   knowledge, but you MUST prefix it with
+   "(general knowledge — not from your documents)".
+3. Never invent document contents, quotes, or citations.
+4. Be concise. Prefer the documents' own wording.
+"""
+
+def build_context(chunks):
+    return "\n\n---\n\n".join(
+        f"[{c['source']}:{c['page_number']}]\n{c['text']}" for c in chunks)
+
+def build_user_prompt(question, chunks):
+    context = build_context(chunks) if chunks else "(no relevant documents)"
+    return f"DOCUMENT CONTEXT:\n{context}\n\nQUESTION:\n{question}"</code></pre></div>
+        <div class="why"><b>RAG quality = retrieval quality + prompt quality.</b> A strict prompt
+          with bad retrieval answers "not in your documents" to everything; a sloppy prompt with
+          perfect retrieval still hallucinates. You need both. Cite, admit ignorance, label general
+          knowledge — that's the minimum anti-hallucination contract.</div>
+      </section>
+
+      <!-- 8 -->
+      <section class="slide">
+        <div class="step-no">Step 6</div>
+        <h2>A provider abstraction</h2>
+        <p>The pipeline shouldn't care <i>which</i> AI answers. So we define one tiny interface and
+           four implementations. Switching providers becomes a one-line env-var change.</p>
+        <div class="block"><div class="label">localrag/providers/__init__.py</div><pre><code>from typing import Protocol
+
+class LLMProvider(Protocol):
+    name: str
+    def is_available(self) -&gt; bool: ...
+    def chat(self, system: str, user: str) -&gt; str: ...
+
+def get_provider(name, config):
+    if name == "claude":
+        from .claude_code import ClaudeCodeProvider; return ClaudeCodeProvider(config)
+    if name == "ollama":
+        from .ollama import OllamaProvider; return OllamaProvider(config)
+    if name == "gemini":
+        from .gemini import GeminiProvider; return GeminiProvider(config)
+    if name == "openai":
+        from .openai import OpenAIProvider; return OpenAIProvider(config)
+    raise ValueError(f"Unknown provider '{name}'")</code></pre></div>
+        <div class="block"><div class="label">The default: Claude Code CLI — no API key</div><pre><code>import shutil, subprocess
+
+class ClaudeCodeProvider:
+    name = "claude"
+    def __init__(self, config):
+        self.bin = config.claude_bin
+    def is_available(self):
+        return shutil.which(self.bin) is not None
+    def chat(self, system, user):
+        result = subprocess.run(
+            [self.bin, "-p", f"{system}\n\n{user}"],
+            capture_output=True, text=True, timeout=180)
+        return result.stdout.strip()</code></pre></div>
+        <div class="why"><b>This is the pattern every LLM framework is built around</b> — a provider
+          interface plus adapters. Write it once by hand and LangChain's <code>ChatModel</code>
+          stops looking like magic.</div>
+      </section>
+
+      <!-- 9 -->
+      <section class="slide">
+        <div class="step-no">Step 7</div>
+        <h2>Wire it together &amp; run</h2>
+        <p>The pipeline: ensure the index is fresh, retrieve top-k chunks, build the grounded
+           prompt, call the provider, print the answer and its sources.</p>
+        <div class="block"><div class="label">the core query function</div><pre><code>def answer(question, retriever, config):
+    hits = retriever.search(question, config.top_k)
+    provider = get_provider(config.provider, config)
+    reply = provider.chat(SYSTEM_PROMPT, build_user_prompt(question, hits))
+    print(reply)
+    sources = []
+    for h in hits:
+        tag = f"{h['source']}:{h['page_number']}"
+        if tag not in sources:
+            sources.append(tag)
+    print("Sources:", ", ".join(sources) or "(none)")</code></pre></div>
+        <div class="block"><div class="label">Type this</div><pre class="cmd"><code>python -m localrag index
+python -m localrag ask "How do I reset the device?"</code></pre></div>
+        <div class="block"><div class="label">Output</div><pre><code>To reset the WidgetPro 3000, press and hold the power button for 10 seconds
+until the status LED blinks blue three times. [sample_manual.md:1]
+
+Sources: sample_manual.md:1</code></pre></div>
+        <div class="why"><b>That's a complete RAG system.</b> Everything after this is upgrades.</div>
+      </section>
+
+      <!-- 10 -->
+      <section class="slide">
+        <div class="step-no">Step 8 · Upgrade</div>
+        <h2>Semantic retrieval with embeddings</h2>
+        <p>BM25 matches <b>words</b>. "How do I power-cycle it?" won't match a doc that says
+           "restart" — no shared keywords. <b>Embeddings</b> match <b>meaning</b>: turn each chunk
+           into a vector and rank by cosine similarity to the question.</p>
+        <div class="block"><div class="label">localrag/retriever.py — EmbeddingRetriever</div><pre><code>class EmbeddingRetriever:
+    name = "embeddings"
+    def __init__(self, chunks, config):
+        import numpy as np
+        from .providers import embed_texts
+        self.chunks, self.config = chunks, config
+        vectors = np.asarray(
+            embed_texts(config.embed_provider, config,
+                        [c["text"] for c in chunks]), dtype="float32")
+        self._vectors = self._normalize(vectors)
+
+    def search(self, query, k):
+        import numpy as np
+        from .providers import embed_texts
+        q = self._normalize(np.asarray(embed_texts(
+            self.config.embed_provider, self.config, [query]),
+            dtype="float32"))[0]
+        sims = self._vectors @ q              # cosine (vectors normalized)
+        ranked = np.argsort(sims)[::-1][:k]
+        return [self.chunks[i] for i in ranked]</code></pre></div>
+        <div class="block"><div class="label">Never dead-end: fall back to BM25</div><pre><code>def build_retriever(chunks, config):
+    if config.retriever == "embeddings":
+        try:
+            return EmbeddingRetriever(chunks, config)
+        except Exception as exc:
+            print(f"[localrag] Embeddings unavailable ({exc}). Falling back to BM25.")
+    return Bm25Retriever(chunks)</code></pre></div>
+        <div class="block"><div class="label">Type this (needs Ollama running)</div><pre class="cmd"><code>RAG_RETRIEVER=embeddings RAG_EMBED_PROVIDER=ollama python -m localrag ask "power-cycle steps?"</code></pre></div>
+        <div class="why"><b>BM25 vs embeddings:</b> BM25 is free, instant, great for exact terms and
+          codes. Embeddings catch paraphrases but cost an embed call. Production often runs both
+          (hybrid) and merges rankings. You now have both — try the same question each way.</div>
+      </section>
+
+      <!-- 11 -->
+      <section class="slide">
+        <div class="step-no">Step 9</div>
+        <h2>A drag-and-drop web UI</h2>
+        <p>A terminal is fine for you; a web page is better for a demo. A tiny Flask app reuses the
+           <i>exact same</i> engine. Three endpoints: serve the page, accept dropped files
+           (save + reindex), and answer questions.</p>
+        <div class="block"><div class="label">localrag/web.py</div><pre><code>@app.post("/api/upload")
+def upload():
+    for f in request.files.getlist("files"):
+        name = secure_filename(f.filename)
+        if Path(name).suffix.lower() in SUPPORTED_EXTS:
+            f.save(base_config.docs_dir / name)
+    chunks, n = refresh_index(base_config)      # rebuild on every drop
+    return jsonify({"files": _list_files(base_config), "chunks": len(chunks)})
+
+@app.post("/api/ask")
+def ask():
+    data = request.get_json()
+    return jsonify(answer_question(_request_config(), data["question"]))</code></pre></div>
+        <div class="block"><div class="label">Type this</div><pre class="cmd"><code>python -m localrag web      # http://127.0.0.1:5000</code></pre></div>
+        <div class="why"><b>Same pipeline, nicer surface.</b> The front end is one HTML file with
+          vanilla JS: a dropzone using the browser's drag-and-drop events, a <code>fetch()</code> to
+          upload, then a question box that renders the answer plus clickable source chips. Drop a
+          PDF, ask a question, watch it cite the file you just dropped.</div>
+      </section>
+
+      <!-- 12 -->
+      <section class="slide">
+        <div class="step-no">Step 10</div>
+        <h2>See the anti-hallucination work</h2>
+        <p>Ask something <b>in</b> your documents and something <b>out of</b> them, and watch the
+           model stay honest:</p>
+        <div class="block"><div class="label">Try both</div><pre class="cmd"><code>python -m localrag ask "How long is the warranty?"
+python -m localrag ask "What is the capital of France?"</code></pre></div>
+        <div class="block"><div class="label">Output</div><pre><code>→ 24 months from purchase date [warranty.txt:1]        # grounded, cited
+
+→ This is not covered in your documents.
+  (general knowledge — not from your documents) The capital of France is Paris.</code></pre></div>
+        <p>A tiny <b>offline test</b> locks in the retrieval core (no network, no LLM):</p>
+        <div class="block"><div class="label">tests/test_smoke.py + run</div><pre><code>def test_bm25_finds_reset_instructions():
+    chunks = chunk_pages(extract_pages(SAMPLE), size=400, overlap=80)
+    hits = Bm25Retriever(chunks).search("how do I reset the device", k=3)
+    assert "power button" in hits[0]["text"].lower()</code></pre></div>
+        <div class="block"><pre class="cmd"><code>pytest -q      # 4 passed</code></pre></div>
+        <div class="why"><b>That clean separation</b> — cited facts vs. clearly-labeled general
+          knowledge — is the payoff of the grounding prompt. It's what makes RAG trustworthy.</div>
+      </section>
+
+      <!-- 13 -->
+      <section class="slide">
+        <div class="step-no">Recap</div>
+        <h2>You built a RAG system — and understand every line</h2>
+        <p>From scratch, you assembled:</p>
+        <table>
+          <tr><th>Stage</th><th>What it does</th></tr>
+          <tr><td>Extraction</td><td>PDF/DOCX/TXT/MD → pages</td></tr>
+          <tr><td>Chunking</td><td>overlapping windows with source+page</td></tr>
+          <tr><td>Indexing</td><td>cached, auto-refreshing JSON index</td></tr>
+          <tr><td>Retrieval</td><td>BM25 <i>and</i> embeddings behind one interface</td></tr>
+          <tr><td>Grounding</td><td>a prompt that cites and admits ignorance</td></tr>
+          <tr><td>Providers</td><td>one interface, four back ends, env-var switch</td></tr>
+          <tr><td>Web UI</td><td>drag-and-drop, same engine underneath</td></tr>
+        </table>
+        <div class="why"><b>No LangChain, no vector database, no cloud</b> — and you understand every
+          line. That understanding is the point: frameworks become easy once you know what they
+          automate.</div>
+        <p><b>Exercises:</b> merge BM25 + embedding rankings (hybrid); chunk on Markdown headings;
+           show the exact sentence behind each citation; stream tokens to the web UI.</p>
+        <div class="cta">
+          <a class="btn" href="./lesson-2-mcp.html">Next → Lesson 2: MCP servers</a>
+          <a class="btn ghost" href="https://github.com/nikolareljin/local-ai-lab" target="_blank" rel="noopener">Get the full source</a>
+        </div>
+      </section>
+
+    </div><!-- /deck -->
+
+    <div class="controls">
+      <button class="nav-btn" data-prev>← Prev</button>
+      <span class="counter"></span>
+      <span class="spacer"></span>
+      <button class="nav-btn" data-next>Next →</button>
+    </div>
+    <div class="kbd-hint">Use <kbd>←</kbd> <kbd>→</kbd> arrow keys, the dots, or the buttons. Each step is deep-linkable.</div>
+  </div>
+
+  <footer class="site"><div class="inner">
+    © 2023–2025 <a href="https://www.linkedin.com/in/nikolareljin" target="_blank" rel="noopener">Nik Reljin</a> ·
+    <a href="https://github.com/nikolareljin/local-ai-lab" target="_blank" rel="noopener">Source on GitHub</a>
+  </div></footer>
+
+  <script src="./assets/slider.js"></script>
+</body>
+</html>

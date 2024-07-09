@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>local-ai-lab — build local AI, hands-on</title>
+  <meta name="description" content="A hands-on course for building local, private AI from scratch: RAG, MCP, LangChain and LangGraph that run on your own machine." />
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+  <div class="topbar"><div class="inner">
+    <span class="brand">local-ai<span class="dot">·</span>lab</span>
+    <nav>
+      <a href="./lesson-1-rag.html">Lesson 1: RAG</a>
+      <a href="./lesson-2-mcp.html">Lesson 2: MCP</a>
+      <a href="https://github.com/nikolareljin/local-ai-lab" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://www.linkedin.com/in/nikolareljin" target="_blank" rel="noopener">LinkedIn</a>
+    </nav>
+  </div></div>
+
+  <div class="wrap">
+    <section class="hero">
+      <h1>Build local AI,<br />one lesson at a time.</h1>
+      <p class="tag">A hands-on course where you build small, fully working programs from
+        scratch — and understand every line. Everything runs on your own machine, with no API key
+        required.</p>
+      <div class="cta">
+        <a class="btn" href="./lesson-1-rag.html">Start Lesson 1: RAG →</a>
+        <a class="btn ghost" href="https://github.com/nikolareljin/local-ai-lab" target="_blank" rel="noopener">View source on GitHub</a>
+      </div>
+    </section>
+
+    <h2>The curriculum</h2>
+    <div class="cards">
+      <a class="card" href="./lesson-1-rag.html">
+        <div class="num">Lesson 1</div>
+        <h3>RAG from scratch</h3>
+        <div>Extract → chunk → retrieve (BM25 + embeddings) → grounded answer with citations. A drag-and-drop document Q&amp;A app.</div>
+        <div class="status"><span class="badge ok">✓ Available</span></div>
+      </a>
+      <a class="card" href="./lesson-2-mcp.html">
+        <div class="num">Lesson 2</div>
+        <h3>MCP servers</h3>
+        <div>Expose your document search as a Model Context Protocol tool that Claude Code can call natively.</div>
+        <div class="status"><span class="badge soon">🚧 Coming soon</span></div>
+      </a>
+      <div class="card">
+        <div class="num">Lesson 3</div>
+        <h3>LangChain</h3>
+        <div>Rebuild the RAG pipeline with LangChain and compare the trade-offs against your from-scratch version.</div>
+        <div class="status"><span class="badge soon">🚧 Planned</span></div>
+      </div>
+      <div class="card">
+        <div class="num">Lesson 4</div>
+        <h3>LangGraph</h3>
+        <div>Turn the pipeline into a stateful agent graph with retries, tool routing, and memory.</div>
+        <div class="status"><span class="badge soon">🚧 Planned</span></div>
+      </div>
+    </div>
+
+    <h2>Why "from scratch"?</h2>
+    <p>Most tutorials teach you to glue frameworks together. This course does the opposite: you
+      write the chunker, the retriever, the grounding prompt, and the provider abstraction
+      yourself — a few dozen lines each. Once you understand the primitives, every framework
+      (LangChain, LlamaIndex, LangGraph) becomes obvious, because you already know what it
+      automates.</p>
+
+    <h2>How each lesson works</h2>
+    <p>Every lesson is an <b>interactive step-by-step slider</b>. Each step explains <i>what</i>
+      you're building and <i>why</i>, gives you the exact command to type, and shows the code.
+      Use the <kbd>←</kbd> / <kbd>→</kbd> arrow keys, the dots, or the buttons to move between
+      steps. Any step is deep-linkable, so you can share a link straight to a specific point.</p>
+
+    <div class="cta">
+      <a class="btn" href="./lesson-1-rag.html">Begin Lesson 1 →</a>
+    </div>
+  </div>
+
+  <footer class="site"><div class="inner">
+    © 2023–2025 <a href="https://www.linkedin.com/in/nikolareljin" target="_blank" rel="noopener">Nik Reljin</a> ·
+    Source on <a href="https://github.com/nikolareljin/local-ai-lab" target="_blank" rel="noopener">GitHub</a> ·
+    Built as a hands-on training course.
+  </div></footer>
+</body>
+</html>
