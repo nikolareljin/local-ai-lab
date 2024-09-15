@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# SCRIPT: stop
+# DESCRIPTION: Stop the Lesson 1 RAG web app.
+# USAGE: ./stop [-h] [-v] [-d]
+# CREATOR: Nik Reljin
+set -euo pipefail
+
+source "$(dirname "$0")/scripts/include.sh"
+parse_common_args "$@"
+
+if ! web_running; then
+  log_info "Not running."
+  rm -f "$PID_FILE"
+  exit 0
+fi
+
+pid="$(web_pid)"
+log_info "Stopping web app (pid $pid) ..."
+kill "$pid" 2>/dev/null || true
+sleep 1
+kill -0 "$pid" 2>/dev/null && kill -9 "$pid" 2>/dev/null || true
+rm -f "$PID_FILE"
+log_info "Stopped."

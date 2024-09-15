@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# SCRIPT: status
+# DESCRIPTION: Show whether the Lesson 1 RAG web app is running.
+# USAGE: ./status [-h] [-v] [-d]
+# CREATOR: Nik Reljin
+set -euo pipefail
+
+source "$(dirname "$0")/scripts/include.sh"
+parse_common_args "$@"
+
+if web_running; then
+  log_info "Running (pid $(web_pid)) on http://127.0.0.1:${WEB_PORT}"
+else
+  log_info "Stopped."
+fi

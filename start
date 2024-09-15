@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# SCRIPT: start
+# DESCRIPTION: Launch the Lesson 1 RAG web app (drag-and-drop UI).
+# USAGE: ./start [-h] [-v] [-d]
+# ENVIRONMENT: WEB_PORT (default 5000), RAG_PROVIDER, RAG_RETRIEVER
+# CREATOR: Nik Reljin
+set -euo pipefail
+
+source "$(dirname "$0")/scripts/include.sh"
+parse_common_args "$@"
+
+if web_running; then
+  log_warn "Already running (pid $(web_pid)) on http://127.0.0.1:${WEB_PORT}"
+  exit 0
+fi
+
+mkdir -p "$(dirname "$PID_FILE")"
+log_info "Starting local-ai-lab web app on http://127.0.0.1:${WEB_PORT} ..."
+nohup "$PYTHON_BIN" -m localrag web --port "$WEB_PORT" >"$ROOT_DIR/.localrag/web.log" 2>&1 &
+echo $! >"$PID_FILE"
+sleep 1
+if web_running; then
+  log_info "Started (pid $(web_pid)). Logs: .localrag/web.log"
+  log_info "Open http://127.0.0.1:${WEB_PORT}"
+else
+  log_error "Failed to start; see .localrag/web.log"
+  exit 1
+fi

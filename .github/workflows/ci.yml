@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    uses: nikolareljin/ci-helpers/.github/workflows/python.yml@production
+    with:
+      python_version: "3.12"
+      working_directory: "."
+      lint_command: "pip install -r requirements.txt && python -m py_compile $(find localrag tests -name '*.py')"
+      test_command: "pip install pytest && pytest -q"
+      build_command: ""

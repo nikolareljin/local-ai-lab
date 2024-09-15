@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+# SCRIPT: update
+# DESCRIPTION: Install or update the script-helpers submodule for this repository.
+# USAGE: ./update [OPTIONS]
+# PARAMETERS:
+#   -h, --help      : Show this help message.
+#   -v, --verbose   : Enable verbose output (script-helpers).
+#   -d, --debug     : Enable debug output (script-helpers).
+# EXAMPLE: ./update
+# ----------------------------------------------------
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$SCRIPT_DIR"
+SCRIPT_HELPERS_DIR="${SCRIPT_HELPERS_DIR:-$ROOT_DIR/scripts/script-helpers}"
+
+print_help() {
+  cat <<'EOF'
+Usage: ./update [OPTIONS]
+
+Install or update the script-helpers submodule for this repository.
+
+Options:
+  -h, --help      Show this help message.
+  -v, --verbose   Enable verbose output (script-helpers).
+  -d, --debug     Enable debug output (script-helpers).
+EOF
+}
+
+log_info() { echo "[INFO] $*" >&2; }
+log_warn() { echo "[WARN] $*" >&2; }
+log_error() { echo "[ERROR] $*" >&2; }
+
+if [[ -f "$SCRIPT_HELPERS_DIR/helpers.sh" ]]; then
+  # shellcheck disable=SC1091
+  source "$SCRIPT_HELPERS_DIR/helpers.sh"
+  shlib_import help logging
+  parse_common_args "$@"
+else
+  for arg in "$@"; do
+    case "$arg" in
+      -h|--help)
+        print_help
+        exit 0
+        ;;
+    esac
+  done
+fi
+
+if ! command -v git >/dev/null 2>&1; then
+  log_error "git is required to install or update submodules."
+  exit 1
+fi
+
+cd "$ROOT_DIR"
+
+if [[ ! -f .gitmodules ]]; then
+  log_warn "No .gitmodules found; initializing submodules definition."
+fi
+
+if [[ ! -f .gitmodules ]] || ! git config -f .gitmodules --get-regexp "^submodule\\..*scripts/script-helpers\\.path$" >/dev/null 2>&1; then
+  log_info "Adding script-helpers submodule..."
+  git submodule add -b production git@github.com:nikolareljin/script-helpers.git scripts/script-helpers
+fi
+
+log_info "Syncing submodule configuration..."
+git submodule sync --recursive
+
+log_info "Updating submodules..."
+git submodule update --init --recursive --remote
+
+if [[ -d "$ROOT_DIR/scripts/script-helpers/.git" ]]; then
+  log_info "Pinning script-helpers to latest release tag..."
+  (
+    cd "$ROOT_DIR/scripts/script-helpers"
+    git fetch --tags origin >/dev/null 2>&1 || true
+    latest_tag="$(git tag --sort=-v:refname | head -n1 || true)"
+    if [[ -n "$latest_tag" ]]; then
+      git checkout --detach "$latest_tag" >/dev/null 2>&1
+      log_info "script-helpers set to $latest_tag"
+    else
+      log_warn "No tags found in script-helpers; leaving current revision."
+    fi
+  )
+fi
+
+log_info "Submodules are up to date."
