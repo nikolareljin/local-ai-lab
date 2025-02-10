@@ -60,7 +60,7 @@ fi
 
 if [[ ! -f .gitmodules ]] || ! git config -f .gitmodules --get-regexp "^submodule\\..*scripts/script-helpers\\.path$" >/dev/null 2>&1; then
   log_info "Adding script-helpers submodule..."
-  git submodule add -b production git@github.com:nikolareljin/script-helpers.git scripts/script-helpers
+  git submodule add -b production https://github.com/nikolareljin/script-helpers.git scripts/script-helpers
 fi
 
 log_info "Syncing submodule configuration..."
