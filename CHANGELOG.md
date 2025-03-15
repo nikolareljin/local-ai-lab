@@ -19,6 +19,7 @@ First public release of **local-ai-lab** — Lesson 1 (RAG) complete, Lesson 2 (
 - **CLI** — `index`, `ask` (REPL + one-shot), `web`.
 - **Drag-and-drop web UI** — Flask app with upload + reindex + grounded answers and source chips.
 - **Course site** — GitHub Pages with interactive step-slider lessons (Lesson 1 full, Lesson 2 preview).
-- **Docs** — README, TUTORIAL, ARCHITECTURE; ingestable `documents/rag_tutorial.md`.
+- **Lesson guides** — full written lessons `LESSON1.md`–`LESSON4.md`, cross-linked to the live site.
+- **Docs** — README, ARCHITECTURE; ingestable `documents/rag_tutorial.md`.
 - **CI** — ci-helpers Python workflow; **script-helpers** submodule with `start`/`stop`/`status`/`update`.
 - **Tests** — offline smoke tests for extraction, chunking, and BM25 retrieval.

@@ -11,15 +11,18 @@ program, so you finish understanding how the thing actually works — not just h
 
 ## Curriculum
 
-| # | Lesson | What you build | Status |
-|---|--------|----------------|--------|
-| 1 | **RAG from scratch** | A drag-and-drop document Q&A app: extract → chunk → retrieve (BM25 + embeddings) → grounded answer with citations | ✅ Available |
-| 2 | **MCP servers** | Expose your document search as a Model Context Protocol tool Claude Code can call | 🚧 Coming soon |
-| 3 | **LangChain** | Rebuild the RAG pipeline with LangChain and compare trade-offs | 🚧 Planned |
-| 4 | **LangGraph** | Turn the pipeline into a stateful agent graph | 🚧 Planned |
+Every lesson comes in two forms: a **written guide** (`LESSONx.md`, full text + code) and an
+**interactive slider** on the course site (each step explains *what* and *why*, gives the exact
+command to type, and shows the code — steps are deep-linkable).
 
-Each lesson on the site is an **interactive step-by-step slider**: every step explains *what* and
-*why*, gives the exact command to type, and shows the code. Steps are deep-linkable.
+| # | Lesson | What you build | Read (Markdown) | Live (interactive) | Status |
+|---|--------|----------------|-----------------|--------------------|--------|
+| 1 | **RAG from scratch** | A drag-and-drop document Q&A app: extract → chunk → retrieve (BM25 + embeddings) → grounded answer with citations | [LESSON1.md](./LESSON1.md) | [▶ open](https://nikolareljin.github.io/local-ai-lab/lesson-1-rag.html) | ✅ Available |
+| 2 | **MCP servers** | Expose your document search as a Model Context Protocol tool Claude Code can call | [LESSON2.md](./LESSON2.md) | [▶ open](https://nikolareljin.github.io/local-ai-lab/lesson-2-mcp.html) | 🚧 Coming soon |
+| 3 | **LangChain** | Rebuild the RAG pipeline with LangChain and compare trade-offs | [LESSON3.md](./LESSON3.md) | _on site soon_ | 🚧 Planned |
+| 4 | **LangGraph** | Turn the pipeline into a stateful agent graph | [LESSON4.md](./LESSON4.md) | _on site soon_ | 🚧 Planned |
+
+🔗 **Browse all lessons live:** https://nikolareljin.github.io/local-ai-lab/
 
 ---
 
@@ -103,7 +106,8 @@ local-ai-lab/
 │   └── templates/         #   index.html (web UI)
 ├── scripts/               # script-helpers submodule + start/stop/status helpers
 ├── tests/                 # offline smoke tests
-├── ARCHITECTURE.md  TUTORIAL.md  CHANGELOG.md  AGENTS.md
+├── LESSON1.md … LESSON4.md   # full written lessons (linked to the live site)
+├── ARCHITECTURE.md  CHANGELOG.md  AGENTS.md
 ```
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for the data flow and module map.
