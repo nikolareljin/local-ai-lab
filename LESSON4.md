@@ -5,7 +5,7 @@
 > 🏠 **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > 💻 **Source:** https://github.com/nikolareljin/local-ai-lab
 >
-> **Lessons:** [1 · RAG](./LESSON1.md) → [2 · MCP](./LESSON2.md) → [3 · LangChain](./LESSON3.md) → **4 · LangGraph (you are here)**
+> **Lessons:** [1 · RAG](./LESSON1.md) → [2 · MCP](./LESSON2.md) → [3 · LangChain](./LESSON3.md) → **4 · LangGraph (you are here)** → [5 · Ollama tools](./LESSON5.md) → [6 · Semantic Kernel](./LESSON6.md) → [7 · Bedrock Agents](./LESSON7.md) → [8 · Google ADK](./LESSON8.md)
 >
 > 🚧 **Status: planned.** Outline below; full step-by-step coming later. ⭐ the repo to follow along.
 
@@ -68,6 +68,11 @@ A graph with nodes such as:
 
 Lessons [1](./LESSON1.md)–[3](./LESSON3.md). The agent reuses the retriever, the MCP tool, and the
 LangChain components from earlier lessons.
+
+## Next lesson
+
+[**Lesson 5 · Ollama + Function Calling →**](./LESSON5.md) — give a local model its own tools, fully
+offline, then carry the same `search_docs` capability through Semantic Kernel, Bedrock, and ADK.
 
 ---
 

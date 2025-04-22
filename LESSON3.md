@@ -5,7 +5,7 @@
 > 🏠 **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > 💻 **Source:** https://github.com/nikolareljin/local-ai-lab
 >
-> **Lessons:** [1 · RAG](./LESSON1.md) → [2 · MCP](./LESSON2.md) → **3 · LangChain (you are here)** → [4 · LangGraph](./LESSON4.md)
+> **Lessons:** [1 · RAG](./LESSON1.md) → [2 · MCP](./LESSON2.md) → **3 · LangChain (you are here)** → [4 · LangGraph](./LESSON4.md) → [5 · Ollama tools](./LESSON5.md) → [6 · Semantic Kernel](./LESSON6.md) → [7 · Bedrock Agents](./LESSON7.md) → [8 · Google ADK](./LESSON8.md)
 >
 > 🚧 **Status: planned.** Outline below; full step-by-step coming later. ⭐ the repo to follow along.
 

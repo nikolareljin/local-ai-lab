@@ -7,7 +7,7 @@
 > 💻 **Source:** https://github.com/nikolareljin/local-ai-lab
 > 👤 **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
 >
-> **Lessons:** **1 · RAG (you are here)** → [2 · MCP](./LESSON2.md) → [3 · LangChain](./LESSON3.md) → [4 · LangGraph](./LESSON4.md)
+> **Lessons:** **1 · RAG (you are here)** → [2 · MCP](./LESSON2.md) → [3 · LangChain](./LESSON3.md) → [4 · LangGraph](./LESSON4.md) → [5 · Ollama tools](./LESSON5.md) → [6 · Semantic Kernel](./LESSON6.md) → [7 · Bedrock Agents](./LESSON7.md) → [8 · Google ADK](./LESSON8.md)
 
 ---
 

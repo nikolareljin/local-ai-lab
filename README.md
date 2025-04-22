@@ -20,7 +20,14 @@ command to type, and shows the code — steps are deep-linkable).
 | 1 | **RAG from scratch** | A drag-and-drop document Q&A app: extract → chunk → retrieve (BM25 + embeddings) → grounded answer with citations | [LESSON1.md](./LESSON1.md) | [▶ open](https://nikolareljin.github.io/local-ai-lab/lesson-1-rag.html) | ✅ Available |
 | 2 | **MCP servers** | Expose your document search as a Model Context Protocol tool Claude Code can call | [LESSON2.md](./LESSON2.md) | [▶ open](https://nikolareljin.github.io/local-ai-lab/lesson-2-mcp.html) | 🚧 Coming soon |
 | 3 | **LangChain** | Rebuild the RAG pipeline with LangChain and compare trade-offs | [LESSON3.md](./LESSON3.md) | _on site soon_ | 🚧 Planned |
-| 4 | **LangGraph** | Turn the pipeline into a stateful agent graph | [LESSON4.md](./LESSON4.md) | _on site soon_ | 🚧 Planned |
+| 4 | **LangGraph** | Turn the pipeline into a stateful, self-correcting agent graph | [LESSON4.md](./LESSON4.md) | _on site soon_ | 🚧 Planned |
+| 5 | **Ollama + Function Calling** | Give a local model real tools (function calling), 100% offline | [LESSON5.md](./LESSON5.md) | _on site soon_ | 🚧 Planned |
+| 6 | **Microsoft Semantic Kernel** | Rebuild the agent in **C# / .NET** with SK plugins (runs locally) | [LESSON6.md](./LESSON6.md) | _on site soon_ | 🚧 Planned |
+| 7 | **AWS Bedrock Agents** | Knowledge bases + action groups on a managed cloud agent, driven locally | [LESSON7.md](./LESSON7.md) | _on site soon_ | 🚧 Planned |
+| 8 | **Google AI Development Kit** | Build & run a Gemini agent locally with Google's ADK | [LESSON8.md](./LESSON8.md) | _on site soon_ | 🚧 Planned |
+
+Every lesson's end goal: a **fully published slideshow lesson** with step-by-step instructions, and
+**all code runs locally**.
 
 🔗 **Browse all lessons live:** https://nikolareljin.github.io/local-ai-lab/
 
