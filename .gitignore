@@ -5,6 +5,7 @@ __pycache__/
 .env
 .localrag/
 .playwright-mcp/
+*.zip
 
 # Jekyll (GitHub Pages) build output
 docs/_site/

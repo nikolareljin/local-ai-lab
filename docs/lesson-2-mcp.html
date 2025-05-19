@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lesson 2 · MCP servers — local-ai-lab</title>
-  <meta name="description" content="Expose your local document search as a Model Context Protocol (MCP) tool that Claude Code can call natively. Coming soon." />
+  <meta name="description" content="Build a working Model Context Protocol (MCP) server that exposes your local document search as a tool Claude Code can call natively." />
   <link rel="stylesheet" href="./assets/style.css" />
 </head>
 <body>
@@ -20,11 +20,10 @@
 
   <div class="wrap">
     <div class="lesson-head">
-      <div class="eyebrow">Lesson 2 · 🚧 Coming soon</div>
-      <h1>MCP servers</h1>
-      <p>Take the document search you built in Lesson 1 and expose it as a Model Context Protocol
-         tool — so Claude Code can query your <code>documents/</code> folder natively, no
-         copy-paste.</p>
+      <div class="eyebrow">Lesson 2</div>
+      <h1>Build an MCP server</h1>
+      <p>Expose the document search from Lesson 1 as a Model Context Protocol tool, so Claude Code
+         can query your <code>documents/</code> folder natively — no copy-paste.</p>
     </div>
 
     <div class="progress"><span></span></div>
@@ -34,59 +33,209 @@
 
       <!-- 1 -->
       <section class="slide">
-        <div class="step-no">Preview</div>
-        <h2>What is MCP, and why?</h2>
-        <p>The <b>Model Context Protocol (MCP)</b> is an open standard that lets an AI client (like
-           Claude Code) discover and call external <b>tools</b> over a simple JSON-RPC connection.
-           Instead of you pasting document text into a prompt, the model calls a
-           <code>search_docs</code> tool and pulls the context itself.</p>
-        <div class="why"><b>Lesson 1 vs Lesson 2:</b> in Lesson 1 <i>your app</i> drove the
-          pipeline and called the LLM. In Lesson 2 the relationship flips — <i>the LLM</i> drives,
-          and your retriever becomes a tool it reaches for on demand. Same retrieval engine, new
-          integration surface.</div>
+        <div class="step-no">Overview</div>
+        <h2>What you'll build &amp; the big flip</h2>
+        <p>In Lesson 1, <b>your app</b> drove the pipeline and called the LLM. In Lesson 2 the
+           relationship <b>flips</b>: <i>the LLM</i> drives, and your retriever becomes a <b>tool</b>
+           it reaches for on demand. Same engine, new integration surface.</p>
+        <div class="block"><pre><code>   ┌──────────────┐   "list your tools"      ┌───────────────────────────┐
+   │ Claude Code  │ ───────────────────────▶ │ local-ai-lab MCP server   │
+   │  (MCP host)  │                          │  tools: search_docs,      │
+   │              │ ◀─────────────────────── │         list_documents    │
+   └──────┬───────┘   tool schemas           └─────────────┬─────────────┘
+          │                                                 │ reuses Lesson 1
+          │  user: "how do I reset the device?"             ▼
+          │  model decides to call search_docs("reset")  documents/ + retriever
+          ▼
+   grounded answer with citations</code></pre></div>
+        <div class="why"><b>Why it matters:</b> RAG you can call from <i>any</i> MCP-aware client,
+          with no bespoke UI. Your documents become a first-class capability of the assistant itself.
+          Press <kbd>→</kbd> to begin.</div>
       </section>
 
       <!-- 2 -->
       <section class="slide">
-        <div class="step-no">Preview</div>
-        <h2>The shape of what we'll build</h2>
-        <p>A tiny stdio MCP server that wraps the Lesson 1 retriever and advertises one tool:</p>
-        <div class="block"><div class="label">mcp_server.py (sketch)</div><pre><code>from mcp.server import Server
-from localrag.config import load_config
-from localrag.engine import get_retriever
-
-server = Server("local-ai-lab-docs")
-
-@server.tool()
-def search_docs(query: str, k: int = 5) -&gt; str:
-    """Search the user's local documents and return the most relevant passages."""
-    config = load_config()
-    hits = get_retriever(config).search(query, k)
-    return "\n\n".join(f"[{h['source']}:{h['page_number']}] {h['text']}" for h in hits)
-
-# run over stdio so Claude Code can launch it as a subprocess</code></pre></div>
-        <div class="why"><b>Notice the reuse:</b> <code>get_retriever</code> and the chunk format
-          come straight from Lesson 1. MCP is just a new doorway onto the same engine.</div>
+        <div class="step-no">Concept</div>
+        <h2>What is MCP?</h2>
+        <p>The <b>Model Context Protocol</b> is an open standard that lets an AI client discover and
+           call external <b>tools</b> over JSON-RPC. A <b>server</b> advertises tools (each with a
+           name, description, and input schema); the <b>host</b> (Claude Code) lists them, and the
+           model calls them when useful, feeding results back into its answer.</p>
+        <div class="why"><b>Three core ideas:</b> <b>tools</b> (functions the model can call),
+          <b>the transport</b> (we use <b>stdio</b> — the host launches your server as a subprocess
+          and talks over stdin/stdout), and <b>the handshake</b> (initialize → list tools → call
+          tools). The official Python SDK's <code>FastMCP</code> handles all the protocol plumbing,
+          so you just write functions.</div>
       </section>
 
       <!-- 3 -->
       <section class="slide">
-        <div class="step-no">Preview</div>
-        <h2>What you'll learn</h2>
+        <div class="step-no">Setup</div>
+        <h2>Prerequisites</h2>
+        <p>Finish <a href="./lesson-1-rag.html">Lesson 1</a> first — the MCP server is a thin wrapper
+           over the retriever you built there. Then add the MCP SDK:</p>
+        <div class="block"><div class="label">Type this</div><pre class="cmd"><code>pip install mcp        # the official Model Context Protocol Python SDK</code></pre></div>
+        <div class="why">The SDK ships <b>FastMCP</b> (a high-level server API) and an <b>stdio
+          client</b> we'll use to test. You also need the Claude Code CLI to register the server at
+          the end.</div>
+      </section>
+
+      <!-- 4 -->
+      <section class="slide">
+        <div class="step-no">Step 1</div>
+        <h2>The server skeleton</h2>
+        <p>Create <code>mcp_server.py</code>. <code>FastMCP</code> gives you a server object; tools
+           are just decorated functions. Their docstring becomes the description the model sees, and
+           the type hints become the input schema — so write them for the model to read.</p>
+        <div class="block"><div class="label">mcp_server.py</div><pre><code>from mcp.server.fastmcp import FastMCP
+
+from localrag.config import load_config
+from localrag.engine import get_retriever
+from localrag.extract import discover_files
+
+mcp = FastMCP("local-ai-lab-docs")
+
+# ... tools go here ...
+
+def main():
+    mcp.run()        # default transport is stdio
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+        <div class="why"><b>Notice the imports:</b> <code>load_config</code>, <code>get_retriever</code>,
+          and <code>discover_files</code> all come straight from Lesson 1. MCP is a new doorway onto
+          the same engine.</div>
+      </section>
+
+      <!-- 5 -->
+      <section class="slide">
+        <div class="step-no">Step 2</div>
+        <h2>The <code>search_docs</code> tool</h2>
+        <p>The star of the show. It runs the Lesson 1 retriever and returns passages tagged
+           <code>[source:page]</code> so the model can cite them.</p>
+        <div class="block"><div class="label">mcp_server.py — add the tool</div><pre><code>@mcp.tool()
+def search_docs(query: str, k: int = 5) -&gt; str:
+    """Search the user's local documents and return the most relevant passages.
+
+    Each passage is prefixed with its source as [filename:page] so the model
+    can cite it. Call this to ground answers in the user's own files instead
+    of relying on training data.
+    """
+    config = load_config()
+    hits = get_retriever(config).search(query, max(1, int(k)))
+    if not hits:
+        return "No relevant passages found in the local documents."
+    return "\n\n".join(
+        f"[{h['source']}:{h['page_number']}] {h['text']}" for h in hits)</code></pre></div>
+        <div class="why"><b>The docstring is a prompt.</b> The model reads it to decide <i>when</i> to
+          call the tool, so it explicitly says "to ground answers… instead of relying on training
+          data." Good tool descriptions are as important as good code.</div>
+      </section>
+
+      <!-- 6 -->
+      <section class="slide">
+        <div class="step-no">Step 3</div>
+        <h2>A second tool: <code>list_documents</code></h2>
+        <p>Servers usually expose more than one tool. This one lets the model see what's in the
+           corpus before searching — handy for "what do you have on X?" questions.</p>
+        <div class="block"><div class="label">mcp_server.py — add another tool</div><pre><code>@mcp.tool()
+def list_documents() -&gt; str:
+    """List the documents currently available to search in the local corpus."""
+    config = load_config()
+    names = [p.name for p in discover_files(config.docs_dir)]
+    return "\n".join(names) if names else "(no documents indexed yet)"</code></pre></div>
+        <div class="why"><b>Tool design tip:</b> keep each tool small and single-purpose with a clear
+          name. The model composes them — it might call <code>list_documents</code>, then
+          <code>search_docs</code> — just like you'd chain functions.</div>
+      </section>
+
+      <!-- 7 -->
+      <section class="slide">
+        <div class="step-no">Step 4</div>
+        <h2>Run it over stdio</h2>
+        <p><code>mcp.run()</code> defaults to the <b>stdio</b> transport: it reads JSON-RPC from
+           stdin and writes to stdout. That's exactly how a host like Claude Code launches a local
+           server — as a subprocess it talks to over pipes.</p>
+        <div class="block"><div class="label">Type this</div><pre class="cmd"><code>python mcp_server.py        # waits silently for an MCP client to connect</code></pre></div>
+        <div class="why">It looks like it's hanging — that's correct. The server is waiting for a
+          client to speak the protocol over stdin. You won't talk to it by hand; the next step uses a
+          client to drive it.</div>
+      </section>
+
+      <!-- 8 -->
+      <section class="slide">
+        <div class="step-no">Step 5</div>
+        <h2>Test it with an stdio client</h2>
+        <p>The SDK includes a client. This spawns the server, does the handshake, lists tools, and
+           calls <code>search_docs</code> — a real integration test, no LLM needed.</p>
+        <div class="block"><div class="label">tests/test_mcp.py (essence)</div><pre><code>from mcp import ClientSession
+from mcp.client.stdio import StdioServerParameters, stdio_client
+
+async def run():
+    params = StdioServerParameters(command=sys.executable,
+                                   args=["mcp_server.py"], cwd=str(ROOT))
+    async with stdio_client(params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            tools = await session.list_tools()
+            result = await session.call_tool(
+                "search_docs", {"query": "how do I reset the device", "k": 3})
+            text = "".join(c.text for c in result.content)
+            return [t.name for t in tools.tools], text</code></pre></div>
+        <div class="block"><div class="label">Run it</div><pre class="cmd"><code>pytest -q tests/test_mcp.py     # passes: tools listed, passage returned</code></pre></div>
+        <div class="why"><b>The handshake in code:</b> <code>initialize()</code> → <code>list_tools()</code>
+          → <code>call_tool()</code>. That's the entire MCP lifecycle. The test asserts the result
+          contains "power button" and <code>sample_manual.md</code> — grounded, cited, verified.</div>
+      </section>
+
+      <!-- 9 -->
+      <section class="slide">
+        <div class="step-no">Step 6</div>
+        <h2>Register it with Claude Code</h2>
+        <p>Now hand the server to a real host. From the repo directory, register it with one command:</p>
+        <div class="block"><div class="label">Type this</div><pre class="cmd"><code>claude mcp add local-ai-lab-docs -- python mcp_server.py
+claude mcp list                         # confirm it's registered</code></pre></div>
+        <div class="why">That tells Claude Code: "when you start, launch <code>python mcp_server.py</code>
+          and treat its tools as your own." (Prefer an absolute path to <code>mcp_server.py</code> and
+          your project's venv Python if you run Claude Code from elsewhere.) Equivalent to adding it
+          to your MCP config JSON by hand.</div>
+      </section>
+
+      <!-- 10 -->
+      <section class="slide">
+        <div class="step-no">Step 7</div>
+        <h2>See it work — RAG, native to the assistant</h2>
+        <p>Open Claude Code in the repo and just ask. The model will call <code>search_docs</code>
+           against your <code>documents/</code> folder and answer with citations — no copy-paste,
+           no custom UI.</p>
+        <div class="block"><div class="label">In Claude Code chat</div><pre><code>You:    How do I reset the device?
+
+Claude: (calls search_docs "reset device")
+        Hold the power button for 10 seconds until the LED blinks blue
+        three times. [sample_manual.md:1]</code></pre></div>
+        <div class="why"><b>That's the payoff:</b> your local, private documents are now a tool the
+          assistant uses on its own initiative. The same retriever, reachable from any MCP host.</div>
+      </section>
+
+      <!-- 11 -->
+      <section class="slide">
+        <div class="step-no">Recap</div>
+        <h2>You built a working MCP server</h2>
         <table>
-          <tr><th>Topic</th><th>What it covers</th></tr>
-          <tr><td>MCP basics</td><td>servers, tools, resources, and the JSON-RPC handshake</td></tr>
-          <tr><td>stdio transport</td><td>how Claude Code launches and talks to a local server</td></tr>
-          <tr><td>Tool design</td><td>schemas, descriptions, and returning grounded context</td></tr>
-          <tr><td>Wiring</td><td>registering the server in Claude Code's MCP config</td></tr>
-          <tr><td>Security</td><td>keeping a local tool safe and scoped to your folder</td></tr>
+          <tr><th>Piece</th><th>What it does</th></tr>
+          <tr><td><code>FastMCP("…")</code></td><td>the server; handles all protocol plumbing</td></tr>
+          <tr><td><code>@mcp.tool()</code></td><td>turns a function into a callable tool (docstring = description, hints = schema)</td></tr>
+          <tr><td><code>search_docs</code> / <code>list_documents</code></td><td>your tools, reusing the Lesson 1 engine</td></tr>
+          <tr><td><code>mcp.run()</code></td><td>serves over stdio for the host to launch</td></tr>
+          <tr><td><code>claude mcp add</code></td><td>registers it so Claude Code can call it</td></tr>
         </table>
-        <div class="why"><b>By the end</b> you'll ask Claude Code a question in plain chat and watch
-          it call <code>search_docs</code> against your own files — RAG, but native to the
-          assistant.</div>
+        <div class="why"><b>The through-line:</b> <code>search_docs</code> is the same capability you'll
+          rebuild in every later lesson — as an Ollama function call, a Semantic Kernel plugin, a
+          Bedrock action group, and a Google ADK tool. Master the primitive once; the frameworks are
+          just wrappers.</div>
         <div class="cta">
-          <a class="btn ghost" href="./lesson-1-rag.html">← Revisit Lesson 1: RAG</a>
-          <a class="btn" href="https://github.com/nikolareljin/local-ai-lab" target="_blank" rel="noopener">Watch the repo for updates</a>
+          <a class="btn" href="./lesson-1-rag.html">← Lesson 1: RAG</a>
+          <a class="btn ghost" href="https://github.com/nikolareljin/local-ai-lab/blob/main/mcp_server.py" target="_blank" rel="noopener">See mcp_server.py</a>
         </div>
       </section>
 
@@ -98,7 +247,7 @@ def search_docs(query: str, k: int = 5) -&gt; str:
       <span class="spacer"></span>
       <button class="nav-btn" data-next>Next →</button>
     </div>
-    <div class="kbd-hint">A full interactive lesson lands here soon. Use <kbd>←</kbd> <kbd>→</kbd> to preview.</div>
+    <div class="kbd-hint">Use <kbd>←</kbd> <kbd>→</kbd> arrow keys, the dots, or the buttons. Each step is deep-linkable.</div>
   </div>
 
   <footer class="site"><div class="inner">

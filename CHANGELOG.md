@@ -4,6 +4,23 @@ All notable changes to this project are documented here. This project follows
 [Conventional Commits](https://www.conventionalcommits.org/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.0]
+
+**Lesson 2 (MCP) complete & working**, plus the full 8-lesson roadmap.
+
+### Added
+- **MCP server** (`mcp_server.py`) — a FastMCP stdio server exposing the Lesson 1 retriever as
+  `search_docs` and `list_documents` tools, callable from Claude Code.
+- **MCP integration test** (`tests/test_mcp.py`) — spawns the server over stdio, lists tools, and
+  calls `search_docs`; skipped if the MCP SDK is absent.
+- **Full Lesson 2** — interactive step-slider (`docs/lesson-2-mcp.html`) and written guide
+  (`LESSON2.md`) with runnable code.
+- **Roadmap lessons 3–8** — written guides `LESSON3.md`–`LESSON8.md` (LangChain, LangGraph,
+  Ollama + function calling, Microsoft Semantic Kernel in C#/.NET, AWS Bedrock Agents, Google ADK).
+
+### Changed
+- `requirements.txt` adds `mcp`. README/landing curriculum mark Lesson 2 as ✅ Available.
+
 ## [0.1.0]
 
 First public release of **local-ai-lab** — Lesson 1 (RAG) complete, Lesson 2 (MCP) previewed.

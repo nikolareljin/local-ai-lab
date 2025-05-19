@@ -18,7 +18,7 @@ command to type, and shows the code — steps are deep-linkable).
 | # | Lesson | What you build | Read (Markdown) | Live (interactive) | Status |
 |---|--------|----------------|-----------------|--------------------|--------|
 | 1 | **RAG from scratch** | A drag-and-drop document Q&A app: extract → chunk → retrieve (BM25 + embeddings) → grounded answer with citations | [LESSON1.md](./LESSON1.md) | [▶ open](https://nikolareljin.github.io/local-ai-lab/lesson-1-rag.html) | ✅ Available |
-| 2 | **MCP servers** | Expose your document search as a Model Context Protocol tool Claude Code can call | [LESSON2.md](./LESSON2.md) | [▶ open](https://nikolareljin.github.io/local-ai-lab/lesson-2-mcp.html) | 🚧 Coming soon |
+| 2 | **MCP servers** | Expose your document search as a Model Context Protocol tool Claude Code can call (`mcp_server.py`) | [LESSON2.md](./LESSON2.md) | [▶ open](https://nikolareljin.github.io/local-ai-lab/lesson-2-mcp.html) | ✅ Available |
 | 3 | **LangChain** | Rebuild the RAG pipeline with LangChain and compare trade-offs | [LESSON3.md](./LESSON3.md) | _on site soon_ | 🚧 Planned |
 | 4 | **LangGraph** | Turn the pipeline into a stateful, self-correcting agent graph | [LESSON4.md](./LESSON4.md) | _on site soon_ | 🚧 Planned |
 | 5 | **Ollama + Function Calling** | Give a local model real tools (function calling), 100% offline | [LESSON5.md](./LESSON5.md) | _on site soon_ | 🚧 Planned |
@@ -96,6 +96,23 @@ line. See it live in [Lesson 1, Step 10](https://nikolareljin.github.io/local-ai
 
 ---
 
+## Lesson 2: the MCP server
+
+`mcp_server.py` exposes the same retriever as **Model Context Protocol** tools (`search_docs`,
+`list_documents`), so Claude Code can query your `documents/` folder natively — no copy-paste.
+
+```bash
+pip install -r requirements.txt          # includes the `mcp` SDK
+pytest -q tests/test_mcp.py              # spawns the server over stdio and calls a tool
+
+# register with Claude Code (run from the repo dir), then just ask in chat:
+claude mcp add local-ai-lab-docs -- python mcp_server.py
+```
+
+Full walkthrough: [LESSON2.md](./LESSON2.md) · [interactive lesson](https://nikolareljin.github.io/local-ai-lab/lesson-2-mcp.html).
+
+---
+
 ## Repository layout
 
 ```
@@ -103,7 +120,7 @@ local-ai-lab/
 ├── docs/                  # GitHub Pages course site (interactive sliders)
 │   ├── index.html         #   landing + curriculum
 │   ├── lesson-1-rag.html  #   Lesson 1 (RAG) — full interactive lesson
-│   ├── lesson-2-mcp.html  #   Lesson 2 (MCP) — preview
+│   ├── lesson-2-mcp.html  #   Lesson 2 (MCP) — full interactive lesson
 │   └── assets/            #   styles + slider.js
 ├── documents/             # the RAG corpus — drop your files here
 ├── localrag/              # Lesson 1 source code (the working app)
@@ -111,9 +128,10 @@ local-ai-lab/
 │   ├── providers/         #   claude_code · ollama · gemini · openai
 │   ├── web.py             #   Flask drag-and-drop UI
 │   └── templates/         #   index.html (web UI)
+├── mcp_server.py          # Lesson 2 — MCP server (search_docs, list_documents)
 ├── scripts/               # script-helpers submodule + start/stop/status helpers
-├── tests/                 # offline smoke tests
-├── LESSON1.md … LESSON4.md   # full written lessons (linked to the live site)
+├── tests/                 # offline smoke tests (incl. MCP integration test)
+├── LESSON1.md … LESSON8.md   # full written lessons (linked to the live site)
 ├── ARCHITECTURE.md  CHANGELOG.md  AGENTS.md
 ```
 
