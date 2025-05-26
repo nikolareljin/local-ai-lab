@@ -32,3 +32,26 @@ web_running() {
   local pid; pid="$(web_pid)"
   [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null
 }
+
+# Create the venv (first run) and install dependencies if anything is missing.
+VENV_DIR="${VENV_DIR:-$ROOT_DIR/venv}"
+ensure_venv() {
+  if [[ ! -x "$VENV_DIR/bin/python" ]]; then
+    log_info "Creating virtualenv (first run) at $VENV_DIR ..."
+    python3 -m venv "$VENV_DIR"
+  fi
+  PYTHON_BIN="$VENV_DIR/bin/python"
+  if ! "$PYTHON_BIN" -c "import flask, rank_bm25, pypdf, docx, numpy, mcp" >/dev/null 2>&1; then
+    log_info "Installing dependencies (one-time) ..."
+    "$PYTHON_BIN" -m pip install -q --upgrade pip >/dev/null 2>&1 || true
+    "$PYTHON_BIN" -m pip install -q -r "$ROOT_DIR/requirements.txt"
+  fi
+}
+
+# Find a free TCP port starting from $1 (default 5000).
+port_in_use() { (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null && { exec 3>&-; return 0; } || return 1; }
+find_free_port() {
+  local p="${1:-5000}" tries=0
+  while port_in_use "$p" && [[ $tries -lt 50 ]]; do p=$((p + 1)); tries=$((tries + 1)); done
+  echo "$p"
+}

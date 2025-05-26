@@ -1,0 +1,144 @@
+#!/usr/bin/env bash
+# SCRIPT: run
+# DESCRIPTION: Run a local-ai-lab lesson locally.  Usage:  ./run -l <N> [action]
+# DEFAULT AI: the Claude Code CLI (no API key needed). Override with RAG_PROVIDER.
+# CREATOR: Nik Reljin
+set -euo pipefail
+
+source "$(dirname "$0")/scripts/include.sh"
+
+usage() {
+  cat <<'EOF'
+local-ai-lab — run a lesson locally
+
+Usage:
+  ./run -l <N> [action] [args]
+
+Lessons:
+  -l 1   RAG app       actions:  web (default) · ask "question" · repl · index · test
+  -l 2   MCP server    actions:  demo (default) · serve · register · test
+  -l 3..8              written guides only (not runnable yet) — see LESSON<N>.md
+
+Examples:
+  ./run -l 1                                  # launch the RAG web UI (auto-picks a free port)
+  ./run -l 1 ask "How do I reset the device?" # one-shot question in the terminal
+  ./run -l 1 test                             # run Lesson 1 tests
+  ./run -l 2                                  # demo the MCP server end-to-end (no LLM needed)
+  ./run -l 2 register                         # register the MCP server with Claude Code
+  ./run -l 2 test                             # run Lesson 2 tests
+
+The default AI provider is the Claude Code CLI — no API key, it uses your existing
+Claude Code login. Override anytime with  RAG_PROVIDER=ollama|gemini|openai.
+
+Options:
+  -l, --lesson N   which lesson (1-8)
+  -h, --help       show this help
+EOF
+}
+
+# Announce the AI provider so it's obvious Claude Code is the default, and check it.
+announce_provider() {
+  local provider="${RAG_PROVIDER:-claude}"
+  if [[ "$provider" == "claude" ]]; then
+    if command -v "${CLAUDE_BIN:-claude}" >/dev/null 2>&1; then
+      log_info "AI provider: Claude Code CLI (default — no API key needed)."
+    else
+      log_warn "Default AI is the Claude Code CLI, but '${CLAUDE_BIN:-claude}' is not on your PATH."
+      log_warn "Install Claude Code (recommended), or set RAG_PROVIDER=ollama|gemini|openai."
+    fi
+  else
+    log_info "AI provider: ${provider} (RAG_PROVIDER override; default is Claude Code)."
+  fi
+}
+
+# --- parse a leading -l/--lesson flag, leave the rest as the action + args ---
+LESSON=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -l|--lesson) LESSON="${2:-}"; shift 2 ;;
+    -l*)         LESSON="${1#-l}"; shift ;;
+    -h|--help)   usage; exit 0 ;;
+    --)          shift; break ;;
+    *)           break ;;
+  esac
+done
+
+if [[ -z "$LESSON" ]]; then
+  log_error "Which lesson? Try:  ./run -l 1"
+  echo
+  usage
+  exit 1
+fi
+
+ACTION="${1:-}"
+[[ $# -gt 0 ]] && shift || true
+
+run_lesson_1() {
+  ensure_venv
+  case "${ACTION:-web}" in
+    web|"")
+      announce_provider
+      local port; port="$(find_free_port "${WEB_PORT:-5000}")"
+      log_info "Lesson 1 · RAG web UI → http://127.0.0.1:${port}    (Ctrl-C to stop)"
+      exec "$PYTHON_BIN" -m localrag web --port "$port"
+      ;;
+    ask)
+      announce_provider
+      exec "$PYTHON_BIN" -m localrag ask "$@"
+      ;;
+    repl)
+      announce_provider
+      exec "$PYTHON_BIN" -m localrag ask
+      ;;
+    index)
+      exec "$PYTHON_BIN" -m localrag index --reindex
+      ;;
+    test)
+      exec "$PYTHON_BIN" -m pytest -q "$ROOT_DIR/tests/test_smoke.py"
+      ;;
+    *)
+      log_error "Lesson 1 actions:  web | ask \"q\" | repl | index | test"
+      exit 1
+      ;;
+  esac
+}
+
+run_lesson_2() {
+  ensure_venv
+  case "${ACTION:-demo}" in
+    demo|"")
+      log_info "Lesson 2 · MCP — spawning the server over stdio and calling its tools ..."
+      exec "$PYTHON_BIN" "$ROOT_DIR/examples/mcp_demo.py" "$@"
+      ;;
+    serve)
+      log_info "Lesson 2 · MCP server over stdio (a host/client connects to this; Ctrl-C to stop)."
+      exec "$PYTHON_BIN" "$ROOT_DIR/mcp_server.py"
+      ;;
+    register)
+      command -v claude >/dev/null 2>&1 || { log_error "The 'claude' CLI is not on your PATH."; exit 1; }
+      log_info "Registering the MCP server with Claude Code ..."
+      exec claude mcp add local-ai-lab-docs -- "$PYTHON_BIN" "$ROOT_DIR/mcp_server.py"
+      ;;
+    test)
+      exec "$PYTHON_BIN" -m pytest -q "$ROOT_DIR/tests/test_mcp.py"
+      ;;
+    *)
+      log_error "Lesson 2 actions:  demo | serve | register | test"
+      exit 1
+      ;;
+  esac
+}
+
+case "$LESSON" in
+  1) run_lesson_1 "$@" ;;
+  2) run_lesson_2 "$@" ;;
+  3|4|5|6|7|8)
+    log_info "Lesson ${LESSON} is a written guide (no runnable code yet)."
+    log_info "Read it:  LESSON${LESSON}.md   ·   live:  https://nikolareljin.github.io/local-ai-lab/"
+    ;;
+  *)
+    log_error "Unknown lesson '${LESSON}'. Choose 1-8."
+    usage
+    exit 1
+    ;;
+esac

@@ -129,6 +129,8 @@ local-ai-lab/
 │   ├── web.py             #   Flask drag-and-drop UI
 │   └── templates/         #   index.html (web UI)
 ├── mcp_server.py          # Lesson 2 — MCP server (search_docs, list_documents)
+├── examples/mcp_demo.py   # Lesson 2 — stdio client demo (used by ./run -l 2)
+├── run                    # ./run -l <N> — run any lesson locally
 ├── scripts/               # script-helpers submodule + start/stop/status helpers
 ├── tests/                 # offline smoke tests (incl. MCP integration test)
 ├── LESSON1.md … LESSON8.md   # full written lessons (linked to the live site)
@@ -139,16 +141,38 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for the data flow and module map.
 
 ---
 
-## Run the lessons / local dev
+## Run a lesson — `./run`
+
+One command runs any lesson locally. It sets up the virtualenv on first use and, by default,
+uses the **Claude Code CLI** as the AI — no API key, it just uses your existing Claude Code login.
+
+```bash
+./run -l 1                                   # launch the RAG web UI (auto-picks a free port)
+./run -l 1 ask "How do I reset the device?"  # one-shot question in the terminal
+./run -l 1 repl                              # interactive Q&A loop
+./run -l 1 test                              # run Lesson 1 tests
+./run -l 2                                   # demo the MCP server end-to-end (no LLM needed)
+./run -l 2 register                          # register the MCP server with Claude Code
+./run -l 2 serve                             # run the MCP server over stdio
+./run -l 2 test                              # run Lesson 2 tests
+./run -h                                     # full help
+```
+
+Lessons **3–8** are written guides for now: `./run -l 3` points you to `LESSON3.md`.
+
+**The AI is Claude Code by default.** `./run` announces the provider and checks that `claude` is on
+your PATH. To use a different one, set `RAG_PROVIDER`:
+
+```bash
+RAG_PROVIDER=ollama ./run -l 1 ask "..."     # or gemini / openai (set the key in .env)
+```
+
+### Other helpers
 
 ```bash
 ./update          # install/update the script-helpers submodule
-./start           # launch the Lesson 1 web app
-./status          # show whether it's running
-./stop            # stop it
+./start           # background the Lesson 1 web app (./status, ./stop to manage)
 ```
-
-(`start`/`stop`/`status` are thin wrappers; you can always use `python -m localrag …` directly.)
 
 ---
 
