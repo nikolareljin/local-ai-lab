@@ -1,13 +1,15 @@
 # Lesson 3 · Rebuild RAG with LangChain
 
+**PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON3.pdf) · **Install (Linux · macOS · Windows):** [guide](./INSTALL.md) · [PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)
+
 > **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** — a hands-on course for building local AI.
 >
-> 🏠 **Course home:** https://nikolareljin.github.io/local-ai-lab/
-> 💻 **Source:** https://github.com/nikolareljin/local-ai-lab
+> **Course home:** https://nikolareljin.github.io/local-ai-lab/
+> **Source:** https://github.com/nikolareljin/local-ai-lab
 >
 > **Lessons:** [1 · RAG](./LESSON1.md) → [2 · MCP](./LESSON2.md) → **3 · LangChain (you are here)** → [4 · LangGraph](./LESSON4.md) → [5 · Ollama tools](./LESSON5.md) → [6 · Semantic Kernel](./LESSON6.md) → [7 · Bedrock Agents](./LESSON7.md) → [8 · Google ADK](./LESSON8.md)
 >
-> 🚧 **Status: planned.** Outline below; full step-by-step coming later. ⭐ the repo to follow along.
+> **Status: planned.** Outline below; full step-by-step coming later. ⭐ the repo to follow along.
 
 ---
 
@@ -44,7 +46,7 @@ read LangChain and see *exactly* which of your hand-rolled pieces each component
 | `providers/` | `ChatModel` adapters (`ChatOllama`, `ChatOpenAI`, …) |
 | `engine.answer_question()` | an LCEL retrieval chain |
 
-> 💡 **The payoff of doing it the hard way first:** none of the table above is mysterious. You know
+> **The payoff of doing it the hard way first:** none of the table above is mysterious. You know
 > what every component does because you wrote its equivalent.
 
 ## Prerequisites

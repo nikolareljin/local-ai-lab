@@ -1,13 +1,15 @@
 # Lesson 8 · Google AI Development Kit (ADK)
 
+**PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON8.pdf) · **Install (Linux · macOS · Windows):** [guide](./INSTALL.md) · [PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)
+
 > **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** — a hands-on course for building local AI.
 >
-> 🏠 **Course home:** https://nikolareljin.github.io/local-ai-lab/
-> 💻 **Source:** https://github.com/nikolareljin/local-ai-lab
+> **Course home:** https://nikolareljin.github.io/local-ai-lab/
+> **Source:** https://github.com/nikolareljin/local-ai-lab
 >
 > **Lessons:** [1 · RAG](./LESSON1.md) → [2 · MCP](./LESSON2.md) → [3 · LangChain](./LESSON3.md) → [4 · LangGraph](./LESSON4.md) → [5 · Ollama tools](./LESSON5.md) → [6 · Semantic Kernel](./LESSON6.md) → [7 · Bedrock Agents](./LESSON7.md) → **8 · Google ADK (you are here)**
 >
-> 🚧 **Status: planned.** Outline below; full published slideshow lesson + step-by-step coming later.
+> **Status: planned.** Outline below; full published slideshow lesson + step-by-step coming later.
 > ADK **runs locally** (`adk run` / `adk web`) against Gemini. ⭐ the repo to follow along.
 
 ---
@@ -48,7 +50,7 @@ root_agent = Agent(
 # Run locally:  adk run .   (or)   adk web
 ```
 
-> 💡 **The finale:** the `search_docs` function is, once again, Lesson 1's retriever. Across MCP,
+> **The finale:** the `search_docs` function is, once again, Lesson 1's retriever. Across MCP,
 > Ollama, Semantic Kernel, Bedrock, and ADK, the *capability* never changed — only the framework
 > wrapping it. That's the whole point of the course: master the primitives, and every framework is
 > just syntax.
@@ -67,7 +69,7 @@ root_agent = Agent(
 Python, a Gemini API key (`GEMINI_API_KEY`), and `pip install google-adk`. [Lesson 1](./LESSON1.md)
 provides the retriever the agent calls.
 
-## Course complete 🎓
+## Course complete 
 
 You've built the same local-first document agent six ways — from a hand-rolled RAG pipeline up
 through MCP, local function calling, Semantic Kernel, Bedrock Agents, and ADK — and you understand

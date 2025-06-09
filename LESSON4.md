@@ -1,13 +1,15 @@
 # Lesson 4 · A Stateful Agent with LangGraph
 
+**PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON4.pdf) · **Install (Linux · macOS · Windows):** [guide](./INSTALL.md) · [PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)
+
 > **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** — a hands-on course for building local AI.
 >
-> 🏠 **Course home:** https://nikolareljin.github.io/local-ai-lab/
-> 💻 **Source:** https://github.com/nikolareljin/local-ai-lab
+> **Course home:** https://nikolareljin.github.io/local-ai-lab/
+> **Source:** https://github.com/nikolareljin/local-ai-lab
 >
 > **Lessons:** [1 · RAG](./LESSON1.md) → [2 · MCP](./LESSON2.md) → [3 · LangChain](./LESSON3.md) → **4 · LangGraph (you are here)** → [5 · Ollama tools](./LESSON5.md) → [6 · Semantic Kernel](./LESSON6.md) → [7 · Bedrock Agents](./LESSON7.md) → [8 · Google ADK](./LESSON8.md)
 >
-> 🚧 **Status: planned.** Outline below; full step-by-step coming later. ⭐ the repo to follow along.
+> **Status: planned.** Outline below; full step-by-step coming later. ⭐ the repo to follow along.
 
 ---
 
@@ -30,7 +32,7 @@ A graph with nodes such as:
         └──────┬──────┘
                ▼
         ┌─────────────┐   weak hits?   ┌──────────────────┐
-        │  retrieve   │ ─────────────▶ │ rewrite query    │──┐
+        │  retrieve   │ ────────────▶│ rewrite query    │──┐
         └──────┬──────┘                └──────────────────┘  │ loop
                │ good hits                                    │ back
                ▼                                              │
@@ -61,7 +63,7 @@ A graph with nodes such as:
 | LangChain retrievers & chat models | [Lesson 3](./LESSON3.md) |
 | **graph, state, cycles, self-correction** | **Lesson 4 (this one)** |
 
-> 💡 **Where it all lands:** by the end of the course you can build a local, private, self-correcting
+> **Where it all lands:** by the end of the course you can build a local, private, self-correcting
 > document agent — and explain every layer, from `pypdf` extraction up to a LangGraph control loop.
 
 ## Prerequisites

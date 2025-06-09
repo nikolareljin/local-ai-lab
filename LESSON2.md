@@ -1,14 +1,16 @@
 # Lesson 2 · Build an MCP Server
 
+**PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON2.pdf) · **Install (Linux · macOS · Windows):** [guide](./INSTALL.md) · [PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)
+
 > **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** — a hands-on course for building local AI.
 >
-> ▶ **Interactive version (slides):** https://nikolareljin.github.io/local-ai-lab/lesson-2-mcp.html
-> 🏠 **Course home:** https://nikolareljin.github.io/local-ai-lab/
-> 💻 **Source:** https://github.com/nikolareljin/local-ai-lab · the working server is [`mcp_server.py`](./mcp_server.py)
+> **Interactive version (slides):** https://nikolareljin.github.io/local-ai-lab/lesson-2-mcp.html
+> **Course home:** https://nikolareljin.github.io/local-ai-lab/
+> **Source:** https://github.com/nikolareljin/local-ai-lab · the working server is [`mcp_server.py`](./mcp_server.py)
 >
 > **Lessons:** [1 · RAG](./LESSON1.md) → **2 · MCP (you are here)** → [3 · LangChain](./LESSON3.md) → [4 · LangGraph](./LESSON4.md) → [5 · Ollama tools](./LESSON5.md) → [6 · Semantic Kernel](./LESSON6.md) → [7 · Bedrock Agents](./LESSON7.md) → [8 · Google ADK](./LESSON8.md)
 >
-> ✅ **Status: complete & working.** Runnable code: [`mcp_server.py`](./mcp_server.py), tested by
+> **Status: complete & working.** Runnable code: [`mcp_server.py`](./mcp_server.py), tested by
 > [`tests/test_mcp.py`](./tests/test_mcp.py). Runs 100% locally.
 
 ---
@@ -25,7 +27,7 @@ plain chat.
 
 ```
    ┌──────────────┐   "list your tools"      ┌───────────────────────────┐
-   │ Claude Code  │ ───────────────────────▶ │ local-ai-lab MCP server   │
+   │ Claude Code  │ ──────────────────────▶│ local-ai-lab MCP server   │
    │  (MCP host)  │                          │  tools: search_docs,      │
    │              │ ◀─────────────────────── │         list_documents    │
    └──────┬───────┘   tool schemas           └─────────────┬─────────────┘
@@ -94,7 +96,7 @@ if __name__ == "__main__":
     main()
 ```
 
-> 💡 **Notice the imports.** `load_config`, `get_retriever`, and `discover_files` come straight from
+> **Notice the imports.** `load_config`, `get_retriever`, and `discover_files` come straight from
 > Lesson 1. MCP is a new doorway onto the same engine.
 
 ---
@@ -121,7 +123,7 @@ def search_docs(query: str, k: int = 5) -> str:
         f"[{h['source']}:{h['page_number']}] {h['text']}" for h in hits)
 ```
 
-> 💡 **The docstring is a prompt.** The model reads it to decide *when* to call the tool, so it
+> **The docstring is a prompt.** The model reads it to decide *when* to call the tool, so it
 > explicitly says "to ground answers… instead of relying on training data." Good tool descriptions
 > are as important as good code.
 
@@ -141,7 +143,7 @@ def list_documents() -> str:
     return "\n".join(names) if names else "(no documents indexed yet)"
 ```
 
-> 💡 **Tool design tip:** keep each tool small and single-purpose with a clear name. The model
+> **Tool design tip:** keep each tool small and single-purpose with a clear name. The model
 > composes them — it might call `list_documents`, then `search_docs` — just like you'd chain
 > functions.
 
@@ -190,7 +192,7 @@ async def run():
 pytest -q tests/test_mcp.py     # passes: tools listed, cited passage returned
 ```
 
-> 💡 **The handshake in code:** `initialize()` → `list_tools()` → `call_tool()`. That's the entire
+> **The handshake in code:** `initialize()` → `list_tools()` → `call_tool()`. That's the entire
 > MCP lifecycle. The test asserts the result contains `power button` and `sample_manual.md` —
 > grounded, cited, verified.
 

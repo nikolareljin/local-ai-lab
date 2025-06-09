@@ -1,11 +1,13 @@
 # Lesson 1 · Build a RAG System From Scratch
 
+**PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON1.pdf) · **Install (Linux · macOS · Windows):** [guide](./INSTALL.md) · [PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)
+
 > **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** — a hands-on course for building local AI.
 >
-> ▶ **Interactive version (slides):** https://nikolareljin.github.io/local-ai-lab/lesson-1-rag.html
-> 🏠 **Course home:** https://nikolareljin.github.io/local-ai-lab/
-> 💻 **Source:** https://github.com/nikolareljin/local-ai-lab
-> 👤 **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
+> **Interactive version (slides):** https://nikolareljin.github.io/local-ai-lab/lesson-1-rag.html
+> **Course home:** https://nikolareljin.github.io/local-ai-lab/
+> **Source:** https://github.com/nikolareljin/local-ai-lab
+> **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
 >
 > **Lessons:** **1 · RAG (you are here)** → [2 · MCP](./LESSON2.md) → [3 · LangChain](./LESSON3.md) → [4 · LangGraph](./LESSON4.md) → [5 · Ollama tools](./LESSON5.md) → [6 · Semantic Kernel](./LESSON6.md) → [7 · Bedrock Agents](./LESSON7.md) → [8 · Google ADK](./LESSON8.md)
 
@@ -121,7 +123,7 @@ def extract_pages(path: Path) -> List[Page]:
 **Why pages?** PDFs have real pages, so a citation like `manual.pdf:4` points the reader to the
 exact spot. Formats without pages (DOCX/TXT/MD) collapse to a single page — still citable by name.
 
-> 💡 **Teaching point.** Extraction is the unglamorous 80% of real RAG. Garbage text in → garbage
+> **Teaching point.** Extraction is the unglamorous 80% of real RAG. Garbage text in → garbage
 > answers out. Scanned PDFs need OCR; tables and multi-column layouts need smarter parsers. We keep
 > it simple here, but this is where production systems spend most of their effort.
 
@@ -174,7 +176,7 @@ def chunk_pages(pages, size=1000, overlap=200):
     return chunks
 ```
 
-> 💡 **Teaching point — chunk size is a dial.** Too large and retrieval is imprecise (you pull in
+> **Teaching point — chunk size is a dial.** Too large and retrieval is imprecise (you pull in
 > irrelevant text); too small and you lose context (the answer is split across chunks). 800–1200
 > chars with 10–20% overlap is a sane default. Tuning this per corpus is half the art of RAG.
 
@@ -246,7 +248,7 @@ class Bm25Retriever:
         return [self.chunks[i] for i in ranked[:k]]
 ```
 
-> ⚠️ **A real bug worth knowing.** BM25's IDF term goes *negative* when a word appears in every
+> **A real bug worth knowing.** BM25's IDF term goes *negative* when a word appears in every
 > chunk — which happens constantly on a tiny corpus. An early version of this code filtered results
 > with `score > 0` and returned **nothing**, because on a 2-chunk corpus every score was negative.
 > The fix: don't apply an absolute score cutoff — return the top-k by rank and let the grounding
@@ -288,7 +290,7 @@ def build_user_prompt(question, chunks):
     return f"DOCUMENT CONTEXT:\n{context}\n\nQUESTION:\n{question}"
 ```
 
-> 💡 **Teaching point.** RAG quality is *retrieval* quality + *prompt* quality. A perfect retriever
+> **Teaching point.** RAG quality is *retrieval* quality + *prompt* quality. A perfect retriever
 > with a sloppy prompt still hallucinates; a strict prompt with bad retrieval answers "not in your
 > documents" to everything. You need both. The rules above — cite, admit ignorance, label general
 > knowledge — are the minimum viable anti-hallucination contract.
@@ -353,7 +355,7 @@ Ollama, Gemini, and OpenAI are equally small REST clients (`POST /api/chat`, `ge
 `/chat/completions`). Each `chat()` takes the same `(system, user)` and returns a string. That
 uniformity is the whole point.
 
-> 💡 **Teaching point.** This is the pattern every "LLM framework" is built around — a provider
+> **Teaching point.** This is the pattern every "LLM framework" is built around — a provider
 > interface plus adapters. Once you've written it by hand, LangChain's `ChatModel` and friends stop
 > looking like magic. (You'll see exactly that in [Lesson 3](./LESSON3.md).)
 
@@ -446,7 +448,7 @@ def build_retriever(chunks, config):
 RAG_RETRIEVER=embeddings RAG_EMBED_PROVIDER=ollama python -m localrag ask "power-cycle steps?"
 ```
 
-> 💡 **Teaching point — BM25 vs embeddings.** BM25 is free, instant, and great for exact terms,
+> **Teaching point — BM25 vs embeddings.** BM25 is free, instant, and great for exact terms,
 > names, and codes. Embeddings catch paraphrases and concepts but cost an embed call and a vector
 > store. Production systems often run **both** (hybrid retrieval) and merge the rankings. You now
 > have both — try the same question each way and watch the difference.

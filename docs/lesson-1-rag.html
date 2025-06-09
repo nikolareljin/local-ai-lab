@@ -54,7 +54,7 @@
                  │  top-k chunks for the question
                  ▼
          ┌────────────────┐     ┌───────────────────────────────┐
- ask ───▶│ grounding      │───▶ │ provider                      │──▶ answer
+ ask ───▶│ grounding      │──▶│ provider                      │──▶ answer
  question│ prompt         │     │ Claude Code · Ollama · Gemini │    + sources
          └────────────────┘     │ · OpenAI                      │
                                 └───────────────────────────────┘</code></pre></div>
@@ -75,6 +75,22 @@ pip install pypdf python-docx rank-bm25 numpy requests python-dotenv flask</code
         <div class="why"><b>The only AI you need to start</b> is the <b>Claude Code CLI</b>. If you
           can run <code>claude</code> in your terminal, you're set — no API key. We'll wire in
           Ollama, Gemini, and OpenAI later, all behind the same interface.</div>
+      </section>
+
+      <!-- 2b · Install -->
+      <section class="slide">
+        <div class="step-no">Install</div>
+        <h2>Dependencies — Linux · macOS · Windows</h2>
+        <p>Same steps on every OS — only how you activate the virtualenv differs. <b>No Docker.</b></p>
+        <div class="block"><div class="label">Linux / macOS</div><pre class="cmd"><code>python3 -m venv venv &amp;&amp; source venv/bin/activate
+pip install -r requirements.txt</code></pre></div>
+        <div class="block"><div class="label">Windows (PowerShell)</div><pre class="cmd"><code>python -m venv venv; venv\Scripts\Activate.ps1
+pip install -r requirements.txt</code></pre></div>
+        <div class="block"><div class="label">Default AI — Claude Code CLI (no API key)</div><pre class="cmd"><code>npm install -g @anthropic-ai/claude-code &amp;&amp; claude</code></pre></div>
+        <div class="why"><b>Polyglot:</b> Python is the reference; Node.js &amp; C# are opt-in via
+          <code>./run -l 1 --lang node|csharp</code>. Full per-OS, per-language guide:
+          <a href="./pdf/INSTALL.pdf" target="_blank" rel="noopener">INSTALL (PDF)</a>. Or just run
+          <code>./run -l 1</code> — it creates the venv and installs everything for you.</div>
       </section>
 
       <!-- 3 -->
@@ -211,7 +227,7 @@ class Bm25Retriever:
         ranked = sorted(range(len(self.chunks)),
                         key=lambda i: scores[i], reverse=True)
         return [self.chunks[i] for i in ranked[:k]]</code></pre></div>
-        <div class="note">⚠️ <b>A real bug worth knowing.</b> BM25's IDF goes <i>negative</i> when a
+        <div class="note"><b>A real bug worth knowing.</b> BM25's IDF goes <i>negative</i> when a
           word appears in every chunk — common on a tiny corpus. An early version filtered with
           <code>score &gt; 0</code> and returned <b>nothing</b>. The fix: don't apply an absolute
           cutoff — return top-k by rank and let the grounding prompt judge relevance. Retrieval

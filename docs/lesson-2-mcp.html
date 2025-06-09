@@ -39,7 +39,7 @@
            relationship <b>flips</b>: <i>the LLM</i> drives, and your retriever becomes a <b>tool</b>
            it reaches for on demand. Same engine, new integration surface.</p>
         <div class="block"><pre><code>   ┌──────────────┐   "list your tools"      ┌───────────────────────────┐
-   │ Claude Code  │ ───────────────────────▶ │ local-ai-lab MCP server   │
+   │ Claude Code  │ ──────────────────────▶│ local-ai-lab MCP server   │
    │  (MCP host)  │                          │  tools: search_docs,      │
    │              │ ◀─────────────────────── │         list_documents    │
    └──────┬───────┘   tool schemas           └─────────────┬─────────────┘
@@ -78,6 +78,22 @@
         <div class="why">The SDK ships <b>FastMCP</b> (a high-level server API) and an <b>stdio
           client</b> we'll use to test. You also need the Claude Code CLI to register the server at
           the end.</div>
+      </section>
+
+      <!-- 3b · Install -->
+      <section class="slide">
+        <div class="step-no">Install</div>
+        <h2>Dependencies — Linux · macOS · Windows</h2>
+        <p>Lesson 2 builds on Lesson 1's environment and adds the <code>mcp</code> SDK (already in
+           <code>requirements.txt</code>). <b>No Docker.</b></p>
+        <div class="block"><div class="label">Linux / macOS</div><pre class="cmd"><code>python3 -m venv venv &amp;&amp; source venv/bin/activate
+pip install -r requirements.txt          # includes mcp</code></pre></div>
+        <div class="block"><div class="label">Windows (PowerShell)</div><pre class="cmd"><code>python -m venv venv; venv\Scripts\Activate.ps1
+pip install -r requirements.txt</code></pre></div>
+        <div class="block"><div class="label">Claude Code CLI (to register the server)</div><pre class="cmd"><code>npm install -g @anthropic-ai/claude-code &amp;&amp; claude</code></pre></div>
+        <div class="why"><b>MCP is multi-language</b> — there are official SDKs for Python, Node.js
+          and C#. This lesson uses Python; full per-OS, per-language setup is in
+          <a href="./pdf/INSTALL.pdf" target="_blank" rel="noopener">INSTALL (PDF)</a>.</div>
       </section>
 
       <!-- 4 -->

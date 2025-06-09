@@ -12,7 +12,7 @@ usage() {
 local-ai-lab — run a lesson locally
 
 Usage:
-  ./run -l <N> [action] [args]
+  ./run -l <N> [--lang python|node|csharp] [action] [args]
 
 Lessons:
   -l 1   RAG app       actions:  web (default) · ask "question" · repl · index · test
@@ -25,14 +25,18 @@ Examples:
   ./run -l 1 test                             # run Lesson 1 tests
   ./run -l 2                                  # demo the MCP server end-to-end (no LLM needed)
   ./run -l 2 register                         # register the MCP server with Claude Code
-  ./run -l 2 test                             # run Lesson 2 tests
+  ./run -l 1 --lang node                      # Node.js implementation (where ported)
+
+Languages (polyglot — Option B): python (default/reference) · node · csharp.
+Where a lesson isn't ported yet, --lang node|csharp points you to the Python reference.
 
 The default AI provider is the Claude Code CLI — no API key, it uses your existing
 Claude Code login. Override anytime with  RAG_PROVIDER=ollama|gemini|openai.
 
 Options:
-  -l, --lesson N   which lesson (1-8)
-  -h, --help       show this help
+  -l, --lesson N        which lesson (1-8)
+  --lang LANG           python | node | csharp  (default: python)
+  -h, --help            show this help
 EOF
 }
 
@@ -55,11 +59,13 @@ announce_provider() {
 LESSON=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    -l|--lesson) LESSON="${2:-}"; shift 2 ;;
-    -l*)         LESSON="${1#-l}"; shift ;;
-    -h|--help)   usage; exit 0 ;;
-    --)          shift; break ;;
-    *)           break ;;
+    -l|--lesson)  LESSON="${2:-}"; shift 2 ;;
+    -l*)          LESSON="${1#-l}"; shift ;;
+    --lang)       LANG_CHOICE="${2:-}"; shift 2 ;;
+    --lang=*)     LANG_CHOICE="${1#*=}"; shift ;;
+    -h|--help)    usage; exit 0 ;;
+    --)           shift; break ;;
+    *)            break ;;
   esac
 done
 
@@ -68,6 +74,24 @@ if [[ -z "$LESSON" ]]; then
   echo
   usage
   exit 1
+fi
+
+# Polyglot (Option B): Python is the reference; Node.js and C# are opt-in per lesson.
+case "${LANG_CHOICE:-python}" in
+  py|python)        LANG_CHOICE=python ;;
+  js|node|nodejs)   LANG_CHOICE=node ;;
+  cs|csharp|dotnet) LANG_CHOICE=csharp ;;
+  *) log_error "Unknown --lang '${LANG_CHOICE}'. Use: python | node | csharp"; exit 1 ;;
+esac
+if [[ "$LANG_CHOICE" != "python" ]]; then
+  impl_dir="$ROOT_DIR/${LANG_CHOICE/csharp/dotnet}/lesson-${LESSON}"
+  if [[ -d "$impl_dir" ]]; then
+    log_info "Running the ${LANG_CHOICE} implementation of Lesson ${LESSON} ..."
+    exec "$impl_dir/run.sh" "$@"
+  fi
+  log_warn "The ${LANG_CHOICE} implementation of Lesson ${LESSON} is planned (polyglot Option B)."
+  log_info  "Run the Python reference instead:  ./run -l ${LESSON}    (see INSTALL.md)"
+  exit 0
 fi
 
 ACTION="${1:-}"
