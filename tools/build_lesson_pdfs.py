@@ -16,6 +16,7 @@ PDFs are written to ``docs/pdf/`` so the GitHub Pages site can link them.
 from __future__ import annotations
 
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -97,10 +98,9 @@ def css() -> str:
       h3 { font-size: 11.5pt; color: #1e293b; margin: 12pt 0 4pt; }
       p, li { font-size: 10.5pt; }
       a { color: #1558d6; text-decoration: none; }
-      pre { background: #0f141b; color: #e6e8ee; padding: 7pt 9pt; font-size: 7.2pt;
-            line-height: 1.3; }
-      code { background: #eef2f7; font-size: 9pt; padding: 0 2pt; }
-      pre code { background: transparent; color: #e6e8ee; padding: 0; }
+      pre { background: #f6f8fa; color: #1f2430; border: 1px solid #d0d7de;
+            padding: 7pt 9pt; font-size: 7.3pt; line-height: 1.3; }
+      code { background: #eef2f7; color: #1f2430; font-size: 9pt; padding: 0 2pt; }
       table { border-collapse: collapse; width: 100%; margin: 8pt 0; }
       th, td { border: 1px solid #94a3b8; padding: 3pt 5pt; font-size: 8.8pt;
                text-align: left; vertical-align: top; }
@@ -117,6 +117,10 @@ def build(md_name: str) -> bool:
     body = markdown.markdown(
         raw, extensions=["fenced_code", "tables", "sane_lists", "toc"]
     )
+    # xhtml2pdf doesn't reliably support the `pre code` descendant selector, so the
+    # inline-code background would bleed onto code blocks. Unwrap <code> inside <pre>.
+    body = re.sub(r"<pre><code[^>]*>", "<pre>", body)
+    body = re.sub(r"</code></pre>", "</pre>", body)
     html = (
         "<html><head><meta charset='utf-8'>"
         f"<style>{css()}</style></head><body>{body}</body></html>"
