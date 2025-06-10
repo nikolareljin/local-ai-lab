@@ -69,7 +69,7 @@ root_agent = Agent(
 Python, a Gemini API key (`GEMINI_API_KEY`), and `pip install google-adk`. [Lesson 1](./LESSON1.md)
 provides the retriever the agent calls.
 
-## Course complete 
+## Course complete
 
 You've built the same local-first document agent six ways — from a hand-rolled RAG pipeline up
 through MCP, local function calling, Semantic Kernel, Bedrock Agents, and ADK — and you understand

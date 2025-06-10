@@ -26,16 +26,14 @@ the SDK's stdio client, and register it with Claude Code so you can ask question
 plain chat.
 
 ```
-   ┌──────────────┐   "list your tools"      ┌───────────────────────────┐
-   │ Claude Code  │ ──────────────────────▶│ local-ai-lab MCP server   │
-   │  (MCP host)  │                          │  tools: search_docs,      │
-   │              │ ◀─────────────────────── │         list_documents    │
-   └──────┬───────┘   tool schemas           └─────────────┬─────────────┘
-          │                                                 │ reuses Lesson 1
-          │  "how do I reset the device?"                   ▼
-          │  model calls search_docs("reset")            documents/ + retriever
-          ▼
-   grounded answer with citations
+   ┌──────────────┐   list / call tools       ┌──────────────────────────┐
+   │ Claude Code  │ ───────────────────────▶  │ local-ai-lab MCP server  │
+   │ (MCP host)   │ ◀───────────────────────  │   search_docs,           │
+   └──────┬───────┘   results (cited)          │   list_documents         │
+          │                                    └─────────────┬────────────┘
+          │  "how do I reset the device?"                    │ reuses Lesson 1
+          ▼                                                  ▼
+   grounded answer with citations                    documents/ + retriever
 ```
 
 ---

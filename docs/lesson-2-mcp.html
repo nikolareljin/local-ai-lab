@@ -38,16 +38,14 @@
         <p>In Lesson 1, <b>your app</b> drove the pipeline and called the LLM. In Lesson 2 the
            relationship <b>flips</b>: <i>the LLM</i> drives, and your retriever becomes a <b>tool</b>
            it reaches for on demand. Same engine, new integration surface.</p>
-        <div class="block"><pre><code>   ┌──────────────┐   "list your tools"      ┌───────────────────────────┐
-   │ Claude Code  │ ──────────────────────▶│ local-ai-lab MCP server   │
-   │  (MCP host)  │                          │  tools: search_docs,      │
-   │              │ ◀─────────────────────── │         list_documents    │
-   └──────┬───────┘   tool schemas           └─────────────┬─────────────┘
-          │                                                 │ reuses Lesson 1
-          │  user: "how do I reset the device?"             ▼
-          │  model decides to call search_docs("reset")  documents/ + retriever
-          ▼
-   grounded answer with citations</code></pre></div>
+        <div class="block"><pre><code>   ┌──────────────┐   list / call tools       ┌──────────────────────────┐
+   │ Claude Code  │ ───────────────────────▶  │ local-ai-lab MCP server  │
+   │ (MCP host)   │ ◀───────────────────────  │   search_docs,           │
+   └──────┬───────┘   results (cited)          │   list_documents         │
+          │                                    └─────────────┬────────────┘
+          │  "how do I reset the device?"                    │ reuses Lesson 1
+          ▼                                                  ▼
+   grounded answer with citations                    documents/ + retriever</code></pre></div>
         <div class="why"><b>Why it matters:</b> RAG you can call from <i>any</i> MCP-aware client,
           with no bespoke UI. Your documents become a first-class capability of the assistant itself.
           Press <kbd>→</kbd> to begin.</div>

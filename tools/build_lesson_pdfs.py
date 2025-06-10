@@ -1,16 +1,21 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Generate a PDF for the install guide and every lesson, from the Markdown sources.
 
 Pure-Python (``markdown`` + ``xhtml2pdf``), so it runs on Linux, macOS, and Windows:
 
     pip install markdown xhtml2pdf
-    python tools/build_lesson_pdfs.py
+    python3 tools/build_lesson_pdfs.py
+
+For correct box-drawing/arrow glyphs, DejaVu fonts are used when found. Set
+``DEJAVU_FONT_DIR`` to point at a folder containing DejaVuSans.ttf /
+DejaVuSansMono.ttf if they live somewhere non-standard (e.g. on macOS/Windows).
 
 PDFs are written to ``docs/pdf/`` so the GitHub Pages site can link them.
 """
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -24,7 +29,6 @@ SOURCES = ["INSTALL.md"] + [f"LESSON{i}.md" for i in range(1, 9)]
 
 # DejaVu covers arrows, box-drawing and ✓; emoji (astral plane) do not render in
 # PDF fonts, so map the ones we use to short text and strip the rest.
-FONT_DIR = Path("/usr/share/fonts/truetype/dejavu")
 EMOJI = {
     "🏠": "", "💻": "", "👤": "", "💡": "", "🎓": "", "📄": "", "📘": "",
     "🐙": "", "💼": "", "🧰": "", "🧩": "", "🔗": "", "▶": "▶",
@@ -40,19 +44,46 @@ def clean(text: str) -> str:
     return "".join(ch for ch in text if ord(ch) <= 0xFFFF)
 
 
-def font_face_css() -> str:
-    reg = FONT_DIR / "DejaVuSans.ttf"
-    bold = FONT_DIR / "DejaVuSans-Bold.ttf"
-    mono = FONT_DIR / "DejaVuSansMono.ttf"
-    if not (reg.exists() and mono.exists()):
-        return ""  # fall back to built-in Helvetica/Courier
-    return f"""
-      @font-face {{ font-family: body; src: url("{reg}"); }}
-      @font-face {{ font-family: body; src: url("{bold}"); font-weight: bold; }}
-      @font-face {{ font-family: mono; src: url("{mono}"); }}
-      body, p, li, td, th, h1, h2, h3, h4, blockquote {{ font-family: body; }}
-      code, pre {{ font-family: mono; }}
+def _font_dir():
+    """Locate a folder with DejaVuSans.ttf + DejaVuSansMono.ttf, cross-platform.
+
+    Honours $DEJAVU_FONT_DIR first, then probes common Linux/macOS/Windows paths.
+    Returns None if not found (the PDF then falls back to Helvetica/Courier).
     """
+    candidates = []
+    env = os.environ.get("DEJAVU_FONT_DIR")
+    if env:
+        candidates.append(Path(env))
+    candidates += [
+        Path("/usr/share/fonts/truetype/dejavu"),   # Debian/Ubuntu
+        Path("/usr/share/fonts/dejavu"),            # Fedora/Arch
+        Path("/opt/homebrew/share/fonts"),          # macOS (Homebrew font-dejavu)
+        Path("/usr/local/share/fonts"),             # macOS/Linux
+        Path("/Library/Fonts"),                     # macOS
+        Path.home() / "Library" / "Fonts",          # macOS (user)
+        Path("C:/Windows/Fonts"),                   # Windows
+    ]
+    for d in candidates:
+        if (d / "DejaVuSans.ttf").exists() and (d / "DejaVuSansMono.ttf").exists():
+            return d
+    return None
+
+
+def font_face_css() -> str:
+    d = _font_dir()
+    if d is None:
+        return ""  # fall back to built-in Helvetica/Courier
+    reg, mono = d / "DejaVuSans.ttf", d / "DejaVuSansMono.ttf"
+    bold = d / "DejaVuSans-Bold.ttf"
+    faces = [
+        f'@font-face {{ font-family: body; src: url("{reg}"); }}',
+        f'@font-face {{ font-family: mono; src: url("{mono}"); }}',
+    ]
+    if bold.exists():  # only reference the bold face if the file is actually there
+        faces.append(f'@font-face {{ font-family: body; src: url("{bold}"); font-weight: bold; }}')
+    faces.append("body, p, li, td, th, h1, h2, h3, h4, blockquote { font-family: body; }")
+    faces.append("code, pre { font-family: mono; }")
+    return "\n      ".join(faces)
 
 
 def css() -> str:

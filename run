@@ -57,11 +57,13 @@ announce_provider() {
 
 # --- parse a leading -l/--lesson flag, leave the rest as the action + args ---
 LESSON=""
+# need_value <remaining-arg-count> <option> <example>
+need_value() { [[ "$1" -ge 2 ]] || { log_error "Option '$2' needs a value (e.g. $3)."; exit 1; }; }
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    -l|--lesson)  LESSON="${2:-}"; shift 2 ;;
+    -l|--lesson)  need_value "$#" "$1" "-l 1"; LESSON="$2"; shift 2 ;;
     -l*)          LESSON="${1#-l}"; shift ;;
-    --lang)       LANG_CHOICE="${2:-}"; shift 2 ;;
+    --lang)       need_value "$#" "$1" "--lang python"; LANG_CHOICE="$2"; shift 2 ;;
     --lang=*)     LANG_CHOICE="${1#*=}"; shift ;;
     -h|--help)    usage; exit 0 ;;
     --)           shift; break ;;
@@ -85,13 +87,18 @@ case "${LANG_CHOICE:-python}" in
 esac
 if [[ "$LANG_CHOICE" != "python" ]]; then
   impl_dir="$ROOT_DIR/${LANG_CHOICE/csharp/dotnet}/lesson-${LESSON}"
-  if [[ -d "$impl_dir" ]]; then
+  if [[ -x "$impl_dir/run.sh" ]]; then
     log_info "Running the ${LANG_CHOICE} implementation of Lesson ${LESSON} ..."
     exec "$impl_dir/run.sh" "$@"
   fi
-  log_warn "The ${LANG_CHOICE} implementation of Lesson ${LESSON} is planned (polyglot Option B)."
+  if [[ -d "$impl_dir" ]]; then
+    log_error "Found ${impl_dir} but no executable run.sh in it."
+    exit 1
+  fi
+  # Not ported yet: exit non-zero so callers/CI don't mistake this for a successful run.
+  log_warn "The ${LANG_CHOICE} implementation of Lesson ${LESSON} is not available yet (polyglot Option B)."
   log_info  "Run the Python reference instead:  ./run -l ${LESSON}    (see INSTALL.md)"
-  exit 0
+  exit 3
 fi
 
 ACTION="${1:-}"
