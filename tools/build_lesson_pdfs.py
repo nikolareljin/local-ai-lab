@@ -76,12 +76,13 @@ def font_face_css() -> str:
         return ""  # fall back to built-in Helvetica/Courier
     reg, mono = d / "DejaVuSans.ttf", d / "DejaVuSansMono.ttf"
     bold = d / "DejaVuSans-Bold.ttf"
+    # Use POSIX-style paths in url() so Windows backslashes aren't treated as CSS escapes.
     faces = [
-        f'@font-face {{ font-family: body; src: url("{reg}"); }}',
-        f'@font-face {{ font-family: mono; src: url("{mono}"); }}',
+        f'@font-face {{ font-family: body; src: url("{reg.as_posix()}"); }}',
+        f'@font-face {{ font-family: mono; src: url("{mono.as_posix()}"); }}',
     ]
     if bold.exists():  # only reference the bold face if the file is actually there
-        faces.append(f'@font-face {{ font-family: body; src: url("{bold}"); font-weight: bold; }}')
+        faces.append(f'@font-face {{ font-family: body; src: url("{bold.as_posix()}"); font-weight: bold; }}')
     faces.append("body, p, li, td, th, h1, h2, h3, h4, blockquote { font-family: body; }")
     faces.append("code, pre { font-family: mono; }")
     return "\n      ".join(faces)
