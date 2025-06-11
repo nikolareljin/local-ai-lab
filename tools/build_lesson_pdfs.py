@@ -54,7 +54,7 @@ def _font_dir():
     candidates = []
     env = os.environ.get("DEJAVU_FONT_DIR")
     if env:
-        candidates.append(Path(env))
+        candidates.append(Path(env).expanduser())  # honour ~ in the override
     candidates += [
         Path("/usr/share/fonts/truetype/dejavu"),   # Debian/Ubuntu
         Path("/usr/share/fonts/dejavu"),            # Fedora/Arch

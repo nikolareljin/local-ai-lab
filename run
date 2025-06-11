@@ -86,7 +86,9 @@ if ! [[ "$LESSON" =~ ^[1-8]$ ]]; then
 fi
 
 # Polyglot (Option B): Python is the reference; Node.js and C# are opt-in per lesson.
-case "${LANG_CHOICE:-python}" in
+# Use ${x-python} (no colon) so an explicit but empty --lang= errors instead of
+# silently defaulting to Python.
+case "${LANG_CHOICE-python}" in
   py|python)        LANG_CHOICE=python ;;
   js|node|nodejs)   LANG_CHOICE=node ;;
   cs|csharp|dotnet) LANG_CHOICE=csharp ;;
