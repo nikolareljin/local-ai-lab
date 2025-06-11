@@ -523,6 +523,57 @@ pytest -q      # 4 passed
 
 ---
 
+## Try it yourself — verify RAG on a brand-new document
+
+The surest way to prove a RAG system actually *reads your files* (instead of reciting training
+data) is to feed it something no model has ever seen. Download this short **fictional** story and
+watch the app answer questions about it — with citations.
+
+**Download:** [The_Magic_Turtle_Astronaut.pdf](https://nikolareljin.github.io/local-ai-lab/pdf/The_Magic_Turtle_Astronaut.pdf)
+— it's also in the repo at `docs/pdf/The_Magic_Turtle_Astronaut.pdf`.
+
+It's a made-up legend, *"The Voyage of Caretta the Magnificent,"* so no language model could know
+its details unless it read the file.
+
+1. Start the app: `./run -l 1` (or `python -m localrag web`) and open the page.
+2. **Drag the PDF onto the dropzone** (or click to browse) — it indexes automatically.
+3. Ask away — and always check the `Sources:` line.
+
+**Questions the story can answer** (grounded — the answer should cite the file):
+
+- What was the name of the magic turtle, and what species was she? → *Caretta; species Chelonia mythica* `[…:2]`
+- Who discovered the turtle's secret, and how? → *Dr. Yuki Tanaka — her shell glowed under UV light and she registered no age* `[…:2]`
+- What was the spaceship called, and how long did the journey to Alpha Centauri take? → *the Ocean's Memory; twelve years* `[…:3]`
+- What planet did Caretta discover, and which star does it orbit? → *Nuevo Edén, orbiting Alpha Centauri B* `[…:3]`
+- On what date was the habitable planet discovered? → *2 May 2126* `[…:3]`
+- How did the turtle save the mission when the cooling line was damaged? → *she sensed the wrongness through her shell and woke the engineer, Commander Adaeze Okafor, in time to seal the breach* `[…:3]`
+- Where did Caretta choose to live after returning to Earth? → *the tide pools of the Galápagos* `[…:4]`
+
+**Questions that are NOT in the story** — these should trigger the honest *"This is not covered in
+your documents"* response. **This is the important test**: the anti-hallucination prompt staying
+honest instead of inventing an answer.
+
+- How much did the spaceship cost to build?
+- What did the turtle eat during the twelve-year voyage?
+- Who was the President of Earth when the mission launched?
+
+> **One nice touch for a talk:** ask *"What is the nearest star system to the Sun?"* The story states
+> Alpha Centauri is ~4.25 light-years away, so the app answers **from the document, with a citation**,
+> even though it's also general knowledge — a clean way to show retrieval preferring *your* text.
+
+> **Why this works:** the story is fiction, so a bare LLM would either refuse or invent details.
+> Right names, ship, planet, and dates — each with a `[file:page]` citation — prove the answer came
+> from **your uploaded file**, not the model's memory. That's RAG doing its job.
+
+Prefer the terminal? Drop the file into `documents/` and ask:
+
+```bash
+cp ~/Downloads/The_Magic_Turtle_Astronaut.pdf documents/
+python -m localrag ask "What planet did Caretta discover, and which star does it orbit?"
+```
+
+---
+
 ## Recap
 
 You built, from scratch:

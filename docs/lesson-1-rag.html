@@ -423,6 +423,28 @@ python -m localrag ask "What is the capital of France?"</code></pre></div>
           knowledge — is the payoff of the grounding prompt. It's what makes RAG trustworthy.</div>
       </section>
 
+      <!-- 12b · Try it yourself -->
+      <section class="slide">
+        <div class="step-no">Try it yourself</div>
+        <h2>Verify RAG on a brand-new document</h2>
+        <p>Prove the app reads <i>your</i> files, not training data: feed it a story no model has ever
+           seen. Download
+           <a href="./pdf/The_Magic_Turtle_Astronaut.pdf" target="_blank" rel="noopener">The_Magic_Turtle_Astronaut.pdf</a>
+           — a made-up legend — and drag it onto the web UI.</p>
+        <div class="block"><div class="label">Grounded — each answer should cite [file:page]</div><pre><code>What was the name of the magic turtle, and what species was she?
+Who discovered the turtle's secret, and how?
+What was the spaceship called, and how long did the journey take?
+What planet did Caretta discover, and which star does it orbit?
+On what date was the habitable planet discovered?</code></pre></div>
+        <div class="block"><div class="label">NOT in the story — should say "not covered in your documents"</div><pre><code>How much did the spaceship cost to build?
+What did the turtle eat during the twelve-year voyage?
+Who was the President of Earth when the mission launched?</code></pre></div>
+        <div class="why"><b>The honest "not covered" answers are the real test</b> — the prompt staying
+          truthful instead of inventing. Talk trick: ask <i>"What is the nearest star system to the
+          Sun?"</i> — the story says Alpha Centauri (~4.25 ly), so it answers <i>from the document,
+          with a citation</i>, even though it's general knowledge — retrieval preferring your text.</div>
+      </section>
+
       <!-- 13 -->
       <section class="slide">
         <div class="step-no">Recap</div>
