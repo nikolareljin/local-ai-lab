@@ -127,7 +127,14 @@ Only needed if you set `RAG_PROVIDER` to something other than `claude`. Copy `.e
 `.env` for keys.
 
 **Ollama (fully local; also embeddings)**
-- **Linux:** `curl -fsSL https://ollama.com/install.sh | sh`
+- **Linux:** download the official script, **inspect it, then run** (don't pipe a remote script
+  straight into a shell):
+  ```bash
+  curl -fsSL https://ollama.com/install.sh -o ollama-install.sh
+  less ollama-install.sh        # review before running
+  sh ollama-install.sh
+  ```
+  (or follow the [official Linux install docs](https://ollama.com/download/linux))
 - **macOS:** `brew install ollama` (or [download](https://ollama.com/download))
 - **Windows:** [installer](https://ollama.com/download)
 ```bash

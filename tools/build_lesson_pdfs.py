@@ -114,6 +114,9 @@ def css() -> str:
 
 def build(md_name: str) -> bool:
     md_path = ROOT / md_name
+    if not md_path.is_file():
+        print(f"  ERR  {md_name}  (source not found)")
+        return False
     raw = clean(md_path.read_text(encoding="utf-8"))
     body = markdown.markdown(
         raw, extensions=["fenced_code", "tables", "sane_lists", "toc"]

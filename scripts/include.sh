@@ -22,8 +22,18 @@ else
 fi
 
 # --- project-specific helpers ---------------------------------------------
-PYTHON_BIN="${PYTHON_BIN:-$ROOT_DIR/venv/bin/python}"
-[[ -x "$PYTHON_BIN" ]] || PYTHON_BIN="python3"
+VENV_DIR="${VENV_DIR:-$ROOT_DIR/venv}"
+
+# Resolve the venv's Python across layouts: POSIX (bin/python) and Windows/Git
+# Bash (Scripts/python.exe). Echoes an empty string if no venv exists yet.
+venv_python() {
+  if [[ -x "$VENV_DIR/bin/python" ]]; then echo "$VENV_DIR/bin/python"
+  elif [[ -x "$VENV_DIR/Scripts/python.exe" ]]; then echo "$VENV_DIR/Scripts/python.exe"
+  else echo ""; fi
+}
+
+PYTHON_BIN="${PYTHON_BIN:-$(venv_python)}"
+[[ -n "$PYTHON_BIN" && -x "$PYTHON_BIN" ]] || PYTHON_BIN="$(command -v python3 || command -v python)"
 WEB_PORT="${WEB_PORT:-5000}"
 PID_FILE="${PID_FILE:-$ROOT_DIR/.localrag/web.pid}"
 
@@ -34,13 +44,13 @@ web_running() {
 }
 
 # Create the venv (first run) and install dependencies if anything is missing.
-VENV_DIR="${VENV_DIR:-$ROOT_DIR/venv}"
 ensure_venv() {
-  if [[ ! -x "$VENV_DIR/bin/python" ]]; then
+  if [[ -z "$(venv_python)" ]]; then
     log_info "Creating virtualenv (first run) at $VENV_DIR ..."
-    python3 -m venv "$VENV_DIR"
+    "$(command -v python3 || command -v python)" -m venv "$VENV_DIR"
   fi
-  PYTHON_BIN="$VENV_DIR/bin/python"
+  PYTHON_BIN="$(venv_python)"
+  [[ -n "$PYTHON_BIN" ]] || { log_error "Could not locate the venv Python (looked in bin/ and Scripts/)."; exit 1; }
   if ! "$PYTHON_BIN" -c "import flask, rank_bm25, pypdf, docx, numpy, mcp" >/dev/null 2>&1; then
     log_info "Installing dependencies (one-time) ..."
     "$PYTHON_BIN" -m pip install -q --upgrade pip >/dev/null 2>&1 || true
