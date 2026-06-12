@@ -116,6 +116,12 @@ static void RunWeb(Config baseConfig, string host, int port)
 
     var builder = WebApplication.CreateBuilder();
     builder.WebHost.UseUrls($"http://{host}:{port}");
+    builder.WebHost.ConfigureKestrel(o =>
+    {
+        // Match the 64 MB upload cap; Kestrel's default request-body limit
+        // (~28.6 MB) would otherwise reject larger uploads before the form reader.
+        o.Limits.MaxRequestBodySize = 64L * 1024 * 1024;
+    });
     builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(o =>
     {
         o.MultipartBodyLengthLimit = 64L * 1024 * 1024; // 64 MB upload cap
@@ -184,8 +190,17 @@ static void RunWeb(Config baseConfig, string host, int port)
 
     app.MapPost("/api/ask", async (HttpRequest request) =>
     {
-        var data = await JsonSerializer.DeserializeAsync<Dictionary<string, JsonElement>>(request.Body)
-                   ?? new Dictionary<string, JsonElement>();
+        Dictionary<string, JsonElement> data;
+        try
+        {
+            data = await JsonSerializer.DeserializeAsync<Dictionary<string, JsonElement>>(request.Body)
+                   ?? new();
+        }
+        catch (JsonException)
+        {
+            // Empty or malformed JSON -> behave like Flask's get_json(silent=True).
+            data = new();
+        }
         var question = data.TryGetValue("question", out var q) && q.ValueKind == JsonValueKind.String
             ? (q.GetString() ?? "").Trim() : "";
         if (question.Length == 0)
