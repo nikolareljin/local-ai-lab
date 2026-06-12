@@ -17,7 +17,7 @@ from flask import Flask, jsonify, render_template, request
 from werkzeug.utils import secure_filename
 
 from .config import Config, load_config
-from .engine import answer_question, refresh_index
+from .engine import answer_question, get_retriever, refresh_index
 from .extract import SUPPORTED_EXTS, discover_files
 
 
@@ -99,6 +99,28 @@ def create_app(base_config: Config | None = None) -> Flask:
             result = answer_question(_request_config(), question)
             return jsonify(result)
         except Exception as exc:  # surface provider/network errors to the UI
+            return jsonify({"error": str(exc)}), 500
+
+    @app.get("/api/peek")
+    def peek():
+        """The raw numbers behind the index: how the system 'sees' your data
+        after BM25 finishes. Optional ?q= adds the per-chunk scoring for a query.
+        """
+        config = _request_config()
+        question = (request.args.get("q") or "").strip()
+        retriever = get_retriever(config)
+        peek_fn = getattr(retriever, "peek", None)
+        if peek_fn is None:
+            name = getattr(retriever, "name", config.retriever)
+            return (
+                jsonify(
+                    {"error": f"The '{name}' retriever has no peek view yet — switch to BM25."}
+                ),
+                400,
+            )
+        try:
+            return jsonify(peek_fn(question or None, config.top_k))
+        except Exception as exc:
             return jsonify({"error": str(exc)}), 500
 
     return app

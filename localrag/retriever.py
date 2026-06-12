@@ -49,6 +49,62 @@ class Bm25Retriever:
             return [self.chunks[i] for i in top]
         return [self.chunks[i] for i in top if scores[i] > 0]
 
+    def peek(self, query: Optional[str] = None, k: int = 5) -> dict:
+        """Expose the raw BM25 numbers behind the index — for the
+        'How the system sees your data' view. Returns global index stats, one
+        tokenized sample chunk, the most distinctive terms by IDF, and (if a
+        query is given) the per-chunk scores with the query terms' IDF and
+        term-frequencies that produced them.
+        """
+        bm = self.bm25
+        n = len(self.chunks)
+        idf = dict(getattr(bm, "idf", {}))
+        top_terms = sorted(idf.items(), key=lambda kv: kv[1], reverse=True)[:18]
+
+        sample = None
+        if self.chunks:
+            c0 = self.chunks[0]
+            toks = _tokenize(c0["text"])
+            sample = {
+                "source": c0["source"],
+                "page_number": c0["page_number"],
+                "text_preview": c0["text"][:240],
+                "num_tokens": len(toks),
+                "tokens": toks[:48],
+            }
+
+        out = {
+            "retriever": "bm25",
+            "params": {"k1": getattr(bm, "k1", None), "b": getattr(bm, "b", None)},
+            "num_chunks": n,
+            "vocabulary": len(idf),
+            "avg_doc_length": round(float(getattr(bm, "avgdl", 0.0)), 2),
+            "top_terms": [{"term": t, "idf": round(float(v), 3)} for t, v in top_terms],
+            "sample_chunk": sample,
+        }
+
+        query = (query or "").strip()
+        if query and self.chunks:
+            q_tokens = _tokenize(query)
+            scores = bm.get_scores(q_tokens)
+            ranked = sorted(range(n), key=lambda i: scores[i], reverse=True)[:k]
+            out["query"] = {
+                "text": query,
+                "tokens": q_tokens,
+                "term_idf": {t: round(float(idf.get(t, 0.0)), 3) for t in q_tokens},
+                "results": [
+                    {
+                        "source": self.chunks[i]["source"],
+                        "page_number": self.chunks[i]["page_number"],
+                        "score": round(float(scores[i]), 4),
+                        "text_preview": self.chunks[i]["text"][:160],
+                        "term_freqs": {t: int(bm.doc_freqs[i].get(t, 0)) for t in q_tokens},
+                    }
+                    for i in ranked
+                ],
+            }
+        return out
+
 
 class EmbeddingRetriever:
     name = "embeddings"

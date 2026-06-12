@@ -47,6 +47,33 @@
     .spin { display:inline-block; width:14px; height:14px; border:2px solid var(--muted);
             border-top-color:transparent; border-radius:50%; animation:r .8s linear infinite; vertical-align:-2px; }
     @keyframes r { to { transform:rotate(360deg); } }
+    /* "How the system sees your data" peek modal */
+    .btn-ghost { background:transparent; border:1px solid var(--edge); color:var(--accent); }
+    .btn-ghost:hover { background:rgba(91,157,255,.08); }
+    .overlay { position:fixed; inset:0; background:rgba(0,0,0,.62); z-index:50; overflow:auto;
+               display:none; align-items:flex-start; justify-content:center; padding:40px 16px; }
+    .overlay.show { display:flex; }
+    .modal { background:var(--panel); border:1px solid var(--edge); border-radius:14px;
+             max-width:840px; width:100%; padding:22px 24px; }
+    .modal h3 { margin:0 0 4px; font-size:18px; }
+    .modal .sub { color:var(--muted); font-size:13px; margin:0 0 16px; max-width:680px; }
+    .modal .close { float:right; background:none; border:none; color:var(--muted);
+                    font-size:24px; line-height:1; cursor:pointer; padding:0 4px; }
+    .modal .close:hover { color:var(--txt); }
+    .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin:0 0 8px; }
+    .stat { background:#11141a; border:1px solid var(--edge); border-radius:10px; padding:10px 12px; }
+    .stat .v { font-size:19px; font-weight:700; color:var(--accent); }
+    .stat .l { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-top:2px; }
+    .modal h4 { margin:18px 0 8px; font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+    .tok { display:inline-block; background:#11141a; border:1px solid var(--edge); border-radius:6px;
+           padding:1px 7px; margin:0 4px 4px 0; font-size:12px;
+           font-family:ui-monospace,Menlo,Consolas,monospace; color:var(--txt); }
+    .tok.miss { color:var(--muted); }
+    .modal table { width:100%; border-collapse:collapse; font-size:13px; margin-top:4px; }
+    .modal th, .modal td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--edge); }
+    .modal th { color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase; }
+    .modal td.num { font-family:ui-monospace,Menlo,Consolas,monospace; color:var(--accent); }
+    .modal td.miss { font-family:ui-monospace,Menlo,Consolas,monospace; color:var(--muted); }
   </style>
 </head>
 <body>
@@ -89,6 +116,8 @@
           </select>
         </div>
         <div style="flex:1"></div>
+        <button id="peek" class="btn-ghost"
+                title="See the BM25 numbers behind your documents">How the system sees your data</button>
         <button id="ask">Ask</button>
       </div>
     </section>
@@ -100,6 +129,17 @@
       <div id="askmeta" class="meta"></div>
     </section>
   </main>
+
+  <div id="peekModal" class="overlay" role="dialog" aria-modal="true" aria-label="How the system sees your data">
+    <div class="modal">
+      <button class="close" id="peekClose" aria-label="Close">&times;</button>
+      <h3>How the system sees your data</h3>
+      <p class="sub">The raw BM25 numbers behind your documents — how text becomes tokens, how rare
+        terms get more weight (IDF), and the scores that rank chunks. This is what retrieval actually
+        computes on your machine, before the LLM ever sees a word.</p>
+      <div id="peekBody"></div>
+    </div>
+  </div>
 
   <footer>
     Part of <a id="f-tutorial" href="#" target="_blank" rel="noopener">local-ai-lab</a> —
@@ -220,6 +260,92 @@
       } finally {
         btn.disabled = false;
       }
+    }
+
+    // --- "How the system sees your data" peek modal ---
+    const peekModal = $("peekModal");
+    const escHtml = (s) => String(s).replace(/[&<>"]/g,
+      (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const closePeek = () => peekModal.classList.remove("show");
+
+    $("peek").addEventListener("click", openPeek);
+    $("peekClose").addEventListener("click", closePeek);
+    peekModal.addEventListener("click", (e) => { if (e.target === peekModal) closePeek(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closePeek(); });
+
+    async function openPeek() {
+      const q = $("q").value.trim();
+      const body = $("peekBody");
+      body.innerHTML = '<span class="spin"></span> reading the index…';
+      peekModal.classList.add("show");
+      try {
+        const r = await fetch("/api/peek?q=" + encodeURIComponent(q));
+        const d = await r.json();
+        body.innerHTML = r.ok
+          ? renderPeek(d)
+          : '<div class="err">' + escHtml(d.error || "Could not read the index.") + "</div>";
+      } catch (e) {
+        body.innerHTML = '<div class="err">Error: ' + escHtml(e) + "</div>";
+      }
+    }
+
+    const stat = (v, l) =>
+      '<div class="stat"><div class="v">' + escHtml(v) + '</div><div class="l">' + escHtml(l) + "</div></div>";
+
+    function renderPeek(d) {
+      let h = '<div class="stat-grid">';
+      h += stat(d.num_chunks, "chunks indexed");
+      h += stat(d.vocabulary, "vocabulary (terms)");
+      h += stat(d.avg_doc_length, "avg tokens / chunk");
+      h += stat("k1=" + d.params.k1 + " · b=" + d.params.b, "BM25 params");
+      h += "</div>";
+
+      const s = d.sample_chunk;
+      if (s) {
+        h += "<h4>One chunk, tokenized (" + s.num_tokens + " tokens) — " +
+          escHtml(s.source) + ":" + s.page_number + "</h4>";
+        h += '<div style="color:var(--muted);font-size:13px;margin-bottom:8px">“' +
+          escHtml(s.text_preview) + '…”</div><div>';
+        h += s.tokens.map((t) => '<span class="tok">' + escHtml(t) + "</span>").join("");
+        if (s.num_tokens > s.tokens.length)
+          h += '<span class="tok miss">+' + (s.num_tokens - s.tokens.length) + " more</span>";
+        h += "</div>";
+      }
+
+      if (d.top_terms && d.top_terms.length) {
+        h += "<h4>Most distinctive terms (higher IDF = rarer = more weight)</h4><div>";
+        h += d.top_terms.map((t) =>
+          '<span class="tok">' + escHtml(t.term) +
+          ' <b style="color:var(--accent)">' + t.idf + "</b></span>").join("");
+        h += "</div>";
+      }
+
+      if (d.query) {
+        const q = d.query;
+        h += "<h4>Your query → BM25 scores</h4><div style=\"margin-bottom:8px\">";
+        h += q.tokens.map((t) =>
+          '<span class="tok">' + escHtml(t) +
+          ' <b style="color:var(--accent)">idf ' + (q.term_idf[t] ?? 0) + "</b></span>").join("");
+        h += "</div><table><thead><tr><th>score</th><th>chunk</th>";
+        h += q.tokens.map((t) => "<th>" + escHtml(t) + "</th>").join("");
+        h += "</tr></thead><tbody>";
+        for (const row of q.results) {
+          h += '<tr><td class="num">' + row.score + "</td><td>" +
+            escHtml(row.source) + ":" + row.page_number + "</td>";
+          h += q.tokens.map((t) => {
+            const f = row.term_freqs[t] || 0;
+            return '<td class="' + (f ? "num" : "miss") + '">' + f + "</td>";
+          }).join("");
+          h += "</tr>";
+        }
+        h += "</tbody></table>";
+        h += '<div class="meta">score = Σ over query terms of IDF(term) × saturated term-frequency ' +
+          "(controlled by k1 & b). Higher = stronger match — this is the ranking the LLM is handed.</div>";
+      } else {
+        h += '<div class="meta" style="margin-top:14px">Tip: type a question in the Ask box, then ' +
+          "reopen this to watch your query get scored against every chunk.</div>";
+      }
+      return h;
     }
 
     loadStatus();
