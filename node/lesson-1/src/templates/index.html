@@ -310,7 +310,8 @@
       body.innerHTML = '<span class="spin"></span> reading the index…';
       peekModal.classList.add("show");
       try {
-        const r = await fetch("/api/peek?q=" + encodeURIComponent(q));
+        const r = await fetch("/api/peek?q=" + encodeURIComponent(q)
+          + "&retriever=" + encodeURIComponent($("retriever").value));
         const d = await r.json();
         body.innerHTML = r.ok
           ? renderPeek(d)

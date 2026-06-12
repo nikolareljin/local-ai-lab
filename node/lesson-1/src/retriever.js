@@ -97,6 +97,10 @@ class Bm25Retriever {
   // Expose the raw BM25 numbers for the "How the system sees your data" view.
   // Mirrors localrag/retriever.py Bm25Retriever.peek (same JSON shape).
   peek(query, k) {
+    // Default/clamp k like the Python port: a non-positive or non-integer k
+    // would make slice(0, k) below misbehave (negative slices from the end,
+    // NaN returns the whole corpus).
+    k = Number.isInteger(k) && k > 0 ? k : 5;
     const n = this.chunks.length;
     const topTerms = [...this.idf.entries()]
       .sort((a, b) => b[1] - a[1])

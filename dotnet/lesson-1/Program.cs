@@ -226,18 +226,23 @@ static void RunWeb(Config baseConfig, string host, int port)
     });
 
     // The raw numbers behind the index — "How the system sees your data".
-    app.MapGet("/api/peek", (string? q) =>
+    app.MapGet("/api/peek", (string? q, string? retriever) =>
     {
         try
         {
-            var retriever = Engine.GetRetriever(baseConfig);
-            if (retriever is not Bm25Retriever bm)
+            // Honor the dropdown's retriever via the query string, matching
+            // /api/ask and the Python/Node ports.
+            var cfg = retriever is { Length: > 0 }
+                ? baseConfig with { Retriever = retriever.ToLowerInvariant() }
+                : baseConfig;
+            var r = Engine.GetRetriever(cfg);
+            if (r is not Bm25Retriever bm)
             {
                 return Results.Json(
-                    new { error = $"The '{retriever.Name}' retriever has no peek view yet — switch to BM25." },
+                    new { error = $"The '{r.Name}' retriever has no peek view yet — switch to BM25." },
                     jsonOpts, statusCode: 400);
             }
-            return Results.Json(bm.Peek(q, baseConfig.TopK), jsonOpts);
+            return Results.Json(bm.Peek(q, cfg.TopK), jsonOpts);
         }
         catch (Exception ex)
         {
