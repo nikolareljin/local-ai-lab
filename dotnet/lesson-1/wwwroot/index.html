@@ -109,6 +109,8 @@
   <script>
     const $ = (id) => document.getElementById(id);
     const drop = $("drop"), fileInput = $("file");
+    // Overridable via DOCS_BASE_URL so local testing links to a local docs copy.
+    let troubleshootingUrl = "https://nikolareljin.github.io/local-ai-lab/troubleshooting.html";
 
     async function loadStatus() {
       const s = await (await fetch("/api/status")).json();
@@ -116,6 +118,7 @@
       $("retriever").value = s.retriever;
       renderFiles(s.files);
       renderLinks(s.links || {});
+      if (s.links && s.links.troubleshooting) troubleshootingUrl = s.links.troubleshooting;
     }
 
     function renderLinks(links) {
@@ -195,7 +198,15 @@
           }),
         });
         const d = await r.json();
-        if (!r.ok) { ans.className = "err"; ans.textContent = d.error || "Request failed."; return; }
+        if (!r.ok) {
+          ans.className = "err";
+          ans.textContent = (d.error || "Request failed.") + "  ";
+          const tip = document.createElement("a");
+          tip.href = troubleshootingUrl;
+          tip.target = "_blank"; tip.rel = "noopener"; tip.textContent = "Troubleshooting →";
+          ans.appendChild(tip);
+          return;
+        }
         ans.textContent = d.answer || "(empty answer)";
         if (d.sources && d.sources.length) {
           src.innerHTML = "Sources: " +

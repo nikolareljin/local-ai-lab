@@ -59,6 +59,7 @@ def create_app(base_config: Config | None = None) -> Flask:
                     "linkedin": base_config.linkedin_url,
                     "github": base_config.github_url,
                     "tutorial": base_config.tutorial_url,
+                    "troubleshooting": base_config.docs_base_url + "troubleshooting.html",
                 },
             }
         )

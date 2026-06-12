@@ -51,6 +51,10 @@ function stripTrailingSlash(s) {
   return s.replace(/\/+$/, "");
 }
 
+function ensureTrailingSlash(s) {
+  return s.replace(/\/+$/, "") + "/";
+}
+
 export function loadConfig() {
   const root = repoRoot();
   loadDotEnv(root);
@@ -74,6 +78,11 @@ export function loadConfig() {
     linkedinUrl: env("LINKEDIN_URL", "https://www.linkedin.com/in/nikolareljin"),
     githubUrl: env("GITHUB_URL", "https://github.com/nikolareljin/local-ai-lab"),
     tutorialUrl: env("TUTORIAL_URL", "https://nikolareljin.github.io/local-ai-lab/"),
+    // Base URL of the docs site (trailing slash). Override (e.g.
+    // http://localhost:8000/) to point Troubleshooting links at a LOCAL copy.
+    docsBaseUrl: ensureTrailingSlash(
+      env("DOCS_BASE_URL", "https://nikolareljin.github.io/local-ai-lab/")
+    ),
 
     // Provider settings.
     claudeBin: env("CLAUDE_BIN", "claude"),

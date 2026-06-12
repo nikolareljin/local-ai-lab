@@ -14,6 +14,9 @@ public record Config(
     string LinkedinUrl,
     string GithubUrl,
     string TutorialUrl,
+    // Base URL of the docs site (trailing slash). Override (e.g.
+    // http://localhost:8000/) to point Troubleshooting links at a LOCAL copy.
+    string DocsBaseUrl,
     // Provider settings
     string ClaudeBin,
     string OllamaUrl,
@@ -115,6 +118,7 @@ public record Config(
             LinkedinUrl: Env("LINKEDIN_URL", "https://www.linkedin.com/in/nikolareljin"),
             GithubUrl: Env("GITHUB_URL", "https://github.com/nikolareljin/local-ai-lab"),
             TutorialUrl: Env("TUTORIAL_URL", "https://nikolareljin.github.io/local-ai-lab/"),
+            DocsBaseUrl: Env("DOCS_BASE_URL", "https://nikolareljin.github.io/local-ai-lab/").TrimEnd('/') + "/",
             ClaudeBin: Env("CLAUDE_BIN", "claude"),
             OllamaUrl: Env("OLLAMA_URL", "http://localhost:11434").TrimEnd('/'),
             OllamaModel: Env("OLLAMA_MODEL", "llama3.1:8b"),

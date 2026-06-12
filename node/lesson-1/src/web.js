@@ -68,6 +68,7 @@ export function createApp(baseConfig) {
         linkedin: baseConfig.linkedinUrl,
         github: baseConfig.githubUrl,
         tutorial: baseConfig.tutorialUrl,
+        troubleshooting: baseConfig.docsBaseUrl + "troubleshooting.html",
       },
     });
   });

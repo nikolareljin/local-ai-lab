@@ -32,6 +32,10 @@ class Config:
     linkedin_url: str
     github_url: str
     tutorial_url: str
+    # Base URL of the docs site (trailing slash). Override (e.g.
+    # http://localhost:8000/) to point the app's Troubleshooting links at a
+    # LOCAL copy of docs/ while testing, before publishing to GitHub Pages.
+    docs_base_url: str
 
     # Provider settings
     claude_bin: str
@@ -63,6 +67,7 @@ def load_config() -> Config:
         linkedin_url=os.getenv("LINKEDIN_URL", "https://www.linkedin.com/in/nikolareljin"),
         github_url=os.getenv("GITHUB_URL", "https://github.com/nikolareljin/local-ai-lab"),
         tutorial_url=os.getenv("TUTORIAL_URL", "https://nikolareljin.github.io/local-ai-lab/"),
+        docs_base_url=os.getenv("DOCS_BASE_URL", "https://nikolareljin.github.io/local-ai-lab/").rstrip("/") + "/",
         claude_bin=os.getenv("CLAUDE_BIN", "claude"),
         ollama_url=os.getenv("OLLAMA_URL", "http://localhost:11434").rstrip("/"),
         ollama_model=os.getenv("OLLAMA_MODEL", "llama3.1:8b"),

@@ -243,5 +243,28 @@ cd dotnet\lesson-1; dotnet run -c Release -- index     # validate; then: dotnet 
 
 ---
 
+## 7. Preview the docs site locally (before publishing)
+
+The app's in-app **Troubleshooting** link normally points at the published GitHub Pages site. To
+review your *local* docs edits (e.g. `docs/troubleshooting.html`) before publishing, serve the
+`docs/` folder and point the app at it with **`DOCS_BASE_URL`** in `.env`:
+
+```bash
+# 1) Serve the local docs site (any static server works; Python is a base prereq)
+python3 -m http.server 8000 --directory docs        # → http://localhost:8000/troubleshooting.html
+
+# 2) Point the app's Troubleshooting links at your local copy (repo-root .env)
+echo 'DOCS_BASE_URL=http://localhost:8000/' >> .env
+
+# 3) Start the app — the "Troubleshooting →" link and Ollama error hints now open your local page
+./run -l 1                 # or --lang node | --lang csharp
+```
+
+`DOCS_BASE_URL` is read by all three languages (Python, Node, C#) and surfaced to the web UI via
+`/api/status`. Remove the line (or set it back to `https://nikolareljin.github.io/local-ai-lab/`)
+when you're done testing.
+
+---
+
 *Course: [nikolareljin.github.io/local-ai-lab](https://nikolareljin.github.io/local-ai-lab/) ·
 Source: [github.com/nikolareljin/local-ai-lab](https://github.com/nikolareljin/local-ai-lab)*

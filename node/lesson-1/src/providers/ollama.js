@@ -7,6 +7,7 @@ export class OllamaProvider {
     this.url = config.ollamaUrl;
     this.model = config.ollamaModel;
     this.embedModel = config.ollamaEmbedModel;
+    this.troubleshootingUrl = config.docsBaseUrl + "troubleshooting.html";
   }
 
   async isAvailable() {
@@ -35,7 +36,23 @@ export class OllamaProvider {
       signal: AbortSignal.timeout(180000),
     });
     if (!resp.ok) {
-      throw new Error(`ollama /api/chat returned ${resp.status}: ${await resp.text()}`);
+      // Surface what's actually wrong. A 404 here almost always means the model
+      // isn't pulled — give the exact fix instead of a bare status code.
+      let detail = (await resp.text()).trim();
+      try {
+        detail = JSON.parse(detail).error || detail;
+      } catch {
+        /* not JSON — keep the raw body */
+      }
+      const hint =
+        resp.status === 404
+          ? ` Model '${this.model}' is not installed — run \`ollama pull ${this.model}\`, ` +
+            "or set OLLAMA_MODEL to a model you have (`ollama list`)."
+          : "";
+      throw new Error(
+        `Ollama request failed (${resp.status}): ${detail}.${hint} ` +
+          `See ${this.troubleshootingUrl}`
+      );
     }
     const data = await resp.json();
     return data.message.content.trim();

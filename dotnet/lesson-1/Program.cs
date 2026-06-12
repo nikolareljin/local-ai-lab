@@ -145,6 +145,7 @@ static void RunWeb(Config baseConfig, string host, int port)
             linkedin = baseConfig.LinkedinUrl,
             github = baseConfig.GithubUrl,
             tutorial = baseConfig.TutorialUrl,
+            troubleshooting = baseConfig.DocsBaseUrl + "troubleshooting.html",
         },
     }, jsonOpts));
 
