@@ -14,7 +14,7 @@ import express from "express";
 import multer from "multer";
 
 import { loadConfig } from "./config.js";
-import { answerQuestion, refreshIndex } from "./engine.js";
+import { answerQuestion, getRetriever, refreshIndex } from "./engine.js";
 import { SUPPORTED_EXTS, discoverFiles } from "./extract.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -108,6 +108,23 @@ export function createApp(baseConfig) {
       res.json(result);
     } catch (exc) {
       // Surface provider/network errors to the UI.
+      res.status(500).json({ error: String(exc.message || exc) });
+    }
+  });
+
+  // The raw numbers behind the index — "How the system sees your data".
+  app.get("/api/peek", async (req, res) => {
+    const config = requestConfig(req.query);
+    const question = (req.query.q || "").toString().trim();
+    try {
+      const retriever = await getRetriever(config);
+      if (typeof retriever.peek !== "function") {
+        return res.status(400).json({
+          error: `The '${retriever.name}' retriever has no peek view yet — switch to BM25.`,
+        });
+      }
+      res.json(retriever.peek(question || null, config.topK));
+    } catch (exc) {
       res.status(500).json({ error: String(exc.message || exc) });
     }
   });

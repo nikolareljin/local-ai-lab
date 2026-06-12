@@ -12,6 +12,11 @@ function tokenize(text) {
   return (text.toLowerCase().match(/[a-z0-9]+/g)) || [];
 }
 
+const round = (x, d) => {
+  const f = 10 ** d;
+  return Math.round(x * f) / f;
+};
+
 class Bm25Retriever {
   constructor(chunks) {
     this.name = "bm25";
@@ -73,6 +78,60 @@ class Bm25Retriever {
       return top.map((i) => this.chunks[i]);
     }
     return top.filter((i) => scores[i] > 0).map((i) => this.chunks[i]);
+  }
+
+  // Expose the raw BM25 numbers for the "How the system sees your data" view.
+  // Mirrors localrag/retriever.py Bm25Retriever.peek (same JSON shape).
+  peek(query, k) {
+    const n = this.chunks.length;
+    const topTerms = [...this.idf.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 18)
+      .map(([term, idf]) => ({ term, idf: round(idf, 3) }));
+
+    let sample = null;
+    if (n) {
+      const c0 = this.chunks[0];
+      const toks = tokenize(c0.text);
+      sample = {
+        source: c0.source,
+        page_number: c0.page_number,
+        text_preview: c0.text.slice(0, 240),
+        num_tokens: toks.length,
+        tokens: toks.slice(0, 48),
+      };
+    }
+
+    const out = {
+      retriever: "bm25",
+      params: { k1: this.k1, b: this.b },
+      num_chunks: n,
+      vocabulary: this.idf.size,
+      avg_doc_length: round(this.avgdl, 2),
+      top_terms: topTerms,
+      sample_chunk: sample,
+    };
+
+    query = (query || "").trim();
+    if (query && n) {
+      const qTokens = tokenize(query);
+      const scores = this.scores(qTokens);
+      const ranked = scores.map((_, i) => i).sort((a, b) => scores[b] - scores[a]).slice(0, k);
+      const uniq = [...new Set(qTokens)];
+      out.query = {
+        text: query,
+        tokens: qTokens,
+        term_idf: Object.fromEntries(uniq.map((t) => [t, round(this.idf.get(t) ?? 0, 3)])),
+        results: ranked.map((i) => ({
+          source: this.chunks[i].source,
+          page_number: this.chunks[i].page_number,
+          score: round(scores[i], 4),
+          text_preview: this.chunks[i].text.slice(0, 160),
+          term_freqs: Object.fromEntries(uniq.map((t) => [t, this.docFreqs[i].get(t) || 0])),
+        })),
+      };
+    }
+    return out;
   }
 }
 

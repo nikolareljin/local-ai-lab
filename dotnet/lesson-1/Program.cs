@@ -210,6 +210,26 @@ static void RunWeb(Config baseConfig, string host, int port)
         }
     });
 
+    // The raw numbers behind the index — "How the system sees your data".
+    app.MapGet("/api/peek", (string? q) =>
+    {
+        var retriever = Engine.GetRetriever(baseConfig);
+        if (retriever is not Bm25Retriever bm)
+        {
+            return Results.Json(
+                new { error = $"The '{retriever.Name}' retriever has no peek view yet — switch to BM25." },
+                jsonOpts, statusCode: 400);
+        }
+        try
+        {
+            return Results.Json(bm.Peek(q, baseConfig.TopK), jsonOpts);
+        }
+        catch (Exception ex)
+        {
+            return Results.Json(new { error = ex.Message }, jsonOpts, statusCode: 500);
+        }
+    });
+
     Console.WriteLine($"[localrag] Web UI on http://{host}:{port}  (Ctrl-C to stop)");
     app.Run();
 }

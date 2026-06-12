@@ -106,6 +106,76 @@ public partial class Bm25Retriever : IRetriever
         }
         return top.Where(i => scores[i] > 0).Select(i => _chunks[i]).ToList();
     }
+
+    private static string Truncate(string s, int n) => s.Length <= n ? s : s.Substring(0, n);
+
+    // Expose the raw BM25 numbers for the "How the system sees your data" view.
+    // Mirrors localrag/retriever.py Bm25Retriever.peek (same JSON shape). Keys are
+    // written in exact snake_case so they serialize verbatim (jsonOpts sets no
+    // naming policy).
+    public object Peek(string? query, int k)
+    {
+        var n = _corpus.Count;
+        var topTerms = _idf.OrderByDescending(kv => kv.Value).Take(18)
+            .Select(kv => new { term = kv.Key, idf = Math.Round(kv.Value, 3) })
+            .ToList();
+
+        object? sample = null;
+        if (_chunks.Count > 0)
+        {
+            var c0 = _chunks[0];
+            var toks = Tokenize(c0.Text);
+            sample = new
+            {
+                source = c0.Source,
+                page_number = c0.PageNumber,
+                text_preview = Truncate(c0.Text, 240),
+                num_tokens = toks.Count,
+                tokens = toks.Take(48).ToList(),
+            };
+        }
+
+        var outDict = new Dictionary<string, object?>
+        {
+            ["retriever"] = "bm25",
+            ["params"] = new { k1 = K1, b = B },
+            ["num_chunks"] = n,
+            ["vocabulary"] = _idf.Count,
+            ["avg_doc_length"] = Math.Round(_avgDocLength, 2),
+            ["top_terms"] = topTerms,
+            ["sample_chunk"] = sample,
+        };
+
+        query = (query ?? string.Empty).Trim();
+        if (query.Length > 0 && _chunks.Count > 0)
+        {
+            var qTokens = Tokenize(query);
+            var uniq = qTokens.Distinct().ToList();
+            var scores = GetScores(qTokens);
+            var ranked = Enumerable.Range(0, n).OrderByDescending(i => scores[i]).Take(k).ToList();
+            var results = ranked.Select(i =>
+            {
+                var freqs = new Dictionary<string, int>();
+                foreach (var t in _corpus[i]) freqs[t] = freqs.GetValueOrDefault(t) + 1;
+                return new
+                {
+                    source = _chunks[i].Source,
+                    page_number = _chunks[i].PageNumber,
+                    score = Math.Round(scores[i], 4),
+                    text_preview = Truncate(_chunks[i].Text, 160),
+                    term_freqs = uniq.ToDictionary(t => t, t => freqs.GetValueOrDefault(t)),
+                };
+            }).ToList();
+            outDict["query"] = new
+            {
+                text = query,
+                tokens = qTokens,
+                term_idf = uniq.ToDictionary(t => t, t => Math.Round(_idf.GetValueOrDefault(t, 0.0), 3)),
+                results,
+            };
+        }
+        return outDict;
+    }
 }
 
 public static class RetrieverFactory
