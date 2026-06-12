@@ -33,13 +33,18 @@ def create_app(base_config: Config | None = None) -> Flask:
     app.config["MAX_CONTENT_LENGTH"] = 64 * 1024 * 1024  # 64 MB upload cap
 
     def _request_config() -> Config:
-        """Per-request config with optional provider/retriever overrides."""
+        """Per-request config with optional provider/retriever overrides.
+
+        Overrides come from the JSON body (POST /api/ask) or the query string
+        (GET /api/peek), so both endpoints honor the dropdown selection — e.g.
+        switching back to BM25 when the server defaults to embeddings.
+        """
         data = request.get_json(silent=True) or {}
         overrides = {}
-        if data.get("provider"):
-            overrides["provider"] = str(data["provider"]).lower()
-        if data.get("retriever"):
-            overrides["retriever"] = str(data["retriever"]).lower()
+        for key in ("provider", "retriever"):
+            value = data.get(key) or request.args.get(key)
+            if value:
+                overrides[key] = str(value).lower()
         return dataclasses.replace(base_config, **overrides) if overrides else base_config
 
     @app.get("/")

@@ -34,24 +34,28 @@ fi
 action="${1:-web}"
 [[ $# -gt 0 ]] && shift || true
 
+# Absolute path so the server's command line references this checkout, letting
+# ./status and ./stop scope it to this repo even where cwd can't be probed.
+cli="$here/src/cli.js"
+
 case "$action" in
   web|"")
     port="$(find_free_port "${WEB_PORT:-5000}")"
     log_info "Lesson 1 (Node) · RAG web UI → http://127.0.0.1:${port}    (Ctrl-C to stop)"
-    exec node src/cli.js web --port "$port"
+    exec node "$cli" web --port "$port"
     ;;
   ask)
-    exec node src/cli.js ask "$@"
+    exec node "$cli" ask "$@"
     ;;
   repl)
-    exec node src/cli.js ask
+    exec node "$cli" ask
     ;;
   index)
-    exec node src/cli.js index --reindex
+    exec node "$cli" index --reindex
     ;;
   test)
     # Smoke test: rebuild the index over the committed sample corpus. Exit 0 offline.
-    exec node src/cli.js index --reindex
+    exec node "$cli" index --reindex
     ;;
   *)
     log_error "Lesson 1 (Node) actions:  web | ask \"q\" | repl | index | test"

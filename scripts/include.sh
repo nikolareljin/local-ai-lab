@@ -107,22 +107,32 @@ lesson_procs() {
     while read -r pid; do
       [[ -n "$pid" && "$pid" != "$self" ]] || continue
       [[ "$seen" == *" $pid "* ]] && continue
-      # Scope to THIS checkout by working directory. Require a verifiable cwd
-      # (via /proc, else lsof) under the repo; if it cannot be determined, skip
-      # the candidate so we never signal an unrelated process — e.g. on macOS or
-      # Windows where /proc is absent.
+      cmd="$(ps -o args= -p "$pid" 2>/dev/null || true)"
+      [[ -n "$cmd" ]] || continue
+      # Scope to THIS checkout. Prefer the verified working directory (Linux
+      # /proc, else lsof). When neither is available (e.g. Windows Git Bash, or a
+      # stripped-down macOS), fall back to requiring the command line itself to
+      # reference this repo's path — so ./status/./stop can still manage the
+      # node/csharp/mcp servers there, while we never signal a process from an
+      # unrelated checkout. The launchers spell out absolute paths under the repo
+      # (node src/cli.js, the built LocalRag binary, $ROOT_DIR/mcp_server.py).
       cwd=""
       if [[ -r "/proc/$pid/cwd" ]]; then
         cwd="$(readlink "/proc/$pid/cwd" 2>/dev/null || true)"
       elif command -v lsof >/dev/null 2>&1; then
         cwd="$(lsof -a -p "$pid" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p' | head -1)"
       fi
-      case "$cwd" in
-        "$ROOT_DIR"|"$ROOT_DIR"/*) ;;
-        *) continue ;;
-      esac
-      cmd="$(ps -o args= -p "$pid" 2>/dev/null || true)"
-      [[ -n "$cmd" ]] || continue
+      if [[ -n "$cwd" ]]; then
+        case "$cwd" in
+          "$ROOT_DIR"|"$ROOT_DIR"/*) ;;
+          *) continue ;;
+        esac
+      else
+        case "$cmd" in
+          *"$ROOT_DIR"*) ;;
+          *) continue ;;
+        esac
+      fi
       # Match the real interpreter, not a shell wrapper that merely launched it
       # (e.g. `bash -c '... http.server ...'`), so we never kill a launcher shell.
       prog="$(basename "${cmd%% *}")"
