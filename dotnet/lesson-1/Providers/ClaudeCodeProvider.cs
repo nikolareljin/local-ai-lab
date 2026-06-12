@@ -57,8 +57,13 @@ public class ClaudeCodeProvider : ILlmProvider
             ?? throw new InvalidOperationException($"Failed to start '{_bin}'.");
         proc.StandardInput.Write(prompt);
         proc.StandardInput.Close();
-        var stdout = proc.StandardOutput.ReadToEnd();
-        var stderr = proc.StandardError.ReadToEnd();
+        // Read stdout and stderr concurrently: reading one to EOF before the
+        // other can deadlock if the CLI fills the other pipe's buffer (e.g. a
+        // large auth/permission error stream).
+        var stdoutTask = proc.StandardOutput.ReadToEndAsync();
+        var stderrTask = proc.StandardError.ReadToEndAsync();
+        var stdout = stdoutTask.GetAwaiter().GetResult();
+        var stderr = stderrTask.GetAwaiter().GetResult();
         proc.WaitForExit();
         if (proc.ExitCode != 0)
         {

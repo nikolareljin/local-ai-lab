@@ -84,7 +84,7 @@ lesson_procs() {
   if [[ -n "$wpid" ]] && kill -0 "$wpid" 2>/dev/null; then
     seen+="$wpid "
     wcmd="$(ps -o args= -p "$wpid" 2>/dev/null || echo 'python -m localrag web')"
-    wport="$(printf '%s' "$wcmd" | grep -oE -- '--port[= ]+[0-9]+' | grep -oE '[0-9]+' | head -1)"
+    wport="$(printf '%s' "$wcmd" | grep -oE -- '--port[= ]+[0-9]+' | grep -oE '[0-9]+' | head -1 || true)"
     [[ -n "$wport" ]] || wport="${WEB_PORT:-5000}"
     printf '%s\t%s\t%s\t%s\n' "$wpid" "python" "$wport" "$wcmd"
   fi
@@ -131,7 +131,7 @@ lesson_procs() {
         node)            [[ "$prog" == *node* ]]   || continue ;;
         csharp)          [[ "$prog" == dotnet* || "$prog" == *LocalRag* ]] || continue ;;
       esac
-      port="$(printf '%s' "$cmd" | grep -oE -- '--port[= ]+[0-9]+' | grep -oE '[0-9]+' | head -1)"
+      port="$(printf '%s' "$cmd" | grep -oE -- '--port[= ]+[0-9]+' | grep -oE '[0-9]+' | head -1 || true)"
       [[ -n "$port" ]] || port="-"
       seen+="$pid "
       printf '%s\t%s\t%s\t%s\n' "$pid" "$kind" "$port" "$cmd"
