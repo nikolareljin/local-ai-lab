@@ -116,13 +116,15 @@ class Bm25Retriever {
       };
     }
 
+    // With no real chunks the placeholder corpus would inflate the stats, so
+    // report zeros/empties to stay consistent with num_chunks === 0.
     const out = {
       retriever: "bm25",
       params: { k1: this.k1, b: this.b },
       num_chunks: n,
-      vocabulary: this.idf.size,
-      avg_doc_length: round(this.avgdl, 2),
-      top_terms: topTerms,
+      vocabulary: n ? this.idf.size : 0,
+      avg_doc_length: n ? round(this.avgdl, 2) : 0,
+      top_terms: n ? topTerms : [],
       sample_chunk: sample,
     };
 

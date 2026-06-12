@@ -89,3 +89,21 @@ def test_peek_shape_and_determinism():
     assert {"source", "page_number", "score", "text_preview", "term_freqs"} <= set(row)
     # Deterministic for the same query.
     assert retriever.peek("how do I reset the device", k=3) == result
+
+
+def test_peek_empty_corpus_reports_zero_stats():
+    # With no real chunks the placeholder corpus must not inflate the stats.
+    p = Bm25Retriever([]).peek()
+    assert p["num_chunks"] == 0
+    assert p["vocabulary"] == 0
+    assert p["avg_doc_length"] == 0.0
+    assert p["top_terms"] == []
+    assert p["sample_chunk"] is None
+
+
+def test_docs_base_url_empty_falls_back(monkeypatch):
+    from localrag.config import load_config
+
+    monkeypatch.setenv("DOCS_BASE_URL", "")
+    url = load_config().docs_base_url
+    assert url.startswith("https://") and url.endswith("/")

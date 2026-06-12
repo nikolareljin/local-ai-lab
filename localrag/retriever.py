@@ -74,13 +74,16 @@ class Bm25Retriever:
                 "tokens": toks[:48],
             }
 
+        # With no real chunks the placeholder corpus would inflate the stats
+        # (vocabulary/avg_doc_length/top_terms), so report zeros to stay
+        # consistent with num_chunks == 0.
         out = {
             "retriever": "bm25",
             "params": {"k1": getattr(bm, "k1", None), "b": getattr(bm, "b", None)},
             "num_chunks": n,
-            "vocabulary": len(idf),
-            "avg_doc_length": round(float(getattr(bm, "avgdl", 0.0)), 2),
-            "top_terms": [{"term": t, "idf": round(float(v), 3)} for t, v in top_terms],
+            "vocabulary": len(idf) if n else 0,
+            "avg_doc_length": round(float(getattr(bm, "avgdl", 0.0)), 2) if n else 0.0,
+            "top_terms": [{"term": t, "idf": round(float(v), 3)} for t, v in top_terms] if n else [],
             "sample_chunk": sample,
         }
 

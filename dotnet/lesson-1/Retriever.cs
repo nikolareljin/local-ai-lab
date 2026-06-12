@@ -154,14 +154,16 @@ public partial class Bm25Retriever : IRetriever
             };
         }
 
+        // With no real chunks the placeholder corpus would inflate the stats, so
+        // report zeros/empties to stay consistent with num_chunks == 0.
         var outDict = new Dictionary<string, object?>
         {
             ["retriever"] = "bm25",
             ["params"] = new { k1 = K1, b = B },
             ["num_chunks"] = n,
-            ["vocabulary"] = _idf.Count,
-            ["avg_doc_length"] = Math.Round(_avgDocLength, 2),
-            ["top_terms"] = topTerms,
+            ["vocabulary"] = n > 0 ? _idf.Count : 0,
+            ["avg_doc_length"] = n > 0 ? Math.Round(_avgDocLength, 2) : 0.0,
+            ["top_terms"] = n > 0 ? (object)topTerms : Array.Empty<object>(),
             ["sample_chunk"] = sample,
         };
 

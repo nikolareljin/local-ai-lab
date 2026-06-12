@@ -2,7 +2,9 @@
 //
 // Keeps a cached retriever so repeated questions don't re-read and re-rank from
 // scratch, rebuilding when the docs folder changes or the retriever type is
-// switched. Node is single-threaded, so no lock is needed (vs. engine.py).
+// switched. JS is single-threaded, but async I/O lets concurrent web requests
+// interleave at `await` points, so index build/load is serialized through a
+// promise-chain mutex (the analogue of engine.py's threading.Lock).
 
 import { SYSTEM_PROMPT, buildUserPrompt } from "./prompts.js";
 import { getProvider } from "./providers/index.js";
@@ -11,26 +13,42 @@ import { buildIndex, isStale, loadChunks } from "./store.js";
 
 const cache = { retriever: null, key: null };
 
+// Run async sections one at a time: each waits for the previous to settle, and
+// the chain itself never rejects so one failure can't wedge later callers.
+let lock = Promise.resolve();
+function withLock(fn) {
+  const result = lock.then(fn, fn);
+  lock = result.then(
+    () => {},
+    () => {}
+  );
+  return result;
+}
+
 export async function refreshIndex(config) {
   // Force a rebuild of the on-disk index and invalidate the retriever cache.
-  const { chunks, fileCount } = await buildIndex(config);
-  cache.retriever = null;
-  cache.key = null;
-  return { chunks, fileCount };
+  return withLock(async () => {
+    const { chunks, fileCount } = await buildIndex(config);
+    cache.retriever = null;
+    cache.key = null;
+    return { chunks, fileCount };
+  });
 }
 
 export async function getRetriever(config) {
   // Return a retriever for the current docs, rebuilding only when needed.
-  if (isStale(config)) {
-    await buildIndex(config);
-    cache.retriever = null;
-  }
-  if (cache.retriever === null || cache.key !== config.retriever) {
-    const chunks = loadChunks(config);
-    cache.retriever = buildRetriever(chunks, config);
-    cache.key = config.retriever;
-  }
-  return cache.retriever;
+  return withLock(async () => {
+    if (isStale(config)) {
+      await buildIndex(config);
+      cache.retriever = null;
+    }
+    if (cache.retriever === null || cache.key !== config.retriever) {
+      const chunks = loadChunks(config);
+      cache.retriever = buildRetriever(chunks, config);
+      cache.key = config.retriever;
+    }
+    return cache.retriever;
+  });
 }
 
 export function dedupSources(hits) {
