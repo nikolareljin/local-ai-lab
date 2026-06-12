@@ -40,10 +40,16 @@ RAG_PROVIDER=ollama         # claude | ollama | gemini | openai</code></pre>
     <p><b>Polyglot note:</b> the <b>Node.js</b> and <b>C#</b> ports of Lesson 1 support
       <code>claude</code> and <code>ollama</code>. For <code>gemini</code> / <code>openai</code>, use
       the <b>Python</b> reference (<code>./run -l 1</code>).</p>
+    <p style="color:var(--muted)">Juggling these providers and keys across several projects or machines?
+      <a href="https://github.com/nikolareljin/agentvault" target="_blank" rel="noopener">agentvault</a>
+      manages Claude / Ollama / Gemini / OpenAI configs and rules in one place.</p>
 
     <h2 id="ollama">Ollama (fully local, no key)</h2>
     <p>Runs models on your own machine. Install it from
-      <a href="https://ollama.com" target="_blank" rel="noopener">ollama.com</a>, then pull a model.</p>
+      <a href="https://ollama.com" target="_blank" rel="noopener">ollama.com</a>, then pull a model.
+      <span style="color:var(--muted)">(Prefer one command to pull&nbsp;+&nbsp;run any Ollama model?
+      <a href="https://github.com/nikolareljin/ai-runner" target="_blank" rel="noopener">ai-runner</a>
+      wraps exactly that.)</span></p>
 
     <h3>Error: <code>404 (Not Found)</code> / “model … not found”</h3>
     <p>Ollama is running, but the model you asked for isn't installed. The default is
