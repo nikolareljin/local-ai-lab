@@ -135,7 +135,12 @@ lesson_procs() {
       fi
       # Match the real interpreter, not a shell wrapper that merely launched it
       # (e.g. `bash -c '... http.server ...'`), so we never kill a launcher shell.
-      prog="$(basename "${cmd%% *}")"
+      # Take the program name from `ps -o comm=` (the kernel-reported executable),
+      # not by splitting argv on spaces — an executable path with spaces (e.g.
+      # Windows "C:\Program Files\nodejs\node.exe") would otherwise truncate to
+      # the first space and drop the real lesson process.
+      prog="$(ps -o comm= -p "$pid" 2>/dev/null || true)"
+      prog="$(basename "${prog:-${cmd%% *}}")"
       case "$kind" in
         python|mcp|docs) [[ "$prog" == *python* ]] || continue ;;
         node)            [[ "$prog" == *node* ]]   || continue ;;

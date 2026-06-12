@@ -82,12 +82,31 @@ public class ClaudeCodeProvider : ILlmProvider
         return stdout.Trim();
     }
 
+    // True only if the path is a file we could actually exec. On Windows that's
+    // any existing file (PATHEXT decides runnability); on POSIX require an execute
+    // bit so a non-executable file named like the CLI isn't reported as found and
+    // then fails opaquely at Process.Start. Mirrors isExecutableFile() in the Node port.
+    private static bool IsExecutableFile(string path)
+    {
+        if (!File.Exists(path))
+        {
+            return false;
+        }
+        if (OperatingSystem.IsWindows())
+        {
+            return true;
+        }
+        const UnixFileMode execBits =
+            UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute;
+        return (File.GetUnixFileMode(path) & execBits) != 0;
+    }
+
     private static string? Which(string bin)
     {
         // Absolute/relative path with a separator: check directly.
         if (bin.Contains(Path.DirectorySeparatorChar) || bin.Contains('/'))
         {
-            return File.Exists(bin) ? bin : null;
+            return IsExecutableFile(bin) ? bin : null;
         }
         // On Windows the launcher is `claude.cmd` / `claude.exe`, so try each
         // PATHEXT suffix; on POSIX the bare name is the executable.
@@ -109,7 +128,7 @@ public class ClaudeCodeProvider : ILlmProvider
             foreach (var ext in exts)
             {
                 var candidate = Path.Combine(dir, bin + ext);
-                if (File.Exists(candidate))
+                if (IsExecutableFile(candidate))
                 {
                     return candidate;
                 }
