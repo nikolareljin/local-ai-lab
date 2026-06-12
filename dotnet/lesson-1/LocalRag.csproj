@@ -12,7 +12,8 @@
   <ItemGroup>
     <!-- PdfPig: this pin restores from public nuget.org on all platforms. The code uses
          only the stable PdfDocument.Open / GetPages() / page.Text API, so a maintainer on
-         a machine with the usual nuget.org view may bump to a standard stable (e.g. 0.1.9). -->
+         a machine with the usual nuget.org view may pin the current stable PdfPig from the
+         0.1.x line on nuget.org instead. -->
     <PackageReference Include="UglyToad.PdfPig" Version="1.7.0-custom-5" />
     <PackageReference Include="DocumentFormat.OpenXml" Version="3.0.2" />
   </ItemGroup>

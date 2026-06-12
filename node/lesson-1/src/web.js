@@ -85,7 +85,9 @@ export function createApp(baseConfig) {
         skipped.push(f.originalname);
         continue;
       }
-      fs.writeFileSync(path.join(baseConfig.docsDir, name), f.buffer);
+      // Async write so a large upload doesn't block the event loop (and other
+      // concurrent requests) while bytes are flushed to disk.
+      await fs.promises.writeFile(path.join(baseConfig.docsDir, name), f.buffer);
       saved.push(name);
     }
 

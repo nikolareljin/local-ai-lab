@@ -34,9 +34,10 @@ sample documents and exits `0`:
 
 ## Check the RAG behaviour (needs an AI provider)
 
-The shared corpus includes a **fictional** story, *The Voyage of Caretta the Magnificent*
-(`documents/The_Magic_Turtle_Astronaut.pdf`). Ask a grounded question and one the story can't
-answer:
+Download the **fictional** story *The Voyage of Caretta the Magnificent*
+([PDF](https://nikolareljin.github.io/local-ai-lab/pdf/The_Magic_Turtle_Astronaut.pdf)) — it's
+user-supplied, not committed — and drop it into `documents/` (or upload it in the web UI). Then ask
+a grounded question and one the story can't answer:
 
 ```bash
 # Grounded — must cite [The_Magic_Turtle_Astronaut.pdf:page]

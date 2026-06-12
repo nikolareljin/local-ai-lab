@@ -62,9 +62,18 @@ public class ClaudeCodeProvider : ILlmProvider
         // large auth/permission error stream).
         var stdoutTask = proc.StandardOutput.ReadToEndAsync();
         var stderrTask = proc.StandardError.ReadToEndAsync();
+        // Bound the wait so a hung CLI (e.g. an interactive login prompt) can't
+        // block the request forever; matches the Node port's 180s.
+        const int timeoutMs = 180_000;
+        if (!proc.WaitForExit(timeoutMs))
+        {
+            try { proc.Kill(entireProcessTree: true); } catch { /* already exiting */ }
+            throw new InvalidOperationException(
+                $"claude did not respond within {timeoutMs / 1000}s — it may be waiting for login. " +
+                "Run `claude` once to sign in, or set RAG_PROVIDER to ollama|gemini|openai.");
+        }
         var stdout = stdoutTask.GetAwaiter().GetResult();
         var stderr = stderrTask.GetAwaiter().GetResult();
-        proc.WaitForExit();
         if (proc.ExitCode != 0)
         {
             throw new InvalidOperationException(
