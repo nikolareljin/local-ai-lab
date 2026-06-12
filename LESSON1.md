@@ -590,8 +590,8 @@ what the anti-hallucination prompt buys you.
 > Right names, ship, planet, and dates — each with a `[file:page]` citation — prove the answer came
 > from **your uploaded file**, not the model's memory. That's RAG doing its job.
 
-Prefer the terminal? The PDF is already in `documents/`, so just ask — in **any of the three
-languages** (same corpus, same grounded answer):
+Prefer the terminal? Drop the PDF you downloaded and read above into `documents/`, then ask — in
+**any of the three languages** (same corpus, same grounded answer):
 
 ```bash
 ./run -l 1 ask "What planet did Caretta discover, and which star does it orbit?"                # Python (default)

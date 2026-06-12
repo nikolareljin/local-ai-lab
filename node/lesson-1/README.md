@@ -37,7 +37,7 @@ sample documents and exits `0`:
 
 ```bash
 ./run -l 1 --lang node test && echo PASS || echo FAIL
-# expected: [localrag] Indexed 4 file(s) into 44 chunk(s).
+# expected: [localrag] Indexed N file(s) into M chunk(s).   (counts depend on documents/)
 #           PASS
 ```
 

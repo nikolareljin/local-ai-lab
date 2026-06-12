@@ -11,7 +11,12 @@ const isWindows = process.platform === "win32";
 
 function isExecutableFile(p) {
   try {
-    return fs.statSync(p).isFile();
+    if (!fs.statSync(p).isFile()) return false;
+    // On Windows executability is determined by extension (PATHEXT); on POSIX
+    // require the execute bit so we don't report a non-executable file as found.
+    if (isWindows) return true;
+    fs.accessSync(p, fs.constants.X_OK);
+    return true;
   } catch {
     return false;
   }

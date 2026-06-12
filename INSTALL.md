@@ -186,21 +186,24 @@ A non-zero exit means something is wrong; a printed `Indexed …` line plus exit
 
 ### What "success" looks like
 ```text
-[localrag] Indexed 4 file(s) into 44 chunk(s).   # Node  (per-page PDF differs slightly by language)
-[localrag] Indexed 4 file(s) into 32 chunk(s).   # C#
+[localrag] Indexed N file(s) into M chunk(s).
 ```
-The exact chunk count varies a little by language (PDF text layout); any `Indexed 4 file(s) …` line
-with exit `0` is a pass. Check the exit code explicitly if you like:
+A printed `Indexed …` line with exit `0` is a pass. The exact counts depend on what's in
+`documents/`: a fresh checkout ships **two** Markdown samples, and the counts grow once you add the
+Caretta PDF below. (Counts also vary slightly by language for PDFs, due to text layout.) Check the
+exit code explicitly if you like:
 ```bash
 ./run -l 1 --lang node test && echo "PASS" || echo "FAIL"
 ```
 
 ### Check the RAG behaviour (needs an AI provider, e.g. Claude Code from §3)
-The committed corpus includes a **fictional** story, *The Voyage of Caretta the Magnificent*
-(`documents/The_Magic_Turtle_Astronaut.pdf`) — a magic turtle astronaut. Because it's invented, a
-plain LLM can't know it, so it's the perfect way to prove the system reads *your* file. Try both a
-grounded question and one the story can't answer (works in any of the three languages — swap in
-`--lang node` / `--lang csharp`):
+The best proof that RAG reads *your* file is to feed it something no model has seen. **Download and
+read** the short **fictional** story *The Voyage of Caretta the Magnificent*
+([The_Magic_Turtle_Astronaut.pdf](https://nikolareljin.github.io/local-ai-lab/pdf/The_Magic_Turtle_Astronaut.pdf))
+— a magic turtle astronaut. Read it first so you can judge the answers yourself; because it's
+invented, a plain LLM can't know it. Then add it to the corpus — **drop it into `documents/`, or
+upload it in the web UI** — and ask both a grounded question and one the story can't answer (works in
+any of the three languages — swap in `--lang node` / `--lang csharp`):
 
 ```bash
 # 1) Grounded — the answer must cite [The_Magic_Turtle_Astronaut.pdf:page]

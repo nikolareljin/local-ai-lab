@@ -85,7 +85,7 @@ lesson_procs() {
     "csharp:dotnet run"
     "docs:http\.server"
   )
-  local seen=" " entry kind rx pid cwd cmd port
+  local seen=" " entry kind rx pid cwd cmd port prog
   for entry in "${sigs[@]}"; do
     kind="${entry%%:*}"; rx="${entry#*:}"
     # `--` so a regex starting with '-' (e.g. "-m localrag") is the pattern,

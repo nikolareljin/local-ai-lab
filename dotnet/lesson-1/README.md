@@ -28,7 +28,7 @@ sample documents and exits `0`:
 
 ```bash
 ./run -l 1 --lang csharp test && echo PASS || echo FAIL
-# expected: [localrag] Indexed 4 file(s) into 32 chunk(s).
+# expected: [localrag] Indexed N file(s) into M chunk(s).   (counts depend on documents/)
 #           PASS
 ```
 

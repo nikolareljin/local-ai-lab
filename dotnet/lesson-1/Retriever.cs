@@ -21,6 +21,7 @@ public partial class Bm25Retriever : IRetriever
 
     private readonly List<Chunk> _chunks;
     private readonly List<List<string>> _corpus;
+    private readonly List<Dictionary<string, int>> _docFreqs;
     private readonly double[] _docLengths;
     private readonly double _avgDocLength;
     private readonly Dictionary<string, double> _idf;
@@ -41,15 +42,24 @@ public partial class Bm25Retriever : IRetriever
         _docLengths = _corpus.Select(d => (double)d.Count).ToArray();
         _avgDocLength = _docLengths.Length > 0 ? _docLengths.Average() : 0.0;
 
+        // Precompute per-document term frequencies once (reused by every query
+        // in GetScores and by Peek), instead of rebuilding them per query.
+        _docFreqs = _corpus.Select(doc =>
+        {
+            var f = new Dictionary<string, int>();
+            foreach (var term in doc) f[term] = f.GetValueOrDefault(term) + 1;
+            return f;
+        }).ToList();
+
         // Document frequency per term, then the rank_bm25 Okapi IDF formula:
         // idf = log((N - df + 0.5) / (df + 0.5)), with negative IDFs (a term in
         // more than half the docs) floored to epsilon * average_idf. Without the
         // floor, a common query term scores matching chunks negatively while
         // chunks that lack it stay at 0, so unrelated chunks would rank first.
         var df = new Dictionary<string, int>();
-        foreach (var doc in _corpus)
+        foreach (var freqs in _docFreqs)
         {
-            foreach (var term in doc.Distinct())
+            foreach (var term in freqs.Keys)
             {
                 df[term] = df.GetValueOrDefault(term) + 1;
             }
@@ -75,12 +85,7 @@ public partial class Bm25Retriever : IRetriever
         var scores = new double[_corpus.Count];
         for (var i = 0; i < _corpus.Count; i++)
         {
-            var doc = _corpus[i];
-            var freqs = new Dictionary<string, int>();
-            foreach (var term in doc)
-            {
-                freqs[term] = freqs.GetValueOrDefault(term) + 1;
-            }
+            var freqs = _docFreqs[i];
             var dl = _docLengths[i];
             double score = 0.0;
             foreach (var term in query)
@@ -126,7 +131,8 @@ public partial class Bm25Retriever : IRetriever
     // naming policy).
     public object Peek(string? query, int k)
     {
-        var n = _corpus.Count;
+        // Real chunk count (0 when empty), not the placeholder corpus size.
+        var n = _chunks.Count;
         var topTerms = _idf.OrderByDescending(kv => kv.Value).Take(18)
             .Select(kv => new { term = kv.Key, idf = Math.Round(kv.Value, 3) })
             .ToList();
@@ -164,18 +170,13 @@ public partial class Bm25Retriever : IRetriever
             var uniq = qTokens.Distinct().ToList();
             var scores = GetScores(qTokens);
             var ranked = Enumerable.Range(0, n).OrderByDescending(i => scores[i]).Take(k).ToList();
-            var results = ranked.Select(i =>
+            var results = ranked.Select(i => new
             {
-                var freqs = new Dictionary<string, int>();
-                foreach (var t in _corpus[i]) freqs[t] = freqs.GetValueOrDefault(t) + 1;
-                return new
-                {
-                    source = _chunks[i].Source,
-                    page_number = _chunks[i].PageNumber,
-                    score = Math.Round(scores[i], 4),
-                    text_preview = Truncate(_chunks[i].Text, 160),
-                    term_freqs = uniq.ToDictionary(t => t, t => freqs.GetValueOrDefault(t)),
-                };
+                source = _chunks[i].Source,
+                page_number = _chunks[i].PageNumber,
+                score = Math.Round(scores[i], 4),
+                text_preview = Truncate(_chunks[i].Text, 160),
+                term_freqs = uniq.ToDictionary(t => t, t => _docFreqs[i].GetValueOrDefault(t)),
             }).ToList();
             outDict["query"] = new
             {

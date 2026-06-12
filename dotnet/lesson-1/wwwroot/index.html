@@ -269,8 +269,15 @@
         }
         ans.textContent = d.answer || "(empty answer)";
         if (d.sources && d.sources.length) {
-          src.innerHTML = "Sources: " +
-            d.sources.map((s) => `<span class="chip">${s}</span>`).join(" ");
+          // Build chips via the DOM (textContent), never innerHTML, so a source
+          // filename can't inject markup into the local UI.
+          src.textContent = "Sources: ";
+          for (const s of d.sources) {
+            const chip = document.createElement("span");
+            chip.className = "chip";
+            chip.textContent = s;
+            src.append(chip, " ");
+          }
         } else {
           src.textContent = "Sources: (none relevant found in your documents)";
         }

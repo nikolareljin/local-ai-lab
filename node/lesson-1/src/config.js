@@ -72,7 +72,12 @@ export function loadConfig() {
     // NOTE: .localrag/node (not .localrag/) so the Node index never collides
     // with the Python reference index.
     cacheDir: path.join(root, ".localrag", "node"),
-    topK: parseInt(env("RAG_TOP_K", "5"), 10),
+    // Guard against a non-numeric or non-positive RAG_TOP_K (would become NaN and
+    // break slice/ranking); fall back to the default of 5.
+    topK: (() => {
+      const v = parseInt(env("RAG_TOP_K", "5"), 10);
+      return Number.isFinite(v) && v > 0 ? v : 5;
+    })(),
 
     // Social / course links surfaced in the web UI.
     linkedinUrl: env("LINKEDIN_URL", "https://www.linkedin.com/in/nikolareljin"),
