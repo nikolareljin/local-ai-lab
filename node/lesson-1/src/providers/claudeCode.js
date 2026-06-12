@@ -22,23 +22,25 @@ function isExecutableFile(p) {
   }
 }
 
-// Resolve a command on PATH WITHOUT invoking a shell, so a CLAUDE_BIN containing
-// spaces or shell metacharacters can't break detection or inject a command. On
-// Windows we try each PATHEXT suffix (claude.cmd / claude.exe); on POSIX the
-// bare name is the executable. Mirrors the C# Which() in this PR.
-function onPath(bin) {
+// Resolve a command to its full path on PATH WITHOUT invoking a shell, so a
+// CLAUDE_BIN containing spaces or shell metacharacters can't break detection or
+// inject a command. On Windows we try each PATHEXT suffix (claude.cmd /
+// claude.exe); on POSIX the bare name is the executable. Returns null if not
+// found. Mirrors the C# Which() in this PR.
+function resolveBin(bin) {
   if (bin.includes("/") || bin.includes(path.sep)) {
-    return isExecutableFile(bin);
+    return isExecutableFile(bin) ? bin : null;
   }
   const exts = isWindows
     ? ["", ...(process.env.PATHEXT || ".COM;.EXE;.BAT;.CMD").split(";").filter(Boolean)]
     : [""];
   for (const dir of (process.env.PATH || "").split(path.delimiter).filter(Boolean)) {
     for (const ext of exts) {
-      if (isExecutableFile(path.join(dir, bin + ext))) return true;
+      const candidate = path.join(dir, bin + ext);
+      if (isExecutableFile(candidate)) return candidate;
     }
   }
-  return false;
+  return null;
 }
 
 export class ClaudeCodeProvider {
@@ -48,27 +50,33 @@ export class ClaudeCodeProvider {
   }
 
   isAvailable() {
-    return onPath(this.bin);
+    return resolveBin(this.bin) !== null;
   }
 
   chat(system, user) {
-    if (!this.isAvailable()) {
+    const resolved = resolveBin(this.bin);
+    if (!resolved) {
       throw new Error(
         `Claude Code CLI '${this.bin}' not found on PATH. Install it, or set ` +
           "RAG_PROVIDER to ollama|gemini|openai."
       );
     }
-    const prompt = `${system}\n\n${user}`;
+    // Run the resolved binary directly (never `shell: true`). A Windows
+    // claude.cmd / .bat is a script, so launch it via cmd.exe /c; a real binary
+    // runs as-is. The prompt goes on STDIN — no argv-length limits and no shell
+    // quoting of a multi-line string. Mirrors the .NET ClaudeCodeProvider.
+    let file = resolved;
+    let args = ["-p"];
+    if (isWindows && /\.(cmd|bat)$/i.test(resolved)) {
+      file = "cmd.exe";
+      args = ["/c", resolved, "-p"];
+    }
     try {
-      // Pass the prompt on STDIN (not as an argv) so it works identically on
-      // Linux, macOS and Windows: no argv-length limits and no shell quoting of
-      // a multi-line string. `shell: true` on Windows lets `claude.cmd` resolve.
-      const out = execFileSync(this.bin, ["-p"], {
-        input: prompt,
+      const out = execFileSync(file, args, {
+        input: `${system}\n\n${user}`,
         encoding: "utf-8",
         timeout: 180000,
         maxBuffer: 64 * 1024 * 1024,
-        shell: isWindows,
       });
       return out.trim();
     } catch (err) {

@@ -74,17 +74,22 @@ find_free_port() {
 # scoped to processes whose working directory is under this repo, so other
 # checkouts or unrelated processes on the machine are never matched.
 lesson_procs() {
-  # Without pgrep (rare), fall back to the PID-file web app so ./status and
-  # ./stop still manage the ./start-launched server instead of finding nothing.
-  if ! command -v pgrep >/dev/null 2>&1; then
-    local wpid; wpid="$(web_pid)"
-    if [[ -n "$wpid" ]] && kill -0 "$wpid" 2>/dev/null; then
-      printf '%s\t%s\t%s\t%s\n' "$wpid" "python" "${WEB_PORT:-5000}" \
-        "$(ps -o args= -p "$wpid" 2>/dev/null || echo 'python -m localrag web')"
-    fi
-    return 0
+  local self=$$ seen=" " wpid wcmd wport
+  # Always include the ./start PID-file web app first. A shimmed PYTHON_BIN
+  # (pyenv/asdf) can make its argv0 a wrapper that the interpreter filter below
+  # would drop, and ./status/./stop must still manage it. Tracked in `seen` so
+  # the signature scan below never lists it twice. This is also the only thing we
+  # can find when pgrep is unavailable.
+  wpid="$(web_pid)"
+  if [[ -n "$wpid" ]] && kill -0 "$wpid" 2>/dev/null; then
+    seen+="$wpid "
+    wcmd="$(ps -o args= -p "$wpid" 2>/dev/null || echo 'python -m localrag web')"
+    wport="$(printf '%s' "$wcmd" | grep -oE -- '--port[= ]+[0-9]+' | grep -oE '[0-9]+' | head -1)"
+    [[ -n "$wport" ]] || wport="${WEB_PORT:-5000}"
+    printf '%s\t%s\t%s\t%s\n' "$wpid" "python" "$wport" "$wcmd"
   fi
-  local self=$$
+  command -v pgrep >/dev/null 2>&1 || return 0
+
   # kind:regex — regex is matched against the full command line via `pgrep -f`.
   local sigs=(
     "python:-m localrag"
@@ -94,7 +99,7 @@ lesson_procs() {
     "csharp:dotnet run"
     "docs:http\.server"
   )
-  local seen=" " entry kind rx pid cwd cmd port prog
+  local entry kind rx pid cwd cmd port prog
   for entry in "${sigs[@]}"; do
     kind="${entry%%:*}"; rx="${entry#*:}"
     # `--` so a regex starting with '-' (e.g. "-m localrag") is the pattern,

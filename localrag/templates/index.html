@@ -159,7 +159,11 @@
       $("retriever").value = s.retriever;
       renderFiles(s.files);
       renderLinks(s.links || {});
-      if (s.links && s.links.troubleshooting) troubleshootingUrl = s.links.troubleshooting;
+      // Sanitize through the http(s) allowlist; keep the default if invalid.
+      if (s.links && s.links.troubleshooting) {
+        const safe = safeUrl(s.links.troubleshooting);
+        if (safe) troubleshootingUrl = safe;
+      }
     }
 
     // Only allow http(s) URLs, and reject anything else (e.g. javascript:).
