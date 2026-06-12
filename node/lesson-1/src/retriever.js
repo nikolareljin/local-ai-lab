@@ -1,8 +1,9 @@
 // Retrieval engine: BM25 (default, zero setup).
 //
 // Mirrors localrag/retriever.py's Bm25Retriever, with BM25 Okapi implemented by
-// hand to match rank_bm25's BM25Okapi defaults (k1=1.5, b=0.75, and the same
-// `log((N - n + 0.5) / (n + 0.5))` IDF that can go negative on tiny corpora).
+// hand to match rank_bm25's BM25Okapi defaults (k1=1.5, b=0.75, the same
+// `log((N - n + 0.5) / (n + 0.5))` IDF, and the same epsilon flooring of negative
+// IDFs so a term in > half the chunks never outranks the chunks that contain it).
 //
 // PARITY NOTE: the EmbeddingRetriever is out of scope for this Node port. If
 // `config.retriever === "embeddings"`, buildRetriever prints a one-line notice
@@ -40,11 +41,23 @@ class Bm25Retriever {
       for (const term of freqs.keys()) df.set(term, (df.get(term) || 0) + 1);
     }
 
-    // IDF, matching rank_bm25 BM25Okapi: log((N - n + 0.5) / (n + 0.5)).
+    // IDF, matching rank_bm25 BM25Okapi: log((N - n + 0.5) / (n + 0.5)), then
+    // floor any negative IDF (a term in more than half the docs) to
+    // epsilon * average_idf. Without this floor, a common query term scores
+    // matching chunks negatively while chunks that lack it stay at 0, so the
+    // unrelated chunks would rank first.
     this.idf = new Map();
+    let idfSum = 0;
+    const negatives = [];
     for (const [term, n] of df.entries()) {
-      this.idf.set(term, Math.log((this.corpusSize - n + 0.5) / (n + 0.5)));
+      const idf = Math.log((this.corpusSize - n + 0.5) / (n + 0.5));
+      this.idf.set(term, idf);
+      idfSum += idf;
+      if (idf < 0) negatives.push(term);
     }
+    const epsilon = 0.25; // rank_bm25 BM25Okapi default
+    const eps = this.idf.size ? epsilon * (idfSum / this.idf.size) : 0;
+    for (const term of negatives) this.idf.set(term, eps);
   }
 
   scores(queryTokens) {

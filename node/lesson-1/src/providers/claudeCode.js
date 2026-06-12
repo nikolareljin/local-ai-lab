@@ -3,20 +3,37 @@
 // No API key required — it reuses your existing Claude Code login. Mirrors
 // localrag/providers/claude_code.py.
 
-import { execFileSync, execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
 
 const isWindows = process.platform === "win32";
 
-function onPath(bin) {
-  // Guard the native lookup: `command -v` works on POSIX; `where` searches
-  // PATHEXT on Windows so it finds `claude.cmd` / `claude.exe`.
-  const probe = isWindows ? `where ${bin}` : `command -v ${bin}`;
+function isExecutableFile(p) {
   try {
-    execSync(probe, { stdio: "ignore" });
-    return true;
+    return fs.statSync(p).isFile();
   } catch {
     return false;
   }
+}
+
+// Resolve a command on PATH WITHOUT invoking a shell, so a CLAUDE_BIN containing
+// spaces or shell metacharacters can't break detection or inject a command. On
+// Windows we try each PATHEXT suffix (claude.cmd / claude.exe); on POSIX the
+// bare name is the executable. Mirrors the C# Which() in this PR.
+function onPath(bin) {
+  if (bin.includes("/") || bin.includes(path.sep)) {
+    return isExecutableFile(bin);
+  }
+  const exts = isWindows
+    ? ["", ...(process.env.PATHEXT || ".COM;.EXE;.BAT;.CMD").split(";").filter(Boolean)]
+    : [""];
+  for (const dir of (process.env.PATH || "").split(path.delimiter).filter(Boolean)) {
+    for (const ext of exts) {
+      if (isExecutableFile(path.join(dir, bin + ext))) return true;
+    }
+  }
+  return false;
 }
 
 export class ClaudeCodeProvider {

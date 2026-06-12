@@ -42,7 +42,10 @@ public partial class Bm25Retriever : IRetriever
         _avgDocLength = _docLengths.Length > 0 ? _docLengths.Average() : 0.0;
 
         // Document frequency per term, then the rank_bm25 Okapi IDF formula:
-        // idf = log((N - df + 0.5) / (df + 0.5)). (Can be negative on tiny corpora.)
+        // idf = log((N - df + 0.5) / (df + 0.5)), with negative IDFs (a term in
+        // more than half the docs) floored to epsilon * average_idf. Without the
+        // floor, a common query term scores matching chunks negatively while
+        // chunks that lack it stay at 0, so unrelated chunks would rank first.
         var df = new Dictionary<string, int>();
         foreach (var doc in _corpus)
         {
@@ -53,10 +56,18 @@ public partial class Bm25Retriever : IRetriever
         }
         var n = _corpus.Count;
         _idf = new Dictionary<string, double>(df.Count);
+        var negatives = new List<string>();
+        var idfSum = 0.0;
         foreach (var (term, freq) in df)
         {
-            _idf[term] = Math.Log((n - freq + 0.5) / (freq + 0.5));
+            var idf = Math.Log((n - freq + 0.5) / (freq + 0.5));
+            _idf[term] = idf;
+            idfSum += idf;
+            if (idf < 0) negatives.Add(term);
         }
+        const double epsilon = 0.25; // rank_bm25 BM25Okapi default
+        var eps = _idf.Count > 0 ? epsilon * (idfSum / _idf.Count) : 0.0;
+        foreach (var term in negatives) _idf[term] = eps;
     }
 
     private double[] GetScores(List<string> query)

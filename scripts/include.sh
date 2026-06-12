@@ -93,11 +93,20 @@ lesson_procs() {
     while read -r pid; do
       [[ -n "$pid" && "$pid" != "$self" ]] || continue
       [[ "$seen" == *" $pid "* ]] && continue
-      # Scope to this checkout by working directory when /proc is available.
+      # Scope to THIS checkout by working directory. Require a verifiable cwd
+      # (via /proc, else lsof) under the repo; if it cannot be determined, skip
+      # the candidate so we never signal an unrelated process — e.g. on macOS or
+      # Windows where /proc is absent.
+      cwd=""
       if [[ -r "/proc/$pid/cwd" ]]; then
         cwd="$(readlink "/proc/$pid/cwd" 2>/dev/null || true)"
-        case "$cwd" in "$ROOT_DIR"|"$ROOT_DIR"/*) ;; *) continue ;; esac
+      elif command -v lsof >/dev/null 2>&1; then
+        cwd="$(lsof -a -p "$pid" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p' | head -1)"
       fi
+      case "$cwd" in
+        "$ROOT_DIR"|"$ROOT_DIR"/*) ;;
+        *) continue ;;
+      esac
       cmd="$(ps -o args= -p "$pid" 2>/dev/null || true)"
       [[ -n "$cmd" ]] || continue
       # Match the real interpreter, not a shell wrapper that merely launched it

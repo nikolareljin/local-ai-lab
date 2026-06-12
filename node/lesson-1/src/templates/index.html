@@ -74,6 +74,7 @@
     .modal th { color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase; }
     .modal td.num { font-family:ui-monospace,Menlo,Consolas,monospace; color:var(--accent); }
     .modal td.miss { font-family:ui-monospace,Menlo,Consolas,monospace; color:var(--muted); }
+    .modal .err { color:#ff9d9d; }
   </style>
 </head>
 <body>
@@ -161,18 +162,37 @@
       if (s.links && s.links.troubleshooting) troubleshootingUrl = s.links.troubleshooting;
     }
 
+    // Only allow http(s) URLs, and reject anything else (e.g. javascript:).
+    function safeUrl(url) {
+      try {
+        const u = new URL(url, window.location.origin);
+        return u.protocol === "http:" || u.protocol === "https:" ? u.href : null;
+      } catch {
+        return null;
+      }
+    }
+
     function renderLinks(links) {
       const nav = $("links");
-      const items = [
+      nav.textContent = "";
+      // Build anchors via the DOM (textContent), never innerHTML, so values from
+      // /api/status can't inject markup or a javascript: URL into the local UI.
+      for (const [label, url] of [
         ["Tutorial", links.tutorial],
         ["LinkedIn", links.linkedin],
         ["GitHub", links.github],
-      ].filter(([, url]) => url);
-      nav.innerHTML = items
-        .map(([t, url]) => `<a href="${url}" target="_blank" rel="noopener">${t}</a>`)
-        .join("");
-      if (links.tutorial) $("f-tutorial").href = links.tutorial;
-      if (links.github) $("f-tutorial").href = links.tutorial || links.github;
+      ]) {
+        const safe = url && safeUrl(url);
+        if (!safe) continue;
+        const a = document.createElement("a");
+        a.href = safe;
+        a.target = "_blank";
+        a.rel = "noopener";
+        a.textContent = label;
+        nav.appendChild(a);
+      }
+      const footer = safeUrl(links.tutorial || "") || safeUrl(links.github || "");
+      if (footer) $("f-tutorial").href = footer;
     }
 
     function renderFiles(files) {
