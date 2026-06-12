@@ -24,10 +24,12 @@ function listFiles(config) {
   return discoverFiles(config.docsDir).map((p) => path.basename(p));
 }
 
-// werkzeug.secure_filename equivalent: strip directory parts and unsafe chars.
+// werkzeug.secure_filename equivalent: strip directory parts and unsafe chars,
+// then trim leading AND trailing dots/underscores/dashes (matching the .NET port;
+// Windows normalizes trailing dots/spaces, which can cause surprise overwrites).
 function secureFilename(name) {
   let base = path.basename(name).replace(/[^A-Za-z0-9_.-]/g, "_");
-  base = base.replace(/^[._]+/, "");
+  base = base.replace(/^[._-]+|[._-]+$/g, "");
   return base || "file";
 }
 

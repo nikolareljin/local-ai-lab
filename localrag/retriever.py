@@ -35,7 +35,8 @@ class Bm25Retriever:
         self.bm25 = BM25Okapi(corpus)
 
     def search(self, query: str, k: int) -> List[Chunk]:
-        if not self.chunks:
+        # Empty corpus or non-positive k (k <= 0 would make top empty -> top[0] raises).
+        if not self.chunks or k <= 0:
             return []
         scores = self.bm25.get_scores(_tokenize(query))
         ranked = sorted(range(len(self.chunks)), key=lambda i: scores[i], reverse=True)

@@ -48,6 +48,21 @@ def test_search_respects_top_k():
     assert len(retriever.search("device", k=1)) <= 1
 
 
+def test_search_guards_nonpositive_k():
+    # k <= 0 must not raise (an empty top list would IndexError on top[0]).
+    retriever = Bm25Retriever(_chunks())
+    assert retriever.search("device", k=0) == []
+    assert retriever.search("device", k=-3) == []
+
+
+def test_config_clamps_invalid_top_k(monkeypatch):
+    from localrag.config import load_config
+
+    for bad in ("0", "-2", "not-a-number"):
+        monkeypatch.setenv("RAG_TOP_K", bad)
+        assert load_config().top_k == 5
+
+
 def test_peek_shape_and_determinism():
     # Guards the /api/peek JSON shape shared by the Python, Node and C# ports.
     chunks = _chunks()

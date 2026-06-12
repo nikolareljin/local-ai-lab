@@ -74,7 +74,16 @@ find_free_port() {
 # scoped to processes whose working directory is under this repo, so other
 # checkouts or unrelated processes on the machine are never matched.
 lesson_procs() {
-  command -v pgrep >/dev/null 2>&1 || return 0
+  # Without pgrep (rare), fall back to the PID-file web app so ./status and
+  # ./stop still manage the ./start-launched server instead of finding nothing.
+  if ! command -v pgrep >/dev/null 2>&1; then
+    local wpid; wpid="$(web_pid)"
+    if [[ -n "$wpid" ]] && kill -0 "$wpid" 2>/dev/null; then
+      printf '%s\t%s\t%s\t%s\n' "$wpid" "python" "${WEB_PORT:-5000}" \
+        "$(ps -o args= -p "$wpid" 2>/dev/null || echo 'python -m localrag web')"
+    fi
+    return 0
+  fi
   local self=$$
   # kind:regex — regex is matched against the full command line via `pgrep -f`.
   local sigs=(

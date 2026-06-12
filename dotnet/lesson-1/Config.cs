@@ -114,7 +114,7 @@ public record Config(
             EmbedProvider: Env("RAG_EMBED_PROVIDER", "ollama").ToLowerInvariant(),
             DocsDir: docsDir,
             CacheDir: cacheDir,
-            TopK: int.TryParse(Env("RAG_TOP_K", "5"), out var k) ? k : 5,
+            TopK: int.TryParse(Env("RAG_TOP_K", "5"), out var k) && k > 0 ? k : 5,
             LinkedinUrl: Env("LINKEDIN_URL", "https://www.linkedin.com/in/nikolareljin"),
             GithubUrl: Env("GITHUB_URL", "https://github.com/nikolareljin/local-ai-lab"),
             TutorialUrl: Env("TUTORIAL_URL", "https://nikolareljin.github.io/local-ai-lab/"),

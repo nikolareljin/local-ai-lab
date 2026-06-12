@@ -104,7 +104,9 @@ public partial class Bm25Retriever : IRetriever
 
     public List<Chunk> Search(string query, int k)
     {
-        if (_chunks.Count == 0)
+        // Guard against an empty corpus or a non-positive k (k <= 0 would make
+        // `top` empty and `top[0]` throw).
+        if (_chunks.Count == 0 || k <= 0)
         {
             return new List<Chunk>();
         }

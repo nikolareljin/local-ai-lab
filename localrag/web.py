@@ -108,17 +108,17 @@ def create_app(base_config: Config | None = None) -> Flask:
         """
         config = _request_config()
         question = (request.args.get("q") or "").strip()
-        retriever = get_retriever(config)
-        peek_fn = getattr(retriever, "peek", None)
-        if peek_fn is None:
-            name = getattr(retriever, "name", config.retriever)
-            return (
-                jsonify(
-                    {"error": f"The '{name}' retriever has no peek view yet — switch to BM25."}
-                ),
-                400,
-            )
         try:
+            retriever = get_retriever(config)  # may rebuild the index — can fail
+            peek_fn = getattr(retriever, "peek", None)
+            if peek_fn is None:
+                name = getattr(retriever, "name", config.retriever)
+                return (
+                    jsonify(
+                        {"error": f"The '{name}' retriever has no peek view yet — switch to BM25."}
+                    ),
+                    400,
+                )
             return jsonify(peek_fn(question or None, config.top_k))
         except Exception as exc:
             return jsonify({"error": str(exc)}), 500

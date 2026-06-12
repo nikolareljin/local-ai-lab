@@ -36,7 +36,7 @@ for (var i = 0; i < rest.Length; i++)
 var config = Config.Load() with { };
 if (providerOverride is { Length: > 0 }) config = config with { Provider = providerOverride };
 if (retrieverOverride is { Length: > 0 }) config = config with { Retriever = retrieverOverride };
-if (kOverride is { } kk) config = config with { TopK = kk };
+if (kOverride is { } kk && kk > 0) config = config with { TopK = kk };
 
 List<Chunk> EnsureIndex(bool force)
 {
@@ -213,15 +213,15 @@ static void RunWeb(Config baseConfig, string host, int port)
     // The raw numbers behind the index — "How the system sees your data".
     app.MapGet("/api/peek", (string? q) =>
     {
-        var retriever = Engine.GetRetriever(baseConfig);
-        if (retriever is not Bm25Retriever bm)
-        {
-            return Results.Json(
-                new { error = $"The '{retriever.Name}' retriever has no peek view yet — switch to BM25." },
-                jsonOpts, statusCode: 400);
-        }
         try
         {
+            var retriever = Engine.GetRetriever(baseConfig);
+            if (retriever is not Bm25Retriever bm)
+            {
+                return Results.Json(
+                    new { error = $"The '{retriever.Name}' retriever has no peek view yet — switch to BM25." },
+                    jsonOpts, statusCode: 400);
+            }
             return Results.Json(bm.Peek(q, baseConfig.TopK), jsonOpts);
         }
         catch (Exception ex)

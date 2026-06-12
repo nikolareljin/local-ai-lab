@@ -76,7 +76,8 @@ class Bm25Retriever {
   }
 
   search(query, k) {
-    if (!this.chunks.length) return [];
+    // Empty corpus or non-positive k (k <= 0 would make top empty -> top[0] undefined).
+    if (!this.chunks.length || k <= 0) return [];
     const scores = this.scores(tokenize(query));
     const ranked = scores
       .map((_, i) => i)

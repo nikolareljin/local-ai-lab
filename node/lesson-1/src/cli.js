@@ -119,7 +119,7 @@ async function main(argv) {
   const config = loadConfig();
   if (top.provider) config.provider = top.provider.toLowerCase();
   if (top.retriever) config.retriever = top.retriever.toLowerCase();
-  if (top.k) config.topK = top.k;
+  if (top.k && top.k > 0) config.topK = top.k;
 
   if (command === "index") {
     const reindex = rest.includes("--reindex");
