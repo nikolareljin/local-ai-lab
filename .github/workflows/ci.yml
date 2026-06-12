@@ -22,6 +22,6 @@ jobs:
     with:
       python_version: "3.12"
       working_directory: "."
-      lint_command: "pip install -r requirements.txt && python -m py_compile $(find localrag tests -name '*.py')"
-      test_command: "pip install pytest && pytest -q"
+      lint_command: "pip install -r requirements.txt && python -m py_compile $(find localrag tests tools examples -name '*.py')"
+      test_command: "pip install -r requirements.txt pytest && python -m pytest -q"
       build_command: ""

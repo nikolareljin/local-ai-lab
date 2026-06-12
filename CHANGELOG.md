@@ -4,6 +4,25 @@ All notable changes to this project are documented here. This project follows
 [Conventional Commits](https://www.conventionalcommits.org/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.0]
+
+Cross-platform install docs, per-lesson PDFs, an easy lesson runner, and the polyglot foundation.
+
+### Added
+- **`INSTALL.md`** — Linux / macOS / Windows dependency setup for Python, Node.js, and C#, with a
+  per-lesson dependency table. Clarifies the app runs with Python directly (no Docker).
+- **PDFs** — `tools/build_lesson_pdfs.py` (pure-Python) generates `docs/pdf/INSTALL.pdf` and
+  `docs/pdf/LESSON1-8.pdf`; linked from each lesson, the README, and the course site.
+- **`./run` dispatcher** — `./run -l <N> [--lang python|node|csharp] [action]`; auto-creates the
+  venv, auto-picks a free port, and announces the default AI (Claude Code).
+- **`examples/mcp_demo.py`** — stdio client used by `./run -l 2`.
+- **Install slides** added to the Lesson 1 and Lesson 2 interactive sliders.
+
+### Changed
+- **Polyglot (Option B):** Python is the reference; `--lang node|csharp` is wired (points to the
+  Python reference where a lesson isn't ported yet).
+- Reduced emoji usage across docs and the site for a cleaner look.
+
 ## [0.2.0]
 
 **Lesson 2 (MCP) complete & working**, plus the full 8-lesson roadmap.
@@ -19,7 +38,7 @@ All notable changes to this project are documented here. This project follows
   Ollama + function calling, Microsoft Semantic Kernel in C#/.NET, AWS Bedrock Agents, Google ADK).
 
 ### Changed
-- `requirements.txt` adds `mcp`. README/landing curriculum mark Lesson 2 as ✅ Available.
+- `requirements.txt` adds `mcp`. README/landing curriculum mark Lesson 2 as Available.
 
 ## [0.1.0]
 

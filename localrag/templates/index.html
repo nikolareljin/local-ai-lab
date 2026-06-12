@@ -121,9 +121,9 @@
     function renderLinks(links) {
       const nav = $("links");
       const items = [
-        ["📘 Tutorial", links.tutorial],
-        ["💼 LinkedIn", links.linkedin],
-        ["🐙 GitHub", links.github],
+        ["Tutorial", links.tutorial],
+        ["LinkedIn", links.linkedin],
+        ["GitHub", links.github],
       ].filter(([, url]) => url);
       nav.innerHTML = items
         .map(([t, url]) => `<a href="${url}" target="_blank" rel="noopener">${t}</a>`)

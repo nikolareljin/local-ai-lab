@@ -4,8 +4,15 @@
 LangGraph that run on your own machine. Each lesson builds a small, fully working, *readable*
 program, so you finish understanding how the thing actually works — not just how to call an SDK.
 
-🔗 **Course site (interactive lessons):** https://nikolareljin.github.io/local-ai-lab/
-👤 **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
+**Course site (interactive lessons):** https://nikolareljin.github.io/local-ai-lab/
+**Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
+
+> **How it runs:** with the language toolchains **directly — there is no Docker.** Install once,
+> then `./run -l <N>`. Full cross-platform setup (Linux · macOS · Windows) and per-lesson
+> dependencies are in **[INSTALL.md](./INSTALL.md)** ([PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)).
+> The course is **polyglot** — **Python** is the reference today; **Node.js** and **C#** are opt-in
+> per lesson via `./run -l <N> --lang node|csharp`. Every lesson is also a **PDF** in
+> [`docs/pdf/`](./docs/pdf/).
 
 ---
 
@@ -17,19 +24,20 @@ command to type, and shows the code — steps are deep-linkable).
 
 | # | Lesson | What you build | Read (Markdown) | Live (interactive) | Status |
 |---|--------|----------------|-----------------|--------------------|--------|
-| 1 | **RAG from scratch** | A drag-and-drop document Q&A app: extract → chunk → retrieve (BM25 + embeddings) → grounded answer with citations | [LESSON1.md](./LESSON1.md) | [▶ open](https://nikolareljin.github.io/local-ai-lab/lesson-1-rag.html) | ✅ Available |
-| 2 | **MCP servers** | Expose your document search as a Model Context Protocol tool Claude Code can call (`mcp_server.py`) | [LESSON2.md](./LESSON2.md) | [▶ open](https://nikolareljin.github.io/local-ai-lab/lesson-2-mcp.html) | ✅ Available |
-| 3 | **LangChain** | Rebuild the RAG pipeline with LangChain and compare trade-offs | [LESSON3.md](./LESSON3.md) | _on site soon_ | 🚧 Planned |
-| 4 | **LangGraph** | Turn the pipeline into a stateful, self-correcting agent graph | [LESSON4.md](./LESSON4.md) | _on site soon_ | 🚧 Planned |
-| 5 | **Ollama + Function Calling** | Give a local model real tools (function calling), 100% offline | [LESSON5.md](./LESSON5.md) | _on site soon_ | 🚧 Planned |
-| 6 | **Microsoft Semantic Kernel** | Rebuild the agent in **C# / .NET** with SK plugins (runs locally) | [LESSON6.md](./LESSON6.md) | _on site soon_ | 🚧 Planned |
-| 7 | **AWS Bedrock Agents** | Knowledge bases + action groups on a managed cloud agent, driven locally | [LESSON7.md](./LESSON7.md) | _on site soon_ | 🚧 Planned |
-| 8 | **Google AI Development Kit** | Build & run a Gemini agent locally with Google's ADK | [LESSON8.md](./LESSON8.md) | _on site soon_ | 🚧 Planned |
+| 1 | **RAG from scratch** | A drag-and-drop document Q&A app: extract → chunk → retrieve (BM25 + embeddings) → grounded answer with citations | [LESSON1.md](./LESSON1.md) | [open](https://nikolareljin.github.io/local-ai-lab/lesson-1-rag.html) | Available |
+| 2 | **MCP servers** | Expose your document search as a Model Context Protocol tool Claude Code can call (`mcp_server.py`) | [LESSON2.md](./LESSON2.md) | [open](https://nikolareljin.github.io/local-ai-lab/lesson-2-mcp.html) | Available |
+| 3 | **LangChain** | Rebuild the RAG pipeline with LangChain and compare trade-offs | [LESSON3.md](./LESSON3.md) | _on site soon_ | Planned |
+| 4 | **LangGraph** | Turn the pipeline into a stateful, self-correcting agent graph | [LESSON4.md](./LESSON4.md) | _on site soon_ | Planned |
+| 5 | **Ollama + Function Calling** | Give a local model real tools (function calling), 100% offline | [LESSON5.md](./LESSON5.md) | _on site soon_ | Planned |
+| 6 | **Microsoft Semantic Kernel** | Rebuild the agent in **C# / .NET** with SK plugins (runs locally) | [LESSON6.md](./LESSON6.md) | _on site soon_ | Planned |
+| 7 | **AWS Bedrock Agents** | Knowledge bases + action groups on a managed cloud agent, driven locally | [LESSON7.md](./LESSON7.md) | _on site soon_ | Planned |
+| 8 | **Google AI Development Kit** | Build & run a Gemini agent locally with Google's ADK | [LESSON8.md](./LESSON8.md) | _on site soon_ | Planned |
 
 Every lesson's end goal: a **fully published slideshow lesson** with step-by-step instructions, and
 **all code runs locally**.
 
-🔗 **Browse all lessons live:** https://nikolareljin.github.io/local-ai-lab/
+**Browse all lessons live:** https://nikolareljin.github.io/local-ai-lab/
+**Every lesson as a printable PDF** (with cross-platform install instructions): [`docs/pdf/`](./docs/pdf/) — e.g. [LESSON1.pdf](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON1.pdf), [INSTALL.pdf](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf).
 
 ---
 
@@ -155,10 +163,14 @@ uses the **Claude Code CLI** as the AI — no API key, it just uses your existin
 ./run -l 2 register                          # register the MCP server with Claude Code
 ./run -l 2 serve                             # run the MCP server over stdio
 ./run -l 2 test                              # run Lesson 2 tests
+./run -l 1 --lang node                       # Node.js / C# impls (where ported; else points to Python)
 ./run -h                                     # full help
 ```
 
 Lessons **3–8** are written guides for now: `./run -l 3` points you to `LESSON3.md`.
+
+First-time setup and per-lesson dependencies for **Linux, macOS, and Windows** (Python, Node.js,
+C#) are in **[INSTALL.md](./INSTALL.md)** ([PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)).
 
 **The AI is Claude Code by default.** `./run` announces the provider and checks that `claude` is on
 your PATH. To use a different one, set `RAG_PROVIDER`:
