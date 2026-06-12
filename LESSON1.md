@@ -557,6 +557,31 @@ honest instead of inventing an answer.
 - What did the turtle eat during the twelve-year voyage?
 - Who was the President of Earth when the mission launched?
 
+**The clearest single test — grounding *and* labeled general knowledge in one answer.** Ask:
+
+```bash
+./run -l 1 ask "Which dog went to space?"
+```
+
+The story is about a *turtle*, Caretta — there is no dog in it. A well-behaved RAG system should
+(1) say it's not in your documents, and (2) add the real-world answer **clearly labeled** as general
+knowledge, so you can tell the two apart:
+
+```text
+No dog is mentioned in your documents. The documents describe a magic turtle named
+Caretta ... [The_Magic_Turtle_Astronaut.pdf:2] — not a dog.
+
+This is not covered in your documents.
+
+(general knowledge — not from your documents) The most famous dog in space was Laika,
+a Soviet dog who flew aboard Sputnik 2 in 1957, becoming the first animal to orbit Earth.
+
+Sources: The_Magic_Turtle_Astronaut.pdf:2, rag_tutorial.md:1
+```
+
+That separation — *cited facts from your file* vs. *clearly-labeled general knowledge* — is exactly
+what the anti-hallucination prompt buys you.
+
 > **One nice touch for a talk:** ask *"What is the nearest star system to the Sun?"* The story states
 > Alpha Centauri is ~4.25 light-years away, so the app answers **from the document, with a citation**,
 > even though it's also general knowledge — a clean way to show retrieval preferring *your* text.
@@ -565,11 +590,13 @@ honest instead of inventing an answer.
 > Right names, ship, planet, and dates — each with a `[file:page]` citation — prove the answer came
 > from **your uploaded file**, not the model's memory. That's RAG doing its job.
 
-Prefer the terminal? Drop the file into `documents/` and ask:
+Prefer the terminal? The PDF is already in `documents/`, so just ask — in **any of the three
+languages** (same corpus, same grounded answer):
 
 ```bash
-cp ~/Downloads/The_Magic_Turtle_Astronaut.pdf documents/
-python -m localrag ask "What planet did Caretta discover, and which star does it orbit?"
+./run -l 1 ask "What planet did Caretta discover, and which star does it orbit?"                # Python (default)
+./run -l 1 --lang node   ask "What planet did Caretta discover, and which star does it orbit?"  # Node.js
+./run -l 1 --lang csharp ask "What planet did Caretta discover, and which star does it orbit?"  # C# / .NET
 ```
 
 ---

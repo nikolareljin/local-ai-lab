@@ -1,0 +1,19 @@
+{
+  "name": "local-ai-lab-lesson1",
+  "version": "1.0.0",
+  "description": "Node.js port of local-ai-lab Lesson 1: a tiny local RAG app (BM25 retrieval + pluggable LLM providers).",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "index": "node src/cli.js index",
+    "ask": "node src/cli.js ask",
+    "web": "node src/cli.js web"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "mammoth": "^1.7.2",
+    "multer": "^2.1.1",
+    "pdf-parse": "^1.1.1"
+  }
+}

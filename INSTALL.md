@@ -91,16 +91,20 @@ pip install -r requirements.txt
 `requests`, `python-dotenv`, `mcp`. (`./run -l 1` also does this automatically on first use.)
 
 ### Node.js (for ported lessons)
-From the lesson's Node directory (e.g. `node/`):
+The simplest path is `./run -l <N> --lang node`, which installs dependencies on first use. To do it
+by hand, run from that lesson's Node directory (e.g. `node/lesson-1/`):
 ```bash
+cd node/lesson-1
 npm install          # installs that lesson's package.json dependencies
 ```
 
 ### C# / .NET (for ported lessons, and Lesson 6)
-From the lesson's .NET project (e.g. `dotnet/`):
+The simplest path is `./run -l <N> --lang csharp`, which restores and builds on first use. To do it
+by hand, run from that lesson's .NET project (e.g. `dotnet/lesson-1/`):
 ```bash
+cd dotnet/lesson-1
 dotnet restore       # restores NuGet packages
-dotnet build
+dotnet build -c Release
 ```
 
 ---
@@ -151,7 +155,7 @@ ollama pull nomic-embed-text   # embeddings (RAG_RETRIEVER=embeddings)
 
 | Lesson | Languages | Extra dependencies | Install |
 |--------|-----------|--------------------|---------|
-| **1 · RAG** | Python ✓ · Node ◔ · C# ◔ | base only | `pip install -r requirements.txt` |
+| **1 · RAG** | Python ✓ · Node ◑ · C# ◑ | base only (Node/C# auto-install on first `./run`) | `pip install -r requirements.txt` |
 | **2 · MCP** | Python ✓ · Node ◔ · C# ◔ | `mcp` (in requirements) + Claude Code | §2 + §3 |
 | **3 · LangChain** | Python | LangChain + a vector store | `pip install langchain langchain-community langchain-ollama langchain-openai faiss-cpu` |
 | **4 · LangGraph** | Python | LangGraph | `pip install langgraph langchain` |
@@ -160,24 +164,81 @@ ollama pull nomic-embed-text   # embeddings (RAG_RETRIEVER=embeddings)
 | **7 · AWS Bedrock Agents** | Python | AWS CLI + boto3 | [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) + `pip install boto3` + `aws configure` |
 | **8 · Google ADK** | Python | `google-adk` + Gemini key | `pip install google-adk` + §4 (Gemini) |
 
-Legend: ✓ available · ◔ planned (Option B port in progress) · blank = single-language by nature.
+Legend: ✓ available · ◑ runnable port (BM25 retrieval; `claude`/`ollama` providers) · ◔ planned
+(Option B port in progress) · blank = single-language by nature.
 
 ---
 
-## 6. Verify your setup
+## 6. Verify your setup (run the tests)
 
+Each language ships an offline smoke test for Lesson 1 — no network, no API key, no LLM. They build
+the index over the committed sample documents and exit `0` on success. **Copy/paste and check:**
+
+### One command per language (Linux · macOS · Windows-Git-Bash)
 ```bash
-./run -l 1 test        # Lesson 1 (RAG) tests (Python)
-./run -l 2 test        # Lesson 2 (MCP) tests
-./run -l 1             # launch the RAG web UI
+./run -l 1 test                  # Python  (reference)  → "Indexed N file(s) into M chunk(s)."
+./run -l 1 --lang node   test    # Node.js              → "Indexed N file(s) into M chunk(s)."
+./run -l 1 --lang csharp test    # C# / .NET            → "Indexed N file(s) into M chunk(s)."
+./run -l 2 test                  # Lesson 2 (MCP) tests (Python)
+```
+A non-zero exit means something is wrong; a printed `Indexed …` line plus exit `0` means the stack
+(toolchain → extract → chunk → index) works end to end.
+
+### What "success" looks like
+```text
+[localrag] Indexed 4 file(s) into 44 chunk(s).   # Node  (per-page PDF differs slightly by language)
+[localrag] Indexed 4 file(s) into 32 chunk(s).   # C#
+```
+The exact chunk count varies a little by language (PDF text layout); any `Indexed 4 file(s) …` line
+with exit `0` is a pass. Check the exit code explicitly if you like:
+```bash
+./run -l 1 --lang node test && echo "PASS" || echo "FAIL"
 ```
 
-**Windows note:** `./run` is a Bash script — use **Git Bash** or **WSL**, or call the app directly:
+### Check the RAG behaviour (needs an AI provider, e.g. Claude Code from §3)
+The committed corpus includes a **fictional** story, *The Voyage of Caretta the Magnificent*
+(`documents/The_Magic_Turtle_Astronaut.pdf`) — a magic turtle astronaut. Because it's invented, a
+plain LLM can't know it, so it's the perfect way to prove the system reads *your* file. Try both a
+grounded question and one the story can't answer (works in any of the three languages — swap in
+`--lang node` / `--lang csharp`):
+
+```bash
+# 1) Grounded — the answer must cite [The_Magic_Turtle_Astronaut.pdf:page]
+./run -l 1 ask "What was the name of Caretta's ship and where did it travel?"
+#   → The ship was the Ocean's Memory [The_Magic_Turtle_Astronaut.pdf:3]; it travelled to
+#     Alpha Centauri ... Sources: The_Magic_Turtle_Astronaut.pdf:3, ...
+
+# 2) Not in the document — the anti-hallucination prompt stays honest, then labels general knowledge
+./run -l 1 ask "Which dog went to space?"
+#   → No dog is mentioned in your documents ... This is not covered in your documents.
+#     (general knowledge — not from your documents) The most famous dog in space was Laika,
+#     a Soviet dog who flew aboard Sputnik 2 in 1957 ...
+```
+If question 1 cites the PDF and question 2 says it's *not in your documents* before adding the
+clearly-labeled Laika fact, RAG + grounding is working. (See LESSON1.md → **Try it yourself** for more.)
+
+### Then launch the app
+```bash
+./run -l 1                       # Python RAG web UI   (auto-picks a free port)
+./run -l 1 --lang node           # Node.js RAG web UI
+./run -l 1 --lang csharp         # C# / .NET RAG web UI
+```
+
+### Windows without Git Bash (PowerShell / cmd)
+`./run` is a Bash script, so on Windows use **Git Bash** or **WSL** to run the commands above. If you
+prefer native PowerShell/cmd, call each stack directly — these are the same validation steps:
 ```powershell
+# Python
+python -m localrag index               # → "Indexed N file(s) into M chunk(s)."
+pytest -q                              # full Python test suite
 python -m localrag web                 # Lesson 1 web UI
-python -m localrag ask "your question" # Lesson 1 one-shot
 python mcp_server.py                   # Lesson 2 MCP server (stdio)
-pytest -q                              # all tests
+
+# Node.js
+cd node\lesson-1; npm install; node src\cli.js index   # validate; then: node src\cli.js web
+
+# C# / .NET
+cd dotnet\lesson-1; dotnet run -c Release -- index     # validate; then: dotnet run -c Release -- web
 ```
 
 ---
