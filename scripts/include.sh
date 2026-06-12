@@ -65,3 +65,53 @@ find_free_port() {
   while port_in_use "$p" && [[ $tries -lt 50 ]]; do p=$((p + 1)); tries=$((tries + 1)); done
   echo "$p"
 }
+
+# --- discover lesson processes (used by ./status and ./stop) ---------------
+# Print one TAB-separated line per running local-ai-lab process started from
+# THIS checkout:   <pid>\t<kind>\t<port-or-->\t<command>
+# Covers all three languages (python / node / csharp), the MCP server, and a
+# local docs preview server. When /proc is available (Linux) candidates are
+# scoped to processes whose working directory is under this repo, so other
+# checkouts or unrelated processes on the machine are never matched.
+lesson_procs() {
+  command -v pgrep >/dev/null 2>&1 || return 0
+  local self=$$
+  # kind:regex — regex is matched against the full command line via `pgrep -f`.
+  local sigs=(
+    "python:-m localrag"
+    "mcp:mcp_server\.py"
+    "node:cli\.js"
+    "csharp:LocalRag"
+    "csharp:dotnet run"
+    "docs:http\.server"
+  )
+  local seen=" " entry kind rx pid cwd cmd port
+  for entry in "${sigs[@]}"; do
+    kind="${entry%%:*}"; rx="${entry#*:}"
+    # `--` so a regex starting with '-' (e.g. "-m localrag") is the pattern,
+    # not parsed as a pgrep option.
+    while read -r pid; do
+      [[ -n "$pid" && "$pid" != "$self" ]] || continue
+      [[ "$seen" == *" $pid "* ]] && continue
+      # Scope to this checkout by working directory when /proc is available.
+      if [[ -r "/proc/$pid/cwd" ]]; then
+        cwd="$(readlink "/proc/$pid/cwd" 2>/dev/null || true)"
+        case "$cwd" in "$ROOT_DIR"|"$ROOT_DIR"/*) ;; *) continue ;; esac
+      fi
+      cmd="$(ps -o args= -p "$pid" 2>/dev/null || true)"
+      [[ -n "$cmd" ]] || continue
+      # Match the real interpreter, not a shell wrapper that merely launched it
+      # (e.g. `bash -c '... http.server ...'`), so we never kill a launcher shell.
+      prog="$(basename "${cmd%% *}")"
+      case "$kind" in
+        python|mcp|docs) [[ "$prog" == *python* ]] || continue ;;
+        node)            [[ "$prog" == *node* ]]   || continue ;;
+        csharp)          [[ "$prog" == dotnet* || "$prog" == *LocalRag* ]] || continue ;;
+      esac
+      port="$(printf '%s' "$cmd" | grep -oE -- '--port[= ]+[0-9]+' | grep -oE '[0-9]+' | head -1)"
+      [[ -n "$port" ]] || port="-"
+      seen+="$pid "
+      printf '%s\t%s\t%s\t%s\n' "$pid" "$kind" "$port" "$cmd"
+    done < <(pgrep -f -- "$rx" 2>/dev/null || true)
+  done
+}

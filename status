@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # SCRIPT: status
-# DESCRIPTION: Show whether the Lesson 1 RAG web app is running.
+# DESCRIPTION: Show every local-ai-lab process running from this checkout —
+#              across Python, Node.js and C#, plus the MCP and docs servers.
 # USAGE: ./status [-h] [-v] [-d]
 # CREATOR: Nik Reljin
 set -euo pipefail
@@ -8,8 +9,22 @@ set -euo pipefail
 source "$(dirname "$0")/scripts/include.sh"
 parse_common_args "$@"
 
-if web_running; then
-  log_info "Running (pid $(web_pid)) on http://127.0.0.1:${WEB_PORT}"
-else
-  log_info "Stopped."
+procs="$(lesson_procs)"
+
+if [[ -z "$procs" ]]; then
+  log_info "No local-ai-lab processes are running."
+  exit 0
 fi
+
+count="$(printf '%s\n' "$procs" | grep -c .)"
+log_info "Running local-ai-lab processes (${count}):"
+printf '  %-7s %-7s %-6s %s\n' "PID" "KIND" "PORT" "COMMAND"
+while IFS=$'\t' read -r pid kind port cmd; do
+  [[ -n "$pid" ]] || continue
+  # Trim very long command lines for a tidy table.
+  [[ ${#cmd} -gt 78 ]] && cmd="${cmd:0:77}…"
+  printf '  %-7s %-7s %-6s %s\n' "$pid" "$kind" "$port" "$cmd"
+done <<< "$procs"
+
+echo
+log_info "Stop everything with:  ./stop"
