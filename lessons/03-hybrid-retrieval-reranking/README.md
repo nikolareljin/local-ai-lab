@@ -58,12 +58,40 @@ opposite directions:
 From the repo root — pick any language, all three give the **same** rankings:
 
 ```bash
-./run -l 3                 # Python (default)
-./run -l 3 --lang node     # Node.js
-./run -l 3 --lang csharp   # C# / .NET 8
+./run -l 3                 # Python — prints the ranking comparison and exits (default)
+./run -l 3 --lang node     # Node.js — same output
+./run -l 3 --lang csharp   # C# / .NET 8 — same output
 ./run -l 3 test            # the offline Python test
 ./run -l 3 show            # walk through this lesson's steps (code, data, prompts, commands)
+./run -l 3 web             # optional: an interactive web UI (Python) — type a query, see all three rankings
 ```
+
+> Lesson 3 is a focused **comparison**: by default it prints the BM25 / semantic / hybrid rankings
+> for two queries and exits — no server needed. The optional `web` action adds a live query box if you
+> want to poke at it interactively.
+
+### Test it with the Fictive Story
+
+The best hands-on test is the bundled short story — *The Voyage of Caretta the Magnificent* (the magic
+turtle who became an astronaut), split into five chapters in [`story/`](./story). Launch the
+interactive UI and search it:
+
+```bash
+./run -l 3 web        # opens http://127.0.0.1:<port> — searching the 5-chapter story
+```
+
+Try these and watch the two retrievers diverge:
+
+| Query | Type | Expect |
+|-------|------|--------|
+| `Nuevo Edén` | exact name | BM25 nails the discovery chapter (`04-nuevo-eden.md`) |
+| `Alpha Centauri` | exact name | the chapters that name the star system rank top |
+| `who found the new planet` | paraphrase | the semantic arm surfaces the discovery chapter with no shared keyword |
+| `how did they keep the turtle alive in space` | paraphrase | the spacesuit chapter (`02-spacesuit.md`) rises |
+
+Exact names are BM25's strength; the paraphrases are where the semantic arm earns its keep — and the
+hybrid (RRF) column gets both right. Prose like this shows the trade-off far better than the toy
+support-doc corpus.
 
 Output:
 

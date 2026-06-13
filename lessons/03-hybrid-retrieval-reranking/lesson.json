@@ -10,14 +10,20 @@
   "defaultAction": "demo",
   "elements": [
     { "type": "note", "text": "BM25 and embeddings are not enemies — they solve different retrieval problems. BM25 wins exact terms (error codes, IDs); embeddings win paraphrases. Fuse both with RRF." },
-    { "type": "command", "action": "demo", "lang": "python", "shell": "python python/hybrid_demo.py", "note": "Run the Python demo." },
+    { "type": "command", "action": "web", "lang": "python", "shell": "python python/web.py", "venv": true, "note": "Interactive hybrid-search web UI — type a query, see all three rankings." },
+    { "type": "command", "action": "demo", "lang": "python", "shell": "python python/hybrid_demo.py", "note": "One-shot ranking comparison (Python)." },
     { "type": "command", "action": "demo", "lang": "node", "shell": "node node/hybrid_demo.mjs", "note": "The Node.js port — same rankings." },
     { "type": "command", "action": "demo", "lang": "csharp", "shell": "dotnet run --project dotnet -c Release --nologo", "note": "The C#/.NET port — same rankings." },
     { "type": "command", "action": "test", "lang": "python", "shell": "python -m pytest -q python/test_hybrid.py", "venv": true, "note": "Offline test of the lesson's claims." },
     { "type": "code", "file": "python/hybrid_demo.py", "lang": "python", "note": "The whole demo: tokenize, BM25, semantic stand-in, RRF." },
+    { "type": "code", "file": "python/web.py", "lang": "python", "note": "The interactive web UI (reuses hybrid_demo)." },
     { "type": "config", "file": "data/error_codes.md", "note": "One sample document from the tiny corpus." },
     { "type": "text", "title": "Exact-keyword query to try", "text": "error E_4096" },
     { "type": "text", "title": "Paraphrase query to try", "text": "my device won't turn on" },
-    { "type": "note", "file": "expected-output.txt", "title": "Expected output (all three languages)" }
+    { "type": "note", "file": "expected-output.txt", "title": "Expected output (all three languages)" },
+    { "type": "note", "text": "Test it on a richer document: `./run -l 3 web` opens an interactive search over the 5-chapter fictive story (The Voyage of Caretta the Magnificent). Watch how an exact name vs a paraphrase pick different chapters." },
+    { "type": "config", "file": "story/04-nuevo-eden.md", "note": "One chapter of the fictive-story corpus the web UI searches." },
+    { "type": "text", "title": "Story query — exact name (BM25 wins)", "text": "Nuevo Edén" },
+    { "type": "text", "title": "Story query — paraphrase (semantic wins)", "text": "who found the new planet" }
   ]
 }
