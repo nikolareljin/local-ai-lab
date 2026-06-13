@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>About — local-ai-lab</title>
+  <meta name="description" content="About local-ai-lab and its author, Nik Reljin — plus a selection of related local-first, developer-focused, AI-native projects." />
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+  <div class="topbar"><div class="inner">
+    <span class="brand"><a href="./index.html" style="color:inherit">local-ai<span class="dot">·</span>lab</a></span>
+    <nav>
+      <a href="./index.html">Home</a>
+      <a href="./lesson-1-rag.html">Lesson 1: RAG</a>
+      <a href="./lesson-2-mcp.html">Lesson 2: MCP</a>
+      <a href="./troubleshooting.html">Troubleshooting</a>
+      <a href="./about.html">About</a>
+      <a href="https://github.com/nikolareljin/local-ai-lab" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </div></div>
+
+  <div class="wrap">
+    <img class="hero-banner" src="./assets/hero-banner.png" width="1200" height="320"
+         alt="local-ai-lab — a neural network flowing into ascending learning steps" />
+
+    <section class="hero" style="padding:36px 0 8px">
+      <h1>About this project</h1>
+      <p class="tag">local-ai-lab teaches how modern AI actually works by building it from scratch —
+        small, readable programs you run on your own machine. It's one piece of a broader body of
+        work: local-first, developer-focused, AI-native tools.</p>
+    </section>
+
+    <h2>The through-line</h2>
+    <p>The course grew out of a simple preference that runs through everything below: software
+      should be <b>understandable</b>, should <b>run on your own hardware</b>, and should treat AI
+      as a primitive you control — not a remote black box. The projects span model finetuning and
+      compression, agent and inference tooling, AI-assisted documentation, and the everyday
+      developer utilities that hold a workflow together.</p>
+    <p>Built and maintained by <a href="https://www.linkedin.com/in/nikolareljin" target="_blank" rel="noopener">Nik
+      Reljin</a>. The full catalog lives on <a href="https://github.com/nikolareljin" target="_blank" rel="noopener">GitHub</a>;
+      the selection here is deliberately small — the ones most relevant to the themes of this course.</p>
+
+    <h2>Local &amp; applied AI</h2>
+    <div class="cards">
+      <a class="card" href="https://github.com/nikolareljin/finetorch" target="_blank" rel="noopener">
+        <div class="num">Rust</div>
+        <h3>finetorch</h3>
+        <div>A Rust-native LLM finetuning toolkit: LoRA / QLoRA, dataset preparation, training
+          orchestration, and evaluation — designed to run on a single GPU.</div>
+        <div class="status"><span class="badge">View on GitHub →</span></div>
+      </a>
+      <a class="card" href="https://github.com/nikolareljin/shrink-llm" target="_blank" rel="noopener">
+        <div class="num">Python</div>
+        <h3>shrink-llm</h3>
+        <div>An end-to-end toolkit for compressing large models — quantization, pruning, and
+          knowledge distillation — so they deploy efficiently on phones and edge devices.</div>
+        <div class="status"><span class="badge">View on GitHub →</span></div>
+      </a>
+      <a class="card" href="https://github.com/nikolareljin/ai-runner" target="_blank" rel="noopener">
+        <div class="num">Shell</div>
+        <h3>ai-runner</h3>
+        <div>Pick and run Ollama models on your own machine from a simple UI — local inference
+          without the setup friction.</div>
+        <div class="status"><span class="badge">View on GitHub →</span></div>
+      </a>
+      <a class="card" href="https://github.com/nikolareljin/agentvault" target="_blank" rel="noopener">
+        <div class="num">Go</div>
+        <h3>agentvault</h3>
+        <div>A CLI/TUI that manages and proxies AI agents, API keys, and instructions behind one
+          controlled gateway.</div>
+        <div class="status"><span class="badge">View on GitHub →</span></div>
+      </a>
+    </div>
+
+    <h2>AI-assisted developer tooling</h2>
+    <div class="cards">
+      <a class="card" href="https://github.com/nikolareljin/claude-docsmith" target="_blank" rel="noopener">
+        <div class="num">Python</div>
+        <h3>claude-docsmith</h3>
+        <div>Generate user and developer documentation straight from a repository, using Anthropic
+          Claude or a local Ollama model.</div>
+        <div class="status"><span class="badge">View on GitHub →</span></div>
+      </a>
+      <a class="card" href="https://github.com/nikolareljin/docforge" target="_blank" rel="noopener">
+        <div class="num">Python</div>
+        <h3>docforge</h3>
+        <div>Auto-generate references and end-user guides from any codebase on every push —
+          CI-driven, and designed to be vendored as a submodule.</div>
+        <div class="status"><span class="badge">View on GitHub →</span></div>
+      </a>
+    </div>
+
+    <h2>Developer tools</h2>
+    <div class="cards">
+      <a class="card" href="https://github.com/nikolareljin/vellum" target="_blank" rel="noopener">
+        <div class="num">Rust</div>
+        <h3>vellum</h3>
+        <div>A full-TUI Markdown reader for the terminal: syntax-highlighted code, inline images,
+          clickable links, search, and navigation history.</div>
+        <div class="status"><span class="badge">View on GitHub →</span></div>
+      </a>
+      <a class="card" href="https://github.com/nikolareljin/git-pulse" target="_blank" rel="noopener">
+        <div class="num">Python</div>
+        <h3>git-pulse</h3>
+        <div>A self-hosted dashboard that surfaces contributor impact, repo health, and code
+          quality from commit analytics and PR signals.</div>
+        <div class="status"><span class="badge">View on GitHub →</span></div>
+      </a>
+    </div>
+
+    <div class="cta" style="margin-top:28px">
+      <a class="btn" href="./lesson-1-rag.html">Start Lesson 1: RAG →</a>
+      <a class="btn ghost" href="https://github.com/nikolareljin" target="_blank" rel="noopener">More on GitHub</a>
+    </div>
+  </div>
+
+  <footer class="site"><div class="inner">
+    © 2023–2025 <a href="https://www.linkedin.com/in/nikolareljin" target="_blank" rel="noopener">Nik Reljin</a> ·
+    Source on <a href="https://github.com/nikolareljin/local-ai-lab" target="_blank" rel="noopener">GitHub</a> ·
+    Built as a hands-on training course.
+  </div></footer>
+</body>
+</html>

@@ -30,6 +30,9 @@ code, pre, kbd { font-family: "SF Mono", ui-monospace, "Cascadia Code", Menlo, C
 
 .wrap { max-width: var(--maxw); margin: 0 auto; padding: 28px 20px 64px; }
 
+/* ---- hero banner image ---- */
+.hero-banner { display: block; width: 100%; height: auto; border-radius: 16px; border: 1px solid var(--edge); margin: 8px 0 4px; }
+
 /* ---- hero / landing ---- */
 .hero { padding: 56px 0 24px; }
 .hero h1 { font-size: 44px; line-height: 1.1; margin: 0 0 12px; }

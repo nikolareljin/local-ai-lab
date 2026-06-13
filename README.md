@@ -1,5 +1,7 @@
 # local-ai-lab
 
+![local-ai-lab — build local AI, one lesson at a time](docs/assets/hero-banner.png)
+
 [![CI](https://github.com/nikolareljin/local-ai-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/nikolareljin/local-ai-lab/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Course site](https://img.shields.io/badge/course-live%20site-5b9dff)](https://nikolareljin.github.io/local-ai-lab/)
@@ -14,6 +16,7 @@ program, so you finish understanding how the thing actually works — not just h
 
 **Course site (interactive lessons):** https://nikolareljin.github.io/local-ai-lab/
 **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
+**Related projects:** [About page](https://nikolareljin.github.io/local-ai-lab/about.html) — selected local-first, developer-focused, AI-native tools.
 
 > **How it runs:** with the language toolchains **directly — there is no Docker.** Install once,
 > then `./run -l <N>`. Full cross-platform setup (Linux · macOS · Windows) and per-lesson
