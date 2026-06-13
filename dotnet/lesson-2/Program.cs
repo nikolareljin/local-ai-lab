@@ -33,7 +33,7 @@ if (action is "demo" or "test" or "client")
 if (action is not "serve")
 {
     await Console.Error.WriteLineAsync($"Unknown action '{action}'. Use: serve | demo | test.");
-    return;
+    Environment.Exit(2); // non-zero so run.sh/scripts don't think the server started
 }
 
 // Run the MCP server over stdio — exactly how a host like Claude Code launches a
@@ -89,15 +89,30 @@ public static class DocTools
         return names.Count > 0 ? string.Join("\n", names) : "(no documents indexed yet)";
     }
 
-    // Mirror Engine.GetRetriever without pulling in Providers/Prompts: rebuild
-    // the on-disk index when the docs change, then build a BM25 retriever.
+    // Mirror Engine.GetRetriever without pulling in Providers/Prompts: cache the
+    // retriever and guard rebuilds with a lock, so repeated tool calls skip the
+    // disk I/O and concurrent calls can't race on the index. Rebuild only when the
+    // docs change or the retriever type is switched.
+    private static readonly object RetrieverLock = new();
+    private static IRetriever? _retriever;
+    private static string? _retrieverKey;
+
     private static IRetriever GetRetriever(Config config)
     {
-        if (Store.IsStale(config))
+        lock (RetrieverLock)
         {
-            Store.BuildIndex(config);
+            if (Store.IsStale(config))
+            {
+                Store.BuildIndex(config);
+                _retriever = null;
+            }
+            if (_retriever is null || _retrieverKey != config.Retriever)
+            {
+                _retriever = RetrieverFactory.BuildRetriever(Store.LoadChunks(config), config);
+                _retrieverKey = config.Retriever;
+            }
+            return _retriever;
         }
-        return RetrieverFactory.BuildRetriever(Store.LoadChunks(config), config);
     }
 }
 

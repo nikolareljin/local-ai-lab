@@ -63,7 +63,9 @@ server.registerTool(
   async ({ query, k }) => {
     const config = loadConfig();
     const retriever = await getRetriever(config);
-    const hits = retriever.search(query, Math.max(1, Number.parseInt(k ?? 5, 10) || 5));
+    // The schema already validates k as an optional integer, so just default it
+    // and clamp to >= 1 (a `|| 5` fallback would wrongly turn k=0 into 5).
+    const hits = retriever.search(query, Math.max(1, k ?? 5));
     const text = hits.length
       ? hits.map((h) => `[${h.source}:${h.page_number}] ${h.text}`).join("\n\n")
       : "No relevant passages found in the local documents.";
