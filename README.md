@@ -18,8 +18,8 @@ program, so you finish understanding how the thing actually works — not just h
 > **How it runs:** with the language toolchains **directly — there is no Docker.** Install once,
 > then `./run -l <N>`. Full cross-platform setup (Linux · macOS · Windows) and per-lesson
 > dependencies are in **[INSTALL.md](./INSTALL.md)** ([PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)).
-> The course is **polyglot** — **Python** is the reference today; **Node.js** and **C#** are opt-in
-> per lesson via `./run -l <N> --lang node|csharp`. Every lesson is also a **PDF** in
+> The course is **polyglot** — **Python** is the reference, with **Node.js** and **C#** ports per
+> lesson via `./run -l <N> --lang node|csharp` (**Lessons 1 and 2** ship in all three today). Every lesson is also a **PDF** in
 > [`docs/pdf/`](./docs/pdf/).
 
 ---
@@ -125,6 +125,10 @@ pytest -q tests/test_mcp.py              # spawns the server over stdio and call
 claude mcp add local-ai-lab-docs -- python mcp_server.py
 ```
 
+**Polyglot:** the same server is also built on the official **Node.js**
+([`node/lesson-2`](./node/lesson-2)) and **C# / .NET** ([`dotnet/lesson-2`](./dotnet/lesson-2))
+MCP SDKs — try `./run -l 2 --lang node` or `./run -l 2 --lang csharp`.
+
 Full walkthrough: [LESSON2.md](./LESSON2.md) · [interactive lesson](https://nikolareljin.github.io/local-ai-lab/lesson-2-mcp.html).
 
 ---
@@ -146,7 +150,9 @@ local-ai-lab/
 │   └── templates/         #   index.html (web UI)
 ├── mcp_server.py          # Lesson 2 — MCP server (search_docs, list_documents)
 ├── examples/mcp_demo.py   # Lesson 2 — stdio client demo (used by ./run -l 2)
-├── run                    # ./run -l <N> — run any lesson locally
+├── node/                  # Node.js ports — lesson-1/ (RAG) · lesson-2/ (MCP server)
+├── dotnet/                # C# / .NET ports — lesson-1/ (RAG) · lesson-2/ (MCP server)
+├── run                    # ./run -l <N> [--lang python|node|csharp] — run any lesson locally
 ├── scripts/               # script-helpers submodule + start/stop/status helpers
 ├── tests/                 # offline smoke tests (incl. MCP integration test)
 ├── LESSON1.md … LESSON8.md   # full written lessons (linked to the live site)
@@ -171,7 +177,8 @@ uses the **Claude Code CLI** as the AI — no API key, it just uses your existin
 ./run -l 2 register                          # register the MCP server with Claude Code
 ./run -l 2 serve                             # run the MCP server over stdio
 ./run -l 2 test                              # run Lesson 2 tests
-./run -l 1 --lang node                       # Node.js / C# impls (where ported; else points to Python)
+./run -l 1 --lang node                       # Node.js impl (Lessons 1-2 ported; else points to Python)
+./run -l 2 --lang csharp                     # C# MCP server, demoed end-to-end
 ./run -h                                     # full help
 ```
 
