@@ -39,10 +39,33 @@ export function createApp(baseConfig) {
 
   const app = express();
   app.use(express.json({ limit: "64mb" }));
+  // memoryStorage buffers each file in RAM, so cap both the per-file size and the
+  // number of files per request — otherwise a single multi-file upload could
+  // exhaust memory. This keeps the worst-case bounded, matching the total-request
+  // caps the Python (MAX_CONTENT_LENGTH) and .NET (MaxRequestBodySize) ports use.
   const upload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 64 * 1024 * 1024 }, // 64 MB upload cap
+    limits: {
+      fileSize: 64 * 1024 * 1024, // 64 MB per-file cap
+      files: 20, // bound how many files one request can buffer at once
+    },
   });
+  // Translate multer limit violations into clear 413s instead of generic 500s.
+  function uploadFiles(req, res, next) {
+    upload.array("files")(req, res, (err) => {
+      if (!err) return next();
+      if (err instanceof multer.MulterError) {
+        const reason =
+          err.code === "LIMIT_FILE_SIZE"
+            ? "A file exceeds the 64 MB limit."
+            : err.code === "LIMIT_FILE_COUNT"
+              ? "Too many files in one upload (max 20)."
+              : err.message;
+        return res.status(413).json({ error: reason });
+      }
+      return next(err);
+    });
+  }
 
   // Per-request config with optional provider/retriever overrides.
   function requestConfig(body) {
@@ -75,7 +98,7 @@ export function createApp(baseConfig) {
     });
   });
 
-  app.post("/api/upload", upload.array("files"), async (req, res) => {
+  app.post("/api/upload", uploadFiles, async (req, res) => {
     const saved = [];
     const skipped = [];
     for (const f of req.files || []) {
