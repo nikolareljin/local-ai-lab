@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # SCRIPT: stop
-# DESCRIPTION: Stop the Lesson 1 RAG web app.
+# DESCRIPTION: Stop every local-ai-lab process running from this checkout —
+#              Python, Node.js and C# lessons, plus the MCP and docs servers.
+#              Use it to clean up a lesson you started with ./run or ./start and
+#              left running unattended.
 # USAGE: ./stop [-h] [-v] [-d]
 # CREATOR: Nik Reljin
 set -euo pipefail
@@ -8,16 +11,36 @@ set -euo pipefail
 source "$(dirname "$0")/scripts/include.sh"
 parse_common_args "$@"
 
-if ! web_running; then
-  log_info "Not running."
+procs="$(lesson_procs)"
+
+if [[ -z "$procs" ]]; then
+  log_info "Nothing to stop — no local-ai-lab processes are running."
   rm -f "$PID_FILE"
   exit 0
 fi
 
-pid="$(web_pid)"
-log_info "Stopping web app (pid $pid) ..."
-kill "$pid" 2>/dev/null || true
+# First pass: ask each process to terminate (SIGTERM).
+n=0
+while IFS=$'\t' read -r pid kind port cmd; do
+  [[ -n "$pid" ]] || continue
+  if [[ "$port" != "-" ]]; then
+    log_info "Stopping ${kind} (pid ${pid}, port ${port}) ..."
+  else
+    log_info "Stopping ${kind} (pid ${pid}) ..."
+  fi
+  kill "$pid" 2>/dev/null || true
+  n=$((n + 1))
+done <<< "$procs"
+
+# Second pass: force-kill any that ignored SIGTERM.
 sleep 1
-kill -0 "$pid" 2>/dev/null && kill -9 "$pid" 2>/dev/null || true
+while IFS=$'\t' read -r pid kind port cmd; do
+  [[ -n "$pid" ]] || continue
+  if kill -0 "$pid" 2>/dev/null; then
+    log_warn "pid ${pid} (${kind}) still alive — force-killing."
+    kill -9 "$pid" 2>/dev/null || true
+  fi
+done <<< "$procs"
+
 rm -f "$PID_FILE"
-log_info "Stopped."
+log_info "Stopped ${n} process(es)."

@@ -107,7 +107,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         config.provider = args.provider.lower()
     if args.retriever:
         config.retriever = args.retriever.lower()
-    if args.k:
+    if args.k and args.k > 0:
         config.top_k = args.k
 
     return args.func(args, config)

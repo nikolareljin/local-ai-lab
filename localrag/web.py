@@ -17,7 +17,7 @@ from flask import Flask, jsonify, render_template, request
 from werkzeug.utils import secure_filename
 
 from .config import Config, load_config
-from .engine import answer_question, refresh_index
+from .engine import answer_question, get_retriever, refresh_index
 from .extract import SUPPORTED_EXTS, discover_files
 
 
@@ -33,13 +33,18 @@ def create_app(base_config: Config | None = None) -> Flask:
     app.config["MAX_CONTENT_LENGTH"] = 64 * 1024 * 1024  # 64 MB upload cap
 
     def _request_config() -> Config:
-        """Per-request config with optional provider/retriever overrides."""
+        """Per-request config with optional provider/retriever overrides.
+
+        Overrides come from the JSON body (POST /api/ask) or the query string
+        (GET /api/peek), so both endpoints honor the dropdown selection — e.g.
+        switching back to BM25 when the server defaults to embeddings.
+        """
         data = request.get_json(silent=True) or {}
         overrides = {}
-        if data.get("provider"):
-            overrides["provider"] = str(data["provider"]).lower()
-        if data.get("retriever"):
-            overrides["retriever"] = str(data["retriever"]).lower()
+        for key in ("provider", "retriever"):
+            value = data.get(key) or request.args.get(key)
+            if value:
+                overrides[key] = str(value).lower()
         return dataclasses.replace(base_config, **overrides) if overrides else base_config
 
     @app.get("/")
@@ -59,6 +64,7 @@ def create_app(base_config: Config | None = None) -> Flask:
                     "linkedin": base_config.linkedin_url,
                     "github": base_config.github_url,
                     "tutorial": base_config.tutorial_url,
+                    "troubleshooting": base_config.docs_base_url + "troubleshooting.html",
                 },
             }
         )
@@ -98,6 +104,28 @@ def create_app(base_config: Config | None = None) -> Flask:
             result = answer_question(_request_config(), question)
             return jsonify(result)
         except Exception as exc:  # surface provider/network errors to the UI
+            return jsonify({"error": str(exc)}), 500
+
+    @app.get("/api/peek")
+    def peek():
+        """The raw numbers behind the index: how the system 'sees' your data
+        after BM25 finishes. Optional ?q= adds the per-chunk scoring for a query.
+        """
+        config = _request_config()
+        question = (request.args.get("q") or "").strip()
+        try:
+            retriever = get_retriever(config)  # may rebuild the index — can fail
+            peek_fn = getattr(retriever, "peek", None)
+            if peek_fn is None:
+                name = getattr(retriever, "name", config.retriever)
+                return (
+                    jsonify(
+                        {"error": f"The '{name}' retriever has no peek view yet — switch to BM25."}
+                    ),
+                    400,
+                )
+            return jsonify(peek_fn(question or None, config.top_k))
+        except Exception as exc:
             return jsonify({"error": str(exc)}), 500
 
     return app

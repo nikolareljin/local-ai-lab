@@ -19,6 +19,15 @@ def _root() -> Path:
     return Path(__file__).resolve().parent.parent
 
 
+def _pos_int(value: str | None, default: int) -> int:
+    """Parse a positive int, falling back to default on missing/non-numeric/<=0."""
+    try:
+        n = int(value)
+    except (TypeError, ValueError):
+        return default
+    return n if n > 0 else default
+
+
 @dataclass
 class Config:
     provider: str
@@ -32,6 +41,10 @@ class Config:
     linkedin_url: str
     github_url: str
     tutorial_url: str
+    # Base URL of the docs site (trailing slash). Override (e.g.
+    # http://localhost:8000/) to point the app's Troubleshooting links at a
+    # LOCAL copy of docs/ while testing, before publishing to GitHub Pages.
+    docs_base_url: str
 
     # Provider settings
     claude_bin: str
@@ -59,10 +72,11 @@ def load_config() -> Config:
         embed_provider=os.getenv("RAG_EMBED_PROVIDER", "ollama").lower(),
         docs_dir=docs_dir,
         cache_dir=root / ".localrag",
-        top_k=int(os.getenv("RAG_TOP_K", "5")),
+        top_k=_pos_int(os.getenv("RAG_TOP_K"), 5),
         linkedin_url=os.getenv("LINKEDIN_URL", "https://www.linkedin.com/in/nikolareljin"),
         github_url=os.getenv("GITHUB_URL", "https://github.com/nikolareljin/local-ai-lab"),
         tutorial_url=os.getenv("TUTORIAL_URL", "https://nikolareljin.github.io/local-ai-lab/"),
+        docs_base_url=(os.getenv("DOCS_BASE_URL") or "https://nikolareljin.github.io/local-ai-lab/").rstrip("/") + "/",
         claude_bin=os.getenv("CLAUDE_BIN", "claude"),
         ollama_url=os.getenv("OLLAMA_URL", "http://localhost:11434").rstrip("/"),
         ollama_model=os.getenv("OLLAMA_MODEL", "llama3.1:8b"),

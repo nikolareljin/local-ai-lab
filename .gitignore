@@ -7,6 +7,10 @@ __pycache__/
 .playwright-mcp/
 *.zip
 
+# Node.js (Lesson 1 port)
+node_modules/
+node/lesson-1/node_modules/
+
 # Jekyll (GitHub Pages) build output
 docs/_site/
 docs/.jekyll-cache/

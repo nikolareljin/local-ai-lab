@@ -46,3 +46,64 @@ def test_search_respects_top_k():
     chunks = _chunks()
     retriever = Bm25Retriever(chunks)
     assert len(retriever.search("device", k=1)) <= 1
+
+
+def test_search_guards_nonpositive_k():
+    # k <= 0 must not raise (an empty top list would IndexError on top[0]).
+    retriever = Bm25Retriever(_chunks())
+    assert retriever.search("device", k=0) == []
+    assert retriever.search("device", k=-3) == []
+
+
+def test_config_clamps_invalid_top_k(monkeypatch):
+    from localrag.config import load_config
+
+    for bad in ("0", "-2", "not-a-number"):
+        monkeypatch.setenv("RAG_TOP_K", bad)
+        assert load_config().top_k == 5
+
+
+def test_peek_shape_and_determinism():
+    # Guards the /api/peek JSON shape shared by the Python, Node and C# ports.
+    chunks = _chunks()
+    retriever = Bm25Retriever(chunks)
+
+    base = retriever.peek()
+    assert base["retriever"] == "bm25"
+    assert base["params"] == {"k1": 1.5, "b": 0.75}
+    assert base["num_chunks"] == len(chunks)
+    assert base["vocabulary"] > 0
+    assert base["avg_doc_length"] > 0
+    assert base["top_terms"] and {"term", "idf"} <= set(base["top_terms"][0])
+    sample = base["sample_chunk"]
+    assert {"source", "page_number", "text_preview", "num_tokens", "tokens"} <= set(sample)
+    # No query given -> no per-query scoring block.
+    assert "query" not in base
+
+    result = retriever.peek("how do I reset the device", k=3)
+    q = result["query"]
+    assert q["text"] == "how do I reset the device"
+    assert q["tokens"] and all(t in q["term_idf"] for t in q["tokens"])
+    assert 1 <= len(q["results"]) <= 3
+    row = q["results"][0]
+    assert {"source", "page_number", "score", "text_preview", "term_freqs"} <= set(row)
+    # Deterministic for the same query.
+    assert retriever.peek("how do I reset the device", k=3) == result
+
+
+def test_peek_empty_corpus_reports_zero_stats():
+    # With no real chunks the placeholder corpus must not inflate the stats.
+    p = Bm25Retriever([]).peek()
+    assert p["num_chunks"] == 0
+    assert p["vocabulary"] == 0
+    assert p["avg_doc_length"] == 0.0
+    assert p["top_terms"] == []
+    assert p["sample_chunk"] is None
+
+
+def test_docs_base_url_empty_falls_back(monkeypatch):
+    from localrag.config import load_config
+
+    monkeypatch.setenv("DOCS_BASE_URL", "")
+    url = load_config().docs_base_url
+    assert url.startswith("https://") and url.endswith("/")

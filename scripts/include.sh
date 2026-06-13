@@ -65,3 +65,91 @@ find_free_port() {
   while port_in_use "$p" && [[ $tries -lt 50 ]]; do p=$((p + 1)); tries=$((tries + 1)); done
   echo "$p"
 }
+
+# --- discover lesson processes (used by ./status and ./stop) ---------------
+# Print one TAB-separated line per running local-ai-lab process started from
+# THIS checkout:   <pid>\t<kind>\t<port-or-->\t<command>
+# Covers all three languages (python / node / csharp), the MCP server, and a
+# local docs preview server. When /proc is available (Linux) candidates are
+# scoped to processes whose working directory is under this repo, so other
+# checkouts or unrelated processes on the machine are never matched.
+lesson_procs() {
+  local self=$$ seen=" " wpid wcmd wport
+  # Always include the ./start PID-file web app first. A shimmed PYTHON_BIN
+  # (pyenv/asdf) can make its argv0 a wrapper that the interpreter filter below
+  # would drop, and ./status/./stop must still manage it. Tracked in `seen` so
+  # the signature scan below never lists it twice. This is also the only thing we
+  # can find when pgrep is unavailable.
+  wpid="$(web_pid)"
+  if [[ -n "$wpid" ]] && kill -0 "$wpid" 2>/dev/null; then
+    seen+="$wpid "
+    wcmd="$(ps -o args= -p "$wpid" 2>/dev/null || echo 'python -m localrag web')"
+    wport="$(printf '%s' "$wcmd" | grep -oE -- '--port[= ]+[0-9]+' | grep -oE '[0-9]+' | head -1 || true)"
+    [[ -n "$wport" ]] || wport="${WEB_PORT:-5000}"
+    printf '%s\t%s\t%s\t%s\n' "$wpid" "python" "$wport" "$wcmd"
+  fi
+  command -v pgrep >/dev/null 2>&1 || return 0
+
+  # kind:regex — regex is matched against the full command line via `pgrep -f`.
+  local sigs=(
+    "python:-m localrag"
+    "mcp:mcp_server\.py"
+    "node:cli\.js"
+    "csharp:LocalRag"
+    "csharp:dotnet run"
+    "docs:http\.server"
+  )
+  local entry kind rx pid cwd cmd port prog
+  for entry in "${sigs[@]}"; do
+    kind="${entry%%:*}"; rx="${entry#*:}"
+    # `--` so a regex starting with '-' (e.g. "-m localrag") is the pattern,
+    # not parsed as a pgrep option.
+    while read -r pid; do
+      [[ -n "$pid" && "$pid" != "$self" ]] || continue
+      [[ "$seen" == *" $pid "* ]] && continue
+      cmd="$(ps -o args= -p "$pid" 2>/dev/null || true)"
+      [[ -n "$cmd" ]] || continue
+      # Scope to THIS checkout. Prefer the verified working directory (Linux
+      # /proc, else lsof). When neither is available (e.g. Windows Git Bash, or a
+      # stripped-down macOS), fall back to requiring the command line itself to
+      # reference this repo's path — so ./status/./stop can still manage the
+      # node/csharp/mcp servers there, while we never signal a process from an
+      # unrelated checkout. The launchers spell out absolute paths under the repo
+      # (node src/cli.js, the built LocalRag binary, $ROOT_DIR/mcp_server.py).
+      cwd=""
+      if [[ -r "/proc/$pid/cwd" ]]; then
+        cwd="$(readlink "/proc/$pid/cwd" 2>/dev/null || true)"
+      elif command -v lsof >/dev/null 2>&1; then
+        cwd="$(lsof -a -p "$pid" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p' | head -1)"
+      fi
+      if [[ -n "$cwd" ]]; then
+        case "$cwd" in
+          "$ROOT_DIR"|"$ROOT_DIR"/*) ;;
+          *) continue ;;
+        esac
+      else
+        case "$cmd" in
+          *"$ROOT_DIR"*) ;;
+          *) continue ;;
+        esac
+      fi
+      # Match the real interpreter, not a shell wrapper that merely launched it
+      # (e.g. `bash -c '... http.server ...'`), so we never kill a launcher shell.
+      # Take the program name from `ps -o comm=` (the kernel-reported executable),
+      # not by splitting argv on spaces — an executable path with spaces (e.g.
+      # Windows "C:\Program Files\nodejs\node.exe") would otherwise truncate to
+      # the first space and drop the real lesson process.
+      prog="$(ps -o comm= -p "$pid" 2>/dev/null || true)"
+      prog="$(basename "${prog:-${cmd%% *}}")"
+      case "$kind" in
+        python|mcp|docs) [[ "$prog" == *python* ]] || continue ;;
+        node)            [[ "$prog" == *node* ]]   || continue ;;
+        csharp)          [[ "$prog" == dotnet* || "$prog" == *LocalRag* ]] || continue ;;
+      esac
+      port="$(printf '%s' "$cmd" | grep -oE -- '--port[= ]+[0-9]+' | grep -oE '[0-9]+' | head -1 || true)"
+      [[ -n "$port" ]] || port="-"
+      seen+="$pid "
+      printf '%s\t%s\t%s\t%s\n' "$pid" "$kind" "$port" "$cmd"
+    done < <(pgrep -f -- "$rx" 2>/dev/null || true)
+  done
+}

@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>LocalRag</RootNamespace>
+    <AssemblyName>LocalRag</AssemblyName>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- PdfPig: this pin restores from public nuget.org on all platforms. The code uses
+         only the stable PdfDocument.Open / GetPages() / page.Text API, so a maintainer on
+         a machine with the usual nuget.org view may pin the current stable PdfPig from the
+         0.1.x line on nuget.org instead. -->
+    <PackageReference Include="UglyToad.PdfPig" Version="1.7.0-custom-5" />
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Ship the single-page UI alongside the binary so `web` can serve it.
+         Web SDK already includes wwwroot content, so Update (not Include). -->
+    <Content Update="wwwroot\index.html" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

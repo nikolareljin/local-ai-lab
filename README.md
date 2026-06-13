@@ -1,5 +1,13 @@
 # local-ai-lab
 
+[![CI](https://github.com/nikolareljin/local-ai-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/nikolareljin/local-ai-lab/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![Course site](https://img.shields.io/badge/course-live%20site-5b9dff)](https://nikolareljin.github.io/local-ai-lab/)
+[![Runs locally](https://img.shields.io/badge/runs-100%25%20local-3fb950)](./INSTALL.md)
+![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=nodedotjs&logoColor=white)
+![.NET](https://img.shields.io/badge/.NET-8-512BD4?logo=dotnet&logoColor=white)
+
 **A hands-on course for building local, private AI from scratch** — RAG, MCP, LangChain, and
 LangGraph that run on your own machine. Each lesson builds a small, fully working, *readable*
 program, so you finish understanding how the thing actually works — not just how to call an SDK.
@@ -191,3 +199,11 @@ RAG_PROVIDER=ollama ./run -l 1 ask "..."     # or gemini / openai (set the key i
 ## License
 
 MIT © Nik Reljin — see [LICENSE](./LICENSE). Educational use encouraged; attribution appreciated.
+
+---
+
+## Clone traffic
+
+![Clone traffic](https://raw.githubusercontent.com/nikolareljin/stats/main/charts/local-ai-lab.svg)
+
+_Updated daily. Total and unique cloners over the last 14 days._
