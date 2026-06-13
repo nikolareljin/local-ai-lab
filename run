@@ -19,7 +19,8 @@ local-ai-lab — run a lesson locally
 
 Usage:
   ./run -l <N> [--lang python|node|csharp] [action] [args]
-  ./run -l <N> show                           # walk through the lesson (code, configs, prompts, commands)
+  ./run -l <N> show                           # walk through the lesson in the terminal (code, configs, prompts, commands)
+  ./run -l <N> preview                        # serve the rendered instructions locally (browser, no GitHub Pages)
   ./run list                                  # list all lessons
 
 Lessons:
@@ -34,7 +35,9 @@ Examples:
   ./run -l 2                                  # demo the MCP server end-to-end (no LLM needed)
   ./run -l 3                                  # run Lesson 3's default demo (Python)
   ./run -l 3 --lang csharp                    # the C#/.NET port of Lesson 3
-  ./run -l 3 show                             # walk through Lesson 3's steps
+  ./run -l 3 show                             # walk through Lesson 3's steps (terminal)
+  ./run -l 3 preview                          # preview the instructions in a browser, locally
+  ./run -l 3 show --html > /tmp/l3.html        # standalone HTML of the instructions
   ./run -l 1 --lang node                      # Node.js implementation (where ported)
 
 Languages (polyglot — Option B): python (default/reference) · node · csharp.
@@ -204,10 +207,11 @@ run_registry_lesson() {
   [[ $LANG_EXPLICIT -eq 1 ]] && langargs=(--lang "$LANG_CHOICE")
 
   if [[ -n "$dir" ]]; then
-    if [[ "${ACTION:-}" == "show" ]]; then
-      exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" show "$LESSON" ${langargs[@]+"${langargs[@]}"}
-    fi
-    exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" run "$LESSON" ${ACTION:+"$ACTION"} ${langargs[@]+"${langargs[@]}"} "$@"
+    case "${ACTION:-}" in
+      show)    exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" show    "$LESSON" ${langargs[@]+"${langargs[@]}"} "$@" ;;
+      preview) exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" preview "$LESSON" ${langargs[@]+"${langargs[@]}"} ;;
+      *)       exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" run     "$LESSON" ${ACTION:+"$ACTION"} ${langargs[@]+"${langargs[@]}"} "$@" ;;
+    esac
   fi
 
   if [[ -f "$ROOT_DIR/LESSON${LESSON}.md" ]]; then

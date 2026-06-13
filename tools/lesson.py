@@ -16,10 +16,15 @@ Used by `./run`; can also be invoked directly:  python tools/lesson.py list
 """
 
 import argparse
+import functools
+import html
+import http.server
 import json
 import os
 import re
 import shlex
+import socket
+import socketserver
 import subprocess
 import sys
 from pathlib import Path
@@ -150,6 +155,9 @@ def read_ref(ldir, el):
 
 def cmd_show(args):
     ldir, lesson = load(args.number)
+    if getattr(args, "html", False):
+        print(render_html(ldir, lesson, args.lang, asset_base=f"file://{ldir}/"))
+        return 0
     lang = args.lang
     print(f"\n{RULE}\nLesson {args.number} · {lesson.get('title','')}")
     if lesson.get("summary"):
@@ -199,6 +207,104 @@ def indent(text, prefix="    "):
     return "\n".join(prefix + line for line in text.splitlines())
 
 
+# --------------------------------------------------------------------------- B') HTML preview
+HTML_CSS = """
+  body { font: 16px/1.6 system-ui, sans-serif; max-width: 820px; margin: 2rem auto; padding: 0 1rem; color: #222; }
+  h1 { font-size: 1.5rem; } h3 { margin: 1.4rem 0 .3rem; } h4 { margin: 1rem 0 .3rem; color: #444; font-size: .95rem; }
+  .summary { color: #555; }
+  pre { background: #f6f8fa; padding: .7rem .9rem; border-radius: 6px; overflow-x: auto; }
+  code { font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .cmd pre { background: #0d1117; color: #e6edf3; }
+  .copy { border-left: 3px solid #2563eb; padding-left: .8rem; }
+  .note p { margin: .3rem 0; }
+  .lang { font-size: .7rem; background: #eef; color: #225; padding: .05rem .4rem; border-radius: 999px; margin-left: .4rem; }
+  .cmdnote { color: #555; margin: .2rem 0 .8rem; }
+  figure { margin: 1rem 0; } img, video { max-width: 100%; border-radius: 6px; } figcaption { color: #666; font-size: .9rem; }
+"""
+
+
+def _esc(s):
+    return html.escape(s, quote=False)
+
+
+def _inline(s):
+    return re.sub(r"`([^`]+)`", r"<code>\1</code>", _esc(s))
+
+
+def render_html(ldir, lesson, lang=None, asset_base=""):
+    out = ["<!doctype html><html><head><meta charset='utf-8'>",
+           f"<title>{_esc(lesson.get('title',''))}</title><style>{HTML_CSS}</style></head><body>",
+           f"<h1>{_esc(lesson.get('title',''))}</h1>"]
+    if lesson.get("summary"):
+        out.append(f"<p class='summary'>{_inline(lesson['summary'])}</p>")
+    for el in lesson.get("elements", []):
+        el_lang = el.get("lang")
+        if lang and el_lang not in (None, lang):
+            continue
+        t, title = el.get("type"), el.get("title")
+        badge = f"<span class='lang'>{_esc(el_lang)}</span>" if el_lang else ""
+        head = f"<h4>{_esc(title)}</h4>" if title else ""
+        cmdnote = f"<p class='cmdnote'>{_inline(el['note'])}</p>" if el.get("note") else ""
+        if t == "note":
+            body = read_ref(ldir, el)
+            inner = f"<pre>{_esc(body)}</pre>" if "file" in el else f"<p>{_inline(body)}</p>"
+            out.append(f"<section class='note'>{head}{inner}</section>")
+        elif t == "command":
+            out.append(f"<div class='cmd'>{badge}<pre>$ {_esc(el['shell'])}</pre>{cmdnote}</div>")
+        elif t in ("code", "config"):
+            out.append(f"<div class='{t}'><h4>{t}: {_esc(el.get('file','(inline)'))} {badge}</h4>"
+                       f"{cmdnote}<pre><code>{_esc(read_ref(ldir, el))}</code></pre></div>")
+        elif t == "text":
+            out.append(f"<div class='copy'>{head}<pre>{_esc(read_ref(ldir, el))}</pre></div>")
+        elif t in ("image", "media", "video"):
+            kind = el.get("kind", t)
+            ref = el.get("file") or el.get("url", "")
+            src = ref if (ref.startswith("http") or not asset_base) else asset_base + ref
+            cap = _esc(el.get("alt") or el.get("note") or "")
+            tag = (f"<video controls src='{src}'></video>" if kind == "video"
+                   else f"<img src='{src}' alt='{cap}'>")
+            out.append(f"<figure>{tag}<figcaption>{cap}</figcaption></figure>")
+    out.append("</body></html>")
+    return "\n".join(out)
+
+
+def free_port():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
+def cmd_preview(args):
+    """Serve the rendered lesson instructions locally (no GitHub Pages needed)."""
+    ldir, lesson = load(args.number)
+    page = render_html(ldir, lesson, args.lang, asset_base="").encode("utf-8")
+
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        def do_GET(self):
+            if self.path in ("/", "/index.html"):
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(page)))
+                self.end_headers()
+                self.wfile.write(page)
+                return
+            super().do_GET()  # static assets (images/videos/code) from the lesson dir
+
+        def log_message(self, *a):
+            pass
+
+    handler = functools.partial(Handler, directory=str(ldir))
+    port = free_port()
+    with socketserver.TCPServer(("127.0.0.1", port), handler) as httpd:
+        print(f"Lesson {args.number} · instructions preview → http://127.0.0.1:{port}  (Ctrl-C to stop)",
+              flush=True)
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            pass
+    return 0
+
+
 # --------------------------------------------------------------------------- list
 def cmd_list(args):
     reg = registry()
@@ -233,7 +339,13 @@ def main(argv=None):
     sp = sub.add_parser("show", help="walk through a lesson's elements")
     sp.add_argument("number", type=int)
     sp.add_argument("--lang", default=None)
+    sp.add_argument("--html", action="store_true", help="emit a standalone HTML page instead of terminal text")
     sp.set_defaults(fn=cmd_show)
+
+    sp = sub.add_parser("preview", help="serve the rendered lesson instructions locally")
+    sp.add_argument("number", type=int)
+    sp.add_argument("--lang", default=None)
+    sp.set_defaults(fn=cmd_preview)
 
     # parse_known_args so any trailing passthrough args (after the known ones)
     # reach the lesson command without REMAINDER swallowing options like --lang.
