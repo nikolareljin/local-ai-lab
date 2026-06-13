@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" role="img"
+     aria-label="local-ai-lab — build local AI, one lesson at a time">
+  <title>local-ai-lab</title>
+  <desc>A neural network flowing into ascending learning steps, with the local-ai-lab wordmark.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f1115"/>
+      <stop offset="1" stop-color="#141821"/>
+    </linearGradient>
+    <linearGradient id="node" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5b9dff"/>
+      <stop offset="1" stop-color="#3a6fd8"/>
+    </linearGradient>
+    <linearGradient id="step" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#3a6fd8"/>
+      <stop offset="1" stop-color="#5b9dff"/>
+    </linearGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- frame -->
+  <rect x="2" y="2" width="1196" height="316" rx="22" fill="url(#bg)" stroke="#2a2f3a"/>
+
+  <!-- ====== AI: neural network (layers 3 - 4 - 3) ====== -->
+  <g stroke="#5b9dff" stroke-width="1.4" opacity="0.16" fill="none">
+    <!-- A(120) -> B(250) -->
+    <path d="M120 105 L250 85 M120 105 L250 145 M120 105 L250 205 M120 105 L250 265"/>
+    <path d="M120 175 L250 85 M120 175 L250 145 M120 175 L250 205 M120 175 L250 265"/>
+    <path d="M120 245 L250 85 M120 245 L250 145 M120 245 L250 205 M120 245 L250 265"/>
+    <!-- B(250) -> C(380) -->
+    <path d="M250 85 L380 105 M250 85 L380 175 M250 85 L380 245"/>
+    <path d="M250 145 L380 105 M250 145 L380 175 M250 145 L380 245"/>
+    <path d="M250 205 L380 105 M250 205 L380 175 M250 205 L380 245"/>
+    <path d="M250 265 L380 105 M250 265 L380 175 M250 265 L380 245"/>
+  </g>
+  <!-- highlighted signal path through the network -->
+  <g stroke="#5b9dff" stroke-width="2.2" opacity="0.85" fill="none" stroke-linecap="round">
+    <path d="M120 175 L250 145 L380 175 L470 175"/>
+  </g>
+
+  <!-- nodes -->
+  <g fill="url(#node)">
+    <circle cx="120" cy="105" r="9"/><circle cx="120" cy="175" r="10" filter="url(#glow)"/><circle cx="120" cy="245" r="9"/>
+    <circle cx="250" cy="85" r="9"/><circle cx="250" cy="145" r="10" filter="url(#glow)"/><circle cx="250" cy="205" r="9"/><circle cx="250" cy="265" r="9"/>
+    <circle cx="380" cy="105" r="9"/><circle cx="380" cy="175" r="10" filter="url(#glow)"/><circle cx="380" cy="245" r="9"/>
+  </g>
+
+  <!-- ====== learning: ascending steps (lesson by lesson) ====== -->
+  <g>
+    <rect x="452" y="195" width="26" height="60"  rx="6" fill="url(#step)" opacity="0.55"/>
+    <rect x="490" y="160" width="26" height="95"  rx="6" fill="url(#step)" opacity="0.70"/>
+    <rect x="528" y="125" width="26" height="130" rx="6" fill="url(#step)" opacity="0.85"/>
+    <rect x="566" y="90"  width="26" height="165" rx="6" fill="url(#step)"/>
+    <!-- baseline -->
+    <rect x="452" y="255" width="140" height="2" fill="#2a2f3a"/>
+  </g>
+
+  <!-- ====== wordmark ====== -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+    <text x="652" y="160" font-size="62" font-weight="800" fill="#e6e8ee" letter-spacing="-1">local-ai<tspan fill="#5b9dff">·</tspan>lab</text>
+    <text x="654" y="200" font-size="22" fill="#8b93a7">Build local AI, one lesson at a time.</text>
+    <text x="654" y="236" font-size="15" fill="#5b9dff" letter-spacing="2" font-weight="600">RAG &#183; MCP &#183; LANGCHAIN &#183; LANGGRAPH</text>
+  </g>
+</svg>
