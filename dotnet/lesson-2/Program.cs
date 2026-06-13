@@ -23,7 +23,7 @@ using ModelContextProtocol.Server;
 
 var action = args.Length > 0 ? args[0] : "serve";
 
-if (action is "demo" or "test" or "client")
+if (action is "demo" or "test")
 {
     var query = args.Length > 1 ? args[1] : "How do I reset the device?";
     await DemoClient.RunAsync(query);
