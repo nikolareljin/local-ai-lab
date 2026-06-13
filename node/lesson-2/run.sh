@@ -22,10 +22,20 @@ command -v node >/dev/null 2>&1 || { log_error "Node.js (>=18) is required but n
 
 cd "$here"
 
-# Install dependencies on first run.
+# Install this lesson's own dependencies (MCP SDK + zod) on first run.
 if [[ ! -d "node_modules" ]]; then
-  log_info "Installing Node dependencies (one-time) ..."
+  log_info "Installing Lesson 2 Node dependencies (one-time) ..."
   npm install --silent --no-fund --no-audit
+fi
+
+# The server reuses Lesson 1's engine (config/engine/extract). Its extractor
+# dynamically imports pdf-parse/mammoth, which resolve from node/lesson-1's own
+# node_modules — so any corpus with a .pdf/.docx fails on a fresh checkout unless
+# Lesson 1 is installed too. Install it here so Lesson 2 is runnable standalone.
+lesson1_dir="$rootDir/node/lesson-1"
+if [[ -f "$lesson1_dir/package.json" && ! -d "$lesson1_dir/node_modules" ]]; then
+  log_info "Installing Lesson 1 Node dependencies (reused by the MCP server) ..."
+  (cd "$lesson1_dir" && npm install --silent --no-fund --no-audit)
 fi
 
 action="${1:-demo}"

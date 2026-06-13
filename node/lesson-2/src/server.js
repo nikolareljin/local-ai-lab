@@ -24,7 +24,17 @@ import { loadConfig } from "../../lesson-1/src/config.js";
 import { getRetriever } from "../../lesson-1/src/engine.js";
 import { discoverFiles } from "../../lesson-1/src/extract.js";
 
-const server = new McpServer({ name: "local-ai-lab-docs", version: "1.0.0" });
+// This process speaks MCP over stdio: stdout is reserved for the JSON-RPC stream
+// (the transport writes it directly). Reused Lesson 1 modules emit diagnostics
+// via console.log — e.g. the BM25 fallback notice when RAG_RETRIEVER=embeddings.
+// Route all of those to stderr so a stray line can never corrupt the protocol,
+// mirroring the C# port's "all logs to stderr" rule.
+console.log = (...args) => console.error(...args);
+
+// Use a distinct self-reported name (matching the Claude Code registration name
+// in run.sh) so the Node server stays distinguishable from the Python and C#
+// servers in any host that surfaces the server's own identity.
+const server = new McpServer({ name: "local-ai-lab-docs-node", version: "1.0.0" });
 
 // --- Tool: search_docs -----------------------------------------------------
 // The star of the show. The description is a *prompt*: the model reads it to

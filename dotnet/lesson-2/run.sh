@@ -24,27 +24,28 @@ cd "$project_dir"
 action="${1:-demo}"
 [[ $# -gt 0 ]] && shift || true
 
-# Build once so both the server and the demo client run the same compiled binary
-# (the client re-launches `dotnet <dll> serve` as the server subprocess).
-build_once() {
-  log_info "Building the C# MCP server (one-time) ..."
+# Ensure an up-to-date build so both the server and the demo client run the same
+# compiled binary (the client re-launches `dotnet <dll> serve` as a subprocess).
+# dotnet build is incremental: a no-op when nothing changed, a rebuild otherwise.
+ensure_build() {
+  log_info "Building the C# MCP server (incremental) ..."
   dotnet build -c Release --nologo -v quiet >/dev/null
 }
 
 case "$action" in
   demo|""|test)
-    build_once
+    ensure_build
     log_info "Lesson 2 (C#) · MCP — spawning the server over stdio and calling its tools ..."
     exec dotnet run -c Release --no-build -- demo "$@"
     ;;
   serve)
-    build_once
+    ensure_build
     log_info "Lesson 2 (C#) · MCP server over stdio (a host/client connects to this; Ctrl-C to stop)."
     exec dotnet run -c Release --no-build -- serve
     ;;
   register)
     command -v claude >/dev/null 2>&1 || { log_error "The 'claude' CLI is not on your PATH."; exit 1; }
-    build_once
+    ensure_build
     dll="$project_dir/bin/Release/net8.0/LocalRagMcp.dll"
     log_info "Registering the C# MCP server with Claude Code ..."
     exec claude mcp add local-ai-lab-docs-dotnet -- dotnet "$dll" serve

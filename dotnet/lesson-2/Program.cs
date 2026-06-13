@@ -101,7 +101,9 @@ public static class DemoClient
             Command = "dotnet",
             Arguments = [dll, "serve"],
         });
-        var client = await McpClient.CreateAsync(transport);
+        // `await using`: the client owns the spawned `dotnet ... serve` subprocess
+        // and its stdio transport; async disposal tears them down reliably on exit.
+        await using var client = await McpClient.CreateAsync(transport);
 
         // The handshake in code: CreateAsync does initialize, then list + call.
         var tools = await client.ListToolsAsync();

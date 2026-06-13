@@ -156,7 +156,7 @@ import { loadConfig } from "../../lesson-1/src/config.js";
 import { getRetriever } from "../../lesson-1/src/engine.js";
 import { discoverFiles } from "../../lesson-1/src/extract.js";
 
-const server = new McpServer({ name: "local-ai-lab-docs", version: "1.0.0" });
+const server = new McpServer({ name: "local-ai-lab-docs-node", version: "1.0.0" });
 
 // ... tools go here ...
 
@@ -354,7 +354,7 @@ const res = await client.callTool({ name: "search_docs",
 var transport = new StdioClientTransport(new StdioClientTransportOptions {
     Command = "dotnet", Arguments = [dll, "serve"],
 });
-var client = await McpClient.CreateAsync(transport);   // initialize
+await using var client = await McpClient.CreateAsync(transport); // initialize (async-disposed)
 var tools  = await client.ListToolsAsync();            // list
 var res    = await client.CallToolAsync("search_docs", // call
     new Dictionary&lt;string, object?&gt; { ["query"] = "how do I reset the device", ["k"] = 3 });
@@ -434,11 +434,16 @@ Claude: (calls search_docs "reset device")
 
     <div class="controls">
       <button class="nav-btn" data-prev>← Prev</button>
-      <span class="counter"></span>
+      <div class="langsel compact" role="group" aria-label="Language">
+        <button class="langsel-btn" data-setlang="python">Py</button>
+        <button class="langsel-btn" data-setlang="node">Node</button>
+        <button class="langsel-btn" data-setlang="csharp">C#</button>
+      </div>
       <span class="spacer"></span>
+      <span class="counter"></span>
       <button class="nav-btn" data-next>Next →</button>
     </div>
-    <div class="kbd-hint">Use <kbd>←</kbd> <kbd>→</kbd> arrow keys, the dots, or the buttons. Each step is deep-linkable.</div>
+    <div class="kbd-hint">Use <kbd>←</kbd> <kbd>→</kbd> arrow keys, the dots, or the buttons. Pick a language above; your choice sticks across every step.</div>
   </div>
 
   <footer class="site"><div class="inner">
