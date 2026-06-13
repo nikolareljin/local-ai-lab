@@ -4,8 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lesson 1 · RAG from scratch — local-ai-lab</title>
-  <meta name="description" content="Build a complete Retrieval-Augmented Generation system from scratch: extract, chunk, retrieve (BM25 + embeddings), ground, and answer with citations." />
+  <meta name="description" content="Build a complete Retrieval-Augmented Generation system from scratch: extract, chunk, retrieve (BM25 + embeddings), ground, and answer with citations. Follow along in Python, Node.js, or C#." />
   <link rel="stylesheet" href="./assets/style.css" />
+  <!-- Apply the saved language before first paint to avoid a flash of the wrong code. -->
+  <script>try{document.documentElement.dataset.lang=localStorage.getItem('localrag-lang')||'python'}catch(e){document.documentElement.dataset.lang='python'}</script>
 </head>
 <body>
   <div class="topbar"><div class="inner">
@@ -24,7 +26,13 @@
       <div class="eyebrow">Lesson 1</div>
       <h1>Build a RAG system from scratch</h1>
       <p>Drag in a document, ask a question, get an answer grounded in it — with citations.
-         A few hundred lines of readable Python, no heavyweight frameworks.</p>
+         A few hundred lines of readable <span class="lang lang-python">Python</span><span class="lang lang-node">JavaScript</span><span class="lang lang-csharp">C#</span>, no heavyweight frameworks.</p>
+      <div class="langsel" role="group" aria-label="Choose a language for this lesson">
+        <span class="langsel-label">Follow along in:</span>
+        <button class="langsel-btn" data-setlang="python">Python</button>
+        <button class="langsel-btn" data-setlang="node">Node.js</button>
+        <button class="langsel-btn" data-setlang="csharp">C#</button>
+      </div>
     </div>
 
     <div class="progress"><span></span></div>
@@ -32,7 +40,7 @@
 
     <div class="deck">
 
-      <!-- 1 -->
+      <!-- 1 · Overview -->
       <section class="slide">
         <div class="step-no">Overview</div>
         <h2>What you'll build</h2>
@@ -63,45 +71,85 @@
           private data. RAG grounds it: retrieve the relevant text first, then make the model
           answer <i>from that text</i> and cite it. That's the difference between a demo and
           something you can trust.</div>
+        <div class="why"><b>Polyglot:</b> pick <b>Python</b> (the reference), <b>Node.js</b>, or
+          <b>C#</b> with the selector above — every step's code and commands follow your choice all
+          the way to the end. The ports are faithful module-for-module translations; a couple of
+          gaps (semantic embeddings, the <code>gemini</code>/<code>openai</code> providers) are
+          Python-only and called out where they come up.</div>
         <p>Press <kbd>→</kbd> to begin.</p>
       </section>
 
-      <!-- 2 -->
+      <!-- 2 · Prerequisites -->
       <section class="slide">
         <div class="step-no">Setup</div>
         <h2>Prerequisites</h2>
-        <p>Create a virtual environment and install the handful of libraries we'll use:</p>
-        <div class="block"><div class="label">Type this</div><pre class="cmd"><code>python -m venv venv &amp;&amp; source venv/bin/activate
+        <p>Install the runtime for your language, then let the dispatcher handle the rest.
+           <span class="lang lang-python">Python is the reference stack.</span><span class="lang lang-node">The Node.js port mirrors it module-for-module.</span><span class="lang lang-csharp">The C# / .NET 8 port mirrors it module-for-module.</span></p>
+        <div class="lang lang-python">
+          <div class="block"><div class="label">Create a virtualenv &amp; install the libraries</div><pre class="cmd"><code>python -m venv venv &amp;&amp; source venv/bin/activate
 pip install pypdf python-docx rank-bm25 numpy requests python-dotenv flask</code></pre></div>
+        </div>
+        <div class="lang lang-node">
+          <div class="block"><div class="label">You only need Node.js 18+</div><pre class="cmd"><code>node --version                  # confirm 18+
+./run -l 1 --lang node test     # installs deps on first use, then indexes</code></pre></div>
+        </div>
+        <div class="lang lang-csharp">
+          <div class="block"><div class="label">You only need the .NET 8 SDK</div><pre class="cmd"><code>dotnet --version                # confirm 8.x
+./run -l 1 --lang csharp test   # restores + builds on first use, then indexes</code></pre></div>
+        </div>
         <div class="why"><b>The only AI you need to start</b> is the <b>Claude Code CLI</b>. If you
-          can run <code>claude</code> in your terminal, you're set — no API key. We'll wire in
-          Ollama, Gemini, and OpenAI later, all behind the same interface.</div>
+          can run <code>claude</code> in your terminal, you're set — no API key. Every language
+          defaults to it; Ollama is the local fallback.</div>
       </section>
 
       <!-- 2b · Install -->
       <section class="slide">
         <div class="step-no">Install</div>
         <h2>Dependencies — Linux · macOS · Windows</h2>
-        <p>Same steps on every OS — only how you activate the virtualenv differs. <b>No Docker.</b></p>
-        <div class="block"><div class="label">Linux / macOS</div><pre class="cmd"><code>python3 -m venv venv &amp;&amp; source venv/bin/activate
+        <p>Same idea on every OS. <b>No Docker.</b> The quickest path is always
+           <code>./run -l 1<span class="lang lang-node"> --lang node</span><span class="lang lang-csharp"> --lang csharp</span></code> — it sets up everything on first use.</p>
+
+        <div class="lang lang-python">
+          <div class="block"><div class="label">Linux / macOS</div><pre class="cmd"><code>python3 -m venv venv &amp;&amp; source venv/bin/activate
 pip install -r requirements.txt</code></pre></div>
-        <div class="block"><div class="label">Windows (PowerShell)</div><pre class="cmd"><code>python -m venv venv; venv\Scripts\Activate.ps1
+          <div class="block"><div class="label">Windows (PowerShell)</div><pre class="cmd"><code>python -m venv venv; venv\Scripts\Activate.ps1
 pip install -r requirements.txt</code></pre></div>
+        </div>
+
+        <div class="lang lang-node">
+          <div class="block"><div class="label">1 · Install Node.js 18+</div><pre class="cmd"><code>sudo apt install -y nodejs npm              # Linux (Debian/Ubuntu)
+brew install node                           # macOS
+winget install -e --id OpenJS.NodeJS.LTS    # Windows</code></pre></div>
+          <div class="block"><div class="label">2 · Manual setup (optional — ./run does this for you)</div><pre class="cmd"><code>cd node/lesson-1 &amp;&amp; npm install</code></pre></div>
+          <div class="block"><div class="label">Windows without Git Bash (PowerShell / cmd)</div><pre class="cmd"><code>cd node\lesson-1
+npm install
+node src\cli.js index      # validate; then: node src\cli.js web</code></pre></div>
+        </div>
+
+        <div class="lang lang-csharp">
+          <div class="block"><div class="label">1 · Install the .NET 8 SDK</div><pre class="cmd"><code># Linux: see learn.microsoft.com/dotnet/core/install/linux
+brew install dotnet@8                          # macOS
+winget install -e --id Microsoft.DotNet.SDK.8  # Windows</code></pre></div>
+          <div class="block"><div class="label">2 · Manual setup (optional — ./run does this for you)</div><pre class="cmd"><code>cd dotnet/lesson-1 &amp;&amp; dotnet restore &amp;&amp; dotnet build -c Release</code></pre></div>
+          <div class="block"><div class="label">Windows without Git Bash (PowerShell / cmd)</div><pre class="cmd"><code>cd dotnet\lesson-1
+dotnet run -c Release -- index   # validate; then: dotnet run -c Release -- web</code></pre></div>
+        </div>
+
         <div class="block"><div class="label">Default AI — Claude Code CLI (no API key)</div><pre class="cmd"><code>npm install -g @anthropic-ai/claude-code &amp;&amp; claude</code></pre></div>
-        <div class="why"><b>Polyglot:</b> Python is the reference; Node.js &amp; C# are opt-in via
-          <code>./run -l 1 --lang node|csharp</code>. Full per-OS, per-language guide:
-          <a href="./pdf/INSTALL.pdf" target="_blank" rel="noopener">INSTALL (PDF)</a>. Or just run
-          <code>./run -l 1</code> — it creates the venv and installs everything for you.</div>
+        <div class="why"><b>Full per-OS, per-language guide:</b>
+          <a href="./pdf/INSTALL.pdf" target="_blank" rel="noopener">INSTALL (PDF)</a>.
+          <span class="lang lang-node">The Node index is cached separately in <code>.localrag/node</code>, so it never clobbers the Python one.</span><span class="lang lang-csharp">The .NET index is cached separately in <code>.localrag/dotnet</code>, so it never clobbers the Python one.</span><span class="lang lang-python">Or just run <code>./run -l 1</code> — it creates the venv and installs everything for you.</span></div>
       </section>
 
-      <!-- 3 -->
+      <!-- 3 · Step 1 Extract -->
       <section class="slide">
         <div class="step-no">Step 1</div>
         <h2>Extract text from documents</h2>
         <p>RAG starts by turning files into plain text. We dispatch on file extension and
            normalize everything to a list of <b>pages</b> — each carrying its text, a page number,
            and the source filename (we need those for citations).</p>
-        <div class="block"><div class="label">localrag/extract.py</div><pre><code>from pathlib import Path
+        <div class="lang lang-python">
+          <div class="block"><div class="label">localrag/extract.py</div><pre><code>from pathlib import Path
 from typing import List, TypedDict
 
 SUPPORTED_EXTS = {".pdf", ".docx", ".txt", ".md", ".markdown"}
@@ -134,12 +182,74 @@ def extract_pages(path: Path) -&gt; List[Page]:
         text = path.read_text(encoding="utf-8", errors="replace").strip()
         return [Page(source=path.name, page_number=1, text=text)] if text else []
     return []</code></pre></div>
+        </div>
+        <div class="lang lang-node">
+          <div class="block"><div class="label">node/lesson-1/src/extract.js</div><pre><code>export const SUPPORTED_EXTS = new Set([".pdf", ".docx", ".txt", ".md", ".markdown"]);
+
+async function extractPdf(filePath) {
+  const { default: pdfParse } = await import("pdf-parse");
+  const data = await pdfParse(fs.readFileSync(filePath));
+  const text = (data.text || "").trim();
+  if (!text) return [];
+  return [{ source: path.basename(filePath), page_number: 1, text }];
+}
+
+export async function extractPages(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  if (ext === ".pdf") return extractPdf(filePath);
+  if (ext === ".docx") return extractDocx(filePath);
+  if (ext === ".txt" || ext === ".md" || ext === ".markdown") {
+    const text = fs.readFileSync(filePath, "utf-8").trim();
+    return text ? [{ source: path.basename(filePath), page_number: 1, text }] : [];
+  }
+  return [];
+}</code></pre></div>
+        </div>
+        <div class="lang lang-csharp">
+          <div class="block"><div class="label">dotnet/lesson-1/Extract.cs</div><pre><code>public record Page(string Source, int PageNumber, string Text);
+
+public static readonly HashSet&lt;string&gt; SupportedExts =
+    new(StringComparer.OrdinalIgnoreCase) { ".pdf", ".docx", ".txt", ".md", ".markdown" };
+
+private static List&lt;Page&gt; ExtractPdf(string path)
+{
+    var pages = new List&lt;Page&gt;();
+    var name = Path.GetFileName(path);
+    using var doc = PdfDocument.Open(path);
+    var i = 0;
+    foreach (var page in doc.GetPages())
+    {
+        i++;
+        var text = (page.Text ?? string.Empty).Trim();
+        if (text.Length &gt; 0) pages.Add(new Page(name, i, text));
+    }
+    return pages;
+}
+
+public static List&lt;Page&gt; ExtractPages(string path)
+{
+    var ext = Path.GetExtension(path).ToLowerInvariant();
+    if (ext == ".pdf") return ExtractPdf(path);
+    if (ext == ".docx") return ExtractDocx(path);
+    if (ext is ".txt" or ".md" or ".markdown")
+    {
+        var text = ReadTextFile(path).Trim();
+        return text.Length &gt; 0 ? new() { new(Path.GetFileName(path), 1, text) } : new();
+    }
+    return new();
+}</code></pre></div>
+        </div>
         <div class="why"><b>Why pages?</b> PDFs have real pages, so a citation like
           <code>manual.pdf:4</code> points to the exact spot. Extraction is the unglamorous 80% of
           real RAG — garbage text in, garbage answers out.</div>
+        <div class="lang lang-node"><div class="note"><b>Parity note:</b> <code>pdf-parse</code> returns
+          whole-document text, so a PDF emits a single page (<code>page_number 1</code>) rather than
+          one page per physical page. DOCX/TXT/MD match the Python reference exactly.</div></div>
+        <div class="lang lang-csharp"><div class="note"><b>Parity note:</b> PdfPig <i>does</i> read
+          per-page like Python; DOCX/TXT/MD match the reference exactly.</div></div>
       </section>
 
-      <!-- 4 -->
+      <!-- 4 · Step 2 Chunk -->
       <section class="slide">
         <div class="step-no">Step 2</div>
         <h2>Split text into overlapping chunks</h2>
@@ -147,7 +257,8 @@ def extract_pages(path: Path) -&gt; List[Page]:
            split it into ~1000-character <b>chunks</b>. The key trick is <b>overlap</b>: each chunk
            repeats the tail of the previous one, so a sentence split across a boundary still
            appears intact somewhere.</p>
-        <div class="block"><div class="label">localrag/chunk.py</div><pre><code>def _split_text(text, size, overlap):
+        <div class="lang lang-python">
+          <div class="block"><div class="label">localrag/chunk.py</div><pre><code>def _split_text(text, size, overlap):
     text = " ".join(text.split())            # normalize whitespace
     if len(text) &lt;= size:
         return [text] if text else []
@@ -168,19 +279,78 @@ def extract_pages(path: Path) -&gt; List[Page]:
             break
         start = max(end - overlap, start + 1)   # step back to create overlap
     return chunks</code></pre></div>
+        </div>
+        <div class="lang lang-node">
+          <div class="block"><div class="label">node/lesson-1/src/chunk.js</div><pre><code>function splitText(text, size, overlap) {
+  text = text.split(/\s+/).filter(Boolean).join(" "); // normalize whitespace
+  if (text.length &lt;= size) return text ? [text] : [];
+
+  const chunks = [];
+  let start = 0;
+  const n = text.length;
+  while (start &lt; n) {
+    let end = Math.min(start + size, n);
+    if (end &lt; n) {                          // prefer a clean break near the limit
+      const window = text.slice(start, end);
+      for (const sep of [". ", "! ", "? ", "\n", " "]) {
+        const pos = window.lastIndexOf(sep);
+        if (pos &gt; Math.floor(size / 2)) { end = start + pos + sep.length; break; }
+      }
+    }
+    const chunk = text.slice(start, end).trim();
+    if (chunk) chunks.push(chunk);
+    if (end &gt;= n) break;
+    start = Math.max(end - overlap, start + 1);  // step back to create overlap
+  }
+  return chunks;
+}</code></pre></div>
+        </div>
+        <div class="lang lang-csharp">
+          <div class="block"><div class="label">dotnet/lesson-1/Chunk.cs</div><pre><code>public static List&lt;string&gt; SplitText(string text, int size, int overlap)
+{
+    // Normalize whitespace: split on whitespace runs, join with single spaces.
+    text = string.Join(" ", text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+    if (text.Length &lt;= size)
+        return text.Length &gt; 0 ? new List&lt;string&gt; { text } : new();
+
+    var chunks = new List&lt;string&gt;();
+    var start = 0;
+    var n = text.Length;
+    while (start &lt; n)
+    {
+        var end = Math.Min(start + size, n);
+        if (end &lt; n)                          // prefer a clean break near the limit
+        {
+            var window = text.Substring(start, end - start);
+            foreach (var sep in new[] { ". ", "! ", "? ", "\n", " " })
+            {
+                var pos = window.LastIndexOf(sep, StringComparison.Ordinal);
+                if (pos &gt; size / 2) { end = start + pos + sep.Length; break; }
+            }
+        }
+        var chunk = text.Substring(start, end - start).Trim();
+        if (chunk.Length &gt; 0) chunks.Add(chunk);
+        if (end &gt;= n) break;
+        start = Math.Max(end - overlap, start + 1);  // step back to create overlap
+    }
+    return chunks;
+}</code></pre></div>
+        </div>
         <div class="why"><b>Chunk size is a dial.</b> Too large → imprecise retrieval; too small →
           lost context. 800–1200 chars with 10–20% overlap is a sane default. Each chunk keeps its
-          <code>source</code> and <code>page_number</code> so we can cite it later.</div>
+          <code>source</code> and <code>page_number</code> so we can cite it later. The algorithm is
+          identical across all three languages.</div>
       </section>
 
-      <!-- 5 -->
+      <!-- 5 · Step 3 Store -->
       <section class="slide">
         <div class="step-no">Step 3</div>
         <h2>Index and cache</h2>
         <p>Extract + chunk every file in <code>documents/</code>, then cache the result so we don't
            redo the work on every question. We fingerprint each file by
            <code>(path, mtime, size)</code>; if nothing changed, we reuse the cache.</p>
-        <div class="block"><div class="label">localrag/store.py</div><pre><code>def is_stale(config):
+        <div class="lang lang-python">
+          <div class="block"><div class="label">localrag/store.py</div><pre><code>def is_stale(config):
     """True if the cache is missing or the documents folder changed."""
     index_path = config.cache_dir / "index.json"
     if not index_path.exists():
@@ -197,19 +367,70 @@ def build_index(config):
     (config.cache_dir / "index.json").write_text(
         json.dumps({"fingerprint": _fingerprint(files), "chunks": chunks}))
     return chunks, len(files)</code></pre></div>
+        </div>
+        <div class="lang lang-node">
+          <div class="block"><div class="label">node/lesson-1/src/store.js</div><pre><code>export function isStale(config) {
+  // True if the cache is missing or the docs folder changed since last build.
+  const ip = indexPath(config);
+  if (!fs.existsSync(ip)) return true;
+  let data;
+  try { data = JSON.parse(fs.readFileSync(ip, "utf-8")); }
+  catch { return true; }
+  return !fingerprintsEqual(data.fingerprint, fingerprint(discoverFiles(config.docsDir)));
+}
+
+export async function buildIndex(config) {
+  const files = discoverFiles(config.docsDir);
+  const chunks = [];
+  for (const filePath of files) {
+    const pages = await extractPages(filePath);
+    chunks.push(...chunkPages(pages));
+  }
+  fs.mkdirSync(config.cacheDir, { recursive: true });
+  fs.writeFileSync(indexPath(config),
+    JSON.stringify({ fingerprint: fingerprint(files), chunks }), "utf-8");
+  return { chunks, fileCount: files.length };
+}</code></pre></div>
+        </div>
+        <div class="lang lang-csharp">
+          <div class="block"><div class="label">dotnet/lesson-1/Store.cs</div><pre><code>public static bool IsStale(Config config)
+{
+    var path = IndexPath(config);
+    if (!File.Exists(path)) return true;
+    IndexFile? data;
+    try { data = JsonSerializer.Deserialize&lt;IndexFile&gt;(File.ReadAllText(path), JsonOpts); }
+    catch { return true; }
+    if (data is null) return true;
+    return !FingerprintsEqual(data.Fingerprint, Fingerprint(Extract.DiscoverFiles(config.DocsDir)));
+}
+
+public static (List&lt;Chunk&gt; Chunks, int FileCount) BuildIndex(Config config)
+{
+    var files = Extract.DiscoverFiles(config.DocsDir);
+    var chunks = new List&lt;Chunk&gt;();
+    foreach (var path in files)
+        chunks.AddRange(Chunking.ChunkPages(Extract.ExtractPages(path)));
+
+    Directory.CreateDirectory(config.CacheDir);
+    var index = new IndexFile(Fingerprint(files), ToRecords(chunks));
+    File.WriteAllText(IndexPath(config), JsonSerializer.Serialize(index, JsonOpts));
+    return (chunks, files.Count);
+}</code></pre></div>
+        </div>
         <div class="why"><b>This is the "drop a file and ask again" loop.</b> The index is just a
           JSON file — no database, no vector server to run. Perfect for a local demo and trivial to
           inspect.</div>
       </section>
 
-      <!-- 6 -->
+      <!-- 6 · Step 4 BM25 -->
       <section class="slide">
         <div class="step-no">Step 4</div>
         <h2>Retrieve with BM25 (zero setup)</h2>
         <p>Given a question, which chunks are relevant? The simplest robust answer is <b>BM25</b>, a
            classic keyword-ranking algorithm. It needs no model and no embedding service, so it
            works with <i>any</i> provider — including Claude Code, which can't embed.</p>
-        <div class="block"><div class="label">localrag/retriever.py</div><pre><code>import re
+        <div class="lang lang-python">
+          <div class="block"><div class="label">localrag/retriever.py</div><pre><code>import re
 from rank_bm25 import BM25Okapi
 
 def _tokenize(text):
@@ -228,21 +449,58 @@ class Bm25Retriever:
         ranked = sorted(range(len(self.chunks)),
                         key=lambda i: scores[i], reverse=True)
         return [self.chunks[i] for i in ranked[:k]]</code></pre></div>
+        </div>
+        <div class="lang lang-node">
+          <div class="block"><div class="label">node/lesson-1/src/retriever.js</div><pre><code>function tokenize(text) {
+  return text.toLowerCase().match(/[a-z0-9]+/g) || [];
+}
+
+class Bm25Retriever {
+  // The constructor builds idf + per-doc term frequencies (k1=1.5, b=0.75) —
+  // a from-scratch BM25 Okapi, since there's no rank-bm25 in Node.
+  search(query, k) {
+    if (!this.chunks.length || k &lt;= 0) return [];
+    const scores = this.scores(tokenize(query));
+    const ranked = scores.map((_, i) =&gt; i).sort((a, b) =&gt; scores[b] - scores[a]);
+    const top = ranked.slice(0, k);
+    const best = scores[top[0]];
+    if (best &lt;= 0) return top.map((i) =&gt; this.chunks[i]);
+    return top.filter((i) =&gt; scores[i] &gt; 0).map((i) =&gt; this.chunks[i]);
+  }
+}</code></pre></div>
+        </div>
+        <div class="lang lang-csharp">
+          <div class="block"><div class="label">dotnet/lesson-1/Retriever.cs</div><pre><code>// The constructor builds idf + per-doc term frequencies (k1=1.5, b=0.75) —
+// a from-scratch BM25 Okapi, since there's no rank-bm25 in .NET.
+public List&lt;Chunk&gt; Search(string query, int k)
+{
+    if (_chunks.Count == 0 || k &lt;= 0) return new List&lt;Chunk&gt;();
+    var scores = GetScores(Tokenize(query));
+    var ranked = Enumerable.Range(0, _chunks.Count)
+        .OrderByDescending(i =&gt; scores[i])
+        .ToList();
+    var top = ranked.Take(k).ToList();
+    var best = scores[top[0]];
+    if (best &lt;= 0) return top.Select(i =&gt; _chunks[i]).ToList();
+    return top.Where(i =&gt; scores[i] &gt; 0).Select(i =&gt; _chunks[i]).ToList();
+}</code></pre></div>
+        </div>
         <div class="note"><b>A real bug worth knowing.</b> BM25's IDF goes <i>negative</i> when a
           word appears in every chunk — common on a tiny corpus. An early version filtered with
           <code>score &gt; 0</code> and returned <b>nothing</b>. The fix: don't apply an absolute
           cutoff — return top-k by rank and let the grounding prompt judge relevance. Retrieval
-          retrieves; the LLM decides.</div>
+          retrieves; the LLM decides. All three ports carry the same fix.</div>
       </section>
 
-      <!-- 7 -->
+      <!-- 7 · Step 5 Prompt -->
       <section class="slide">
         <div class="step-no">Step 5</div>
         <h2>The grounding prompt (anti-hallucination)</h2>
         <p>This is the heart of RAG. We hand the model the retrieved chunks as <b>context</b> and
            instruct it to answer <i>from that context</i>, cite sources, and clearly label anything
-           it adds from general knowledge.</p>
-        <div class="block"><div class="label">localrag/prompts.py</div><pre><code>SYSTEM_PROMPT = """You are a careful assistant answering questions over a set
+           it adds from general knowledge. The prompt text is <b>identical</b> in every language.</p>
+        <div class="lang lang-python">
+          <div class="block"><div class="label">localrag/prompts.py</div><pre><code>SYSTEM_PROMPT = """You are a careful assistant answering questions over a set
 of the user's own documents. Follow these rules exactly:
 
 1. Answer from the DOCUMENT CONTEXT below FIRST. For every claim that comes
@@ -262,19 +520,65 @@ def build_context(chunks):
 def build_user_prompt(question, chunks):
     context = build_context(chunks) if chunks else "(no relevant documents)"
     return f"DOCUMENT CONTEXT:\n{context}\n\nQUESTION:\n{question}"</code></pre></div>
+        </div>
+        <div class="lang lang-node">
+          <div class="block"><div class="label">node/lesson-1/src/prompts.js</div><pre><code>export const SYSTEM_PROMPT = `You are a careful assistant answering questions over a set of
+the user's own documents. Follow these rules exactly:
+
+1. Answer from the DOCUMENT CONTEXT below FIRST. For every claim that comes from
+the documents, cite the source like [filename:page].
+2. If the answer is not in the context, say so plainly: "This is not covered in
+your documents." Prefix any general knowledge with "(general knowledge — ...)".
+3. Never invent document contents, quotes, or citations.
+4. Be concise. Prefer the documents' own wording.`;
+
+export function buildContext(chunks) {
+  return chunks
+    .map((c) =&gt; `[${c.source}:${c.page_number}]\n${c.text}`)
+    .join("\n\n---\n\n");
+}
+
+export function buildUserPrompt(question, chunks) {
+  const context = chunks.length ? buildContext(chunks) : "(no relevant documents found)";
+  return `DOCUMENT CONTEXT:\n${context}\n\nQUESTION:\n${question}`;
+}</code></pre></div>
+        </div>
+        <div class="lang lang-csharp">
+          <div class="block"><div class="label">dotnet/lesson-1/Prompts.cs</div><pre><code>public const string SystemPrompt =
+    "You are a careful assistant answering questions over a set of " +
+    "the user's own documents. Follow these rules exactly:\n\n" +
+    "1. Answer from the DOCUMENT CONTEXT below FIRST. Cite each claim like [filename:page].\n" +
+    "2. If the answer is not in the context, say so plainly, then prefix any general " +
+    "knowledge with \"(general knowledge — not from your documents)\".\n" +
+    "3. Never invent document contents, quotes, or citations.\n" +
+    "4. Be concise. Prefer the documents' own wording.\n";
+
+public static string BuildContext(List&lt;Chunk&gt; chunks)
+{
+    var blocks = chunks.Select(c =&gt; $"[{c.Source}:{c.PageNumber}]\n{c.Text}");
+    return string.Join("\n\n---\n\n", blocks);
+}
+
+public static string BuildUserPrompt(string question, List&lt;Chunk&gt; chunks)
+{
+    var context = chunks.Count &gt; 0 ? BuildContext(chunks) : "(no relevant documents found)";
+    return $"DOCUMENT CONTEXT:\n{context}\n\nQUESTION:\n{question}";
+}</code></pre></div>
+        </div>
         <div class="why"><b>RAG quality = retrieval quality + prompt quality.</b> A strict prompt
           with bad retrieval answers "not in your documents" to everything; a sloppy prompt with
           perfect retrieval still hallucinates. You need both. Cite, admit ignorance, label general
           knowledge — that's the minimum anti-hallucination contract.</div>
       </section>
 
-      <!-- 8 -->
+      <!-- 8 · Step 6 Providers -->
       <section class="slide">
         <div class="step-no">Step 6</div>
         <h2>A provider abstraction</h2>
         <p>The pipeline shouldn't care <i>which</i> AI answers. So we define one tiny interface and
-           four implementations. Switching providers becomes a one-line env-var change.</p>
-        <div class="block"><div class="label">localrag/providers/__init__.py</div><pre><code>from typing import Protocol
+           pick an implementation by name. Switching providers becomes a one-line env-var change.</p>
+        <div class="lang lang-python">
+          <div class="block"><div class="label">localrag/providers/__init__.py</div><pre><code>from typing import Protocol
 
 class LLMProvider(Protocol):
     name: str
@@ -291,7 +595,7 @@ def get_provider(name, config):
     if name == "openai":
         from .openai import OpenAIProvider; return OpenAIProvider(config)
     raise ValueError(f"Unknown provider '{name}'")</code></pre></div>
-        <div class="block"><div class="label">The default: Claude Code CLI — no API key</div><pre><code>import shutil, subprocess
+          <div class="block"><div class="label">The default: Claude Code CLI — no API key</div><pre><code>import shutil, subprocess
 
 class ClaudeCodeProvider:
     name = "claude"
@@ -304,18 +608,76 @@ class ClaudeCodeProvider:
             [self.bin, "-p", f"{system}\n\n{user}"],
             capture_output=True, text=True, timeout=180)
         return result.stdout.strip()</code></pre></div>
+        </div>
+        <div class="lang lang-node">
+          <div class="block"><div class="label">node/lesson-1/src/providers/index.js</div><pre><code>import { ClaudeCodeProvider } from "./claudeCode.js";
+import { OllamaProvider } from "./ollama.js";
+
+export function getProvider(name, config) {
+  name = (name || "").toLowerCase();
+  if (name === "claude") return new ClaudeCodeProvider(config);
+  if (name === "ollama") return new OllamaProvider(config);
+  if (name === "gemini" || name === "openai") {
+    throw new Error(`Provider '${name}' is not ported in Node yet — use the Python reference.`);
+  }
+  throw new Error(`Unknown provider '${name}'. Choose one of: claude, ollama.`);
+}</code></pre></div>
+          <div class="block"><div class="label">The default: Claude Code CLI — no API key</div><pre><code>export class ClaudeCodeProvider {
+  constructor(config) { this.name = "claude"; this.bin = config.claudeBin; }
+  isAvailable() { return resolveBin(this.bin) !== null; }
+  chat(system, user) {
+    const resolved = resolveBin(this.bin);   // find claude on PATH, no shell
+    // The prompt goes on STDIN — no argv-length limits, no shell quoting.
+    const out = execFileSync(resolved, ["-p"], {
+      input: `${system}\n\n${user}`, encoding: "utf-8", timeout: 180000,
+    });
+    return out.trim();
+  }
+}</code></pre></div>
+          <div class="note"><b>Parity note:</b> the Node port ships <code>claude</code> + <code>ollama</code>.
+            Asking for <code>gemini</code>/<code>openai</code> throws a clear error pointing back to the
+            Python reference (<code>./run -l 1 --provider gemini …</code>).</div>
+        </div>
+        <div class="lang lang-csharp">
+          <div class="block"><div class="label">dotnet/lesson-1/Providers/ILlmProvider.cs</div><pre><code>public interface ILlmProvider
+{
+    string Name { get; }
+    bool IsAvailable();
+    string Chat(string system, string user);
+}
+
+public static class ProviderFactory
+{
+    public static ILlmProvider GetProvider(string name, Config config)
+    {
+        name = (name ?? string.Empty).ToLowerInvariant();
+        return name switch
+        {
+            "claude" =&gt; new ClaudeCodeProvider(config),
+            "ollama" =&gt; new OllamaProvider(config),
+            "gemini" or "openai" =&gt; throw new InvalidOperationException(
+                $"Provider '{name}' is not ported in C# yet — use the Python reference."),
+            _ =&gt; throw new InvalidOperationException($"Unknown provider '{name}'."),
+        };
+    }
+}</code></pre></div>
+          <div class="note"><b>Parity note:</b> the C# port ships <code>claude</code> + <code>ollama</code>.
+            Asking for <code>gemini</code>/<code>openai</code> throws a clear error pointing back to the
+            Python reference.</div>
+        </div>
         <div class="why"><b>This is the pattern every LLM framework is built around</b> — a provider
           interface plus adapters. Write it once by hand and LangChain's <code>ChatModel</code>
           stops looking like magic.</div>
       </section>
 
-      <!-- 9 -->
+      <!-- 9 · Step 7 Wire & run -->
       <section class="slide">
         <div class="step-no">Step 7</div>
         <h2>Wire it together &amp; run</h2>
         <p>The pipeline: ensure the index is fresh, retrieve top-k chunks, build the grounded
            prompt, call the provider, print the answer and its sources.</p>
-        <div class="block"><div class="label">the core query function</div><pre><code>def answer(question, retriever, config):
+        <div class="lang lang-python">
+          <div class="block"><div class="label">the core query function</div><pre><code>def answer(question, retriever, config):
     hits = retriever.search(question, config.top_k)
     provider = get_provider(config.provider, config)
     reply = provider.chat(SYSTEM_PROMPT, build_user_prompt(question, hits))
@@ -326,8 +688,39 @@ class ClaudeCodeProvider:
         if tag not in sources:
             sources.append(tag)
     print("Sources:", ", ".join(sources) or "(none)")</code></pre></div>
-        <div class="block"><div class="label">Type this</div><pre class="cmd"><code>python -m localrag index
+          <div class="block"><div class="label">Type this</div><pre class="cmd"><code>python -m localrag index
 python -m localrag ask "How do I reset the device?"</code></pre></div>
+        </div>
+        <div class="lang lang-node">
+          <div class="block"><div class="label">node/lesson-1/src/cli.js — the core query function</div><pre><code>async function answer(question, retriever, config) {
+  const hits = retriever.search(question, config.topK);
+  const provider = getProvider(config.provider, config);
+  const reply = await provider.chat(SYSTEM_PROMPT, buildUserPrompt(question, hits));
+  console.log("\n" + reply.trim() + "\n");
+  const sources = [];
+  for (const h of hits) {
+    const tag = `${h.source}:${h.page_number}`;
+    if (!sources.includes(tag)) sources.push(tag);
+  }
+  console.log("Sources: " + (sources.join(", ") || "(none)"));
+}</code></pre></div>
+          <div class="block"><div class="label">Type this</div><pre class="cmd"><code>./run -l 1 --lang node index
+./run -l 1 --lang node ask "How do I reset the device?"</code></pre></div>
+        </div>
+        <div class="lang lang-csharp">
+          <div class="block"><div class="label">dotnet/lesson-1/Program.cs — the core query function</div><pre><code>void PrintAnswer(string question, IRetriever retriever)
+{
+    var hits = retriever.Search(question, config.TopK);
+    var provider = ProviderFactory.GetProvider(config.Provider, config);
+    var reply = provider.Chat(Prompts.SystemPrompt, Prompts.BuildUserPrompt(question, hits));
+    Console.WriteLine("\n" + reply.Trim() + "\n");
+    Console.WriteLine(hits.Count &gt; 0
+        ? "Sources: " + string.Join(", ", Engine.DedupSources(hits))
+        : "Sources: (none)");
+}</code></pre></div>
+          <div class="block"><div class="label">Type this</div><pre class="cmd"><code>./run -l 1 --lang csharp index
+./run -l 1 --lang csharp ask "How do I reset the device?"</code></pre></div>
+        </div>
         <div class="block"><div class="label">Output</div><pre><code>To reset the WidgetPro 3000, press and hold the power button for 10 seconds
 until the status LED blinks blue three times. [sample_manual.md:1]
 
@@ -335,14 +728,15 @@ Sources: sample_manual.md:1</code></pre></div>
         <div class="why"><b>That's a complete RAG system.</b> Everything after this is upgrades.</div>
       </section>
 
-      <!-- 10 -->
+      <!-- 10 · Step 8 Embeddings -->
       <section class="slide">
         <div class="step-no">Step 8 · Upgrade</div>
         <h2>Semantic retrieval with embeddings</h2>
         <p>BM25 matches <b>words</b>. "How do I power-cycle it?" won't match a doc that says
            "restart" — no shared keywords. <b>Embeddings</b> match <b>meaning</b>: turn each chunk
            into a vector and rank by cosine similarity to the question.</p>
-        <div class="block"><div class="label">localrag/retriever.py — EmbeddingRetriever</div><pre><code>class EmbeddingRetriever:
+        <div class="lang lang-python">
+          <div class="block"><div class="label">localrag/retriever.py — EmbeddingRetriever</div><pre><code>class EmbeddingRetriever:
     name = "embeddings"
     def __init__(self, chunks, config):
         import numpy as np
@@ -362,27 +756,61 @@ Sources: sample_manual.md:1</code></pre></div>
         sims = self._vectors @ q              # cosine (vectors normalized)
         ranked = np.argsort(sims)[::-1][:k]
         return [self.chunks[i] for i in ranked]</code></pre></div>
-        <div class="block"><div class="label">Never dead-end: fall back to BM25</div><pre><code>def build_retriever(chunks, config):
+          <div class="block"><div class="label">Never dead-end: fall back to BM25</div><pre><code>def build_retriever(chunks, config):
     if config.retriever == "embeddings":
         try:
             return EmbeddingRetriever(chunks, config)
         except Exception as exc:
             print(f"[localrag] Embeddings unavailable ({exc}). Falling back to BM25.")
     return Bm25Retriever(chunks)</code></pre></div>
-        <div class="block"><div class="label">Type this (needs Ollama running)</div><pre class="cmd"><code>RAG_RETRIEVER=embeddings RAG_EMBED_PROVIDER=ollama python -m localrag ask "power-cycle steps?"</code></pre></div>
+          <div class="block"><div class="label">Type this (needs Ollama running)</div><pre class="cmd"><code>RAG_RETRIEVER=embeddings RAG_EMBED_PROVIDER=ollama python -m localrag ask "power-cycle steps?"</code></pre></div>
+        </div>
+        <div class="lang lang-node">
+          <div class="note"><b>Semantic embeddings are Python-only.</b> The Node port keeps the same
+            "never dead-end" design: ask for embeddings and it prints a notice and falls back to
+            BM25. For the full embeddings path, use the Python reference (<code>./run -l 1</code>).</div>
+          <div class="block"><div class="label">node/lesson-1/src/retriever.js — graceful fallback</div><pre><code>export function buildRetriever(chunks, config) {
+  // Embeddings are not ported in Node; fall back to BM25 with a clear message,
+  // mirroring the Python "never dead-end" design.
+  if (config.retriever === "embeddings") {
+    console.log(
+      "[localrag] Embeddings not ported in Node. Falling back to BM25 " +
+      "(use the Python reference for embeddings)."
+    );
+  }
+  return new Bm25Retriever(chunks);
+}</code></pre></div>
+        </div>
+        <div class="lang lang-csharp">
+          <div class="note"><b>Semantic embeddings are Python-only.</b> The C# port keeps the same
+            "never dead-end" design: ask for embeddings and it prints a notice and falls back to
+            BM25. For the full embeddings path, use the Python reference (<code>./run -l 1</code>).</div>
+          <div class="block"><div class="label">dotnet/lesson-1/Retriever.cs — graceful fallback</div><pre><code>public static class RetrieverFactory
+{
+    /// &lt;summary&gt;Pick a retriever from config. Embeddings fall back to BM25 in this port.&lt;/summary&gt;
+    public static IRetriever BuildRetriever(List&lt;Chunk&gt; chunks, Config config)
+    {
+        if (config.Retriever == "embeddings")
+            Console.WriteLine("[localrag] Embeddings are not ported in C# yet. Falling back to BM25.");
+        return new Bm25Retriever(chunks);
+    }
+}</code></pre></div>
+        </div>
         <div class="why"><b>BM25 vs embeddings:</b> BM25 is free, instant, great for exact terms and
           codes. Embeddings catch paraphrases but cost an embed call. Production often runs both
-          (hybrid) and merges rankings. You now have both — try the same question each way.</div>
+          (hybrid) and merges rankings. <span class="lang lang-python">You now have both — try the same question each way.</span><span class="lang lang-node">In Python you have both — try the same question each way.</span><span class="lang lang-csharp">In Python you have both — try the same question each way.</span></div>
       </section>
 
-      <!-- 11 -->
+      <!-- 11 · Step 9 Web UI -->
       <section class="slide">
         <div class="step-no">Step 9</div>
         <h2>A drag-and-drop web UI</h2>
-        <p>A terminal is fine for you; a web page is better for a demo. A tiny Flask app reuses the
-           <i>exact same</i> engine. Three endpoints: serve the page, accept dropped files
-           (save + reindex), and answer questions.</p>
-        <div class="block"><div class="label">localrag/web.py</div><pre><code>@app.post("/api/upload")
+        <p>A terminal is fine for you; a web page is better for a demo. A tiny
+           <span class="lang lang-python">Flask</span><span class="lang lang-node">Express</span><span class="lang lang-csharp">ASP.NET minimal-API</span>
+           app reuses the <i>exact same</i> engine. Three endpoints: serve the page, accept dropped
+           files (save + reindex), and answer questions.</p>
+        <div class="lang lang-python">
+          <div class="block"><div class="label">localrag/web.py</div><pre><code>@app.post("/api/upload")
 def upload():
     for f in request.files.getlist("files"):
         name = secure_filename(f.filename)
@@ -395,31 +823,86 @@ def upload():
 def ask():
     data = request.get_json()
     return jsonify(answer_question(_request_config(), data["question"]))</code></pre></div>
-        <div class="block"><div class="label">Type this</div><pre class="cmd"><code>python -m localrag web      # http://127.0.0.1:5000</code></pre></div>
+          <div class="block"><div class="label">Type this</div><pre class="cmd"><code>python -m localrag web      # http://127.0.0.1:5000</code></pre></div>
+        </div>
+        <div class="lang lang-node">
+          <div class="block"><div class="label">node/lesson-1/src/web.js</div><pre><code>app.post("/api/upload", uploadFiles, async (req, res) =&gt; {
+  for (const f of req.files || []) {
+    const name = secureFilename(f.originalname);
+    if (SUPPORTED_EXTS.has(path.extname(name).toLowerCase())) {
+      await fs.promises.writeFile(path.join(baseConfig.docsDir, name), f.buffer);
+    }
+  }
+  const { chunks, fileCount } = await refreshIndex(baseConfig);   // rebuild on every drop
+  res.json({ files: listFiles(baseConfig), indexed_files: fileCount, chunks: chunks.length });
+});</code></pre></div>
+          <div class="block"><div class="label">Type this</div><pre class="cmd"><code>./run -l 1 --lang node      # http://127.0.0.1:5000</code></pre></div>
+        </div>
+        <div class="lang lang-csharp">
+          <div class="block"><div class="label">dotnet/lesson-1/Program.cs</div><pre><code>app.MapPost("/api/upload", async (HttpRequest request) =&gt;
+{
+    var form = await request.ReadFormAsync();
+    foreach (var f in form.Files.GetFiles("files"))
+    {
+        var name = SecureFilename(f.FileName);
+        if (!Extract.SupportedExts.Contains(Path.GetExtension(name))) continue;
+        await using var fs = File.Create(Path.Combine(baseConfig.DocsDir, name));
+        await f.CopyToAsync(fs);
+    }
+    var (chunks, nFiles) = Engine.RefreshIndex(baseConfig);   // rebuild on every drop
+    return Results.Json(new { files = ListFiles(baseConfig), chunks = chunks.Count });
+});</code></pre></div>
+          <div class="block"><div class="label">Type this</div><pre class="cmd"><code>./run -l 1 --lang csharp    # http://127.0.0.1:5000</code></pre></div>
+        </div>
         <div class="why"><b>Same pipeline, nicer surface.</b> The front end is one HTML file with
           vanilla JS: a dropzone using the browser's drag-and-drop events, a <code>fetch()</code> to
-          upload, then a question box that renders the answer plus clickable source chips. Drop a
-          PDF, ask a question, watch it cite the file you just dropped.</div>
+          upload, then a question box that renders the answer plus clickable source chips. All three
+          ports serve the <i>same</i> page. Drop a PDF, ask a question, watch it cite the file you
+          just dropped.</div>
       </section>
 
-      <!-- 12 -->
+      <!-- 12 · Step 10 See it work -->
       <section class="slide">
         <div class="step-no">Step 10</div>
         <h2>See the anti-hallucination work</h2>
         <p>Ask something <b>in</b> your documents and something <b>out of</b> them, and watch the
            model stay honest:</p>
-        <div class="block"><div class="label">Try both</div><pre class="cmd"><code>python -m localrag ask "How long is the warranty?"
+        <div class="lang lang-python">
+          <div class="block"><div class="label">Try both</div><pre class="cmd"><code>python -m localrag ask "How long is the warranty?"
 python -m localrag ask "What is the capital of France?"</code></pre></div>
+        </div>
+        <div class="lang lang-node">
+          <div class="block"><div class="label">Try both</div><pre class="cmd"><code>./run -l 1 --lang node ask "How long is the warranty?"
+./run -l 1 --lang node ask "What is the capital of France?"</code></pre></div>
+        </div>
+        <div class="lang lang-csharp">
+          <div class="block"><div class="label">Try both</div><pre class="cmd"><code>./run -l 1 --lang csharp ask "How long is the warranty?"
+./run -l 1 --lang csharp ask "What is the capital of France?"</code></pre></div>
+        </div>
         <div class="block"><div class="label">Output</div><pre><code>→ 24 months from purchase date [warranty.txt:1]        # grounded, cited
 
 → This is not covered in your documents.
   (general knowledge — not from your documents) The capital of France is Paris.</code></pre></div>
         <p>A tiny <b>offline test</b> locks in the retrieval core (no network, no LLM):</p>
-        <div class="block"><div class="label">tests/test_smoke.py + run</div><pre><code>def test_bm25_finds_reset_instructions():
+        <div class="lang lang-python">
+          <div class="block"><div class="label">tests/test_smoke.py + run</div><pre><code>def test_bm25_finds_reset_instructions():
     chunks = chunk_pages(extract_pages(SAMPLE), size=400, overlap=80)
     hits = Bm25Retriever(chunks).search("how do I reset the device", k=3)
     assert "power button" in hits[0]["text"].lower()</code></pre></div>
-        <div class="block"><pre class="cmd"><code>pytest -q      # 4 passed</code></pre></div>
+          <div class="block"><pre class="cmd"><code>pytest -q      # 4 passed</code></pre></div>
+        </div>
+        <div class="lang lang-node">
+          <div class="block"><div class="label">Validate the port (indexes the sample corpus)</div><pre class="cmd"><code>./run -l 1 --lang node test    # → "Indexed 4 file(s) into 44 chunk(s)."</code></pre></div>
+          <div class="note">The offline unit-test suite (<code>tests/test_smoke.py</code>) lives in the
+            Python reference; the ports ship a <code>test</code> command that exercises the same
+            extract → chunk → index path end to end.</div>
+        </div>
+        <div class="lang lang-csharp">
+          <div class="block"><div class="label">Validate the port (indexes the sample corpus)</div><pre class="cmd"><code>./run -l 1 --lang csharp test  # → "Indexed 4 file(s) into 32 chunk(s)."</code></pre></div>
+          <div class="note">The offline unit-test suite (<code>tests/test_smoke.py</code>) lives in the
+            Python reference; the ports ship a <code>test</code> command that exercises the same
+            extract → chunk → index path end to end.</div>
+        </div>
         <div class="why"><b>That clean separation</b> — cited facts vs. clearly-labeled general
           knowledge — is the payoff of the grounding prompt. It's what makes RAG trustworthy.</div>
       </section>
@@ -431,7 +914,8 @@ python -m localrag ask "What is the capital of France?"</code></pre></div>
         <p>Prove the app reads <i>your</i> files, not training data: feed it a story no model has ever
            seen. Download
            <a href="./pdf/The_Magic_Turtle_Astronaut.pdf" target="_blank" rel="noopener">The_Magic_Turtle_Astronaut.pdf</a>
-           — a made-up legend — and drag it onto the web UI.</p>
+           — a made-up legend — and drag it onto the web UI
+           (<code>./run -l 1<span class="lang lang-node"> --lang node</span><span class="lang lang-csharp"> --lang csharp</span></code>).</p>
         <div class="block"><div class="label">Grounded — each answer should cite [file:page]</div><pre><code>What was the name of the magic turtle, and what species was she?
 Who discovered the turtle's secret, and how?
 What was the spaceship called, and how long did the journey take?
@@ -446,7 +930,7 @@ Who was the President of Earth when the mission launched?</code></pre></div>
           with a citation</i>, even though it's general knowledge — retrieval preferring your text.</div>
       </section>
 
-      <!-- 13 -->
+      <!-- 13 · Recap -->
       <section class="slide">
         <div class="step-no">Recap</div>
         <h2>You built a RAG system — and understand every line</h2>
@@ -456,14 +940,14 @@ Who was the President of Earth when the mission launched?</code></pre></div>
           <tr><td>Extraction</td><td>PDF/DOCX/TXT/MD → pages</td></tr>
           <tr><td>Chunking</td><td>overlapping windows with source+page</td></tr>
           <tr><td>Indexing</td><td>cached, auto-refreshing JSON index</td></tr>
-          <tr><td>Retrieval</td><td>BM25 <i>and</i> embeddings behind one interface</td></tr>
+          <tr><td>Retrieval</td><td>BM25<span class="lang lang-python"> <i>and</i> embeddings</span> behind one interface</td></tr>
           <tr><td>Grounding</td><td>a prompt that cites and admits ignorance</td></tr>
-          <tr><td>Providers</td><td>one interface, four back ends, env-var switch</td></tr>
+          <tr><td>Providers</td><td>one interface,<span class="lang lang-python"> four back ends,</span><span class="lang lang-node"> claude + ollama,</span><span class="lang lang-csharp"> claude + ollama,</span> env-var switch</td></tr>
           <tr><td>Web UI</td><td>drag-and-drop, same engine underneath</td></tr>
         </table>
         <div class="why"><b>No LangChain, no vector database, no cloud</b> — and you understand every
           line. That understanding is the point: frameworks become easy once you know what they
-          automate.</div>
+          automate.<span class="lang lang-node"> You followed the Node.js port; the Python reference adds semantic embeddings and the gemini/openai providers.</span><span class="lang lang-csharp"> You followed the C# port; the Python reference adds semantic embeddings and the gemini/openai providers.</span></div>
         <p><b>Exercises:</b> merge BM25 + embedding rankings (hybrid); chunk on Markdown headings;
            show the exact sentence behind each citation; stream tokens to the web UI.</p>
         <div class="cta">
@@ -476,11 +960,16 @@ Who was the President of Earth when the mission launched?</code></pre></div>
 
     <div class="controls">
       <button class="nav-btn" data-prev>← Prev</button>
-      <span class="counter"></span>
+      <div class="langsel compact" role="group" aria-label="Language">
+        <button class="langsel-btn" data-setlang="python">Py</button>
+        <button class="langsel-btn" data-setlang="node">Node</button>
+        <button class="langsel-btn" data-setlang="csharp">C#</button>
+      </div>
       <span class="spacer"></span>
+      <span class="counter"></span>
       <button class="nav-btn" data-next>Next →</button>
     </div>
-    <div class="kbd-hint">Use <kbd>←</kbd> <kbd>→</kbd> arrow keys, the dots, or the buttons. Each step is deep-linkable.</div>
+    <div class="kbd-hint">Use <kbd>←</kbd> <kbd>→</kbd> arrow keys, the dots, or the buttons. Pick a language above; your choice sticks across every step.</div>
   </div>
 
   <footer class="site"><div class="inner">

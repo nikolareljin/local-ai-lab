@@ -28,6 +28,24 @@
     deck.style.height = slides[i].offsetHeight + "px";
   }
 
+  // ---- language selector (Python / Node.js / C#) ----
+  // The active language is reflected on <html data-lang="..."> and drives the
+  // per-language show/hide CSS. Persisted so Next/Prev — and reloads — stay in
+  // the chosen language until the reader changes it.
+  const LANG_KEY = "localrag-lang";
+  const LANGS = ["python", "node", "csharp"];
+  const langButtons = Array.from(document.querySelectorAll("[data-setlang]"));
+  function applyLang(lang) {
+    if (!LANGS.includes(lang)) lang = "python";
+    document.documentElement.dataset.lang = lang;
+    langButtons.forEach((b) => b.classList.toggle("on", b.dataset.setlang === lang));
+    try { localStorage.setItem(LANG_KEY, lang); } catch (e) { /* ignore */ }
+    setHeight(); // the active slide's height changes when code blocks swap
+  }
+  langButtons.forEach((b) =>
+    b.addEventListener("click", () => applyLang(b.dataset.setlang))
+  );
+
   function render() {
     slides.forEach((s, idx) => s.classList.toggle("active", idx === i));
     dots.forEach((d, idx) => d.classList.toggle("on", idx === i));
@@ -76,6 +94,12 @@
   // Deep link: open on the step in the URL hash (#step-N)
   const m = location.hash.match(/step-(\d+)/);
   if (m) i = Math.max(0, Math.min(slides.length - 1, parseInt(m[1], 10) - 1));
+
+  // Sync the selector buttons to the language the head script already applied
+  // (defaults to python). Done before the first render so heights are correct.
+  let savedLang = "python";
+  try { savedLang = localStorage.getItem(LANG_KEY) || "python"; } catch (e) { /* ignore */ }
+  applyLang(savedLang);
 
   window.addEventListener("resize", setHeight);
   window.addEventListener("load", render);

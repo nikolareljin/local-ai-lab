@@ -61,6 +61,26 @@ th { background: var(--panel); }
 .lesson-head h1 { margin: 6px 0 6px; font-size: 30px; }
 .lesson-head p { color: var(--muted); margin: 0; }
 
+/* ---- language selector (Python / Node.js / C#) ---- */
+.langsel { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 14px 0 2px; }
+.langsel-label { color: var(--muted); font-size: 13px; margin-right: 2px; }
+.langsel-btn {
+  background: var(--panel); border: 1px solid var(--edge); color: var(--muted);
+  padding: 6px 14px; border-radius: 999px; cursor: pointer; font: inherit; font-size: 13px; font-weight: 600;
+}
+.langsel-btn:hover { color: var(--txt); border-color: var(--accent); }
+.langsel-btn.on { background: var(--accent2); border-color: var(--accent); color: #fff; }
+.langsel.compact { margin: 0; }
+.langsel.compact .langsel-btn { padding: 5px 11px; font-size: 12px; }
+
+/* Per-language content: show only the blocks for the active language. The root
+   <html data-lang="..."> is set by an inline head script + slider.js. Using
+   display:contents so the wrapper adds no box (works for block and inline). */
+.lang { display: none; }
+[data-lang="python"] .lang-python,
+[data-lang="node"]   .lang-node,
+[data-lang="csharp"] .lang-csharp { display: contents; }
+
 .progress { height: 4px; background: var(--edge); border-radius: 999px; overflow: hidden; margin: 18px 0 8px; }
 .progress > span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent2), var(--accent)); transition: width .35s ease; }
 
