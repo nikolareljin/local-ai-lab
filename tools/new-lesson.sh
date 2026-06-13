@@ -15,7 +15,9 @@ dest="$root/lessons/${nn}-${slug}"
 
 cp -r "$root/lessons/_template" "$dest"
 # Fill the two placeholders in the manifest (kept simple: TITLE / SLUG).
-sed -i "s/\"TITLE\"/\"${title//\//\\/}\"/; s/\"SLUG\"/\"${slug}\"/" "$dest/lesson.json"
+# Portable in-place edit (BSD/macOS sed needs a backup suffix; GNU accepts it too).
+sed -i.bak "s/\"TITLE\"/\"${title//\//\\/}\"/; s/\"SLUG\"/\"${slug}\"/" "$dest/lesson.json"
+rm -f "$dest/lesson.json.bak"
 
 echo "Created $dest"
 echo "Next: add code under python/ node/ dotnet/, edit lesson.json elements, then:  ./run -l $1 show"

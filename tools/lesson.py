@@ -119,9 +119,9 @@ def cmd_run(args):
     for el in cmds:
         shell = el["shell"]
         el_lang = el.get("lang") or lang
-        if el_lang == "node" and not which("node"):
+        if el_lang == "node" and not shutil.which("node"):
             sys.exit("[ERROR] Node.js is required (https://nodejs.org).")
-        if el_lang == "csharp" and not which("dotnet"):
+        if el_lang == "csharp" and not shutil.which("dotnet"):
             sys.exit("[ERROR] The .NET SDK is required (https://dotnet.microsoft.com).")
         if el_lang == "python":
             py = python_for(el.get("venv", False))
@@ -134,10 +134,6 @@ def cmd_run(args):
         if rc != 0:
             return rc
     return 0
-
-
-def which(name):
-    return any((Path(p) / name).exists() for p in os.environ.get("PATH", "").split(os.pathsep) if p)
 
 
 # --------------------------------------------------------------------------- B) show
@@ -156,10 +152,11 @@ def read_ref(ldir, el):
 def cmd_show(args):
     ldir, lesson = load(args.number)
     if getattr(args, "html", False):
-        # Standalone file: reference the repo's assets and media by absolute file:// path.
+        # Standalone file: reference the repo's assets and media by absolute file:// URI
+        # (Path.as_uri() is correct on Windows too, e.g. file:///C:/...).
         print(render_html(args.number, ldir, lesson, args.lang,
-                          assets_href=f"file://{ROOT}/docs/assets",
-                          media_base=f"file://{ldir}/"))
+                          assets_href=(ROOT / "docs" / "assets").as_uri(),
+                          media_base=ldir.as_uri() + "/"))
         return 0
     lang = args.lang
     print(f"\n{RULE}\nLesson {args.number} · {lesson.get('title','')}")

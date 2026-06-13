@@ -12,7 +12,15 @@ set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 
-dir_for() { local n; n="$(printf '%02d' "$1")"; ls -d "lessons/${n}-"* 2>/dev/null | head -1; }
+# Echo the lesson dir for a number, or nothing. Avoids `ls | head`, which fails
+# under `set -euo pipefail` when no directory matches.
+dir_for() {
+  local n d; n="$(printf '%02d' "$1")"
+  for d in "lessons/${n}-"*/; do
+    [[ -d "$d" ]] && { printf '%s\n' "${d%/}"; return 0; }
+  done
+  return 0
+}
 slug_of() { local d="$1"; d="${d#lessons/}"; echo "${d#*-}"; }
 
 case "${1:-}" in

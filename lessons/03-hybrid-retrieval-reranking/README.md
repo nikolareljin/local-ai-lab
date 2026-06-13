@@ -197,8 +197,11 @@ Three more levers that production systems add on top of fusion:
 | **Query rewriting** | vague / underspecified questions | can over-expand | one LLM call | yes |
 | **Metadata filtering** | scoping large mixed corpora | needs good metadata | negligible | no |
 
-On the demo corpus, each single retriever fails one of the two queries; the hybrid handles both —
-that's the whole argument for fusion.
+On this tiny offline corpus the two arms happen to agree on the *top* hit, but they order the lower
+results differently — compare BM25 (`setup.md` second) with the semantic arm (`error_codes.md` second)
+on the paraphrase query — and RRF fuses them. With real embeddings on a larger corpus the split is far
+sharper: a paraphrase that shares **no** keywords with the answer sinks under BM25 yet surfaces
+semantically, which is exactly where fusion earns its keep.
 
 ---
 
