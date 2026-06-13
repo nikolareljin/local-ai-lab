@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>LocalRag</RootNamespace>
+    <AssemblyName>LocalRagMcp</AssemblyName>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The official C# MCP SDK (stdio server + client). -->
+    <PackageReference Include="ModelContextProtocol" Version="1.4.0" />
+    <!-- Brought in transitively by the SDK, referenced explicitly for the Host builder. -->
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <!-- Needed only because we reuse Lesson 1's Extract.cs (PDF + DOCX text). -->
+    <PackageReference Include="UglyToad.PdfPig" Version="1.7.0-custom-5" />
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Reuse the Lesson 1 engine module-for-module — MCP is a new doorway onto
+         the same retriever. We pull in only what the retriever needs (no
+         Providers/Prompts/Engine), so this server has no LLM dependency. -->
+    <Compile Include="..\lesson-1\Config.cs" />
+    <Compile Include="..\lesson-1\Chunk.cs" />
+    <Compile Include="..\lesson-1\Extract.cs" />
+    <Compile Include="..\lesson-1\Store.cs" />
+    <Compile Include="..\lesson-1\Retriever.cs" />
+  </ItemGroup>
+
+</Project>
