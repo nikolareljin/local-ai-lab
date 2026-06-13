@@ -16,7 +16,6 @@ Used by `./run`; can also be invoked directly:  python tools/lesson.py list
 """
 
 import argparse
-import functools
 import html
 import http.server
 import json
@@ -156,7 +155,10 @@ def read_ref(ldir, el):
 def cmd_show(args):
     ldir, lesson = load(args.number)
     if getattr(args, "html", False):
-        print(render_html(ldir, lesson, args.lang, asset_base=f"file://{ldir}/"))
+        # Standalone file: reference the repo's assets and media by absolute file:// path.
+        print(render_html(args.number, ldir, lesson, args.lang,
+                          assets_href=f"file://{ROOT}/docs/assets",
+                          media_base=f"file://{ldir}/"))
         return 0
     lang = args.lang
     print(f"\n{RULE}\nLesson {args.number} · {lesson.get('title','')}")
@@ -208,21 +210,6 @@ def indent(text, prefix="    "):
 
 
 # --------------------------------------------------------------------------- B') HTML preview
-HTML_CSS = """
-  body { font: 16px/1.6 system-ui, sans-serif; max-width: 820px; margin: 2rem auto; padding: 0 1rem; color: #222; }
-  h1 { font-size: 1.5rem; } h3 { margin: 1.4rem 0 .3rem; } h4 { margin: 1rem 0 .3rem; color: #444; font-size: .95rem; }
-  .summary { color: #555; }
-  pre { background: #f6f8fa; padding: .7rem .9rem; border-radius: 6px; overflow-x: auto; }
-  code { font-family: ui-monospace, Menlo, Consolas, monospace; }
-  .cmd pre { background: #0d1117; color: #e6edf3; }
-  .copy { border-left: 3px solid #2563eb; padding-left: .8rem; }
-  .note p { margin: .3rem 0; }
-  .lang { font-size: .7rem; background: #eef; color: #225; padding: .05rem .4rem; border-radius: 999px; margin-left: .4rem; }
-  .cmdnote { color: #555; margin: .2rem 0 .8rem; }
-  figure { margin: 1rem 0; } img, video { max-width: 100%; border-radius: 6px; } figcaption { color: #666; font-size: .9rem; }
-"""
-
-
 def _esc(s):
     return html.escape(s, quote=False)
 
@@ -231,41 +218,61 @@ def _inline(s):
     return re.sub(r"`([^`]+)`", r"<code>\1</code>", _esc(s))
 
 
-def render_html(ldir, lesson, lang=None, asset_base=""):
-    out = ["<!doctype html><html><head><meta charset='utf-8'>",
-           f"<title>{_esc(lesson.get('title',''))}</title><style>{HTML_CSS}</style></head><body>",
-           f"<h1>{_esc(lesson.get('title',''))}</h1>"]
-    if lesson.get("summary"):
-        out.append(f"<p class='summary'>{_inline(lesson['summary'])}</p>")
-    for el in lesson.get("elements", []):
-        el_lang = el.get("lang")
-        if lang and el_lang not in (None, lang):
-            continue
-        t, title = el.get("type"), el.get("title")
-        badge = f"<span class='lang'>{_esc(el_lang)}</span>" if el_lang else ""
-        head = f"<h4>{_esc(title)}</h4>" if title else ""
-        cmdnote = f"<p class='cmdnote'>{_inline(el['note'])}</p>" if el.get("note") else ""
-        if t == "note":
-            body = read_ref(ldir, el)
-            inner = f"<pre>{_esc(body)}</pre>" if "file" in el else f"<p>{_inline(body)}</p>"
-            out.append(f"<section class='note'>{head}{inner}</section>")
-        elif t == "command":
-            out.append(f"<div class='cmd'>{badge}<pre>$ {_esc(el['shell'])}</pre>{cmdnote}</div>")
-        elif t in ("code", "config"):
-            out.append(f"<div class='{t}'><h4>{t}: {_esc(el.get('file','(inline)'))} {badge}</h4>"
-                       f"{cmdnote}<pre><code>{_esc(read_ref(ldir, el))}</code></pre></div>")
-        elif t == "text":
-            out.append(f"<div class='copy'>{head}<pre>{_esc(read_ref(ldir, el))}</pre></div>")
-        elif t in ("image", "media", "video"):
-            kind = el.get("kind", t)
-            ref = el.get("file") or el.get("url", "")
-            src = ref if (ref.startswith("http") or not asset_base) else asset_base + ref
-            cap = _esc(el.get("alt") or el.get("note") or "")
-            tag = (f"<video controls src='{src}'></video>" if kind == "video"
-                   else f"<img src='{src}' alt='{cap}'>")
-            out.append(f"<figure>{tag}<figcaption>{cap}</figcaption></figure>")
-    out.append("</body></html>")
-    return "\n".join(out)
+TEMPLATE_PATH = Path(__file__).resolve().parent / "templates" / "lesson-preview.html"
+
+
+def _slide(ldir, el, asset_base):
+    t, title = el.get("type"), el.get("title")
+    note = f"<p>{_inline(el['note'])}</p>" if el.get("note") else ""
+    label = title or (t or "step").capitalize()
+    if t == "note":
+        body = read_ref(ldir, el)
+        content = f"<pre><code>{_esc(body)}</code></pre>" if "file" in el else f"<p>{_inline(body)}</p>"
+    elif t == "command":
+        lab = el.get("action", "run") + (f" · {el['lang']}" if el.get("lang") else "")
+        content = (f"<div class='block'><div class='label'>{_esc(lab)}</div>"
+                   f"<pre><code>$ {_esc(el['shell'])}</code></pre></div>{note}")
+        label = title or "Run"
+    elif t in ("code", "config"):
+        content = (f"<div class='block'><div class='label'>{_esc(el.get('file', '(inline)'))}</div>"
+                   f"<pre><code>{_esc(read_ref(ldir, el))}</code></pre></div>{note}")
+        label = title or el.get("file", t)
+    elif t == "text":
+        content = f"<div class='block'><pre><code>{_esc(read_ref(ldir, el))}</code></pre></div>"
+    elif t in ("image", "media", "video"):
+        kind = el.get("kind", t)
+        ref = el.get("file") or el.get("url", "")
+        src = ref if (ref.startswith("http") or not asset_base) else asset_base + ref
+        cap = _esc(el.get("alt") or el.get("note") or "")
+        media = f"<video controls src='{src}'></video>" if kind == "video" else f"<img src='{src}' alt='{cap}'>"
+        content = f"<figure>{media}<figcaption>{cap}</figcaption></figure>"
+        label = title or kind
+    else:
+        content = f"<p>[{_esc(str(t))}]</p>"
+    badge = f"<span class='lang-badge'>{_esc(el['lang'])}</span>" if el.get("lang") else ""
+    return f"<section class='slide'><div class='step-no'>{_esc(label)}{badge}</div>{content}</section>"
+
+
+def render_html(number, ldir, lesson, lang=None, assets_href="/assets", media_base=""):
+    """Render a lesson to the step-by-step slideshow HTML, template-driven.
+
+    Reads tools/templates/lesson-preview.html and fills it from lesson.json (one
+    `.slide` per element, code/config slides read their referenced files). The
+    template *references* the published assets (style.css, slider.js) — they are
+    NOT inlined — so the local preview matches Lessons 1-2.
+    """
+    template = TEMPLATE_PATH.read_text(encoding="utf-8")
+    slides = "\n".join(
+        _slide(ldir, el, media_base)
+        for el in lesson.get("elements", [])
+        if not (lang and el.get("lang") not in (None, lang))
+    )
+    return (template
+            .replace("{{ASSETS}}", assets_href)
+            .replace("{{NUMBER}}", str(number))
+            .replace("{{TITLE}}", _esc(lesson.get("title", "")))
+            .replace("{{SUMMARY}}", _inline(lesson.get("summary", "")))
+            .replace("{{SLIDES}}", slides))
 
 
 def free_port():
@@ -275,27 +282,40 @@ def free_port():
 
 
 def cmd_preview(args):
-    """Serve the rendered lesson instructions locally (no GitHub Pages needed)."""
+    """Serve the rendered lesson instructions locally (no GitHub Pages needed).
+
+    `/`            -> the rendered slideshow (from the template + lesson.json)
+    `/assets/...`  -> the published course assets (style.css, slider.js)
+    everything else-> static files from the lesson dir (media, etc.)
+    """
     ldir, lesson = load(args.number)
-    page = render_html(ldir, lesson, args.lang, asset_base="").encode("utf-8")
+    page = render_html(args.number, ldir, lesson, args.lang,
+                       assets_href="/assets", media_base="").encode("utf-8")
+    assets_dir = ROOT / "docs" / "assets"
 
     class Handler(http.server.SimpleHTTPRequestHandler):
         def do_GET(self):
-            if self.path in ("/", "/index.html"):
+            if self.path.split("?")[0] in ("/", "/index.html"):
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html; charset=utf-8")
                 self.send_header("Content-Length", str(len(page)))
                 self.end_headers()
                 self.wfile.write(page)
                 return
-            super().do_GET()  # static assets (images/videos/code) from the lesson dir
+            super().do_GET()
+
+        def translate_path(self, path):
+            clean = path.split("?", 1)[0].split("#", 1)[0].lstrip("/")
+            clean = os.path.normpath(clean).lstrip("./")
+            if clean.startswith("assets/"):
+                return str(assets_dir / clean[len("assets/"):])
+            return str(Path(ldir) / clean)
 
         def log_message(self, *a):
             pass
 
-    handler = functools.partial(Handler, directory=str(ldir))
     port = free_port()
-    with socketserver.TCPServer(("127.0.0.1", port), handler) as httpd:
+    with socketserver.TCPServer(("127.0.0.1", port), Handler) as httpd:
         print(f"Lesson {args.number} · instructions preview → http://127.0.0.1:{port}  (Ctrl-C to stop)",
               flush=True)
         try:

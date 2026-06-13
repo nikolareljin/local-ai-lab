@@ -50,10 +50,13 @@ directory. Add code/commands/media by dropping files and referencing them here �
 
 ### Testing the instructions locally without GitHub Pages
 
-`./run -l N preview` renders the lesson's `elements` to HTML and serves them on localhost — code
-highlighted, `text` as copy boxes, and **images/videos embedded in-place** — using the *same* elements
-the published site will use. So a local preview equals what gets published, with nothing deployed.
-`show` is the quick terminal version; `show --html` writes a standalone file you can open directly.
+`./run -l N preview` renders the lesson as the **same step-by-step slideshow** the published lessons
+use (deep-linkable `#step-N`, dots, prev/next, copy buttons) and serves it on localhost. It is
+**template-driven**: [`tools/templates/lesson-preview.html`](../tools/templates/lesson-preview.html)
+*references* the real `docs/assets/style.css` + `slider.js` (not inlined) and is filled from
+`lesson.json` — one step per element, with `code`/`config` steps reading their files. So a local
+preview equals what gets published, with nothing deployed. `show` is the quick terminal version;
+`show --html` writes a standalone file (assets referenced by absolute path).
 
 ## Authoring a new lesson
 
