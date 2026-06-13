@@ -18,6 +18,12 @@ else
   log_error() { echo "[ERROR] $*" >&2; }
 fi
 
+# This wrapper can be launched as an MCP stdio server command (`run.sh serve`),
+# where stdout is reserved for the JSON-RPC stream. Force our own diagnostics to
+# stderr (the shared log_info writes to stdout) so they can never corrupt the
+# protocol handshake during setup or startup.
+log_info() { echo "[INFO] $*" >&2; }
+
 command -v node >/dev/null 2>&1 || { log_error "Node.js (>=18) is required but not on PATH."; exit 1; }
 
 cd "$here"

@@ -38,7 +38,12 @@
   function applyLang(lang) {
     if (!LANGS.includes(lang)) lang = "python";
     document.documentElement.dataset.lang = lang;
-    langButtons.forEach((b) => b.classList.toggle("on", b.dataset.setlang === lang));
+    langButtons.forEach((b) => {
+      const active = b.dataset.setlang === lang;
+      b.classList.toggle("on", active);
+      // Expose the toggle state so assistive tech announces the active language.
+      b.setAttribute("aria-pressed", String(active));
+    });
     try { localStorage.setItem(LANG_KEY, lang); } catch (e) { /* ignore */ }
     setHeight(); // the active slide's height changes when code blocks swap
   }

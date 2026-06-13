@@ -17,6 +17,12 @@ else
   log_error() { echo "[ERROR] $*" >&2; }
 fi
 
+# This wrapper can be launched as an MCP stdio server command (`run.sh serve`),
+# where stdout is reserved for the JSON-RPC stream. Force our own diagnostics to
+# stderr (the shared log_info writes to stdout) so the build/status preamble can
+# never corrupt the protocol handshake.
+log_info() { echo "[INFO] $*" >&2; }
+
 command -v dotnet >/dev/null 2>&1 || { log_error ".NET SDK (>=8) is required but not on PATH."; exit 1; }
 
 cd "$project_dir"
@@ -51,7 +57,7 @@ case "$action" in
     exec claude mcp add local-ai-lab-docs-dotnet -- dotnet "$dll" serve
     ;;
   *)
-    log_info "Lesson 2 (C#) actions:  demo | serve | register | test"
+    log_error "Lesson 2 (C#) actions:  demo | serve | register | test"
     exit 1
     ;;
 esac
