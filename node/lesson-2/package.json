@@ -1,0 +1,16 @@
+{
+  "name": "local-ai-lab-lesson2",
+  "version": "1.0.0",
+  "description": "Node.js port of local-ai-lab Lesson 2: an MCP server exposing the Lesson 1 retriever (search_docs, list_documents) over stdio.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "serve": "node src/server.js",
+    "demo": "node src/demo.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.23.8"
+  }
+}

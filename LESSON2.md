@@ -12,6 +12,11 @@
 >
 > **Status: complete & working.** Runnable code: [`mcp_server.py`](./mcp_server.py), tested by
 > [`tests/test_mcp.py`](./tests/test_mcp.py). Runs 100% locally.
+>
+> **Polyglot:** this lesson ships in **Python** (reference, below), **Node.js**
+> ([`node/lesson-2`](./node/lesson-2)) and **C# / .NET 8**
+> ([`dotnet/lesson-2`](./dotnet/lesson-2)) — each on its official MCP SDK, each
+> reusing its own Lesson 1 retriever. Run any of them with `./run -l 2 --lang python|node|csharp`.
 
 ---
 
@@ -248,6 +253,31 @@ retriever, reachable from any MCP host.
 - Add a `get_document(name)` tool that returns a whole file's text.
 - Expose the corpus as an MCP **resource** (not just a tool) so hosts can browse it.
 - Return structured JSON (source, page, score) instead of a flat string and let the host format it.
+
+## Other languages (polyglot)
+
+MCP is multi-language, and so is this lesson. The same two tools — `search_docs`
+and `list_documents`, same `[filename:page]` citation format — are implemented
+on each language's **official** MCP SDK, reusing that language's Lesson 1
+retriever. No LLM is needed to test any of them; the demo client drives the
+server over stdio and prints cited passages.
+
+```bash
+./run -l 2                  # Python (reference) · FastMCP + mcp stdio client
+./run -l 2 --lang node      # Node.js     · @modelcontextprotocol/sdk (McpServer)
+./run -l 2 --lang csharp    # C# / .NET 8 · ModelContextProtocol ([McpServerTool])
+```
+
+| Language | Server entry | SDK | Details |
+|----------|--------------|-----|---------|
+| Python | [`mcp_server.py`](./mcp_server.py) | `mcp` (FastMCP) | the reference above |
+| Node.js | [`node/lesson-2/src/server.js`](./node/lesson-2/src/server.js) | `@modelcontextprotocol/sdk` | [README](./node/lesson-2/README.md) |
+| C# / .NET | [`dotnet/lesson-2/Program.cs`](./dotnet/lesson-2/Program.cs) | `ModelContextProtocol` | [README](./dotnet/lesson-2/README.md) |
+
+Each server registers under a distinct name (`local-ai-lab-docs`,
+`local-ai-lab-docs-node`, `local-ai-lab-docs-dotnet`), so all three can coexist
+in Claude Code at once. Pick a language with the **Follow along in:** selector on
+the [interactive slides](https://nikolareljin.github.io/local-ai-lab/lesson-2-mcp.html).
 
 ## Next lesson
 

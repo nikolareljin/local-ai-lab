@@ -7,6 +7,12 @@ set -euo pipefail
 
 source "$(dirname "$0")/scripts/include.sh"
 
+# Diagnostics go to stderr: several actions (Lesson 2 `serve`, the language
+# wrappers) exec an stdio MCP server whose stdout IS the JSON-RPC stream, so any
+# [INFO] preamble on stdout would corrupt the handshake. Keep stdout clean for
+# every action (the shared log_info writes to stdout).
+log_info() { echo "[INFO] $*" >&2; }
+
 usage() {
   cat <<'EOF'
 local-ai-lab — run a lesson locally
@@ -26,9 +32,11 @@ Examples:
   ./run -l 2                                  # demo the MCP server end-to-end (no LLM needed)
   ./run -l 2 register                         # register the MCP server with Claude Code
   ./run -l 1 --lang node                      # Node.js implementation (where ported)
+  ./run -l 2 --lang csharp                    # C# MCP server, demoed end-to-end (no LLM needed)
 
 Languages (polyglot — Option B): python (default/reference) · node · csharp.
-Where a lesson isn't ported yet, --lang node|csharp points you to the Python reference.
+Lessons 1 and 2 are ported to all three; where a lesson isn't ported yet,
+  --lang node|csharp points you to the Python reference.
 
 The default AI provider is the Claude Code CLI — no API key, it uses your existing
 Claude Code login. Override anytime with  RAG_PROVIDER=ollama|gemini|openai.

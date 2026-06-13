@@ -4,6 +4,25 @@ All notable changes to this project are documented here. This project follows
 [Conventional Commits](https://www.conventionalcommits.org/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.0]
+
+**Lesson 2 (MCP) goes polyglot** — the MCP server now ships in Node.js and C# alongside Python.
+
+### Added
+- **Node.js MCP server** (`node/lesson-2/`) — `search_docs` and `list_documents` over stdio on the
+  official `@modelcontextprotocol/sdk` (`McpServer`), reusing the Node Lesson 1 engine. Includes an
+  stdio-client demo (`src/demo.js`) and `run.sh` (`demo`/`serve`/`register`/`test`).
+- **C# / .NET MCP server** (`dotnet/lesson-2/`) — the same two tools on the official
+  `ModelContextProtocol` SDK (`[McpServerTool]`), reusing the C# Lesson 1 retriever. Includes an
+  `McpClient` demo and `run.sh`.
+- **Language selector** on the Lesson 2 interactive slides (`docs/lesson-2-mcp.html`) — Python /
+  Node.js / C#, mirroring Lesson 1; every code step has all three implementations.
+
+### Changed
+- `./run -l 2 --lang node|csharp` now runs the real ports (previously pointed to the Python
+  reference). README, `LESSON2.md`, and `run` help updated to reflect Lessons 1-2 in all three
+  languages. Each server registers under a distinct name so all three can coexist in Claude Code.
+
 ## [0.3.0]
 
 Cross-platform install docs, per-lesson PDFs, an easy lesson runner, and the polyglot foundation.
