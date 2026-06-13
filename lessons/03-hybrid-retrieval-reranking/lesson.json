@@ -1,0 +1,23 @@
+{
+  "title": "Hybrid Retrieval & Reranking",
+  "slug": "hybrid-retrieval-reranking",
+  "status": "working",
+  "summary": "BM25 + a semantic stand-in, fused with RRF — offline, polyglot, identical rankings in Python, Node and .NET.",
+  "cluster": "rag-depth",
+  "priority": "high",
+  "languages": ["python", "node", "csharp"],
+  "defaultLanguage": "python",
+  "defaultAction": "demo",
+  "elements": [
+    { "type": "note", "text": "BM25 and embeddings are not enemies — they solve different retrieval problems. BM25 wins exact terms (error codes, IDs); embeddings win paraphrases. Fuse both with RRF." },
+    { "type": "command", "action": "demo", "lang": "python", "shell": "python python/hybrid_demo.py", "note": "Run the Python demo." },
+    { "type": "command", "action": "demo", "lang": "node", "shell": "node node/hybrid_demo.mjs", "note": "The Node.js port — same rankings." },
+    { "type": "command", "action": "demo", "lang": "csharp", "shell": "dotnet run --project dotnet -c Release --nologo", "note": "The C#/.NET port — same rankings." },
+    { "type": "command", "action": "test", "lang": "python", "shell": "python -m pytest -q python/test_hybrid.py", "venv": true, "note": "Offline test of the lesson's claims." },
+    { "type": "code", "file": "python/hybrid_demo.py", "lang": "python", "note": "The whole demo: tokenize, BM25, semantic stand-in, RRF." },
+    { "type": "config", "file": "data/error_codes.md", "note": "One sample document from the tiny corpus." },
+    { "type": "text", "title": "Exact-keyword query to try", "text": "error E_4096" },
+    { "type": "text", "title": "Paraphrase query to try", "text": "my device won't turn on" },
+    { "type": "note", "file": "expected-output.txt", "title": "Expected output (all three languages)" }
+  ]
+}

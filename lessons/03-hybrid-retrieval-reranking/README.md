@@ -55,17 +55,14 @@ opposite directions:
 
 ### Run it (offline, no dependencies)
 
-Pick any language — all three give the **same** rankings:
+From the repo root — pick any language, all three give the **same** rankings:
 
 ```bash
-# Python
-cd lessons/03-hybrid-retrieval-reranking/python && python hybrid_demo.py
-
-# Node.js
-cd lessons/03-hybrid-retrieval-reranking/node && ./run.sh
-
-# C# / .NET 8
-cd lessons/03-hybrid-retrieval-reranking/dotnet && ./run.sh
+./run -l 3                 # Python (default)
+./run -l 3 --lang node     # Node.js
+./run -l 3 --lang csharp   # C# / .NET 8
+./run -l 3 test            # the offline Python test
+./run -l 3 show            # walk through this lesson's steps (code, data, prompts, commands)
 ```
 
 Output:
@@ -186,9 +183,13 @@ RRF) are the same; only the syntax changes.
 
 | Port | Entry point | Run |
 |------|-------------|-----|
-| [Python](./python) | `python/hybrid_demo.py` | `python hybrid_demo.py` · `pytest` |
-| [Node.js](./node) | `node/hybrid_demo.mjs` | `./run.sh` |
-| [.NET 8](./dotnet) | `dotnet/Program.cs` | `./run.sh` |
+| [Python](./python) | `python/hybrid_demo.py` | `./run -l 3` · `./run -l 3 test` |
+| [Node.js](./node) | `node/hybrid_demo.mjs` | `./run -l 3 --lang node` |
+| [.NET 8](./dotnet) | `dotnet/Program.cs` | `./run -l 3 --lang csharp` |
+
+> All three commands are declared once in [`lesson.json`](./lesson.json) — the single source of truth
+> the `./run` engine reads. `./run -l 3 show` renders this lesson's elements (notes, code, sample data,
+> prompts, commands) in order.
 
 ---
 

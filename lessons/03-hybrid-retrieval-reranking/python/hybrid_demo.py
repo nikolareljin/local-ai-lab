@@ -104,7 +104,7 @@ def main():
     docs = load_docs()
     for query in ["error E_4096", "my device won't turn on"]:
         lexical, semantic, fused = hybrid(query, docs)
-        print(f"\nQuery: {query!r}")
+        print(f'\nQuery: "{query}"')
         print(f"  BM25 (lexical):   {lexical}")
         print(f"  Semantic (stand): {semantic}")
         print(f"  Hybrid (RRF):     {fused}")

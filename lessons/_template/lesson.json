@@ -1,0 +1,17 @@
+{
+  "title": "TITLE",
+  "slug": "SLUG",
+  "status": "planned",
+  "summary": "One-line summary of the lesson.",
+  "cluster": "",
+  "priority": "",
+  "languages": ["python"],
+  "defaultLanguage": "python",
+  "defaultAction": "demo",
+  "elements": [
+    { "type": "note", "text": "What this lesson teaches, in one or two sentences." },
+    { "type": "command", "action": "demo", "lang": "python", "shell": "python python/demo.py", "note": "Run the demo." },
+    { "type": "code", "file": "python/demo.py", "lang": "python", "note": "The demo code." },
+    { "type": "text", "title": "Prompt to try", "text": "..." }
+  ]
+}
