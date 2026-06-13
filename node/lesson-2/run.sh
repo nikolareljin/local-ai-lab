@@ -28,10 +28,12 @@ command -v node >/dev/null 2>&1 || { log_error "Node.js (>=18) is required but n
 
 cd "$here"
 
-# Install this lesson's own dependencies (MCP SDK + zod) on first run.
+# Install this lesson's own dependencies (MCP SDK + zod) on first run. Send npm's
+# stdout to stderr too: this wrapper can be the MCP server command, where stdout
+# is the JSON-RPC stream and install chatter would corrupt the handshake.
 if [[ ! -d "node_modules" ]]; then
   log_info "Installing Lesson 2 Node dependencies (one-time) ..."
-  npm install --silent --no-fund --no-audit
+  npm install --silent --no-fund --no-audit >&2
 fi
 
 # The server reuses Lesson 1's engine (config/engine/extract). Its extractor
@@ -41,7 +43,7 @@ fi
 lesson1_dir="$rootDir/node/lesson-1"
 if [[ -f "$lesson1_dir/package.json" && ! -d "$lesson1_dir/node_modules" ]]; then
   log_info "Installing Lesson 1 Node dependencies (reused by the MCP server) ..."
-  (cd "$lesson1_dir" && npm install --silent --no-fund --no-audit)
+  (cd "$lesson1_dir" && npm install --silent --no-fund --no-audit >&2)
 fi
 
 action="${1:-demo}"
