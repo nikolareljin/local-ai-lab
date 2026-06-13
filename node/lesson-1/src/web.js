@@ -37,21 +37,28 @@ export function createApp(baseConfig) {
   baseConfig = baseConfig || loadConfig();
   fs.mkdirSync(baseConfig.docsDir, { recursive: true });
 
+  // 64 MB total-request cap, mirroring Python's MAX_CONTENT_LENGTH and .NET's
+  // MaxRequestBodySize. memoryStorage buffers files in RAM, so the total — not
+  // just per-file size — is what must stay bounded.
+  const MAX_UPLOAD_BYTES = 64 * 1024 * 1024;
+
   const app = express();
   app.use(express.json({ limit: "64mb" }));
-  // memoryStorage buffers each file in RAM, so cap both the per-file size and the
-  // number of files per request — otherwise a single multi-file upload could
-  // exhaust memory. This keeps the worst-case bounded, matching the total-request
-  // caps the Python (MAX_CONTENT_LENGTH) and .NET (MaxRequestBodySize) ports use.
   const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
-      fileSize: 64 * 1024 * 1024, // 64 MB per-file cap
+      fileSize: MAX_UPLOAD_BYTES, // per-file backstop (a single file can't exceed the total)
       files: 20, // bound how many files one request can buffer at once
     },
   });
-  // Translate multer limit violations into clear 413s instead of generic 500s.
+  // Reject oversized uploads up front via Content-Length (best-effort, matching
+  // werkzeug's MAX_CONTENT_LENGTH check), then translate multer's per-file/count
+  // limit violations into clear 413s instead of generic 500s.
   function uploadFiles(req, res, next) {
+    const declared = Number(req.headers["content-length"]);
+    if (Number.isFinite(declared) && declared > MAX_UPLOAD_BYTES) {
+      return res.status(413).json({ error: "Upload exceeds the 64 MB total limit." });
+    }
     upload.array("files")(req, res, (err) => {
       if (!err) return next();
       if (err instanceof multer.MulterError) {
