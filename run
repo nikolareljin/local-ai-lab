@@ -210,6 +210,7 @@ run_registry_lesson() {
     case "${ACTION:-}" in
       show)    exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" show    "$LESSON" ${langargs[@]+"${langargs[@]}"} "$@" ;;
       preview) exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" preview "$LESSON" ${langargs[@]+"${langargs[@]}"} ;;
+      build)   exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" build   "$LESSON" ${langargs[@]+"${langargs[@]}"} ;;
       *)       exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" run     "$LESSON" ${ACTION:+"$ACTION"} ${langargs[@]+"${langargs[@]}"} "$@" ;;
     esac
   fi

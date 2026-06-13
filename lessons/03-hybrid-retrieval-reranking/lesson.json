@@ -11,12 +11,31 @@
   "elements": [
     { "type": "note", "text": "BM25 and embeddings are not enemies — they solve different retrieval problems. BM25 wins exact terms (error codes, IDs); embeddings win paraphrases. Fuse both with RRF." },
     { "type": "command", "action": "web", "lang": "python", "shell": "python python/web.py", "venv": true, "note": "Interactive hybrid-search web UI — type a query, see all three rankings." },
-    { "type": "command", "action": "demo", "lang": "python", "shell": "python python/hybrid_demo.py", "note": "One-shot ranking comparison (Python)." },
-    { "type": "command", "action": "demo", "lang": "node", "shell": "node node/hybrid_demo.mjs", "note": "The Node.js port — same rankings." },
-    { "type": "command", "action": "demo", "lang": "csharp", "shell": "dotnet run --project dotnet -c Release --nologo", "note": "The C#/.NET port — same rankings." },
+    { "type": "command", "action": "demo", "lang": "python", "group": "run-demo", "title": "Run the demo", "shell": "python python/hybrid_demo.py", "note": "One-shot ranking comparison (Python)." },
+    { "type": "command", "action": "demo", "lang": "node", "group": "run-demo", "shell": "node node/hybrid_demo.mjs", "note": "The Node.js port — same rankings." },
+    { "type": "command", "action": "demo", "lang": "csharp", "group": "run-demo", "shell": "dotnet run --project dotnet -c Release --nologo", "note": "The C#/.NET port — same rankings." },
     { "type": "command", "action": "test", "lang": "python", "shell": "python -m pytest -q python/test_hybrid.py", "venv": true, "note": "Offline test of the lesson's claims." },
-    { "type": "code", "file": "python/hybrid_demo.py", "lang": "python", "note": "The whole demo: tokenize, BM25, semantic stand-in, RRF." },
-    { "type": "code", "file": "python/web.py", "lang": "python", "note": "The interactive web UI (reuses hybrid_demo)." },
+    { "type": "code", "file": "python/hybrid_demo.py", "lang": "python", "group": "impl", "title": "The implementation", "notes": [
+      "Pure-stdlib BM25 — no `rank-bm25` dependency, so the Python, Node and .NET ports produce identical rankings.",
+      "`tokenize()` lowercases and splits on `[a-z0-9_]+`; the same rule is reimplemented in every port.",
+      "`rrf()` fuses by **rank** (1/(k+rank)), not by score, so BM25 and the semantic arm get an equal vote.",
+      "`SYNONYMS` is the offline stand-in for embeddings — swap in a real model in production and the fusion code is unchanged."
+    ] },
+    { "type": "code", "file": "node/hybrid_demo.mjs", "lang": "node", "group": "impl", "notes": [
+      "ESM, Node 18+, zero dependencies — the same algorithm as the Python port.",
+      "`tokenize()` uses `/[a-z0-9_]+/g`; `bm25Scores`, `semanticScores` and `rrf` mirror the Python functions.",
+      "Reads the shared `../data` corpus and prints rankings byte-identical to Python and .NET."
+    ] },
+    { "type": "code", "file": "dotnet/Program.cs", "lang": "csharp", "group": "impl", "notes": [
+      ".NET 8 top-level program, no NuGet packages — the same BM25 + RRF as the other ports.",
+      "Uses `Regex`, `Dictionary` and LINQ; tie-breaks with `StringComparer.Ordinal` so ordering matches the others.",
+      "Walks up from the build output to locate the shared `data/` corpus."
+    ] },
+    { "type": "code", "file": "python/web.py", "lang": "python", "notes": [
+      "Reuses `hybrid()` from `hybrid_demo` — the retrieval logic is never duplicated.",
+      "Searches the 5-chapter `story/` corpus, not the tiny `data/` demo corpus.",
+      "`free_port()` binds to port 0 to grab a free port, mirroring Lesson 1's web UI."
+    ] },
     { "type": "config", "file": "data/error_codes.md", "note": "One sample document from the tiny corpus." },
     { "type": "text", "title": "Exact-keyword query to try", "text": "error E_4096" },
     { "type": "text", "title": "Paraphrase query to try", "text": "my device won't turn on" },

@@ -22,6 +22,7 @@ import json
 import os
 import re
 import shlex
+import shutil
 import socket
 import socketserver
 import subprocess
@@ -181,13 +182,13 @@ def cmd_show(args):
         elif etype == "command":
             label = f"{el.get('action','run')}{tag}"
             print(f"\n$ {el['shell']}    ({label})")
-            if el.get("note"):
-                print(indent(el["note"]))
+            for r in remarks_of(el):
+                print(indent("• " + r))
         elif etype in ("code", "config"):
             head = el.get("file", "(inline)")
             print(f"\n── {etype}: {head}{tag} ──")
-            if el.get("note"):
-                print(indent(el["note"]))
+            for r in remarks_of(el):
+                print(indent("• " + r))
             print(read_ref(ldir, el))
         elif etype == "text":
             print(f"\n✎ copy/paste{(' — ' + title) if title else ''}{tag}:")
@@ -220,10 +221,90 @@ def _inline(s):
 
 TEMPLATE_PATH = Path(__file__).resolve().parent / "templates" / "lesson-preview.html"
 
+# ----- lightweight, offline syntax highlighting (server-side, CSS-themed) -----
+_KW = {
+    "python": "def class import from return if elif else for while in not and or is None True False"
+              " with as try except finally raise lambda yield global nonlocal pass break continue assert del async await",
+    "js": "const let var function return if else for while of in new class extends import export from default"
+          " async await try catch finally throw typeof instanceof this null undefined true false",
+    "csharp": "using namespace class struct record public private protected internal static void var new return"
+              " if else for foreach while in out ref try catch finally throw null true false int double string bool"
+              " async await override virtual abstract readonly get set this base",
+    "bash": "if then else elif fi for while do done case esac function in exit return local set export",
+    "json": "true false null",
+    "yaml": "true false null",
+}
+_KEYWORDS = {lang: set(words.split()) for lang, words in _KW.items()}
+_COMMENT = {"python": r"#[^\n]*", "bash": r"#[^\n]*", "yaml": r"#[^\n]*",
+            "js": r"//[^\n]*|/\*[\s\S]*?\*/", "csharp": r"//[^\n]*|/\*[\s\S]*?\*/"}
+_STRING = {
+    "python": r'"""[\s\S]*?"""|\'\'\'[\s\S]*?\'\'\'|"(?:\\.|[^"\\\n])*"|\'(?:\\.|[^\'\\\n])*\'',
+    "js": r'`(?:\\.|[^`\\])*`|"(?:\\.|[^"\\\n])*"|\'(?:\\.|[^\'\\\n])*\'',
+    "csharp": r'@"(?:""|[^"])*"|\$?"(?:\\.|[^"\\\n])*"',
+    "bash": r'"(?:\\.|[^"\\])*"|\'[^\']*\'',
+    "json": r'"(?:\\.|[^"\\])*"',
+    "yaml": r'"(?:\\.|[^"\\\n])*"|\'(?:[^\']|\'\')*\'',
+}
+_EXT_LANG = {".py": "python", ".js": "js", ".mjs": "js", ".cjs": "js", ".cs": "csharp",
+             ".sh": "bash", ".bash": "bash", ".json": "json", ".yaml": "yaml", ".yml": "yaml"}
 
-def _slide(ldir, el, asset_base):
+
+def lang_for(el):
+    """Highlight language: the element's `lang`, else inferred from the file extension."""
+    lang = el.get("lang")
+    if lang in _KEYWORDS:
+        return lang
+    if lang == "node":
+        return "js"
+    if "file" in el:
+        return _EXT_LANG.get(Path(el["file"]).suffix.lower())
+    return None
+
+
+def highlight(code, lang):
+    """Return HTML-escaped code with token <span>s. Falls back to plain escaped text."""
+    if lang not in _KEYWORDS:
+        return _esc(code)
+    alts = []
+    if lang in _COMMENT:
+        alts.append(f"(?P<comment>{_COMMENT[lang]})")
+    if lang in _STRING:
+        alts.append(f"(?P<string>{_STRING[lang]})")
+    alts.append(r"(?P<number>\b\d[\d_]*\.?\d*(?:[eE][+-]?\d+)?\b)")
+    alts.append(r"(?P<word>[A-Za-z_]\w*)")
+    pattern = re.compile("|".join(alts))
+    kws = _KEYWORDS[lang]
+    out, pos = [], 0
+    for m in pattern.finditer(code):
+        out.append(_esc(code[pos:m.start()]))
+        kind, text = m.lastgroup, m.group()
+        if kind == "word":
+            out.append(f'<span class="hl-kw">{_esc(text)}</span>' if text in kws else _esc(text))
+        else:
+            out.append(f'<span class="hl-{kind[:3]}">{_esc(text)}</span>')
+        pos = m.end()
+    out.append(_esc(code[pos:]))
+    return "".join(out)
+
+
+def remarks_of(el):
+    """One or several notes under a snippet: `note` (string) and/or `notes` (list)."""
+    items = []
+    if el.get("note"):
+        items.append(el["note"])
+    items.extend(el.get("notes", []))
+    return items
+
+
+def _remarks_html(el):
+    items = remarks_of(el)
+    return ("<ul class='remarks'>" + "".join(f"<li>{_inline(x)}</li>" for x in items) + "</ul>") if items else ""
+
+
+def _content(ldir, el, asset_base):
+    """Return (step label, inner HTML) for one element — no <section> wrapper."""
     t, title = el.get("type"), el.get("title")
-    note = f"<p>{_inline(el['note'])}</p>" if el.get("note") else ""
+    remarks = _remarks_html(el)
     label = title or (t or "step").capitalize()
     if t == "note":
         body = read_ref(ldir, el)
@@ -231,11 +312,13 @@ def _slide(ldir, el, asset_base):
     elif t == "command":
         lab = el.get("action", "run") + (f" · {el['lang']}" if el.get("lang") else "")
         content = (f"<div class='block'><div class='label'>{_esc(lab)}</div>"
-                   f"<pre><code>$ {_esc(el['shell'])}</code></pre></div>{note}")
+                   f"<pre><code class='lang-bash'>$ {highlight(el['shell'], 'bash')}</code></pre></div>{remarks}")
         label = title or "Run"
     elif t in ("code", "config"):
+        lang = lang_for(el)
         content = (f"<div class='block'><div class='label'>{_esc(el.get('file', '(inline)'))}</div>"
-                   f"<pre><code>{_esc(read_ref(ldir, el))}</code></pre></div>{note}")
+                   f"<pre><code class='lang-{lang or 'text'}'>{highlight(read_ref(ldir, el), lang)}</code></pre>"
+                   f"</div>{remarks}")
         label = title or el.get("file", t)
     elif t == "text":
         content = f"<div class='block'><pre><code>{_esc(read_ref(ldir, el))}</code></pre></div>"
@@ -249,29 +332,94 @@ def _slide(ldir, el, asset_base):
         label = title or kind
     else:
         content = f"<p>[{_esc(str(t))}]</p>"
-    badge = f"<span class='lang-badge'>{_esc(el['lang'])}</span>" if el.get("lang") else ""
-    return f"<section class='slide'><div class='step-no'>{_esc(label)}{badge}</div>{content}</section>"
+    return label, content
+
+
+def _slide(ldir, el, asset_base):
+    label, content = _content(ldir, el, asset_base)
+    return f"<section class='slide'><div class='step-no'>{_esc(label)}</div>{content}</section>"
+
+
+def _group_slide(ldir, els, asset_base):
+    """One step holding the per-language variants of the same thing. The language
+    selector shows just the active language, so paging never switches language."""
+    label = next((e["title"] for e in els if e.get("title")), None) or _content(ldir, els[0], asset_base)[0]
+    parts = []
+    for el in els:
+        _, content = _content(ldir, el, asset_base)
+        lang = el.get("lang")
+        parts.append(f"<div class='lang lang-{lang}'>{content}</div>" if lang else content)
+    return f"<section class='slide'><div class='step-no'>{_esc(label)}</div>{''.join(parts)}</section>"
+
+
+LANG_LABELS = {"python": "Python", "node": "Node.js", "csharp": "C#"}
+LANG_SHORT = {"python": "Py", "node": "Node", "csharp": "C#"}
+
+
+def _langsel_html(langs, compact=False):
+    langs = [x for x in langs if x in LANG_LABELS]
+    if len(langs) < 2:
+        return ""
+    cls = "langsel compact" if compact else "langsel"
+    lbl = "" if compact else '<span class="langsel-label">Follow along in:</span>'
+    names = LANG_SHORT if compact else LANG_LABELS
+    btns = "".join(f'<button class="langsel-btn" data-setlang="{x}" aria-label="{LANG_LABELS[x]}">{names[x]}</button>'
+                   for x in langs)
+    return f'<div class="{cls}" role="group" aria-label="Language">{lbl}{btns}</div>'
+
+
+def _nav_html():
+    """The shared topbar nav: Home, a Lessons dropdown (built from the registry), Troubleshooting, About."""
+    items = [(1, "RAG from scratch", "./lesson-1-rag.html"), (2, "MCP servers", "./lesson-2-mcp.html")]
+    reg = registry()
+    for n in sorted(reg):
+        with open(reg[n] / "lesson.json", encoding="utf-8") as fh:
+            m = json.load(fh)
+        slug = m.get("slug") or re.sub(r"^\d+-", "", reg[n].name)
+        if m.get("status") == "working":
+            items.append((n, m.get("title", ""), f"./lesson-{n}-{slug}.html"))
+    links = "".join(f'<a href="{h}">{n} · {_esc(t)}</a>' for n, t, h in items)
+    return ('<a href="./index.html">Home</a>'
+            '<details class="nav-dd"><summary>Lessons</summary>'
+            f'<div class="nav-dd-menu">{links}</div></details>'
+            '<a href="./troubleshooting.html">Troubleshooting</a>'
+            '<a href="./about.html">About</a>')
 
 
 def render_html(number, ldir, lesson, lang=None, assets_href="/assets", media_base=""):
     """Render a lesson to the step-by-step slideshow HTML, template-driven.
 
-    Reads tools/templates/lesson-preview.html and fills it from lesson.json (one
-    `.slide` per element, code/config slides read their referenced files). The
-    template *references* the published assets (style.css, slider.js) — they are
-    NOT inlined — so the local preview matches Lessons 1-2.
+    Reads tools/templates/lesson-preview.html and fills it from lesson.json. Elements
+    sharing a `group` become one step with per-language variants (toggled by the
+    language selector); everything else is its own step. The template *references*
+    the published assets (NOT inlined) so the page matches Lessons 1-2.
     """
     template = TEMPLATE_PATH.read_text(encoding="utf-8")
+    order, groups, seen = [], {}, set()
+    for el in lesson.get("elements", []):
+        if lang and el.get("lang") not in (None, lang):
+            continue
+        g = el.get("group")
+        if g:
+            if g not in seen:
+                seen.add(g)
+                order.append(("group", g))
+            groups.setdefault(g, []).append(el)
+        else:
+            order.append(("single", el))
     slides = "\n".join(
-        _slide(ldir, el, media_base)
-        for el in lesson.get("elements", [])
-        if not (lang and el.get("lang") not in (None, lang))
+        _slide(ldir, val, media_base) if kind == "single" else _group_slide(ldir, groups[val], media_base)
+        for kind, val in order
     )
+    langs = lesson.get("languages", [])
     return (template
             .replace("{{ASSETS}}", assets_href)
+            .replace("{{NAV}}", _nav_html())
             .replace("{{NUMBER}}", str(number))
             .replace("{{TITLE}}", _esc(lesson.get("title", "")))
             .replace("{{SUMMARY}}", _inline(lesson.get("summary", "")))
+            .replace("{{LANGSEL}}", _langsel_html(langs))
+            .replace("{{LANGSEL_COMPACT}}", _langsel_html(langs, compact=True))
             .replace("{{SLIDES}}", slides))
 
 
@@ -305,11 +453,14 @@ def cmd_preview(args):
             super().do_GET()
 
         def translate_path(self, path):
-            clean = path.split("?", 1)[0].split("#", 1)[0].lstrip("/")
-            clean = os.path.normpath(clean).lstrip("./")
+            clean = os.path.normpath(path.split("?", 1)[0].split("#", 1)[0].lstrip("/")).lstrip("./")
             if clean.startswith("assets/"):
                 return str(assets_dir / clean[len("assets/"):])
-            return str(Path(ldir) / clean)
+            local = Path(ldir) / clean
+            if local.exists():           # media / data from the lesson dir
+                return str(local)
+            docs = ROOT / "docs" / clean  # nav links (index.html, lesson-1-rag.html, …) preview like the site
+            return str(docs if docs.exists() else local)
 
         def log_message(self, *a):
             pass
@@ -322,6 +473,32 @@ def cmd_preview(args):
             httpd.serve_forever()
         except KeyboardInterrupt:
             pass
+    return 0
+
+
+def cmd_build(args):
+    """Generate the publishable GitHub Pages page (docs/lesson-N-slug.html).
+
+    Same template + assets as the local preview, but with relative `./assets`
+    references so it renders on Pages exactly like the hand-authored Lessons 1-2.
+    Code/config/text are baked in from the referenced files at build time.
+    """
+    ldir, lesson = load(args.number)
+    slug = lesson.get("slug") or re.sub(r"^\d+-", "", ldir.name)
+    out = ROOT / "docs" / f"lesson-{args.number}-{slug}.html"
+
+    media_base = ""
+    media_dir = ldir / "media"
+    if media_dir.exists():
+        dest = ROOT / "docs" / "lesson-media" / ldir.name
+        shutil.rmtree(dest, ignore_errors=True)
+        shutil.copytree(media_dir, dest)
+        media_base = f"./lesson-media/{ldir.name}/"
+        warn("Copied media into docs/lesson-media/ — element media paths should be relative to the lesson dir.")
+
+    out.write_text(render_html(args.number, ldir, lesson, args.lang,
+                               assets_href="./assets", media_base=media_base), encoding="utf-8")
+    print(f"Wrote {out.relative_to(ROOT)}  (publish by committing docs/; link it from docs/index.html)")
     return 0
 
 
@@ -366,6 +543,11 @@ def main(argv=None):
     sp.add_argument("number", type=int)
     sp.add_argument("--lang", default=None)
     sp.set_defaults(fn=cmd_preview)
+
+    sp = sub.add_parser("build", help="generate the publishable docs/ page (GitHub Pages)")
+    sp.add_argument("number", type=int)
+    sp.add_argument("--lang", default=None)
+    sp.set_defaults(fn=cmd_build)
 
     # parse_known_args so any trailing passthrough args (after the known ones)
     # reach the lesson command without REMAINDER swallowing options like --lang.

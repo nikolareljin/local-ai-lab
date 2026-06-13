@@ -3,24 +3,26 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Lesson {{NUMBER}} · {{TITLE}} — local preview</title>
+  <title>Lesson {{NUMBER}} · {{TITLE}} — local-ai-lab</title>
   <!-- Reuse the published course assets (NOT inlined): the same stylesheet and
        step slider Lessons 1-2 use, so the local preview matches the live pages. -->
   <link rel="stylesheet" href="{{ASSETS}}/style.css" />
+  <link rel="stylesheet" href="{{ASSETS}}/highlight.css" />
   <style>.lang-badge{font-size:.7rem;background:#eef;color:#225;padding:.05rem .45rem;border-radius:999px;margin-left:.5rem;vertical-align:middle;}</style>
   <script>try{document.documentElement.dataset.lang=localStorage.getItem('localrag-lang')||'python'}catch(e){document.documentElement.dataset.lang='python'}</script>
 </head>
 <body>
   <div class="topbar"><div class="inner">
-    <span class="brand">local-ai<span class="dot">·</span>lab</span>
-    <nav><a href="https://github.com/nikolareljin/local-ai-lab" target="_blank" rel="noopener">Source</a></nav>
+    <span class="brand"><a href="./index.html" style="color:inherit">local-ai<span class="dot">·</span>lab</a></span>
+    <nav>{{NAV}}</nav>
   </div></div>
 
   <div class="wrap">
     <div class="lesson-head">
-      <div class="eyebrow">Lesson {{NUMBER}} · local preview</div>
+      <div class="eyebrow">Lesson {{NUMBER}}</div>
       <h1>{{TITLE}}</h1>
       <p>{{SUMMARY}}</p>
+      {{LANGSEL}}
     </div>
 
     <div class="progress"><span></span></div>
@@ -32,6 +34,7 @@
 
     <div class="controls">
       <button class="nav-btn" data-prev>&larr; Prev</button>
+      {{LANGSEL_COMPACT}}
       <span class="spacer"></span>
       <span class="counter"></span>
       <button class="nav-btn" data-next>Next &rarr;</button>
@@ -39,7 +42,10 @@
     <div class="kbd-hint">Use <kbd>&larr;</kbd> <kbd>&rarr;</kbd> arrow keys, the dots, or the buttons. Deep-link a step with <code>#step-N</code>.</div>
   </div>
 
-  <footer class="site"><div class="inner">Local preview &middot; rendered from lesson.json &middot; no GitHub Pages needed</div></footer>
+  <footer class="site"><div class="inner">
+    &copy; 2023&ndash;2025 <a href="https://www.linkedin.com/in/nikolareljin" target="_blank" rel="noopener">Nik Reljin</a> &middot;
+    <a href="https://github.com/nikolareljin/local-ai-lab" target="_blank" rel="noopener">Source on GitHub</a>
+  </div></footer>
 
   <!-- The same slider that powers the published lessons: steps, dots, progress,
        #step-N deep links, copy buttons. Read from the file, not inlined. -->

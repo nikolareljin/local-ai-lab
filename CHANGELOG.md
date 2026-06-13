@@ -4,6 +4,33 @@ All notable changes to this project are documented here. This project follows
 [Conventional Commits](https://www.conventionalcommits.org/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.0]
+
+**Config-driven lessons + Lesson 3 (Hybrid retrieval & reranking).** Lessons from 3 onward are
+described by a single `lesson.json` and run, preview, and publish through one engine.
+
+### Added
+- **Lesson 3 — Hybrid retrieval & reranking** (`lessons/03-hybrid-retrieval-reranking/`): an offline,
+  dependency-free demo of BM25 + a semantic stand-in fused with RRF, in **Python, Node.js and C# / .NET**
+  with byte-identical output, an optional Flask web UI, an offline test, and a 5-chapter fictive-story
+  corpus to search.
+- **Lesson engine** (`tools/lesson.py`): `list`, `run` (per action + `--lang`), `show` (terminal
+  walkthrough), `preview` (local step-slideshow server), and `build` (publishable `docs/` page).
+  Driven by a per-lesson `lesson.json` of typed elements — command / code / config / text / note /
+  media — that **reference real files** (code is never pasted into the config).
+- **Step-by-step preview/publish that matches Lessons 1-2**: a shared template references the published
+  `docs/assets/style.css` + `slider.js`; adds server-side **syntax highlighting**
+  (`docs/assets/highlight.css`), **one or several notes per code snippet**, a **language selector** that
+  groups the per-language steps, and a **Lessons dropdown** in the top nav across the site.
+- Authoring / reorder tooling: `tools/new-lesson.sh`, `tools/sync-curriculum.sh`,
+  `tools/renumber-lessons.sh`, and `lessons/_template/`.
+
+### Changed
+- `./run` is registry-driven for lessons 3+ (`./run -l 3 [demo|web|test|show|preview|build] [--lang …]`);
+  Lessons 1-2 keep their bespoke dispatch (unchanged).
+- The site top-nav is now a **Lessons dropdown** (all pages); switching a lesson's language restarts it
+  at step 1 so paging never changes the chosen language.
+
 ## [0.4.0]
 
 **Lesson 2 (MCP) goes polyglot** — the MCP server now ships in Node.js and C# alongside Python.
