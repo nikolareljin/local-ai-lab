@@ -30,9 +30,24 @@ if (action is "demo" or "test" or "client")
     return;
 }
 
-// Default: run the MCP server over stdio — exactly how a host like Claude Code
-// launches a local server.
-var builder = Host.CreateApplicationBuilder(args);
+if (action is not "serve")
+{
+    await Console.Error.WriteLineAsync($"Unknown action '{action}'. Use: serve | demo | test.");
+    return;
+}
+
+// Run the MCP server over stdio — exactly how a host like Claude Code launches a
+// local server. stdout is reserved for the JSON-RPC stream (the SDK transport
+// writes the raw stdout stream directly). Reused Lesson 1 code (RetrieverFactory)
+// prints a BM25 fallback notice via Console.WriteLine, so redirect Console.Out to
+// stderr — Console.Out is independent of the transport's raw stream, so this keeps
+// the protocol clean (the Node port does the same with console.log).
+Console.SetOut(Console.Error);
+
+// Build the host WITHOUT forwarding the CLI args: the default configuration wires
+// up AddCommandLine(args), and the bare positional action token (e.g. "serve") is
+// not a valid key/value and can fail host startup.
+var builder = Host.CreateApplicationBuilder();
 // Route ALL logs to stderr so they never corrupt the JSON-RPC stream on stdout.
 builder.Logging.AddConsole(o => o.LogToStandardErrorThreshold = LogLevel.Trace);
 builder.Services

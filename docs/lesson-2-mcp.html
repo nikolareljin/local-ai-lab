@@ -168,7 +168,10 @@ await server.connect(transport);</code></pre></div>
 using ModelContextProtocol.Server;
 using LocalRag;   // reuse Lesson 1's Config / Store / Retriever / Extract
 
-var builder = Host.CreateApplicationBuilder(args);
+// stdout is the JSON-RPC stream; send stray Console output to stderr instead.
+Console.SetOut(Console.Error);
+// Build WITHOUT the CLI args so the positional action token can't break startup.
+var builder = Host.CreateApplicationBuilder();
 // Route logs to stderr so they never corrupt the JSON-RPC stream on stdout.
 builder.Logging.AddConsole(o =&gt; o.LogToStandardErrorThreshold = LogLevel.Trace);
 builder.Services
@@ -212,7 +215,7 @@ def search_docs(query: str, k: int = 5) -&gt; str:
     "Each passage is prefixed with its source as [filename:page] so the model " +
     "can cite it. Call this to ground answers in the user's own files instead " +
     "of relying on training data.",
-  inputSchema: { query: z.string(), k: z.number().int().optional() },
+  inputSchema: z.object({ query: z.string(), k: z.number().int().optional() }),
 }, async ({ query, k }) =&gt; {
   const config = loadConfig();
   const hits = (await getRetriever(config)).search(query, Math.max(1, k ?? 5));
@@ -267,7 +270,7 @@ def list_documents() -&gt; str:
         <div class="lang lang-node">
           <div class="block"><div class="label">server.js — add another tool</div><pre><code>server.registerTool("list_documents", {
   description: "List the documents currently available to search in the local corpus.",
-  inputSchema: {},
+  inputSchema: z.object({}),
 }, async () =&gt; {
   const config = loadConfig();
   const names = discoverFiles(config.docsDir).map((p) =&gt; path.basename(p));

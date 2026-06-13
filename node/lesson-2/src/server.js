@@ -49,14 +49,16 @@ server.registerTool(
       "Each passage is prefixed with its source as [filename:page] so the model " +
       "can cite it. Call this to ground answers in the user's own files instead " +
       "of relying on training data.",
-    inputSchema: {
+    // A full Zod object schema (not a raw shape) — the SDK's forward-compatible
+    // form for inputSchema.
+    inputSchema: z.object({
       query: z.string().describe("What to search for, in natural language."),
       k: z
         .number()
         .int()
         .optional()
         .describe("How many passages to return (default 5)."),
-    },
+    }),
   },
   async ({ query, k }) => {
     const config = loadConfig();
@@ -77,7 +79,8 @@ server.registerTool(
   {
     title: "List local documents",
     description: "List the documents currently available to search in the local corpus.",
-    inputSchema: {},
+    // Explicit empty Zod object for a no-argument tool.
+    inputSchema: z.object({}),
   },
   async () => {
     const config = loadConfig();
