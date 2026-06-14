@@ -1,0 +1,14 @@
+/* local-ai-lab — lightweight syntax-highlight theme for lesson code previews.
+ * Tokens are produced server-side by tools/lesson.py (no JS highlighter needed),
+ * so this is pure CSS. Tuned for the dark deck background in style.css. */
+
+pre code .hl-com { color: #8b949e; font-style: italic; }   /* comments */
+pre code .hl-kw  { color: #ff7b72; }                        /* keywords */
+pre code .hl-str { color: #a5d6ff; }                        /* strings  */
+pre code .hl-num { color: #79c0ff; }                        /* numbers  */
+pre code .hl-fn  { color: #d2a8ff; }                        /* functions / builtins */
+
+/* "one or several notes under a code snippet" */
+.remarks { margin: .5rem 0 0; padding-left: 1.15rem; color: var(--muted, #8b93a7); font-size: 14px; }
+.remarks li { margin: .2rem 0; }
+.remarks li code { color: var(--txt, #e6e8ee); }

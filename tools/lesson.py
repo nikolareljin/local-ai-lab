@@ -1,0 +1,664 @@
+#!/usr/bin/env python3
+"""local-ai-lab lesson engine.
+
+One small program that reads a lesson's `lesson.json` and serves the two
+operations the course needs:
+
+  A) run   — execute the command element(s) for a chosen action + language.
+  B) show  — walk through every element (note, command, code, config, text,
+             media) in order, optionally filtered to one language.
+
+Lessons live in `lessons/NN-slug/`; the NN prefix IS the lesson number, so
+reordering a lesson is just a directory rename. Lessons 1-2 are handled by the
+bash `run` dispatcher and are not part of this registry.
+
+Used by `./run`; can also be invoked directly:  python tools/lesson.py list
+"""
+
+import argparse
+import html
+import http.server
+import json
+import os
+import re
+import shlex
+import shutil
+import socket
+import socketserver
+from urllib.parse import unquote
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+LESSONS_DIR = ROOT / "lessons"
+
+
+# --------------------------------------------------------------------------- registry
+def registry():
+    """Map lesson number -> directory, derived from the NN- prefix."""
+    found = {}
+    if not LESSONS_DIR.is_dir():
+        return found
+    for entry in sorted(LESSONS_DIR.iterdir()):
+        if not entry.is_dir() or not (entry / "lesson.json").is_file():
+            continue
+        m = re.match(r"^(\d+)-", entry.name)
+        if m:
+            num = int(m.group(1))
+            if num in found:
+                sys.exit(f"[ERROR] Two lessons share number {num}: "
+                         f"{found[num].name} and {entry.name}. Renumber one.")
+            found[num] = entry
+    return found
+
+
+def lesson_dir(number):
+    return registry().get(int(number))
+
+
+def load(number):
+    d = lesson_dir(number)
+    if d is None:
+        sys.exit(f"[ERROR] No lesson numbered {number} in lessons/ (need lessons/NN-slug/lesson.json).")
+    with open(d / "lesson.json", encoding="utf-8") as fh:
+        return d, json.load(fh)
+
+
+def warn(msg):
+    print(f"[INFO] {msg}", file=sys.stderr)
+
+
+# --------------------------------------------------------------------------- python resolution
+def venv_python():
+    for rel in ("venv/bin/python", "venv/Scripts/python.exe"):
+        p = ROOT / rel
+        if p.exists():
+            return str(p)
+    return ""
+
+
+def ensure_venv_python():
+    """Reuse the repo's bash ensure_venv (creates venv + installs deps), return its python."""
+    script = f'source {shlex.quote(str(ROOT))}/scripts/include.sh && ensure_venv 1>&2 && printf "%s" "$PYTHON_BIN"'
+    out = subprocess.run(["bash", "-c", script], capture_output=True, text=True)
+    py = out.stdout.strip()
+    if not py:
+        warn("Could not prepare the virtualenv; falling back to system Python.")
+        return sys.executable
+    return py
+
+
+def python_for(need_venv):
+    if need_venv:
+        return ensure_venv_python()
+    return os.environ.get("PYTHON_BIN") or venv_python() or sys.executable
+
+
+# --------------------------------------------------------------------------- A) run
+def matching_commands(lesson, action, lang):
+    cmds = []
+    for el in lesson.get("elements", []):
+        if el.get("type") != "command" or el.get("action") != action:
+            continue
+        el_lang = el.get("lang")
+        if el_lang in (None, lang):
+            cmds.append(el)
+    return cmds
+
+
+def cmd_run(args):
+    ldir, lesson = load(args.number)
+    if lesson.get("status") != "working":
+        warn(f"Lesson {args.number} status is '{lesson.get('status')}' — not runnable yet.")
+        return 1  # non-zero so scripts/CI don't read a skipped lesson as success
+    action = args.action or lesson.get("defaultAction", "demo")
+    lang = args.lang or lesson.get("defaultLanguage", "python")
+
+    cmds = matching_commands(lesson, action, lang)
+    if not cmds:
+        actions = sorted({e.get("action") for e in lesson.get("elements", [])
+                          if e.get("type") == "command" and e.get("action")})
+        sys.exit(f"[ERROR] No '{action}' command for lang '{lang}'. Available actions: {', '.join(actions)}")
+
+    for el in cmds:
+        shell = el["shell"]
+        el_lang = el.get("lang") or lang
+        if el_lang == "node" and not shutil.which("node"):
+            sys.exit("[ERROR] Node.js is required (https://nodejs.org).")
+        if el_lang == "csharp" and not shutil.which("dotnet"):
+            sys.exit("[ERROR] The .NET SDK is required (https://dotnet.microsoft.com).")
+        if el_lang == "python":
+            py = python_for(el.get("venv", False))
+            if shell.startswith("python "):
+                shell = shlex.quote(py) + shell[len("python"):]
+        if args.rest:
+            shell = shell + " " + " ".join(shlex.quote(a) for a in args.rest)
+        warn(f"Lesson {args.number} · {action} · {el_lang}:  {shell}")  # the command actually run
+        rc = subprocess.run(shell, shell=True, cwd=ldir).returncode
+        if rc != 0:
+            return rc
+    return 0
+
+
+# --------------------------------------------------------------------------- B) show
+RULE = "─" * 72
+
+
+def read_ref(ldir, el):
+    if "file" in el:
+        ldir = Path(ldir).resolve()
+        path = (ldir / el["file"]).resolve()
+        # Keep reads inside the lesson directory: a lesson.json must not be able
+        # to reference files outside it (e.g. ../../secret) and embed them.
+        try:
+            path.relative_to(ldir)
+        except ValueError:
+            return f"[blocked path outside lesson: {el['file']}]"
+        if not path.exists():
+            return f"[missing file: {el['file']}]"
+        text = path.read_text(encoding="utf-8")
+        spec = el.get("lines")
+        if spec:  # focused excerpt: "30-45" (1-based, inclusive) or a single "42"
+            try:
+                parts = [int(x) for x in str(spec).strip().split("-")]
+                a, b = parts[0], parts[-1]  # single value → a == b
+                if a < 1 or b < a:
+                    raise ValueError
+            except (ValueError, IndexError):
+                return f"[invalid lines spec: {spec}]"
+            text = "\n".join(text.splitlines()[a - 1:b])
+        return text.rstrip("\n")
+    return el.get("text", "")
+
+
+def cmd_show(args):
+    ldir, lesson = load(args.number)
+    if getattr(args, "html", False):
+        # Standalone file: reference the repo's assets and media by absolute file:// URI
+        # (Path.as_uri() is correct on Windows too, e.g. file:///C:/...).
+        print(render_html(args.number, ldir, lesson, args.lang,
+                          assets_href=(ROOT / "docs" / "assets").as_uri(),
+                          media_base=ldir.as_uri() + "/",
+                          nav_base=(ROOT / "docs").as_uri() + "/"))
+        return 0
+    lang = args.lang
+    print(f"\n{RULE}\nLesson {args.number} · {lesson.get('title','')}")
+    if lesson.get("summary"):
+        print(lesson["summary"])
+    print(RULE)
+
+    for el in lesson.get("elements", []):
+        el_lang = el.get("lang")
+        if lang and el_lang not in (None, lang):
+            continue
+        tag = f" [{el_lang}]" if el_lang else ""
+        etype = el.get("type")
+        title = el.get("title")
+
+        if etype == "note":
+            if title:
+                print(f"\n• {title}")
+            print(indent(read_ref(ldir, el)))
+        elif etype == "command":
+            label = f"{el.get('action','run')}{tag}"
+            print(f"\n$ {el['shell']}    ({label})")
+            for r in remarks_of(el):
+                print(indent("• " + r))
+        elif etype in ("code", "config"):
+            head = el.get("file", "(inline)")
+            print(f"\n── {etype}: {head}{tag} ──")
+            for r in remarks_of(el):
+                print(indent("• " + r))
+            print(read_ref(ldir, el))
+        elif etype == "text":
+            print(f"\n✎ copy/paste{(' — ' + title) if title else ''}{tag}:")
+            print(indent(read_ref(ldir, el)))
+        elif etype in ("media", "image", "video"):
+            kind = el.get("kind", etype)
+            ref = el.get("file") or el.get("url", "")
+            extra = el.get("alt") or el.get("note") or ""
+            # Inline terminal image rendering is environment-specific; print a
+            # labeled reference (the same element embeds natively on the site).
+            print(f"\n[{kind}] {ref}" + (f" — {extra}" if extra else ""))
+        else:
+            print(f"\n[unknown element type: {etype}]")
+    print()
+    return 0
+
+
+def indent(text, prefix="    "):
+    return "\n".join(prefix + line for line in text.splitlines())
+
+
+# --------------------------------------------------------------------------- B') HTML preview
+def _esc(s):
+    return html.escape(s, quote=False)
+
+
+def _inline(s):
+    s = _esc(s)
+    s = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)   # bold first
+    s = re.sub(r"\*([^*\n]+)\*", r"<em>\1</em>", s)             # then italics
+    return re.sub(r"`([^`]+)`", r"<code>\1</code>", s)
+
+
+TEMPLATE_PATH = Path(__file__).resolve().parent / "templates" / "lesson-preview.html"
+
+# ----- lightweight, offline syntax highlighting (server-side, CSS-themed) -----
+_KW = {
+    "python": "def class import from return if elif else for while in not and or is None True False"
+              " with as try except finally raise lambda yield global nonlocal pass break continue assert del async await",
+    "js": "const let var function return if else for while of in new class extends import export from default"
+          " async await try catch finally throw typeof instanceof this null undefined true false",
+    "csharp": "using namespace class struct record public private protected internal static void var new return"
+              " if else for foreach while in out ref try catch finally throw null true false int double string bool"
+              " async await override virtual abstract readonly get set this base",
+    "bash": "if then else elif fi for while do done case esac function in exit return local set export",
+    "json": "true false null",
+    "yaml": "true false null",
+}
+_KEYWORDS = {lang: set(words.split()) for lang, words in _KW.items()}
+_COMMENT = {"python": r"#[^\n]*", "bash": r"#[^\n]*", "yaml": r"#[^\n]*",
+            "js": r"//[^\n]*|/\*[\s\S]*?\*/", "csharp": r"//[^\n]*|/\*[\s\S]*?\*/"}
+_STRING = {
+    "python": r'"""[\s\S]*?"""|\'\'\'[\s\S]*?\'\'\'|"(?:\\.|[^"\\\n])*"|\'(?:\\.|[^\'\\\n])*\'',
+    "js": r'`(?:\\.|[^`\\])*`|"(?:\\.|[^"\\\n])*"|\'(?:\\.|[^\'\\\n])*\'',
+    "csharp": r'@"(?:""|[^"])*"|\$?"(?:\\.|[^"\\\n])*"',
+    "bash": r'"(?:\\.|[^"\\])*"|\'[^\']*\'',
+    "json": r'"(?:\\.|[^"\\])*"',
+    "yaml": r'"(?:\\.|[^"\\\n])*"|\'(?:[^\']|\'\')*\'',
+}
+_EXT_LANG = {".py": "python", ".js": "js", ".mjs": "js", ".cjs": "js", ".cs": "csharp",
+             ".sh": "bash", ".bash": "bash", ".json": "json", ".yaml": "yaml", ".yml": "yaml"}
+
+
+def lang_for(el):
+    """Highlight language: the element's `lang`, else inferred from the file extension."""
+    lang = el.get("lang")
+    if lang in _KEYWORDS:
+        return lang
+    if lang == "node":
+        return "js"
+    if "file" in el:
+        return _EXT_LANG.get(Path(el["file"]).suffix.lower())
+    return None
+
+
+def highlight(code, lang):
+    """Return HTML-escaped code with token <span>s. Falls back to plain escaped text."""
+    if lang not in _KEYWORDS:
+        return _esc(code)
+    alts = []
+    if lang in _COMMENT:
+        alts.append(f"(?P<comment>{_COMMENT[lang]})")
+    if lang in _STRING:
+        alts.append(f"(?P<string>{_STRING[lang]})")
+    alts.append(r"(?P<number>\b\d[\d_]*\.?\d*(?:[eE][+-]?\d+)?\b)")
+    alts.append(r"(?P<word>[A-Za-z_]\w*)")
+    pattern = re.compile("|".join(alts))
+    kws = _KEYWORDS[lang]
+    out, pos = [], 0
+    for m in pattern.finditer(code):
+        out.append(_esc(code[pos:m.start()]))
+        kind, text = m.lastgroup, m.group()
+        if kind == "word":
+            out.append(f'<span class="hl-kw">{_esc(text)}</span>' if text in kws else _esc(text))
+        else:
+            out.append(f'<span class="hl-{kind[:3]}">{_esc(text)}</span>')
+        pos = m.end()
+    out.append(_esc(code[pos:]))
+    return "".join(out)
+
+
+def remarks_of(el):
+    """One or several notes under a snippet: `note` (string) and/or `notes` (list)."""
+    items = []
+    if el.get("note"):
+        items.append(el["note"])
+    items.extend(el.get("notes", []))
+    return items
+
+
+def _remarks_html(el):
+    items = remarks_of(el)
+    return ("<ul class='remarks'>" + "".join(f"<li>{_inline(x)}</li>" for x in items) + "</ul>") if items else ""
+
+
+def _paras(text):
+    """Markdown-ish prose: blank-line-separated paragraphs, inline code/bold."""
+    if not text:
+        return ""
+    return "".join(f"<p>{_inline(p.strip())}</p>" for p in re.split(r"\n\s*\n", text) if p.strip())
+
+
+def _body_of(el):
+    if el.get("body"):
+        return el["body"]
+    # legacy: a note's `text` (with no file) is its prose
+    if el.get("type") == "note" and "file" not in el and el.get("text"):
+        return el["text"]
+    return ""
+
+
+def _kicker(el):
+    return el.get("kicker") or (el.get("type") or "step").capitalize()
+
+
+def _artifact(ldir, el, asset_base):
+    """The type-specific block for an element — command, code, config, text, media,
+    or a note's referenced file. (Note prose is handled separately as `body`.)"""
+    t = el.get("type")
+    if t == "command":
+        lab = el.get("action", "run") + (f" · {el['lang']}" if el.get("lang") else "")
+        shown = el.get("display") or el["shell"]   # friendly command to type; runner uses `shell`
+        return (f"<div class='block'><div class='label'>{_esc(lab)}</div>"
+                f"<pre><code class='lang-bash'>$ {highlight(shown, 'bash')}</code></pre></div>")
+    if t in ("code", "config"):
+        lang = lang_for(el)
+        return (f"<div class='block'><div class='label'>{_esc(el.get('file', '(inline)'))}</div>"
+                f"<pre><code class='lang-{_lang_token(lang or 'text')}'>{highlight(read_ref(ldir, el), lang)}</code></pre></div>")
+    if t == "text":
+        return f"<div class='block'><pre><code>{_esc(read_ref(ldir, el))}</code></pre></div>"
+    if t in ("image", "media", "video"):
+        kind = el.get("kind", t)
+        ref = el.get("file") or el.get("url", "")
+        if ref and not ref.startswith("http"):
+            # Confine local media to the lesson dir (same rule as read_ref), so a
+            # stray file:"../.." can't embed files outside it — e.g. the file://
+            # URLs that `show --html` builds.
+            ldirr = Path(ldir).resolve()
+            try:
+                (ldirr / ref).resolve().relative_to(ldirr)
+            except ValueError:
+                return f"<div class='block'>[blocked media path outside lesson: {_esc(ref)}]</div>"
+        src = ref if (ref.startswith("http") or not asset_base) else asset_base + ref
+        srca = html.escape(src, quote=True)          # quote attributes to avoid injection
+        alt = el.get("alt") or el.get("note") or ""
+        media = (f'<video controls src="{srca}"></video>' if kind == "video"
+                 else f'<img src="{srca}" alt="{html.escape(alt, quote=True)}">')
+        return f"<figure>{media}<figcaption>{_esc(alt)}</figcaption></figure>"
+    if t == "note" and "file" in el:
+        return f"<pre><code>{_esc(read_ref(ldir, el))}</code></pre>"
+    return ""
+
+
+def _why(el):
+    return f"<div class='why'>{_inline(el['why'])}</div>" if el.get("why") else ""
+
+
+def _slide(ldir, el, asset_base):
+    """A guided step: kicker → h2 title → intro prose → artifact → notes → why."""
+    heading = f"<h2>{_inline(el['title'])}</h2>" if el.get("title") else ""
+    inner = _artifact(ldir, el, asset_base) + _remarks_html(el)
+    return (f"<section class='slide'><div class='step-no'>{_esc(_kicker(el))}</div>"
+            f"{heading}{_paras(_body_of(el))}{inner}{_why(el)}</section>")
+
+
+def _group_slide(ldir, els, asset_base):
+    """One step with per-language variants. The kicker/heading/intro/why come from
+    the group's first element; each language gets its own artifact + notes, wrapped
+    in .lang so the language selector shows just the active one (paging never
+    switches language)."""
+    first = els[0]
+    title = next((e.get("title") for e in els if e.get("title")), None)
+    heading = f"<h2>{_inline(title)}</h2>" if title else ""
+    variants = []
+    for el in els:
+        block = _artifact(ldir, el, asset_base) + _remarks_html(el)
+        lang = el.get("lang")
+        variants.append(f"<div class='lang lang-{_lang_token(lang)}'>{block}</div>" if lang else block)
+    return (f"<section class='slide'><div class='step-no'>{_esc(_kicker(first))}</div>"
+            f"{heading}{_paras(_body_of(first))}{''.join(variants)}{_why(first)}</section>")
+
+
+LANG_LABELS = {"python": "Python", "node": "Node.js", "csharp": "C#"}
+LANG_SHORT = {"python": "Py", "node": "Node", "csharp": "C#"}
+# The languages the renderer/slider support; also the allowed `--lang` CLI values.
+SUPPORTED_LANGS = ("python", "node", "csharp")
+
+
+def _lang_token(lang):
+    """A safe CSS class token for a language: lowercased and restricted to
+    [a-z0-9_-]. Anything else (spaces, punctuation, markup) collapses to '-', so a
+    stray or malicious lesson.json `lang` can't inject, split into extra classes,
+    or break the `[data-lang] .lang-*` show/hide selectors."""
+    return re.sub(r"[^a-z0-9_-]+", "-", str(lang).lower())
+
+
+def _langsel_html(langs, compact=False):
+    langs = [x for x in langs if x in LANG_LABELS]
+    if len(langs) < 2:
+        return ""
+    cls = "langsel compact" if compact else "langsel"
+    lbl = "" if compact else '<span class="langsel-label">Follow along in:</span>'
+    names = LANG_SHORT if compact else LANG_LABELS
+    btns = "".join(f'<button class="langsel-btn" data-setlang="{x}" aria-label="{LANG_LABELS[x]}">{names[x]}</button>'
+                   for x in langs)
+    return f'<div class="{cls}" role="group" aria-label="Language">{lbl}{btns}</div>'
+
+
+def _nav_html(base="./"):
+    """The shared topbar nav: Home, a Lessons dropdown (built from the registry),
+    Troubleshooting, About. `base` prefixes every link — "./" for the relative
+    preview/published pages, or an absolute `file://…/docs/` URI for a standalone
+    `show --html` file written to an arbitrary location."""
+    items = [(1, "RAG from scratch", "lesson-1-rag.html"), (2, "MCP servers", "lesson-2-mcp.html")]
+    reg = registry()
+    for n in sorted(reg):
+        with open(reg[n] / "lesson.json", encoding="utf-8") as fh:
+            m = json.load(fh)
+        slug = m.get("slug") or re.sub(r"^\d+-", "", reg[n].name)
+        if m.get("status") == "working":
+            items.append((n, m.get("title", ""), f"lesson-{n}-{slug}.html"))
+    href = lambda p: html.escape(base + p, quote=True)
+    links = "".join(f'<a href="{href(h)}">{n} · {_esc(t)}</a>' for n, t, h in items)
+    return (f'<a href="{href("index.html")}">Home</a>'
+            '<details class="nav-dd"><summary>Lessons</summary>'
+            f'<div class="nav-dd-menu">{links}</div></details>'
+            f'<a href="{href("troubleshooting.html")}">Troubleshooting</a>'
+            f'<a href="{href("about.html")}">About</a>')
+
+
+def render_html(number, ldir, lesson, lang=None, assets_href="/assets", media_base="", nav_base="./"):
+    """Render a lesson to the step-by-step slideshow HTML, template-driven.
+
+    Reads tools/templates/lesson-preview.html and fills it from lesson.json. Elements
+    sharing a `group` become one step with per-language variants (toggled by the
+    language selector); everything else is its own step. The template *references*
+    the published assets (NOT inlined) so the page matches Lessons 1-2.
+    """
+    template = TEMPLATE_PATH.read_text(encoding="utf-8")
+    order, groups, seen = [], {}, set()
+    for el in lesson.get("elements", []):
+        if lang and el.get("lang") not in (None, lang):
+            continue
+        g = el.get("group")
+        if g:
+            if g not in seen:
+                seen.add(g)
+                order.append(("group", g))
+            groups.setdefault(g, []).append(el)
+        else:
+            order.append(("single", el))
+    slides = "\n".join(
+        _slide(ldir, val, media_base) if kind == "single" else _group_slide(ldir, groups[val], media_base)
+        for kind, val in order
+    )
+    # Only offer the selector for languages actually rendered (a single-language
+    # render has no selector, so switching can't hide all the blocks).
+    langs = [lang] if lang else lesson.get("languages", [])
+    # Initial <html data-lang>. A full render restores the reader's saved choice;
+    # a single-language render forces the one language it shipped (no selector to
+    # recover from, so localStorage must not be allowed to hide every block).
+    if lang:
+        lang_init = "document.documentElement.dataset.lang=%s" % json.dumps(lang)
+    else:
+        lang_init = ("try{document.documentElement.dataset.lang="
+                     "localStorage.getItem('localrag-lang')||'python'}"
+                     "catch(e){document.documentElement.dataset.lang='python'}")
+    out = (template
+           .replace("{{LANG_INIT}}", lang_init)
+           .replace("{{ASSETS}}", assets_href)
+           .replace("{{NAV}}", _nav_html(nav_base))
+           .replace("{{HOME}}", html.escape(nav_base + "index.html", quote=True))
+           .replace("{{ABOUT}}", html.escape(nav_base + "about.html", quote=True))
+           .replace("{{NUMBER}}", str(number))
+           .replace("{{TITLE}}", _esc(lesson.get("title", "")))
+           .replace("{{SUMMARY}}", _inline(lesson.get("summary", "")))
+           .replace("{{LANGSEL}}", _langsel_html(langs))
+           .replace("{{LANGSEL_COMPACT}}", _langsel_html(langs, compact=True))
+           .replace("{{SLIDES}}", slides))
+    # Inject the "generated" banner into the OUTPUT only — keeping it out of the
+    # template itself, which contributors are meant to edit.
+    banner = ("<!-- GENERATED FILE — do not edit by hand. Built by tools/lesson.py "
+              "(`./run -l N build`) from lessons/NN-slug/lesson.json; edit the lesson.json "
+              "or tools/templates/lesson-preview.html instead. -->")
+    return out.replace("<!doctype html>", "<!doctype html>\n" + banner, 1)
+
+
+def free_port():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
+def cmd_preview(args):
+    """Serve the rendered lesson instructions locally (no GitHub Pages needed).
+
+    `/`            -> the rendered slideshow (from the template + lesson.json)
+    `/assets/...`  -> the published course assets (style.css, slider.js)
+    everything else-> static files from the lesson dir (media, etc.)
+    """
+    ldir, lesson = load(args.number)
+    page = render_html(args.number, ldir, lesson, args.lang,
+                       assets_href="/assets", media_base="").encode("utf-8")
+    assets_dir = ROOT / "docs" / "assets"
+
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        def do_GET(self):
+            # Only the root is the lesson; /index.html falls through to docs/index.html
+            # so the nav "Home" link works in the preview.
+            if self.path.split("?")[0] == "/":
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(page)))
+                self.end_headers()
+                self.wfile.write(page)
+                return
+            super().do_GET()
+
+        def translate_path(self, path):
+            # URL-decode BEFORE normalizing, so percent-encoded traversal
+            # (e.g. %2e%2e/ -> ../) can't slip past the ".." check below.
+            rel = unquote(path.split("?", 1)[0].split("#", 1)[0]).lstrip("/")
+            clean = os.path.normpath(rel)
+            if clean in (".", "") or clean.startswith("..") or os.path.isabs(clean):
+                return str(Path(ldir) / "__not_found__")   # block traversal outside the roots
+            if clean == "assets" or clean.startswith("assets" + os.sep):
+                return str(assets_dir / clean[len("assets"):].lstrip(os.sep))
+            local = Path(ldir) / clean
+            if local.exists():           # media / data from the lesson dir
+                return str(local)
+            docs = ROOT / "docs" / clean  # nav links (index.html, lesson-1-rag.html, …) preview like the site
+            return str(docs if docs.exists() else local)
+
+        def log_message(self, *a):
+            pass
+
+    port = free_port()
+    with socketserver.TCPServer(("127.0.0.1", port), Handler) as httpd:
+        print(f"Lesson {args.number} · instructions preview → http://127.0.0.1:{port}  (Ctrl-C to stop)",
+              flush=True)
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            pass
+    return 0
+
+
+def cmd_build(args):
+    """Generate the publishable GitHub Pages page (docs/lesson-N-slug.html).
+
+    Same template + assets as the local preview, but with relative `./assets`
+    references so it renders on Pages exactly like the hand-authored Lessons 1-2.
+    Code/config/text are baked in from the referenced files at build time.
+    """
+    ldir, lesson = load(args.number)
+    slug = lesson.get("slug") or re.sub(r"^\d+-", "", ldir.name)
+    out = ROOT / "docs" / f"lesson-{args.number}-{slug}.html"
+
+    media_base = ""
+    media_dir = ldir / "media"
+    if media_dir.exists():
+        # Mirror the lesson's media/ subtree under docs/ so refs authored relative
+        # to the lesson dir resolve from the built page:
+        #   media_base + "media/foo.png" -> ./lesson-media/<dir>/media/foo.png
+        dest = ROOT / "docs" / "lesson-media" / ldir.name
+        shutil.rmtree(dest, ignore_errors=True)
+        shutil.copytree(media_dir, dest / "media")
+        media_base = f"./lesson-media/{ldir.name}/"
+        warn(f"Copied media into docs/lesson-media/{ldir.name}/media/ (refs are relative to the lesson dir).")
+
+    out.write_text(render_html(args.number, ldir, lesson, args.lang,
+                               assets_href="./assets", media_base=media_base), encoding="utf-8")
+    print(f"Wrote {out.relative_to(ROOT)}  (publish by committing docs/; link it from docs/index.html)")
+    return 0
+
+
+# --------------------------------------------------------------------------- list
+def cmd_list(args):
+    reg = registry()
+    if not reg and not args.md:
+        print("(no config-driven lessons yet)")
+        return 0
+    for num in sorted(reg):
+        with open(reg[num] / "lesson.json", encoding="utf-8") as fh:
+            m = json.load(fh)
+        langs = ", ".join(m.get("languages", []))
+        if args.md:
+            print(f"| {num} | {m.get('title','')} | {m.get('status','')} | {langs} |")
+        else:
+            print(f"L{num:<3} {m.get('title',''):<40} [{m.get('status','')}]  ({langs})")
+    return 0
+
+
+def main(argv=None):
+    p = argparse.ArgumentParser(prog="lesson", description="local-ai-lab lesson engine")
+    sub = p.add_subparsers(dest="cmd", required=True)
+
+    sp = sub.add_parser("list", help="list config-driven lessons")
+    sp.add_argument("--md", action="store_true", help="emit markdown table rows")
+    sp.set_defaults(fn=cmd_list)
+
+    sp = sub.add_parser("run", help="run a lesson action")
+    sp.add_argument("number", type=int)
+    sp.add_argument("action", nargs="?", default=None)
+    sp.add_argument("--lang", default=None, choices=SUPPORTED_LANGS)
+    sp.set_defaults(fn=cmd_run)
+
+    sp = sub.add_parser("show", help="walk through a lesson's elements")
+    sp.add_argument("number", type=int)
+    sp.add_argument("--lang", default=None, choices=SUPPORTED_LANGS)
+    sp.add_argument("--html", action="store_true", help="emit a standalone HTML page instead of terminal text")
+    sp.set_defaults(fn=cmd_show)
+
+    sp = sub.add_parser("preview", help="serve the rendered lesson instructions locally")
+    sp.add_argument("number", type=int)
+    sp.add_argument("--lang", default=None, choices=SUPPORTED_LANGS)
+    sp.set_defaults(fn=cmd_preview)
+
+    sp = sub.add_parser("build", help="generate the publishable docs/ page (GitHub Pages)")
+    sp.add_argument("number", type=int)
+    sp.add_argument("--lang", default=None, choices=SUPPORTED_LANGS)
+    sp.set_defaults(fn=cmd_build)
+
+    # parse_known_args so any trailing passthrough args (after the known ones)
+    # reach the lesson command without REMAINDER swallowing options like --lang.
+    args, extra = p.parse_known_args(argv)
+    args.rest = extra
+    return args.fn(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

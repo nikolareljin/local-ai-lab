@@ -1,0 +1,86 @@
+{
+  "title": "Hybrid Retrieval & Reranking",
+  "slug": "hybrid-retrieval-reranking",
+  "status": "working",
+  "summary": "BM25 + a semantic stand-in, fused with RRF — offline, polyglot, identical rankings in Python, Node and .NET.",
+  "cluster": "rag-depth",
+  "priority": "high",
+  "languages": ["python", "node", "csharp"],
+  "defaultLanguage": "python",
+  "defaultAction": "demo",
+  "elements": [
+    { "type": "note", "kicker": "Overview", "title": "What you'll build",
+      "file": "overview.txt",
+      "body": "Two documents about the same problem rarely use the same words. **Hybrid retrieval** runs two searchers over your documents and merges their results, so you catch both the *exact* matches and the ones that only match in *meaning*.\n\n**BM25** is keyword search — unbeatable at exact terms like an error code or a product ID, but blind to synonyms. A **semantic** searcher (embeddings) matches by meaning, so it finds paraphrases BM25 misses. **Reciprocal Rank Fusion (RRF)** combines the two ranked lists into one.\n\nEverything here — the code *and* the tiny document set — already ships in the repo, so there's **nothing to copy, paste or create**. You'll read the program one piece at a time — tokenizer, BM25, semantic arm, fusion — in **Python, Node.js or C#**, then run the finished demo with a single command. Pick a language with the selector above; every step follows your choice. Press → to begin." },
+
+    { "type": "command", "kicker": "Setup", "title": "What you need",
+      "body": "You follow this lesson by **reading and running** — not by writing code. Clone the repo and `cd` into it; the walkthrough, the demo program and its data all live inside. The demo is **offline and dependency-free** — nothing to install for Python; for the other ports you only need the runtime (**Node.js 18+** or the **.NET 8 SDK**). Every command below runs through the dispatcher from the repo root:",
+      "shell": "./run -l 3            # or:  ./run -l 3 --lang node  |  --lang csharp" },
+
+    { "type": "config", "file": "data/error_codes.md", "kicker": "Step 1", "title": "A tiny corpus of support docs",
+      "body": "Our \"knowledge base\" is three small Markdown files that **already ship with the lesson** in `data/` — about error codes, power problems, and first-time setup. **You don't create these — they're already there;** this step just shows what the demo searches over. A deliberately tiny corpus keeps the rankings easy to eyeball. Here is one of them:" },
+
+    { "type": "code", "file": "python/hybrid_demo.py", "lang": "python", "lines": "37-38", "group": "tok",
+      "kicker": "Step 2", "title": "Turn text into tokens",
+      "body": "The next four steps walk through the program that already lives in the repo — `python/hybrid_demo.py` and its Node/C# twins. **Just read along to see how it works — nothing to copy, and nothing to run until *Run the demo* below.**\n\nBoth searchers work on **tokens**, not raw text. We lowercase and split on runs of letters, digits and underscores — the *same* rule in every port, so the three implementations agree exactly." },
+    { "type": "code", "file": "node/hybrid_demo.mjs", "lang": "node", "lines": "32-34", "group": "tok" },
+    { "type": "code", "file": "dotnet/Program.cs", "lang": "csharp", "lines": "49-50", "group": "tok" },
+
+    { "type": "code", "file": "python/hybrid_demo.py", "lang": "python", "lines": "49-69", "group": "bm25",
+      "kicker": "Step 3", "title": "BM25 — rank by exact-term overlap",
+      "body": "**BM25** scores a document by how many query terms it contains, weighting **rare** terms far more (a code like `E_4096` counts for much more than `the`) and damping very long documents. It is fast, needs no model, and is unbeatable when the user knows the exact string — but it can't match a synonym it has never seen.",
+      "why": "Reach for BM25 when the query is a literal: an error code, a SKU, a function name, a person's name." },
+    { "type": "code", "file": "node/hybrid_demo.mjs", "lang": "node", "lines": "54-71", "group": "bm25" },
+    { "type": "code", "file": "dotnet/Program.cs", "lang": "csharp", "lines": "53-76", "group": "bm25" },
+
+    { "type": "code", "file": "python/hybrid_demo.py", "lang": "python", "lines": "73-81", "group": "sem",
+      "kicker": "Step 4", "title": "A semantic arm — meaning, not keywords",
+      "body": "A real system embeds text into vectors and matches by **meaning**, so paraphrases land near each other even with no shared words. To stay offline we stand in a small **synonym map** (`broken → fail, dead`) and score by overlap — enough to behave like embeddings for the demo, recovering documents BM25 would miss.",
+      "why": "Swap the synonym stand-in for a real embedding model in production — the fusion code below does not change." },
+    { "type": "code", "file": "node/hybrid_demo.mjs", "lang": "node", "lines": "74-83", "group": "sem" },
+    { "type": "code", "file": "dotnet/Program.cs", "lang": "csharp", "lines": "79-92", "group": "sem" },
+
+    { "type": "code", "file": "python/hybrid_demo.py", "lang": "python", "lines": "84-96", "group": "rrf",
+      "kicker": "Step 5", "title": "Fuse the two with Reciprocal Rank Fusion",
+      "body": "Each arm produces a ranked list. **RRF** adds up `1 / (k + rank)` across the lists, so a document near the top of *either* list rises — it fuses by **rank**, not raw score, giving the two arms an equal vote. We also drop zero-score documents, so an arm that finds nothing contributes nothing.",
+      "why": "RRF is the cheapest, most robust way to combine retrievers — a few lines, no score calibration." },
+    { "type": "code", "file": "node/hybrid_demo.mjs", "lang": "node", "lines": "87-103", "group": "rrf" },
+    { "type": "code", "file": "dotnet/Program.cs", "lang": "csharp", "lines": "96-115", "group": "rrf" },
+
+    { "type": "command", "action": "demo", "lang": "python", "group": "run-demo",
+      "kicker": "Run it", "title": "Run the demo",
+      "body": "Now run it — this executes the exact file you just read through, over the corpus from Step 1. No flags, no editing. It prints the BM25, semantic and fused (RRF) rankings for two contrasting queries, then exits — identical output in all three languages.",
+      "display": "./run -l 3", "shell": "python python/hybrid_demo.py" },
+    { "type": "command", "action": "demo", "lang": "node", "group": "run-demo",
+      "display": "./run -l 3 --lang node", "shell": "node node/hybrid_demo.mjs" },
+    { "type": "command", "action": "demo", "lang": "csharp", "group": "run-demo",
+      "display": "./run -l 3 --lang csharp", "shell": "dotnet run --project dotnet -c Release --nologo" },
+
+    { "type": "note", "kicker": "Run it", "title": "Read the output",
+      "file": "expected-output.txt",
+      "body": "Look at the two queries. **`error E_4096`** is an exact code: BM25 nails `error_codes.md`, and the semantic arm finds it too. **`broken gadget`** is a paraphrase whose words appear in **no** document: BM25 returns **nothing**, yet the semantic arm maps *broken → fail/dead* and recovers `power_issues.md` — and the hybrid keeps that hit. That single example is the whole reason to fuse." },
+
+    { "type": "text", "kicker": "Try it", "title": "Try the exact-term query", "text": "error E_4096",
+      "body": "Want to experiment? This is the one place you change something: edit the query list near the bottom of `python/hybrid_demo.py` (or add a file to the corpus in `data/`), then re-run `./run -l 3`. Start with the exact code — BM25 pins the matching document:" },
+    { "type": "text", "kicker": "Try it", "title": "Try the keyword-free paraphrase", "text": "broken gadget",
+      "body": "Now one whose words appear in no document — BM25 returns nothing, the semantic arm recovers it, and the hybrid agrees:" },
+
+    { "type": "command", "action": "test", "lang": "python", "kicker": "Try it", "title": "Confirm it with the test",
+      "body": "An offline test pins the lesson's claims: BM25 nails the exact term, BM25 finds nothing for the paraphrase, and the hybrid recovers it. No network, no model.",
+      "display": "./run -l 3 test", "shell": "python -m pytest -q python/test_hybrid.py", "venv": true },
+
+    { "type": "command", "action": "web", "lang": "python", "kicker": "Optional", "title": "Search a story in your browser",
+      "body": "For a richer, hands-on feel, launch an interactive search over a bundled 5-chapter story (*The Voyage of Caretta the Magnificent*). Type a query and watch all three rankings update live. The web app reuses the same `hybrid()` you just built — no retrieval logic is duplicated.",
+      "display": "./run -l 3 web", "shell": "python python/web.py", "venv": true },
+    { "type": "text", "kicker": "Optional", "title": "Story query — an exact name", "text": "Nuevo Edén",
+      "body": "An exact name BM25 loves:" },
+    { "type": "text", "kicker": "Optional", "title": "Story query — a paraphrase", "text": "who found the new planet",
+      "body": "…and a paraphrase the semantic arm recovers:" },
+
+    { "type": "note", "kicker": "Going further", "title": "From demo to production",
+      "body": "This is a teaching demo. For real systems:\n\nReplace the synonym stand-in with a real **embedding model** for the semantic arm. Add a **cross-encoder reranker** over the fused top-k — usually the single biggest quality win. **Rewrite** vague queries before retrieval, and **filter by metadata** (product, version, date). And **measure** it: a golden-question set tells you whether hybrid actually beats either arm on *your* data." },
+
+    { "type": "note", "kicker": "Recap", "title": "What you learned",
+      "body": "**BM25** wins exact terms; a **semantic** arm wins paraphrases; **RRF** fuses them so you keep whichever arm found the answer. You built all three by hand — the same algorithm in **Python, Node.js and C#**, with byte-identical results — and saw a query where keyword search returns nothing yet the hybrid still answers.\n\nNext: **Lesson 4 · RAG safety & prompt injection**." }
+  ]
+}

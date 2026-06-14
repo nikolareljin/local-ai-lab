@@ -1,0 +1,10 @@
+{
+  "name": "lesson03-hybrid-retrieval",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Lesson 3 - hybrid retrieval (BM25 + semantic + RRF), Node.js port",
+  "scripts": {
+    "start": "node hybrid_demo.mjs"
+  }
+}

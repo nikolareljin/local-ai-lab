@@ -35,7 +35,7 @@
   const LANG_KEY = "localrag-lang";
   const LANGS = ["python", "node", "csharp"];
   const langButtons = Array.from(document.querySelectorAll("[data-setlang]"));
-  function applyLang(lang) {
+  function applyLang(lang, reset) {
     if (!LANGS.includes(lang)) lang = "python";
     document.documentElement.dataset.lang = lang;
     langButtons.forEach((b) => {
@@ -45,10 +45,12 @@
       b.setAttribute("aria-pressed", String(active));
     });
     try { localStorage.setItem(LANG_KEY, lang); } catch (e) { /* ignore */ }
-    setHeight(); // the active slide's height changes when code blocks swap
+    // Switching language restarts the lesson at step 1 (a fresh read in that
+    // language). On first load we keep the current step so deep links survive.
+    if (reset) go(0); else setHeight(); // code-block height changes when languages swap
   }
   langButtons.forEach((b) =>
-    b.addEventListener("click", () => applyLang(b.dataset.setlang))
+    b.addEventListener("click", () => applyLang(b.dataset.setlang, true))
   );
 
   function render() {
@@ -100,11 +102,17 @@
   const m = location.hash.match(/step-(\d+)/);
   if (m) i = Math.max(0, Math.min(slides.length - 1, parseInt(m[1], 10) - 1));
 
-  // Sync the selector buttons to the language the head script already applied
-  // (defaults to python). Done before the first render so heights are correct.
-  let savedLang = "python";
-  try { savedLang = localStorage.getItem(LANG_KEY) || "python"; } catch (e) { /* ignore */ }
-  applyLang(savedLang);
+  // Restore the reader's saved language — but ONLY when a selector is present.
+  // A single-language render (e.g. build/preview --lang node) has no selector and
+  // ships only that language's blocks; applying a different saved language would
+  // hide every block with no way to recover, so we keep what the page rendered.
+  if (langButtons.length) {
+    let savedLang = "python";
+    try { savedLang = localStorage.getItem(LANG_KEY) || "python"; } catch (e) { /* ignore */ }
+    applyLang(savedLang, false);
+  } else {
+    setHeight();
+  }
 
   window.addEventListener("resize", setHeight);
   window.addEventListener("load", render);

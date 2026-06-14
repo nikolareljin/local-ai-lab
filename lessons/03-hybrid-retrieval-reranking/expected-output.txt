@@ -1,0 +1,10 @@
+
+Query: "error E_4096"
+  BM25 (lexical):   ['error_codes.md']
+  Semantic (stand): ['error_codes.md']
+  Hybrid (RRF):     ['error_codes.md']
+
+Query: "broken gadget"
+  BM25 (lexical):   []
+  Semantic (stand): ['power_issues.md']
+  Hybrid (RRF):     ['power_issues.md']

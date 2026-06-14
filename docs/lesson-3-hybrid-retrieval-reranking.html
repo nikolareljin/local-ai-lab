@@ -1,0 +1,245 @@
+<!doctype html>
+<!-- GENERATED FILE — do not edit by hand. Built by tools/lesson.py (`./run -l N build`) from lessons/NN-slug/lesson.json; edit the lesson.json or tools/templates/lesson-preview.html instead. -->
+<html lang="en" data-lang="python">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lesson 3 · Hybrid Retrieval &amp; Reranking — local-ai-lab</title>
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32.png" />
+  <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
+  <!-- Reuse the published course assets (NOT inlined): the same stylesheet and
+       step slider Lessons 1-2 use, so the local preview matches the live pages. -->
+  <link rel="stylesheet" href="./assets/style.css" />
+  <link rel="stylesheet" href="./assets/highlight.css" />
+  <style>.lang-badge{font-size:.7rem;background:#eef;color:#225;padding:.05rem .45rem;border-radius:999px;margin-left:.5rem;vertical-align:middle;}</style>
+  <script>try{document.documentElement.dataset.lang=localStorage.getItem('localrag-lang')||'python'}catch(e){document.documentElement.dataset.lang='python'}</script>
+</head>
+<body>
+  <div class="topbar"><div class="inner">
+    <span class="brand"><a href="./index.html" style="color:inherit">local-ai<span class="dot">·</span>lab</a></span>
+    <nav><a href="./index.html">Home</a><details class="nav-dd"><summary>Lessons</summary><div class="nav-dd-menu"><a href="./lesson-1-rag.html">1 · RAG from scratch</a><a href="./lesson-2-mcp.html">2 · MCP servers</a><a href="./lesson-3-hybrid-retrieval-reranking.html">3 · Hybrid Retrieval &amp; Reranking</a></div></details><a href="./troubleshooting.html">Troubleshooting</a><a href="./about.html">About</a></nav>
+  </div></div>
+
+  <div class="wrap">
+    <div class="lesson-head">
+      <div class="eyebrow">Lesson 3</div>
+      <h1>Hybrid Retrieval &amp; Reranking</h1>
+      <p>BM25 + a semantic stand-in, fused with RRF — offline, polyglot, identical rankings in Python, Node and .NET.</p>
+      <div class="langsel" role="group" aria-label="Language"><span class="langsel-label">Follow along in:</span><button class="langsel-btn" data-setlang="python" aria-label="Python">Python</button><button class="langsel-btn" data-setlang="node" aria-label="Node.js">Node.js</button><button class="langsel-btn" data-setlang="csharp" aria-label="C#">C#</button></div>
+    </div>
+
+    <div class="progress"><span></span></div>
+    <div class="dots"></div>
+
+    <div class="deck">
+<section class='slide'><div class='step-no'>Overview</div><h2>What you'll build</h2><p>Two documents about the same problem rarely use the same words. <strong>Hybrid retrieval</strong> runs two searchers over your documents and merges their results, so you catch both the <em>exact</em> matches and the ones that only match in <em>meaning</em>.</p><p><strong>BM25</strong> is keyword search — unbeatable at exact terms like an error code or a product ID, but blind to synonyms. A <strong>semantic</strong> searcher (embeddings) matches by meaning, so it finds paraphrases BM25 misses. <strong>Reciprocal Rank Fusion (RRF)</strong> combines the two ranked lists into one.</p><p>Everything here — the code <em>and</em> the tiny document set — already ships in the repo, so there's <strong>nothing to copy, paste or create</strong>. You'll read the program one piece at a time — tokenizer, BM25, semantic arm, fusion — in <strong>Python, Node.js or C#</strong>, then run the finished demo with a single command. Pick a language with the selector above; every step follows your choice. Press → to begin.</p><pre><code>                      ┌──────────────────────┐
+                ┌────▶│   BM25  (lexical)     │   exact terms: codes, IDs, names
+                │     └──────────┬───────────┘
+   query ───────┤                │  ranked list A
+                │                 ▼
+                │           ┌──────────┐
+                │           │   RRF    │  fuse by rank ──▶  ranked results
+                │           └──────────┘
+                │                 ▲
+                │                 │  ranked list B
+                │     ┌──────────┴───────────┐
+                └────▶│ semantic  (meaning)  │   paraphrases, synonyms
+                      └──────────────────────┘</code></pre></section>
+<section class='slide'><div class='step-no'>Setup</div><h2>What you need</h2><p>You follow this lesson by <strong>reading and running</strong> — not by writing code. Clone the repo and <code>cd</code> into it; the walkthrough, the demo program and its data all live inside. The demo is <strong>offline and dependency-free</strong> — nothing to install for Python; for the other ports you only need the runtime (<strong>Node.js 18+</strong> or the <strong>.NET 8 SDK</strong>). Every command below runs through the dispatcher from the repo root:</p><div class='block'><div class='label'>run</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">3</span>            <span class="hl-com"># or:  ./run -l 3 --lang node  |  --lang csharp</span></code></pre></div></section>
+<section class='slide'><div class='step-no'>Step 1</div><h2>A tiny corpus of support docs</h2><p>Our "knowledge base" is three small Markdown files that <strong>already ship with the lesson</strong> in <code>data/</code> — about error codes, power problems, and first-time setup. <strong>You don't create these — they're already there;</strong> this step just shows what the demo searches over. A deliberately tiny corpus keeps the rankings easy to eyeball. Here is one of them:</p><div class='block'><div class='label'>data/error_codes.md</div><pre><code class='lang-text'># Error code reference
+
+## E_4096 — overheating shutdown
+
+If you see **error E_4096**, the device detected an over-temperature condition and shut down to protect
+itself. Let it cool for ten minutes, clear any vents, then power it on again. If E_4096 returns, the
+fan may have failed.
+
+## E_2001 — storage full
+
+Error E_2001 means internal storage is full. Delete old recordings to continue.</code></pre></div></section>
+<section class='slide'><div class='step-no'>Step 2</div><h2>Turn text into tokens</h2><p>The next four steps walk through the program that already lives in the repo — <code>python/hybrid_demo.py</code> and its Node/C# twins. *<em>Just read along to see how it works — nothing to copy, and nothing to run until </em>Run the demo<em> below.</em>*</p><p>Both searchers work on <strong>tokens</strong>, not raw text. We lowercase and split on runs of letters, digits and underscores — the <em>same</em> rule in every port, so the three implementations agree exactly.</p><div class='lang lang-python'><div class='block'><div class='label'>python/hybrid_demo.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> tokenize(text):
+    <span class="hl-kw">return</span> re.findall(r<span class="hl-str">"[a-z0-9_]+"</span>, text.lower())</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/hybrid_demo.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> tokenize(text) {
+  <span class="hl-kw">return</span> (text.toLowerCase().match(/[a-z0-<span class="hl-num">9_</span>]+/g) ?? []);
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'><span class="hl-kw">static</span> List&lt;<span class="hl-kw">string</span>&gt; Tokenize(<span class="hl-kw">string</span> text) =&gt;
+    Regex.Matches(text.ToLowerInvariant(), <span class="hl-str">"[a-z0-9_]+"</span>).Select(m =&gt; m.Value).ToList();</code></pre></div></div></section>
+<section class='slide'><div class='step-no'>Step 3</div><h2>BM25 — rank by exact-term overlap</h2><p><strong>BM25</strong> scores a document by how many query terms it contains, weighting <strong>rare</strong> terms far more (a code like <code>E_4096</code> counts for much more than <code>the</code>) and damping very long documents. It is fast, needs no model, and is unbeatable when the user knows the exact string — but it can't match a synonym it has never seen.</p><div class='lang lang-python'><div class='block'><div class='label'>python/hybrid_demo.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> bm25_scores(query_tokens, docs):
+    n = len(docs)
+    <span class="hl-kw">if</span> n == <span class="hl-num">0</span>:                      <span class="hl-com"># empty corpus → no scores (avoid /0 on avgdl)</span>
+        <span class="hl-kw">return</span> []
+    avgdl = sum(len(d[<span class="hl-str">"tokens"</span>]) <span class="hl-kw">for</span> d <span class="hl-kw">in</span> docs) / n
+    df = {}
+    <span class="hl-kw">for</span> d <span class="hl-kw">in</span> docs:
+        <span class="hl-kw">for</span> t <span class="hl-kw">in</span> set(d[<span class="hl-str">"tokens"</span>]):
+            df[t] = df.get(t, <span class="hl-num">0</span>) + <span class="hl-num">1</span>
+    scores = []
+    <span class="hl-kw">for</span> d <span class="hl-kw">in</span> docs:
+        dl = len(d[<span class="hl-str">"tokens"</span>])
+        score = <span class="hl-num">0.0</span>
+        <span class="hl-kw">for</span> t <span class="hl-kw">in</span> query_tokens:
+            <span class="hl-kw">if</span> t <span class="hl-kw">not</span> <span class="hl-kw">in</span> df:
+                <span class="hl-kw">continue</span>
+            idf = math.log(<span class="hl-num">1</span> + (n - df[t] + <span class="hl-num">0.5</span>) / (df[t] + <span class="hl-num">0.5</span>))
+            tf = d[<span class="hl-str">"tokens"</span>].count(t)
+            score += idf * (tf * (K1 + <span class="hl-num">1</span>)) / (tf + K1 * (<span class="hl-num">1</span> - B + B * dl / avgdl))
+        scores.append(score)
+    <span class="hl-kw">return</span> scores</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/hybrid_demo.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> bm25Scores(queryTokens, docs) {
+  <span class="hl-kw">const</span> n = docs.length;
+  <span class="hl-kw">if</span> (n === <span class="hl-num">0</span>) <span class="hl-kw">return</span> []; <span class="hl-com">// empty corpus → no scores (avoid Infinity/NaN on avgdl)</span>
+  <span class="hl-kw">const</span> avgdl = docs.reduce((s, d) =&gt; s + d.tokens.length, <span class="hl-num">0</span>) / n;
+  <span class="hl-kw">const</span> df = <span class="hl-kw">new</span> Map();
+  <span class="hl-kw">for</span> (<span class="hl-kw">const</span> d <span class="hl-kw">of</span> docs) <span class="hl-kw">for</span> (<span class="hl-kw">const</span> t <span class="hl-kw">of</span> <span class="hl-kw">new</span> Set(d.tokens)) df.set(t, (df.get(t) ?? <span class="hl-num">0</span>) + <span class="hl-num">1</span>);
+  <span class="hl-kw">return</span> docs.map((d) =&gt; {
+    <span class="hl-kw">const</span> dl = d.tokens.length;
+    <span class="hl-kw">let</span> score = <span class="hl-num">0</span>;
+    <span class="hl-kw">for</span> (<span class="hl-kw">const</span> t <span class="hl-kw">of</span> queryTokens) {
+      <span class="hl-kw">if</span> (!df.has(t)) continue;
+      <span class="hl-kw">const</span> idf = Math.log(<span class="hl-num">1</span> + (n - df.get(t) + <span class="hl-num">0.5</span>) / (df.get(t) + <span class="hl-num">0.5</span>));
+      <span class="hl-kw">const</span> tf = count(d.tokens, t);
+      score += idf * (tf * (K1 + <span class="hl-num">1</span>)) / (tf + K1 * (<span class="hl-num">1</span> - B + B * dl / avgdl));
+    }
+    <span class="hl-kw">return</span> score;
+  });
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>List&lt;<span class="hl-kw">double</span>&gt; Bm25Scores(List&lt;<span class="hl-kw">string</span>&gt; queryTokens, List&lt;Doc&gt; corpus)
+{
+    <span class="hl-kw">int</span> n = corpus.Count;
+    <span class="hl-kw">if</span> (n == <span class="hl-num">0</span>) <span class="hl-kw">return</span> <span class="hl-kw">new</span> List&lt;<span class="hl-kw">double</span>&gt;(); <span class="hl-com">// empty corpus → no scores (Average throws on empty)</span>
+    <span class="hl-kw">double</span> avgdl = corpus.Average(d =&gt; d.Tokens.Count);
+    <span class="hl-kw">var</span> df = <span class="hl-kw">new</span> Dictionary&lt;<span class="hl-kw">string</span>, <span class="hl-kw">int</span>&gt;();
+    <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> d <span class="hl-kw">in</span> corpus)
+        <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> t <span class="hl-kw">in</span> d.Tokens.Distinct())
+            df[t] = df.GetValueOrDefault(t) + <span class="hl-num">1</span>;
+
+    <span class="hl-kw">return</span> corpus.Select(d =&gt;
+    {
+        <span class="hl-kw">int</span> dl = d.Tokens.Count;
+        <span class="hl-kw">double</span> score = <span class="hl-num">0</span>;
+        <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> t <span class="hl-kw">in</span> queryTokens)
+        {
+            <span class="hl-kw">if</span> (!df.TryGetValue(t, <span class="hl-kw">out</span> <span class="hl-kw">int</span> dft)) continue;
+            <span class="hl-kw">double</span> idf = Math.Log(<span class="hl-num">1</span> + (n - dft + <span class="hl-num">0.5</span>) / (dft + <span class="hl-num">0.5</span>));
+            <span class="hl-kw">int</span> tf = d.Tokens.Count(x =&gt; x == t);
+            score += idf * (tf * (K1 + <span class="hl-num">1</span>)) / (tf + K1 * (<span class="hl-num">1</span> - B + B * dl / avgdl));
+        }
+        <span class="hl-kw">return</span> score;
+    }).ToList();
+}</code></pre></div></div><div class='why'>Reach for BM25 when the query is a literal: an error code, a SKU, a function name, a person's name.</div></section>
+<section class='slide'><div class='step-no'>Step 4</div><h2>A semantic arm — meaning, not keywords</h2><p>A real system embeds text into vectors and matches by <strong>meaning</strong>, so paraphrases land near each other even with no shared words. To stay offline we stand in a small <strong>synonym map</strong> (<code>broken → fail, dead</code>) and score by overlap — enough to behave like embeddings for the demo, recovering documents BM25 would miss.</p><div class='lang lang-python'><div class='block'><div class='label'>python/hybrid_demo.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> semantic_scores(query_tokens, docs):
+    q = set(query_tokens)
+    <span class="hl-kw">for</span> t <span class="hl-kw">in</span> list(q):
+        q.update(SYNONYMS.get(t, []))
+    scores = []
+    <span class="hl-kw">for</span> d <span class="hl-kw">in</span> docs:
+        toks = set(d[<span class="hl-str">"tokens"</span>])
+        scores.append(len(q &amp; toks) / (len(q) <span class="hl-kw">or</span> <span class="hl-num">1</span>))
+    <span class="hl-kw">return</span> scores</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/hybrid_demo.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> semanticScores(queryTokens, docs) {
+  <span class="hl-kw">const</span> q = <span class="hl-kw">new</span> Set(queryTokens);
+  <span class="hl-kw">for</span> (<span class="hl-kw">const</span> t <span class="hl-kw">of</span> [...q]) <span class="hl-kw">for</span> (<span class="hl-kw">const</span> s <span class="hl-kw">of</span> SYNONYMS[t] ?? []) q.add(s);
+  <span class="hl-kw">return</span> docs.map((d) =&gt; {
+    <span class="hl-kw">const</span> toks = <span class="hl-kw">new</span> Set(d.tokens);
+    <span class="hl-kw">let</span> overlap = <span class="hl-num">0</span>;
+    <span class="hl-kw">for</span> (<span class="hl-kw">const</span> t <span class="hl-kw">of</span> q) <span class="hl-kw">if</span> (toks.has(t)) overlap++;
+    <span class="hl-kw">return</span> overlap / (q.size || <span class="hl-num">1</span>);
+  });
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>List&lt;<span class="hl-kw">double</span>&gt; SemanticScores(List&lt;<span class="hl-kw">string</span>&gt; queryTokens, List&lt;Doc&gt; corpus)
+{
+    <span class="hl-kw">var</span> q = <span class="hl-kw">new</span> HashSet&lt;<span class="hl-kw">string</span>&gt;(queryTokens);
+    <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> t <span class="hl-kw">in</span> q.ToList())
+        <span class="hl-kw">if</span> (synonyms.TryGetValue(t, <span class="hl-kw">out</span> <span class="hl-kw">var</span> syns))
+            <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> s <span class="hl-kw">in</span> syns) q.Add(s);
+
+    <span class="hl-kw">return</span> corpus.Select(d =&gt;
+    {
+        <span class="hl-kw">var</span> toks = <span class="hl-kw">new</span> HashSet&lt;<span class="hl-kw">string</span>&gt;(d.Tokens);
+        <span class="hl-kw">int</span> overlap = q.Count(toks.Contains);
+        <span class="hl-kw">return</span> (<span class="hl-kw">double</span>)overlap / Math.Max(q.Count, <span class="hl-num">1</span>);
+    }).ToList();
+}</code></pre></div></div><div class='why'>Swap the synonym stand-in for a real embedding model in production — the fusion code below does not change.</div></section>
+<section class='slide'><div class='step-no'>Step 5</div><h2>Fuse the two with Reciprocal Rank Fusion</h2><p>Each arm produces a ranked list. <strong>RRF</strong> adds up <code>1 / (k + rank)</code> across the lists, so a document near the top of <em>either</em> list rises — it fuses by <strong>rank</strong>, not raw score, giving the two arms an equal vote. We also drop zero-score documents, so an arm that finds nothing contributes nothing.</p><div class='lang lang-python'><div class='block'><div class='label'>python/hybrid_demo.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> rank(docs, scores):
+    <span class="hl-str">"""Best-first doc names, dropping zero-score (unmatched) docs so an arm that
+    finds nothing contributes nothing to RRF. Deterministic: score desc, name asc."""</span>
+    order = sorted(range(len(docs)), key=<span class="hl-kw">lambda</span> i: (-scores[i], docs[i][<span class="hl-str">"name"</span>]))
+    <span class="hl-kw">return</span> [docs[i][<span class="hl-str">"name"</span>] <span class="hl-kw">for</span> i <span class="hl-kw">in</span> order <span class="hl-kw">if</span> scores[i] &gt; <span class="hl-num">0</span>]
+
+
+<span class="hl-kw">def</span> rrf(rankings):
+    fused = {}
+    <span class="hl-kw">for</span> ranking <span class="hl-kw">in</span> rankings:
+        <span class="hl-kw">for</span> pos, name <span class="hl-kw">in</span> enumerate(ranking):
+            fused[name] = fused.get(name, <span class="hl-num">0.0</span>) + <span class="hl-num">1.0</span> / (RRF_K + pos + <span class="hl-num">1</span>)
+    <span class="hl-kw">return</span> [name <span class="hl-kw">for</span> name, _ <span class="hl-kw">in</span> sorted(fused.items(), key=<span class="hl-kw">lambda</span> kv: (-kv[<span class="hl-num">1</span>], kv[<span class="hl-num">0</span>]))]</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/hybrid_demo.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> rank(docs, scores) {
+  <span class="hl-kw">return</span> docs
+    .map((d, i) =&gt; ({ name: d.name, score: scores[i] }))
+    .filter((x) =&gt; x.score &gt; <span class="hl-num">0</span>)
+    .sort((a, b) =&gt; b.score - a.score || cmpOrdinal(a.name, b.name))
+    .map((x) =&gt; x.name);
+}
+
+<span class="hl-kw">function</span> rrf(rankings) {
+  <span class="hl-kw">const</span> fused = <span class="hl-kw">new</span> Map();
+  <span class="hl-kw">for</span> (<span class="hl-kw">const</span> ranking <span class="hl-kw">of</span> rankings) {
+    ranking.forEach((name, pos) =&gt; fused.set(name, (fused.get(name) ?? <span class="hl-num">0</span>) + <span class="hl-num">1</span> / (RRF_K + pos + <span class="hl-num">1</span>)));
+  }
+  <span class="hl-kw">return</span> [...fused.entries()]
+    .sort((a, b) =&gt; b[<span class="hl-num">1</span>] - a[<span class="hl-num">1</span>] || cmpOrdinal(a[<span class="hl-num">0</span>], b[<span class="hl-num">0</span>]))
+    .map(([name]) =&gt; name);
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'><span class="hl-kw">static</span> List&lt;<span class="hl-kw">string</span>&gt; Rank(List&lt;Doc&gt; corpus, List&lt;<span class="hl-kw">double</span>&gt; scores) =&gt;
+    corpus.Select((d, i) =&gt; (d.Name, Score: scores[i]))
+        .Where(x =&gt; x.Score &gt; <span class="hl-num">0</span>)
+        .OrderByDescending(x =&gt; x.Score)
+        .ThenBy(x =&gt; x.Name, StringComparer.Ordinal)
+        .Select(x =&gt; x.Name)
+        .ToList();
+
+<span class="hl-kw">static</span> List&lt;<span class="hl-kw">string</span>&gt; Rrf(IEnumerable&lt;List&lt;<span class="hl-kw">string</span>&gt;&gt; rankings)
+{
+    <span class="hl-kw">var</span> fused = <span class="hl-kw">new</span> Dictionary&lt;<span class="hl-kw">string</span>, <span class="hl-kw">double</span>&gt;();
+    <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> ranking <span class="hl-kw">in</span> rankings)
+        <span class="hl-kw">for</span> (<span class="hl-kw">int</span> pos = <span class="hl-num">0</span>; pos &lt; ranking.Count; pos++)
+            fused[ranking[pos]] = fused.GetValueOrDefault(ranking[pos]) + <span class="hl-num">1.0</span> / (RrfK + pos + <span class="hl-num">1</span>);
+
+    <span class="hl-kw">return</span> fused.OrderByDescending(kv =&gt; kv.Value)
+        .ThenBy(kv =&gt; kv.Key, StringComparer.Ordinal)
+        .Select(kv =&gt; kv.Key)
+        .ToList();
+}</code></pre></div></div><div class='why'>RRF is the cheapest, most robust way to combine retrievers — a few lines, no score calibration.</div></section>
+<section class='slide'><div class='step-no'>Run it</div><h2>Run the demo</h2><p>Now run it — this executes the exact file you just read through, over the corpus from Step 1. No flags, no editing. It prints the BM25, semantic and fused (RRF) rankings for two contrasting queries, then exits — identical output in all three languages.</p><div class='lang lang-python'><div class='block'><div class='label'>demo · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">3</span></code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>demo · node</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">3</span> --lang node</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>demo · csharp</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">3</span> --lang csharp</code></pre></div></div></section>
+<section class='slide'><div class='step-no'>Run it</div><h2>Read the output</h2><p>Look at the two queries. <strong><code>error E_4096</code></strong> is an exact code: BM25 nails <code>error_codes.md</code>, and the semantic arm finds it too. <strong><code>broken gadget</code></strong> is a paraphrase whose words appear in <strong>no</strong> document: BM25 returns <strong>nothing</strong>, yet the semantic arm maps <em>broken → fail/dead</em> and recovers <code>power_issues.md</code> — and the hybrid keeps that hit. That single example is the whole reason to fuse.</p><pre><code>
+Query: "error E_4096"
+  BM25 (lexical):   ['error_codes.md']
+  Semantic (stand): ['error_codes.md']
+  Hybrid (RRF):     ['error_codes.md']
+
+Query: "broken gadget"
+  BM25 (lexical):   []
+  Semantic (stand): ['power_issues.md']
+  Hybrid (RRF):     ['power_issues.md']</code></pre></section>
+<section class='slide'><div class='step-no'>Try it</div><h2>Try the exact-term query</h2><p>Want to experiment? This is the one place you change something: edit the query list near the bottom of <code>python/hybrid_demo.py</code> (or add a file to the corpus in <code>data/</code>), then re-run <code>./run -l 3</code>. Start with the exact code — BM25 pins the matching document:</p><div class='block'><pre><code>error E_4096</code></pre></div></section>
+<section class='slide'><div class='step-no'>Try it</div><h2>Try the keyword-free paraphrase</h2><p>Now one whose words appear in no document — BM25 returns nothing, the semantic arm recovers it, and the hybrid agrees:</p><div class='block'><pre><code>broken gadget</code></pre></div></section>
+<section class='slide'><div class='step-no'>Try it</div><h2>Confirm it with the test</h2><p>An offline test pins the lesson's claims: BM25 nails the exact term, BM25 finds nothing for the paraphrase, and the hybrid recovers it. No network, no model.</p><div class='block'><div class='label'>test · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">3</span> test</code></pre></div></section>
+<section class='slide'><div class='step-no'>Optional</div><h2>Search a story in your browser</h2><p>For a richer, hands-on feel, launch an interactive search over a bundled 5-chapter story (<em>The Voyage of Caretta the Magnificent</em>). Type a query and watch all three rankings update live. The web app reuses the same <code>hybrid()</code> you just built — no retrieval logic is duplicated.</p><div class='block'><div class='label'>web · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">3</span> web</code></pre></div></section>
+<section class='slide'><div class='step-no'>Optional</div><h2>Story query — an exact name</h2><p>An exact name BM25 loves:</p><div class='block'><pre><code>Nuevo Edén</code></pre></div></section>
+<section class='slide'><div class='step-no'>Optional</div><h2>Story query — a paraphrase</h2><p>…and a paraphrase the semantic arm recovers:</p><div class='block'><pre><code>who found the new planet</code></pre></div></section>
+<section class='slide'><div class='step-no'>Going further</div><h2>From demo to production</h2><p>This is a teaching demo. For real systems:</p><p>Replace the synonym stand-in with a real <strong>embedding model</strong> for the semantic arm. Add a <strong>cross-encoder reranker</strong> over the fused top-k — usually the single biggest quality win. <strong>Rewrite</strong> vague queries before retrieval, and <strong>filter by metadata</strong> (product, version, date). And <strong>measure</strong> it: a golden-question set tells you whether hybrid actually beats either arm on <em>your</em> data.</p></section>
+<section class='slide'><div class='step-no'>Recap</div><h2>What you learned</h2><p><strong>BM25</strong> wins exact terms; a <strong>semantic</strong> arm wins paraphrases; <strong>RRF</strong> fuses them so you keep whichever arm found the answer. You built all three by hand — the same algorithm in <strong>Python, Node.js and C#</strong>, with byte-identical results — and saw a query where keyword search returns nothing yet the hybrid still answers.</p><p>Next: <strong>Lesson 4 · RAG safety &amp; prompt injection</strong>.</p></section>
+    </div><!-- /deck -->
+
+    <div class="controls">
+      <button class="nav-btn" data-prev>&larr; Prev</button>
+      <div class="langsel compact" role="group" aria-label="Language"><button class="langsel-btn" data-setlang="python" aria-label="Python">Py</button><button class="langsel-btn" data-setlang="node" aria-label="Node.js">Node</button><button class="langsel-btn" data-setlang="csharp" aria-label="C#">C#</button></div>
+      <span class="spacer"></span>
+      <span class="counter"></span>
+      <button class="nav-btn" data-next>Next &rarr;</button>
+    </div>
+    <div class="kbd-hint">Use <kbd>&larr;</kbd> <kbd>&rarr;</kbd> arrow keys, the dots, or the buttons. Deep-link a step with <code>#step-N</code>.</div>
+  </div>
+
+  <footer class="site"><div class="inner">
+    &copy; 2023&ndash;2025 Nik Reljin &middot; <a href="./about.html">About</a>
+  </div></footer>
+
+  <!-- The same slider that powers the published lessons: steps, dots, progress,
+       #step-N deep links, copy buttons. Read from the file, not inlined. -->
+  <script src="./assets/slider.js"></script>
+</body>
+</html>

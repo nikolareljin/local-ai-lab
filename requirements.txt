@@ -6,3 +6,4 @@ requests>=2.31
 python-dotenv>=1.0
 flask>=3.0
 mcp>=1.2
+pytest>=7.0          # test runner for `./run -l N test` / `pytest -q`

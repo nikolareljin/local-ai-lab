@@ -19,20 +19,26 @@ local-ai-lab — run a lesson locally
 
 Usage:
   ./run -l <N> [--lang python|node|csharp] [action] [args]
+  ./run -l <N> show                           # walk through the lesson in the terminal (code, configs, prompts, commands)
+  ./run -l <N> preview                        # serve the rendered instructions locally (browser, no GitHub Pages)
+  ./run list                                  # list all lessons
 
 Lessons:
   -l 1   RAG app       actions:  web (default) · ask "question" · repl · index · test
   -l 2   MCP server    actions:  demo (default) · serve · register · test
-  -l 3..8              written guides only (not runnable yet) — see LESSON<N>.md
+  -l 3+  config-driven: actions are defined per lesson in lessons/NN-*/lesson.json (run + show)
 
 Examples:
   ./run -l 1                                  # launch the RAG web UI (auto-picks a free port)
   ./run -l 1 ask "How do I reset the device?" # one-shot question in the terminal
   ./run -l 1 test                             # run Lesson 1 tests
   ./run -l 2                                  # demo the MCP server end-to-end (no LLM needed)
-  ./run -l 2 register                         # register the MCP server with Claude Code
+  ./run -l 3                                  # run Lesson 3's default demo (Python)
+  ./run -l 3 --lang csharp                    # the C#/.NET port of Lesson 3
+  ./run -l 3 show                             # walk through Lesson 3's steps (terminal)
+  ./run -l 3 preview                          # preview the instructions in a browser, locally
+  ./run -l 3 show --html > /tmp/l3.html        # standalone HTML of the instructions
   ./run -l 1 --lang node                      # Node.js implementation (where ported)
-  ./run -l 2 --lang csharp                    # C# MCP server, demoed end-to-end (no LLM needed)
 
 Languages (polyglot — Option B): python (default/reference) · node · csharp.
 Lessons 1 and 2 are ported to all three; where a lesson isn't ported yet,
@@ -42,7 +48,7 @@ The default AI provider is the Claude Code CLI — no API key, it uses your exis
 Claude Code login. Override anytime with  RAG_PROVIDER=ollama|gemini|openai.
 
 Options:
-  -l, --lesson N        which lesson (1-8)
+  -l, --lesson N        which lesson (1, 2, or any lessons/NN-* lesson)
   --lang LANG           python | node | csharp  (default: python)
   -h, --help            show this help
 EOF
@@ -63,16 +69,29 @@ announce_provider() {
   fi
 }
 
+# List every lesson: Lessons 1-2 (bespoke) + the config-driven registry (3+).
+list_lessons() {
+  echo "Lessons:"
+  echo "  L1   RAG from scratch                    [working]  (python, node, csharp)"
+  echo "  L2   MCP servers                         [working]  (python, node, csharp)"
+  # Best-effort: a registry/list failure must not abort ./run (Lessons 1-2 above
+  # are always known), but say so explicitly instead of silently dropping 3+.
+  if ! "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" list 2>/dev/null | sed 's/^/  /'; then
+    echo "  (could not load lessons 3+ — re-run with a working Python 3 to see them)"
+  fi
+}
+
 # --- parse a leading -l/--lesson flag, leave the rest as the action + args ---
 LESSON=""
+LANG_EXPLICIT=0
 # need_value <remaining-arg-count> <option> <example>
 need_value() { [[ "$1" -ge 2 ]] || { log_error "Option '$2' needs a value (e.g. $3)."; exit 1; }; }
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -l|--lesson)  need_value "$#" "$1" "-l 1"; LESSON="$2"; shift 2 ;;
     -l*)          LESSON="${1#-l}"; shift ;;
-    --lang)       need_value "$#" "$1" "--lang python"; LANG_CHOICE="$2"; shift 2 ;;
-    --lang=*)     LANG_CHOICE="${1#*=}"; shift ;;
+    --lang)       need_value "$#" "$1" "--lang python"; LANG_CHOICE="$2"; LANG_EXPLICIT=1; shift 2 ;;
+    --lang=*)     LANG_CHOICE="${1#*=}"; LANG_EXPLICIT=1; shift ;;
     -h|--help)    usage; exit 0 ;;
     --)           shift; break ;;
     *)            break ;;
@@ -80,16 +99,20 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$LESSON" ]]; then
-  log_error "Which lesson? Try:  ./run -l 1"
+  if [[ $# -eq 0 || "${1:-}" == "list" ]]; then
+    list_lessons
+    exit 0
+  fi
+  log_error "Which lesson? Try:  ./run -l 1   (or:  ./run list)"
   echo
   usage
   exit 1
 fi
 
-# Validate the lesson number up front, before any language dispatch, so an invalid
-# lesson is always reported as such (regardless of --lang).
-if ! [[ "$LESSON" =~ ^[1-8]$ ]]; then
-  log_error "Unknown lesson '${LESSON}'. Choose 1-8."
+# Validate the lesson number up front. Unknown-but-numeric lessons are reported
+# later by the registry dispatch (which knows what actually exists).
+if ! [[ "$LESSON" =~ ^[0-9]+$ ]]; then
+  log_error "Lesson must be a number, e.g.  ./run -l 1"
   exit 1
 fi
 
@@ -102,7 +125,9 @@ case "${LANG_CHOICE-python}" in
   cs|csharp|dotnet) LANG_CHOICE=csharp ;;
   *) log_error "Unknown --lang '${LANG_CHOICE}'. Use: python | node | csharp"; exit 1 ;;
 esac
-if [[ "$LANG_CHOICE" != "python" ]]; then
+# Lessons 1-2 are ported under node/lesson-N and dotnet/lesson-N (legacy layout).
+# Lessons 3+ carry their own language dispatch in lesson.json, so they skip this.
+if [[ "$LANG_CHOICE" != "python" && ( "$LESSON" == "1" || "$LESSON" == "2" ) ]]; then
   impl_dir="$ROOT_DIR/${LANG_CHOICE/csharp/dotnet}/lesson-${LESSON}"
   # Invoke via bash (not requiring the exec bit) so it works on Windows/Git Bash too.
   if [[ -f "$impl_dir/run.sh" ]]; then
@@ -110,7 +135,7 @@ if [[ "$LANG_CHOICE" != "python" ]]; then
     exec bash "$impl_dir/run.sh" "$@"
   fi
   # Not ported yet: exit non-zero so callers/CI don't mistake this for a successful run.
-  log_warn "The ${LANG_CHOICE} implementation of Lesson ${LESSON} is not available yet (polyglot Option B)."
+  log_warn "The ${LANG_CHOICE} implementation of Lesson ${LESSON} is not available yet."
   log_info  "Run the Python reference instead:  ./run -l ${LESSON}    (see INSTALL.md)"
   exit 3
 fi
@@ -174,16 +199,37 @@ run_lesson_2() {
   esac
 }
 
+# Lessons 3+: config-driven. Find lessons/NN-*/lesson.json and delegate to the
+# lesson engine (run an action, or `show` to walk through the elements). Falls
+# back to a legacy LESSON<N>.md written guide when no config-driven lesson exists.
+run_registry_lesson() {
+  local n2 dir="" g langargs=()
+  n2="$(printf '%02d' "$LESSON" 2>/dev/null || echo "$LESSON")"
+  for g in "$ROOT_DIR"/lessons/"${n2}"-*/lesson.json "$ROOT_DIR"/lessons/"${LESSON}"-*/lesson.json; do
+    [[ -f "$g" ]] && { dir="$(dirname "$g")"; break; }
+  done
+  [[ $LANG_EXPLICIT -eq 1 ]] && langargs=(--lang "$LANG_CHOICE")
+
+  if [[ -n "$dir" ]]; then
+    case "${ACTION:-}" in
+      show)    exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" show    "$LESSON" ${langargs[@]+"${langargs[@]}"} "$@" ;;
+      preview) exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" preview "$LESSON" ${langargs[@]+"${langargs[@]}"} ;;
+      build)   exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" build   "$LESSON" ${langargs[@]+"${langargs[@]}"} ;;
+      *)       exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" run     "$LESSON" ${ACTION:+"$ACTION"} ${langargs[@]+"${langargs[@]}"} "$@" ;;
+    esac
+  fi
+
+  if [[ -f "$ROOT_DIR/LESSON${LESSON}.md" ]]; then
+    log_info "Lesson ${LESSON} is a written guide (no runnable code yet)."
+    log_info "Read it:  LESSON${LESSON}.md   ·   live:  https://nikolareljin.github.io/local-ai-lab/"
+    return 0
+  fi
+  log_error "Unknown lesson '${LESSON}'. Try:  ./run list"
+  exit 1
+}
+
 case "$LESSON" in
   1) run_lesson_1 "$@" ;;
   2) run_lesson_2 "$@" ;;
-  3|4|5|6|7|8)
-    log_info "Lesson ${LESSON} is a written guide (no runnable code yet)."
-    log_info "Read it:  LESSON${LESSON}.md   ·   live:  https://nikolareljin.github.io/local-ai-lab/"
-    ;;
-  *)
-    log_error "Unknown lesson '${LESSON}'. Choose 1-8."
-    usage
-    exit 1
-    ;;
+  *) run_registry_lesson "$@" ;;
 esac

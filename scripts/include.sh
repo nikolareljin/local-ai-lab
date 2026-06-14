@@ -51,7 +51,7 @@ ensure_venv() {
   fi
   PYTHON_BIN="$(venv_python)"
   [[ -n "$PYTHON_BIN" ]] || { log_error "Could not locate the venv Python (looked in bin/ and Scripts/)."; exit 1; }
-  if ! "$PYTHON_BIN" -c "import flask, rank_bm25, pypdf, docx, numpy, mcp" >/dev/null 2>&1; then
+  if ! "$PYTHON_BIN" -c "import flask, rank_bm25, pypdf, docx, numpy, mcp, pytest" >/dev/null 2>&1; then
     log_info "Installing dependencies (one-time) ..."
     "$PYTHON_BIN" -m pip install -q --upgrade pip >/dev/null 2>&1 || true
     "$PYTHON_BIN" -m pip install -q -r "$ROOT_DIR/requirements.txt"
