@@ -58,17 +58,18 @@ opposite directions:
 From the repo root — pick any language, all three give the **same** rankings:
 
 ```bash
-./run -l 3                 # Python — prints the ranking comparison and exits (default)
-./run -l 3 --lang node     # Node.js — same output
-./run -l 3 --lang csharp   # C# / .NET 8 — same output
-./run -l 3 test            # the offline Python test
-./run -l 3 show            # walk through this lesson's steps (code, data, prompts, commands)
-./run -l 3 web             # optional: an interactive web UI (Python) — type a query, see all three rankings
+./run -l 3                      # interactive experiment GUI (default) — tune k1/b/RRF-k & synonyms live
+./run -l 3 demo                 # Python — print the BM25 / semantic / hybrid comparison and exit
+./run -l 3 --lang node demo     # Node.js — same output
+./run -l 3 --lang csharp demo   # C# / .NET 8 — same output
+./run -l 3 test                 # the offline Python test
+./run -l 3 show                 # walk through this lesson's steps (code, data, prompts, commands)
 ```
 
-> Lesson 3 is a focused **comparison**: by default it prints the BM25 / semantic / hybrid rankings
-> for two queries and exits — no server needed. The optional `web` action adds a live query box if you
-> want to poke at it interactively.
+> By default `./run -l 3` opens the **experiment GUI** — type a query and watch the BM25, semantic and
+> hybrid rankings (and the numbers behind them) recompute as you tune the knobs, no code editing.
+> `./run -l 3 demo` is the dependency-free **comparison**: it prints the rankings for two queries and
+> exits — no server needed, and byte-identical across Python, Node.js and C#.
 
 ### Test it with the Fictive Story
 
@@ -216,9 +217,9 @@ RRF) are the same; only the syntax changes.
 
 | Port | Entry point | Run |
 |------|-------------|-----|
-| [Python](./python) | `python/hybrid_demo.py` | `./run -l 3` · `./run -l 3 test` |
-| [Node.js](./node) | `node/hybrid_demo.mjs` | `./run -l 3 --lang node` |
-| [.NET 8](./dotnet) | `dotnet/Program.cs` | `./run -l 3 --lang csharp` |
+| [Python](./python) | `python/hybrid_demo.py` | `./run -l 3 demo` · `./run -l 3 test` |
+| [Node.js](./node) | `node/hybrid_demo.mjs` | `./run -l 3 --lang node demo` |
+| [.NET 8](./dotnet) | `dotnet/Program.cs` | `./run -l 3 --lang csharp demo` |
 
 > All three commands are declared once in [`lesson.json`](./lesson.json) — the single source of truth
 > the `./run` engine reads. `./run -l 3 show` renders this lesson's elements (notes, code, sample data,
