@@ -591,11 +591,14 @@ def cmd_build(args):
     media_base = ""
     media_dir = ldir / "media"
     if media_dir.exists():
+        # Mirror the lesson's media/ subtree under docs/ so refs authored relative
+        # to the lesson dir resolve from the built page:
+        #   media_base + "media/foo.png" -> ./lesson-media/<dir>/media/foo.png
         dest = ROOT / "docs" / "lesson-media" / ldir.name
         shutil.rmtree(dest, ignore_errors=True)
-        shutil.copytree(media_dir, dest)
+        shutil.copytree(media_dir, dest / "media")
         media_base = f"./lesson-media/{ldir.name}/"
-        warn("Copied media into docs/lesson-media/ — element media paths should be relative to the lesson dir.")
+        warn(f"Copied media into docs/lesson-media/{ldir.name}/media/ (refs are relative to the lesson dir).")
 
     out.write_text(render_html(args.number, ldir, lesson, args.lang,
                                assets_href="./assets", media_base=media_base), encoding="utf-8")

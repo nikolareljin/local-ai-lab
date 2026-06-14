@@ -94,6 +94,9 @@ described by a single `lesson.json` and run, preview, and publish through one en
   run can't collide and corrupt the swap.
 - `lessons/README.md` now correctly states that renumbering changes a lesson's published filename
   (`lesson-<number>-<slug>.html`) and requires rebuilding the affected pages — the dir rename isn't enough.
+- `build` mirrors a lesson's `media/` subtree to `docs/lesson-media/<dir>/media/` (preserving the `media/`
+  prefix), so media referenced as `media/foo.png` resolves on the published page; previously the prefix
+  was dropped and published media 404'd even though `preview` worked.
 
 ## [0.4.0]
 
