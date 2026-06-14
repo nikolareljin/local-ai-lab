@@ -337,7 +337,7 @@ def _artifact(ldir, el, asset_base):
     if t in ("code", "config"):
         lang = lang_for(el)
         return (f"<div class='block'><div class='label'>{_esc(el.get('file', '(inline)'))}</div>"
-                f"<pre><code class='lang-{lang or 'text'}'>{highlight(read_ref(ldir, el), lang)}</code></pre></div>")
+                f"<pre><code class='lang-{_lang_token(lang or 'text')}'>{highlight(read_ref(ldir, el), lang)}</code></pre></div>")
     if t == "text":
         return f"<div class='block'><pre><code>{_esc(read_ref(ldir, el))}</code></pre></div>"
     if t in ("image", "media", "video"):
@@ -378,13 +378,21 @@ def _group_slide(ldir, els, asset_base):
     for el in els:
         block = _artifact(ldir, el, asset_base) + _remarks_html(el)
         lang = el.get("lang")
-        variants.append(f"<div class='lang lang-{lang}'>{block}</div>" if lang else block)
+        variants.append(f"<div class='lang lang-{_lang_token(lang)}'>{block}</div>" if lang else block)
     return (f"<section class='slide'><div class='step-no'>{_esc(_kicker(first))}</div>"
             f"{heading}{_paras(_body_of(first))}{''.join(variants)}{_why(first)}</section>")
 
 
 LANG_LABELS = {"python": "Python", "node": "Node.js", "csharp": "C#"}
 LANG_SHORT = {"python": "Py", "node": "Node", "csharp": "C#"}
+# The languages the renderer/slider support; also the allowed `--lang` CLI values.
+SUPPORTED_LANGS = ("python", "node", "csharp")
+
+
+def _lang_token(lang):
+    """Escape a value before it lands inside a `lang-*` CSS class, so a stray or
+    malicious lesson.json `lang` can't break the attribute or inject markup."""
+    return html.escape(str(lang), quote=True)
 
 
 def _langsel_html(langs, compact=False):
@@ -578,23 +586,23 @@ def main(argv=None):
     sp = sub.add_parser("run", help="run a lesson action")
     sp.add_argument("number", type=int)
     sp.add_argument("action", nargs="?", default=None)
-    sp.add_argument("--lang", default=None)
+    sp.add_argument("--lang", default=None, choices=SUPPORTED_LANGS)
     sp.set_defaults(fn=cmd_run)
 
     sp = sub.add_parser("show", help="walk through a lesson's elements")
     sp.add_argument("number", type=int)
-    sp.add_argument("--lang", default=None)
+    sp.add_argument("--lang", default=None, choices=SUPPORTED_LANGS)
     sp.add_argument("--html", action="store_true", help="emit a standalone HTML page instead of terminal text")
     sp.set_defaults(fn=cmd_show)
 
     sp = sub.add_parser("preview", help="serve the rendered lesson instructions locally")
     sp.add_argument("number", type=int)
-    sp.add_argument("--lang", default=None)
+    sp.add_argument("--lang", default=None, choices=SUPPORTED_LANGS)
     sp.set_defaults(fn=cmd_preview)
 
     sp = sub.add_parser("build", help="generate the publishable docs/ page (GitHub Pages)")
     sp.add_argument("number", type=int)
-    sp.add_argument("--lang", default=None)
+    sp.add_argument("--lang", default=None, choices=SUPPORTED_LANGS)
     sp.set_defaults(fn=cmd_build)
 
     # parse_known_args so any trailing passthrough args (after the known ones)

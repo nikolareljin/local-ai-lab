@@ -6,6 +6,7 @@ set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 out="$root/lessons/CURRICULUM.md"
 py="${PYTHON_BIN:-$(command -v python3 || command -v python)}"
+[[ -n "$py" ]] || { echo "Python 3 is required (set PYTHON_BIN or install python3)." >&2; exit 1; }
 
 {
   echo "# Curriculum (generated)"

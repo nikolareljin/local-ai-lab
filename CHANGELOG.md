@@ -40,6 +40,13 @@ described by a single `lesson.json` and run, preview, and publish through one en
 - Lesson 3's Python test is self-contained (adds its own directory to `sys.path`), so pytest finds
   `hybrid_demo` regardless of the working directory.
 - `tools/new-lesson.sh` resolves the interpreter as `python3 || python`, matching the rest of the repo.
+- The `lang` value is escaped before it is interpolated into a `lang-*` CSS class, so a stray or
+  malicious `lesson.json` `lang` can't break the attribute or inject markup.
+- `--lang` is constrained to `python|node|csharp` at parse time across `run`/`show`/`preview`/`build`,
+  so an unknown value fails fast instead of rendering empty/hidden content.
+- `tools/sync-curriculum.sh` fails with a clear message when no Python interpreter is found.
+- The homepage curriculum card for Lesson 3 now matches the dropdown — **Hybrid retrieval & reranking
+  (Available)** instead of the stale "LangChain (Planned)".
 
 ## [0.4.0]
 
