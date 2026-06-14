@@ -40,6 +40,14 @@ def test_read_ref_invalid_lines_spec_is_a_placeholder_not_a_crash():
         assert out.startswith("[invalid lines spec"), (bad, out[:60])
 
 
+def test_media_path_is_confined_to_the_lesson():
+    blocked = lesson._artifact(L3, {"type": "image", "file": "../../secret.png"}, "file:///x/")
+    assert "blocked media path" in blocked
+    # in-lesson and remote refs are still allowed
+    assert "blocked" not in lesson._artifact(L3, {"type": "image", "file": "data/error_codes.md"}, "file:///x/")
+    assert "blocked" not in lesson._artifact(L3, {"type": "image", "url": "https://x/y.png"}, "file:///x/")
+
+
 def test_lang_token_is_a_safe_css_class():
     assert lesson._lang_token("python") == "python"
     assert lesson._lang_token("node js") == "node-js"

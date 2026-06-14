@@ -45,7 +45,11 @@ def registry():
             continue
         m = re.match(r"^(\d+)-", entry.name)
         if m:
-            found[int(m.group(1))] = entry
+            num = int(m.group(1))
+            if num in found:
+                sys.exit(f"[ERROR] Two lessons share number {num}: "
+                         f"{found[num].name} and {entry.name}. Renumber one.")
+            found[num] = entry
     return found
 
 
@@ -107,7 +111,7 @@ def cmd_run(args):
     ldir, lesson = load(args.number)
     if lesson.get("status") != "working":
         warn(f"Lesson {args.number} status is '{lesson.get('status')}' — not runnable yet.")
-        return 0
+        return 1  # non-zero so scripts/CI don't read a skipped lesson as success
     action = args.action or lesson.get("defaultAction", "demo")
     lang = args.lang or lesson.get("defaultLanguage", "python")
 
@@ -359,6 +363,15 @@ def _artifact(ldir, el, asset_base):
     if t in ("image", "media", "video"):
         kind = el.get("kind", t)
         ref = el.get("file") or el.get("url", "")
+        if ref and not ref.startswith("http"):
+            # Confine local media to the lesson dir (same rule as read_ref), so a
+            # stray file:"../.." can't embed files outside it — e.g. the file://
+            # URLs that `show --html` builds.
+            ldirr = Path(ldir).resolve()
+            try:
+                (ldirr / ref).resolve().relative_to(ldirr)
+            except ValueError:
+                return f"<div class='block'>[blocked media path outside lesson: {_esc(ref)}]</div>"
         src = ref if (ref.startswith("http") or not asset_base) else asset_base + ref
         srca = html.escape(src, quote=True)          # quote attributes to avoid injection
         alt = el.get("alt") or el.get("note") or ""

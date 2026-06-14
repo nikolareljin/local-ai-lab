@@ -82,6 +82,12 @@ described by a single `lesson.json` and run, preview, and publish through one en
 - **Site favicon** — the published site had none (tabs showed nothing). Added a brand-matching icon
   (`docs/assets/favicon.svg` + PNG/apple-touch + a multi-size `docs/favicon.ico`) and linked it from every
   page and the lesson template.
+- `registry()` fails fast when two lesson directories share the same number, instead of silently
+  overwriting one (which made lesson resolution nondeterministic).
+- `cmd_run()` returns a non-zero code when a lesson isn't `working`, so scripts/CI don't read a skipped
+  lesson as success.
+- Media elements (`image`/`video`/`media`) are confined to the lesson directory like `read_ref()`, so a
+  stray `file: "../.."` can't embed files from outside it in standalone `show --html` output.
 
 ## [0.4.0]
 
