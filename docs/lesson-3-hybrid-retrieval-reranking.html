@@ -115,9 +115,10 @@ SYNONYMS = {
 
 
 <span class="hl-kw">def</span> rank(docs, scores):
-    <span class="hl-str">"""Return doc names best-first. Deterministic: score desc, then name asc."""</span>
+    <span class="hl-str">"""Best-first doc names, dropping zero-score (unmatched) docs so an arm that
+    finds nothing contributes nothing to RRF. Deterministic: score desc, name asc."""</span>
     order = sorted(range(len(docs)), key=<span class="hl-kw">lambda</span> i: (-scores[i], docs[i][<span class="hl-str">"name"</span>]))
-    <span class="hl-kw">return</span> [docs[i][<span class="hl-str">"name"</span>] <span class="hl-kw">for</span> i <span class="hl-kw">in</span> order]
+    <span class="hl-kw">return</span> [docs[i][<span class="hl-str">"name"</span>] <span class="hl-kw">for</span> i <span class="hl-kw">in</span> order <span class="hl-kw">if</span> scores[i] &gt; <span class="hl-num">0</span>]
 
 
 <span class="hl-kw">def</span> rrf(rankings):
@@ -137,7 +138,7 @@ SYNONYMS = {
 
 <span class="hl-kw">def</span> main():
     docs = load_docs()
-    <span class="hl-kw">for</span> query <span class="hl-kw">in</span> [<span class="hl-str">"error E_4096"</span>, <span class="hl-str">"my device won't turn on"</span>]:
+    <span class="hl-kw">for</span> query <span class="hl-kw">in</span> [<span class="hl-str">"error E_4096"</span>, <span class="hl-str">"broken gadget"</span>]:
         lexical, semantic, fused = hybrid(query, docs)
         print(f<span class="hl-str">'\nQuery: "{query}"'</span>)
         print(f<span class="hl-str">"  BM25 (lexical):   {lexical}"</span>)
@@ -225,10 +226,12 @@ SYNONYMS = {
   });
 }
 
-<span class="hl-com">// Deterministic: score desc, then name asc.</span>
+<span class="hl-com">// Drop zero-score (unmatched) docs so an arm that finds nothing contributes</span>
+<span class="hl-com">// nothing to RRF. Deterministic: score desc, then name asc.</span>
 <span class="hl-kw">function</span> rank(docs, scores) {
   <span class="hl-kw">return</span> docs
     .map((d, i) =&gt; ({ name: d.name, score: scores[i] }))
+    .filter((x) =&gt; x.score &gt; <span class="hl-num">0</span>)
     .sort((a, b) =&gt; b.score - a.score || a.name.localeCompare(b.name))
     .map((x) =&gt; x.name);
 }
@@ -252,7 +255,7 @@ SYNONYMS = {
 
 <span class="hl-kw">function</span> main() {
   <span class="hl-kw">const</span> docs = loadDocs();
-  <span class="hl-kw">for</span> (<span class="hl-kw">const</span> query <span class="hl-kw">of</span> [<span class="hl-str">"error E_4096"</span>, <span class="hl-str">"my device won't turn on"</span>]) {
+  <span class="hl-kw">for</span> (<span class="hl-kw">const</span> query <span class="hl-kw">of</span> [<span class="hl-str">"error E_4096"</span>, <span class="hl-str">"broken gadget"</span>]) {
     <span class="hl-kw">const</span> { lexical, semantic, fused } = hybrid(query, docs);
     console.log(<span class="hl-str">`\nQuery: ${JSON.stringify(query)}`</span>);
     console.log(<span class="hl-str">`  BM25 (lexical):   [${lexical.map((s) =&gt; `</span><span class="hl-str">'${s}'</span><span class="hl-str">`).join(", ")}]`</span>);
@@ -296,7 +299,7 @@ const <span class="hl-kw">int</span> RrfK = <span class="hl-num">60</span>;
     .Select(name =&gt; <span class="hl-kw">new</span> Doc(name!, Tokenize(File.ReadAllText(Path.Combine(dataDir, name!)))))
     .ToList();
 
-<span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> query <span class="hl-kw">in</span> <span class="hl-kw">new</span>[] { <span class="hl-str">"error E_4096"</span>, <span class="hl-str">"my device won't turn on"</span> })
+<span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> query <span class="hl-kw">in</span> <span class="hl-kw">new</span>[] { <span class="hl-str">"error E_4096"</span>, <span class="hl-str">"broken gadget"</span> })
 {
     <span class="hl-kw">var</span> q = Tokenize(query);
     <span class="hl-kw">var</span> lexical = Rank(docs, Bm25Scores(q, docs));
@@ -353,9 +356,11 @@ List&lt;<span class="hl-kw">double</span>&gt; SemanticScores(List&lt;<span class
     }).ToList();
 }
 
-<span class="hl-com">// Deterministic: score desc, then name asc.</span>
+<span class="hl-com">// Drop zero-score (unmatched) docs so an arm that finds nothing contributes</span>
+<span class="hl-com">// nothing to RRF. Deterministic: score desc, then name asc.</span>
 <span class="hl-kw">static</span> List&lt;<span class="hl-kw">string</span>&gt; Rank(List&lt;Doc&gt; corpus, List&lt;<span class="hl-kw">double</span>&gt; scores) =&gt;
     corpus.Select((d, i) =&gt; (d.Name, Score: scores[i]))
+        .Where(x =&gt; x.Score &gt; <span class="hl-num">0</span>)
         .OrderByDescending(x =&gt; x.Score)
         .ThenBy(x =&gt; x.Name, StringComparer.Ordinal)
         .Select(x =&gt; x.Name)
@@ -503,17 +508,17 @@ fan may have failed.
 
 Error E_2001 means internal storage is full. Delete old recordings to continue.</code></pre></div><ul class='remarks'><li>One sample document from the tiny corpus.</li></ul></section>
 <section class='slide'><div class='step-no'>Exact-keyword query to try</div><div class='block'><pre><code>error E_4096</code></pre></div></section>
-<section class='slide'><div class='step-no'>Paraphrase query to try</div><div class='block'><pre><code>my device won't turn on</code></pre></div></section>
+<section class='slide'><div class='step-no'>Keyword-free paraphrase to try (BM25 finds nothing)</div><div class='block'><pre><code>broken gadget</code></pre></div></section>
 <section class='slide'><div class='step-no'>Expected output (all three languages)</div><pre><code>
 Query: "error E_4096"
-  BM25 (lexical):   ['error_codes.md', 'power_issues.md', 'setup.md']
-  Semantic (stand): ['error_codes.md', 'power_issues.md', 'setup.md']
-  Hybrid (RRF):     ['error_codes.md', 'power_issues.md', 'setup.md']
+  BM25 (lexical):   ['error_codes.md']
+  Semantic (stand): ['error_codes.md']
+  Hybrid (RRF):     ['error_codes.md']
 
-Query: "my device won't turn on"
-  BM25 (lexical):   ['power_issues.md', 'setup.md', 'error_codes.md']
-  Semantic (stand): ['power_issues.md', 'error_codes.md', 'setup.md']
-  Hybrid (RRF):     ['power_issues.md', 'error_codes.md', 'setup.md']</code></pre></section>
+Query: "broken gadget"
+  BM25 (lexical):   []
+  Semantic (stand): ['power_issues.md']
+  Hybrid (RRF):     ['power_issues.md']</code></pre></section>
 <section class='slide'><div class='step-no'>Note</div><p>Test it on a richer document: <code>./run -l 3 web</code> opens an interactive search over the 5-chapter fictive story (The Voyage of Caretta the Magnificent). Watch how an exact name vs a paraphrase pick different chapters.</p></section>
 <section class='slide'><div class='step-no'>story/04-nuevo-eden.md</div><div class='block'><div class='label'>story/04-nuevo-eden.md</div><pre><code class='lang-text'># Chapter the Fourth — The Discovery of Nuevo Edén
 

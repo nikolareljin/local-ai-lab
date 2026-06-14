@@ -49,7 +49,7 @@ A tiny corpus of three support docs lives in [`data/`](./data). We run **two que
 opposite directions:
 
 - an **exact-keyword** query — `error E_4096`
-- a **semantic / paraphrase** query — `my device won't turn on`
+- a **keyword-free paraphrase** — `broken gadget` (no document contains either word)
 
 …and print the BM25 ranking, the semantic ranking, and the fused (RRF) ranking for each.
 
@@ -97,19 +97,23 @@ Output:
 
 ```
 Query: "error E_4096"
-  BM25 (lexical):   ['error_codes.md', 'power_issues.md', 'setup.md']
-  Semantic (stand): ['error_codes.md', 'power_issues.md', 'setup.md']
-  Hybrid (RRF):     ['error_codes.md', 'power_issues.md', 'setup.md']
+  BM25 (lexical):   ['error_codes.md']
+  Semantic (stand): ['error_codes.md']
+  Hybrid (RRF):     ['error_codes.md']
 
-Query: "my device won't turn on"
-  BM25 (lexical):   ['power_issues.md', 'setup.md', 'error_codes.md']
-  Semantic (stand): ['power_issues.md', 'error_codes.md', 'setup.md']
-  Hybrid (RRF):     ['power_issues.md', 'error_codes.md', 'setup.md']
+Query: "broken gadget"
+  BM25 (lexical):   []
+  Semantic (stand): ['power_issues.md']
+  Hybrid (RRF):     ['power_issues.md']
 ```
 
+Notice the second query: **BM25 returns nothing** — no document literally contains *broken* or
+*gadget* — yet the semantic arm recovers `power_issues.md`, and the hybrid keeps that hit. That is the
+divergence fusion exists for.
+
 > **Why no embedding model?** To keep the demo offline and dependency-free, the "semantic" arm is a
-> small **synonym-expanded overlap** stand-in — enough to behave like embeddings (matching
-> *won't turn on* → the *power/startup* doc) so you can watch RRF fuse two different rankings. In
+> small **synonym-expanded overlap** stand-in — enough to behave like embeddings (mapping *broken* →
+> *fail/dead*, so it recovers the *power/startup* doc that BM25 misses entirely). In
 > production you swap in real sentence embeddings; the *fusion* code doesn't change. That swap is the
 > first item in *From demo to production*.
 
@@ -128,8 +132,8 @@ score += idf * (tf * (K1 + 1)) / (tf + K1 * (1 - B + B * dl / avgdl))   # tf, le
 
 - **Wins** the exact query: `E_4096` appears in exactly one document, so its IDF is high and
   `error_codes.md` shoots to the top.
-- **Loses** on paraphrase: ask *"won't power on"* and BM25 can't match the synonym *"fails to power
-  on"* — there's no shared token.
+- **Loses** on a keyword-free paraphrase: ask *"broken gadget"* and BM25 returns **nothing** — no
+  document shares a single token with the query.
 
 > **Teaching point:** reach for BM25 when the user knows the exact string — an error code, a product
 > SKU, a function name, a person's name. It is fast, needs no model, and is unbeatable at literal
@@ -141,12 +145,12 @@ Embeddings map text into a vector space where *meaning* is distance, so paraphra
 other even with no shared words. In the demo a synonym-expanded overlap **stands in** for this:
 
 ```python
-SYNONYMS = {"turn": ["power", "start", "startup", "boot"], "on": ["up"], ...}
-# "my device won't turn on" now overlaps the power/startup document
+SYNONYMS = {"broken": ["fail", "fails", "dead"], "turn": ["power", "start", "startup", "boot"], ...}
+# "broken gadget" now overlaps the power/startup document (broken -> fail/dead)
 ```
 
-- **Wins** the paraphrase query: `power_issues.md` rises even though *"won't turn on"* never appears
-  verbatim.
+- **Wins** the keyword-free paraphrase: `power_issues.md` surfaces even though *"broken gadget"* shares
+  no word with any document.
 - **Loses** on exact IDs: a rare code like `E_4096` can get diluted among "semantically similar" text.
 
 > **Teaching point:** reach for embeddings when the user describes a problem in their own words. They
@@ -197,11 +201,9 @@ Three more levers that production systems add on top of fusion:
 | **Query rewriting** | vague / underspecified questions | can over-expand | one LLM call | yes |
 | **Metadata filtering** | scoping large mixed corpora | needs good metadata | negligible | no |
 
-On this tiny offline corpus the two arms happen to agree on the *top* hit, but they order the lower
-results differently — compare BM25 (`setup.md` second) with the semantic arm (`error_codes.md` second)
-on the paraphrase query — and RRF fuses them. With real embeddings on a larger corpus the split is far
-sharper: a paraphrase that shares **no** keywords with the answer sinks under BM25 yet surfaces
-semantically, which is exactly where fusion earns its keep.
+On the demo corpus BM25 nails the exact code but returns **nothing** for the keyword-free paraphrase,
+while the semantic arm recovers the right document — and RRF keeps whichever arm found the answer.
+That's the whole argument for fusion: you never lose one retriever's strength.
 
 ---
 

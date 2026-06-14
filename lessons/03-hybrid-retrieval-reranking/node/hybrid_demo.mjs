@@ -77,10 +77,12 @@ function semanticScores(queryTokens, docs) {
   });
 }
 
-// Deterministic: score desc, then name asc.
+// Drop zero-score (unmatched) docs so an arm that finds nothing contributes
+// nothing to RRF. Deterministic: score desc, then name asc.
 function rank(docs, scores) {
   return docs
     .map((d, i) => ({ name: d.name, score: scores[i] }))
+    .filter((x) => x.score > 0)
     .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
     .map((x) => x.name);
 }
@@ -104,7 +106,7 @@ function hybrid(query, docs) {
 
 function main() {
   const docs = loadDocs();
-  for (const query of ["error E_4096", "my device won't turn on"]) {
+  for (const query of ["error E_4096", "broken gadget"]) {
     const { lexical, semantic, fused } = hybrid(query, docs);
     console.log(`\nQuery: ${JSON.stringify(query)}`);
     console.log(`  BM25 (lexical):   [${lexical.map((s) => `'${s}'`).join(", ")}]`);

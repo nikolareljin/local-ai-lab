@@ -38,7 +38,7 @@
     ] },
     { "type": "config", "file": "data/error_codes.md", "note": "One sample document from the tiny corpus." },
     { "type": "text", "title": "Exact-keyword query to try", "text": "error E_4096" },
-    { "type": "text", "title": "Paraphrase query to try", "text": "my device won't turn on" },
+    { "type": "text", "title": "Keyword-free paraphrase to try (BM25 finds nothing)", "text": "broken gadget" },
     { "type": "note", "file": "expected-output.txt", "title": "Expected output (all three languages)" },
     { "type": "note", "text": "Test it on a richer document: `./run -l 3 web` opens an interactive search over the 5-chapter fictive story (The Voyage of Caretta the Magnificent). Watch how an exact name vs a paraphrase pick different chapters." },
     { "type": "config", "file": "story/04-nuevo-eden.md", "note": "One chapter of the fictive-story corpus the web UI searches." },

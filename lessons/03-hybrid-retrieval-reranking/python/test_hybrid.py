@@ -1,7 +1,8 @@
 """Offline test for the Lesson 3 hybrid retrieval demo (Python).
 
-Encodes the lesson's claim: BM25 wins the exact-term query, the semantic stand-in
-wins the paraphrase query, and the hybrid (RRF) gets both right.
+Encodes the lesson's claim: BM25 nails an exact term, but a keyword-free
+paraphrase slips past BM25 entirely while the semantic stand-in recovers it —
+and the hybrid (RRF) keeps the right answer either way.
 
 Run:  python -m pytest test_hybrid.py
 """
@@ -17,16 +18,19 @@ def test_exact_term_query_favours_bm25():
     assert fused[0] == "error_codes.md"
 
 
-def test_paraphrase_query_favours_semantic():
+def test_zero_score_docs_are_excluded():
     docs = load_docs()
-    lexical, semantic, fused = hybrid("my device won't turn on", docs)
-    # "won't turn on" never appears verbatim; the semantic stand-in still finds
-    # the power/startup doc, and the hybrid ranking agrees.
+    lexical, _, _ = hybrid("error E_4096", docs)
+    # Only the document that actually matches is ranked — no zero-score filler.
+    assert lexical == ["error_codes.md"]
+
+
+def test_paraphrase_bm25_misses_semantic_recovers():
+    docs = load_docs()
+    lexical, semantic, fused = hybrid("broken gadget", docs)
+    # No document contains "broken" or "gadget", so BM25 finds nothing...
+    assert lexical == []
+    # ...but the semantic stand-in maps broken -> fail/dead and recovers the doc,
+    # and the hybrid keeps that hit.
     assert semantic[0] == "power_issues.md"
     assert fused[0] == "power_issues.md"
-
-
-def test_all_documents_ranked():
-    docs = load_docs()
-    lexical, semantic, fused = hybrid("error E_4096", docs)
-    assert sorted(fused) == ["error_codes.md", "power_issues.md", "setup.md"]

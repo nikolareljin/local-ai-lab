@@ -80,9 +80,10 @@ def semantic_scores(query_tokens, docs):
 
 
 def rank(docs, scores):
-    """Return doc names best-first. Deterministic: score desc, then name asc."""
+    """Best-first doc names, dropping zero-score (unmatched) docs so an arm that
+    finds nothing contributes nothing to RRF. Deterministic: score desc, name asc."""
     order = sorted(range(len(docs)), key=lambda i: (-scores[i], docs[i]["name"]))
-    return [docs[i]["name"] for i in order]
+    return [docs[i]["name"] for i in order if scores[i] > 0]
 
 
 def rrf(rankings):
@@ -102,7 +103,7 @@ def hybrid(query, docs):
 
 def main():
     docs = load_docs()
-    for query in ["error E_4096", "my device won't turn on"]:
+    for query in ["error E_4096", "broken gadget"]:
         lexical, semantic, fused = hybrid(query, docs)
         print(f'\nQuery: "{query}"')
         print(f"  BM25 (lexical):   {lexical}")

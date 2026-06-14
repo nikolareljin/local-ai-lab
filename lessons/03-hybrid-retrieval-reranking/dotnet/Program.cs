@@ -33,7 +33,7 @@ var docs = Directory.GetFiles(dataDir, "*.md")
     .Select(name => new Doc(name!, Tokenize(File.ReadAllText(Path.Combine(dataDir, name!)))))
     .ToList();
 
-foreach (var query in new[] { "error E_4096", "my device won't turn on" })
+foreach (var query in new[] { "error E_4096", "broken gadget" })
 {
     var q = Tokenize(query);
     var lexical = Rank(docs, Bm25Scores(q, docs));
@@ -90,9 +90,11 @@ List<double> SemanticScores(List<string> queryTokens, List<Doc> corpus)
     }).ToList();
 }
 
-// Deterministic: score desc, then name asc.
+// Drop zero-score (unmatched) docs so an arm that finds nothing contributes
+// nothing to RRF. Deterministic: score desc, then name asc.
 static List<string> Rank(List<Doc> corpus, List<double> scores) =>
     corpus.Select((d, i) => (d.Name, Score: scores[i]))
+        .Where(x => x.Score > 0)
         .OrderByDescending(x => x.Score)
         .ThenBy(x => x.Name, StringComparer.Ordinal)
         .Select(x => x.Name)
