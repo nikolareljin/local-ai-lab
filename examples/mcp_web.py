@@ -76,12 +76,13 @@ def search(query, values):
     # Fetch the retriever per request — exactly the path `search_docs` takes — so the
     # GUI reflects files added to / removed from documents/ while it is running.
     hits = get_retriever(load_config()).search(query, k)
-    sources = [f'{h["source"]}:{h["page_number"]}' for h in hits]
+    # Match the real search_docs() output, which prefixes each passage with [source:page].
+    sources = [f'[{h["source"]}:{h["page_number"]}]' for h in hits]
     arms = [{"label": f"search_docs → {len(sources)} cited passage(s)", "ranking": sources}]
     if hits:
         results = {"kind": "table",
                    "title": "Returned passages — exactly what the model is handed (each tagged [source:page])",
-                   "columns": ["source:page", "passage"],
+                   "columns": ["[source:page]", "passage"],
                    "rows": [[{"v": s, "cls": "text"}, {"v": _passage(h["text"], full), "cls": "text"}]
                             for s, h in zip(sources, hits)]}
     else:

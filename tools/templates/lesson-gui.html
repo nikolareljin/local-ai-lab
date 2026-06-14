@@ -112,7 +112,17 @@
     let PARAMS = [];
 
     async function init() {
-      const cfg = await (await fetch("/api/config")).json();
+      let cfg;
+      try {
+        const r = await fetch("/api/config");
+        if (!r.ok) throw new Error("server responded " + r.status);
+        cfg = await r.json();
+      } catch (e) {
+        // Fail visibly instead of leaving a blank page on an unhandled rejection.
+        renderBlocks([{ kind: "note", text: "Could not load the experiment config: "
+          + (e && e.message ? e.message : e) + " — is the local server still running?" }]);
+        return;
+      }
       $("title").textContent = cfg.title || "experiment";
       $("subtitle").textContent = cfg.subtitle || "";
       $("hint").textContent = cfg.hint || "";
