@@ -62,6 +62,11 @@ described by a single `lesson.json` and run, preview, and publish through one en
 - `./run list` and the `python3 || python` lookups in `new-lesson.sh` / `sync-curriculum.sh` no longer
   abort under `set -euo pipefail` when the registry list or interpreter lookup fails.
 - The Lesson 3 `web.py` docstring shows the correct command (`./run -l 3 web`, not `./run -l 3`).
+- `read_ref()` parses the `lines` excerpt spec tolerantly — a single line (`"42"`), surrounding
+  whitespace, or an invalid spec returns a clear `[invalid lines spec: …]` placeholder instead of
+  crashing the whole `show`/`preview`/`build` render.
+- Generated lesson pages carry a `GENERATED FILE — do not edit by hand` banner (from the template), so
+  it's clear they come from `./run -l N build` and manual edits will be overwritten.
 
 ## [0.4.0]
 

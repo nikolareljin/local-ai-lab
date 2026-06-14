@@ -154,8 +154,15 @@ def read_ref(ldir, el):
         if not path.exists():
             return f"[missing file: {el['file']}]"
         text = path.read_text(encoding="utf-8")
-        if el.get("lines"):  # focused excerpt, e.g. "30-45" (1-based, inclusive)
-            a, b = (int(x) for x in str(el["lines"]).split("-"))
+        spec = el.get("lines")
+        if spec:  # focused excerpt: "30-45" (1-based, inclusive) or a single "42"
+            try:
+                parts = [int(x) for x in str(spec).strip().split("-")]
+                a, b = parts[0], parts[-1]  # single value → a == b
+                if a < 1 or b < a:
+                    raise ValueError
+            except (ValueError, IndexError):
+                return f"[invalid lines spec: {spec}]"
             text = "\n".join(text.splitlines()[a - 1:b])
         return text.rstrip("\n")
     return el.get("text", "")
