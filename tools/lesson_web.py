@@ -45,6 +45,8 @@ def _free_port(host: str = "127.0.0.1") -> int:
 def _coerce(params, raw):
     """Turn the raw JSON param values from the browser into typed Python values,
     falling back to each param's declared default when missing or unparsable."""
+    if not isinstance(raw, dict):
+        raw = {}  # defensive: a non-dict `params` falls back to all defaults, never raises
     out = {}
     for p in params:
         name = p["name"]
@@ -103,9 +105,14 @@ def serve(
 
     @app.post("/api/search")
     def api_search():
-        data = request.get_json(silent=True) or {}
-        query = (data.get("query") or "").strip()
-        values = _coerce(params, data.get("params") or {})
+        # Tolerate a malformed body (a JSON array/string, or non-dict `params`) — read
+        # what we can and let `search` run rather than 500-ing before the UI sees anything.
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            data = {}
+        query = str(data.get("query") or "").strip()
+        raw_params = data.get("params")
+        values = _coerce(params, raw_params if isinstance(raw_params, dict) else {})
         try:
             return jsonify(search(query, values))
         except Exception as exc:  # surface compute errors to the UI instead of 500-ing blank
