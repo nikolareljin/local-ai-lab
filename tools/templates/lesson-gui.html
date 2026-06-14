@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>local-ai-lab · experiment</title>
+  <style>
+    /* Same palette as Lesson 1's local GUI, so every lesson's experiment feels of-a-piece. */
+    :root { --bg:#0f1115; --panel:#1a1d24; --edge:#2a2f3a; --txt:#e6e8ee; --muted:#8b93a7;
+            --accent:#5b9dff; --accent2:#3a6fd8; --ok:#3fb950; --warn:#d29922; }
+    * { box-sizing: border-box; }
+    body { margin:0; font:15px/1.5 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+           background:var(--bg); color:var(--txt); }
+    header { padding:18px 24px; border-bottom:1px solid var(--edge); }
+    header h1 { margin:0; font-size:18px; }
+    header p { margin:6px 0 0; color:var(--muted); font-size:13px; max-width:760px; }
+    main { max-width:920px; margin:0 auto; padding:24px; display:grid; gap:20px; }
+    .panel { background:var(--panel); border:1px solid var(--edge); border-radius:12px; padding:18px; }
+    .panel h2 { margin:0 0 12px; font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    input[type=text] { flex:1; min-width:240px; background:#11141a; color:var(--txt);
+                       border:1px solid var(--edge); border-radius:10px; padding:12px; font:inherit; }
+    button { font:inherit; border-radius:10px; border:1px solid var(--edge);
+             background:var(--accent2); color:#fff; border:none; padding:10px 18px; cursor:pointer; font-weight:600; }
+    button:hover { background:var(--accent); }
+    .examples { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+    .ex { background:#11141a; border:1px solid var(--edge); color:var(--accent); border-radius:999px;
+          padding:5px 12px; font-size:13px; cursor:pointer; }
+    .ex:hover { background:rgba(91,157,255,.10); }
+    /* parameter panel */
+    .params { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
+    .param label { font-size:12px; color:var(--muted); display:block; margin-bottom:6px; }
+    .param .val { color:var(--accent); font-family:ui-monospace,Menlo,Consolas,monospace; }
+    .param input[type=range] { width:100%; accent-color:var(--accent); }
+    .param.toggle .row2 { display:flex; align-items:center; gap:8px; }
+    .param input[type=checkbox] { width:16px; height:16px; accent-color:var(--accent); }
+    .reset { background:transparent; border:1px solid var(--edge); color:var(--accent); padding:7px 12px; }
+    .reset:hover { background:rgba(91,157,255,.08); }
+    /* arms / rankings */
+    .arms { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
+    .arm { background:#11141a; border:1px solid var(--edge); border-radius:10px; padding:12px 14px; }
+    .arm .name { font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin-bottom:8px; }
+    .arm ol { margin:0; padding-left:20px; }
+    .arm li { margin:2px 0; }
+    .arm .empty { color:var(--muted); font-style:italic; }
+    .arm.hybrid { border-color:var(--accent2); }
+    .arm.hybrid .name { color:var(--accent); }
+    /* breakdown blocks (mirrors L1's "how the system sees your data" styling) */
+    .blk { margin-top:16px; }
+    .blk h4 { margin:0 0 8px; font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+    .tok { display:inline-block; background:#11141a; border:1px solid var(--edge); border-radius:6px;
+           padding:1px 7px; margin:0 4px 6px 0; font-size:12px;
+           font-family:ui-monospace,Menlo,Consolas,monospace; color:var(--txt); }
+    .tok.miss { color:var(--muted); }
+    .tok b { color:var(--accent); font-weight:600; }
+    .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; }
+    .stat { background:#11141a; border:1px solid var(--edge); border-radius:10px; padding:10px 12px; }
+    .stat .v { font-size:19px; font-weight:700; color:var(--accent); }
+    .stat .l { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-top:2px; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--edge); }
+    th { color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase; }
+    td.num { font-family:ui-monospace,Menlo,Consolas,monospace; color:var(--accent); }
+    td.miss { font-family:ui-monospace,Menlo,Consolas,monospace; color:var(--muted); }
+    .note { color:var(--muted); font-size:12px; margin-top:6px; }
+    footer { max-width:920px; margin:0 auto; padding:8px 24px 40px; color:var(--muted); font-size:12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="title">local-ai-lab · experiment</h1>
+    <p id="subtitle"></p>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>Ask</h2>
+      <div class="row">
+        <input id="q" type="text" placeholder="type a query…" autofocus />
+        <button id="go">Search ▶</button>
+      </div>
+      <div id="examples" class="examples"></div>
+      <p id="hint" class="note"></p>
+    </section>
+
+    <section class="panel">
+      <h2 style="display:flex;justify-content:space-between;align-items:center">
+        <span>Tune the knobs — no code editing</span>
+        <button id="reset" class="reset" title="Restore the lesson defaults">Reset defaults</button>
+      </h2>
+      <div id="params" class="params"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Rankings</h2>
+      <div id="arms" class="arms"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Why these results — the numbers behind the ranking</h2>
+      <div id="breakdown"></div>
+    </section>
+  </main>
+
+  <footer>Part of <strong>local-ai-lab</strong> — runs entirely on your machine. Tune a knob and the rankings recompute live.</footer>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const escHtml = (s) => String(s).replace(/[&<>"]/g,
+      (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    let PARAMS = [];
+
+    async function init() {
+      const cfg = await (await fetch("/api/config")).json();
+      $("title").textContent = cfg.title || "experiment";
+      $("subtitle").textContent = cfg.subtitle || "";
+      $("hint").textContent = cfg.hint || "";
+      PARAMS = cfg.params || [];
+      renderParams(PARAMS);
+      renderExamples(cfg.examples || []);
+      // Preload the first example so the user sees a live result immediately.
+      if (cfg.examples && cfg.examples.length) $("q").value = cfg.examples[0].query;
+      search();
+    }
+
+    function renderParams(params) {
+      const box = $("params");
+      box.textContent = "";
+      for (const p of params) {
+        const wrap = document.createElement("div");
+        wrap.className = "param" + (p.kind === "toggle" ? " toggle" : "");
+        if (p.kind === "toggle") {
+          const lab = document.createElement("label");
+          lab.textContent = p.label;
+          const r2 = document.createElement("div");
+          r2.className = "row2";
+          const cb = document.createElement("input");
+          cb.type = "checkbox"; cb.id = "p_" + p.name; cb.checked = !!p.default;
+          cb.addEventListener("change", search);
+          const state = document.createElement("span");
+          state.className = "val";
+          const setState = () => (state.textContent = cb.checked ? "on" : "off");
+          setState(); cb.addEventListener("change", setState);
+          r2.append(cb, state);
+          wrap.append(lab, r2);
+        } else {
+          const lab = document.createElement("label");
+          lab.textContent = p.label + " ";
+          const val = document.createElement("span");
+          val.className = "val"; val.id = "v_" + p.name; val.textContent = p.default;
+          lab.appendChild(val);
+          const sl = document.createElement("input");
+          sl.type = "range"; sl.id = "p_" + p.name;
+          sl.min = p.min; sl.max = p.max; sl.step = p.step; sl.value = p.default;
+          sl.addEventListener("input", () => { val.textContent = sl.value; });
+          sl.addEventListener("change", search);
+          wrap.append(lab, sl);
+        }
+        box.appendChild(wrap);
+      }
+    }
+
+    function renderExamples(examples) {
+      const box = $("examples");
+      box.textContent = "";
+      for (const ex of examples) {
+        const b = document.createElement("button");
+        b.className = "ex"; b.textContent = ex.label;
+        b.addEventListener("click", () => { $("q").value = ex.query; search(); });
+        box.appendChild(b);
+      }
+    }
+
+    function readParams() {
+      const values = {};
+      for (const p of PARAMS) {
+        const el = $("p_" + p.name);
+        if (!el) continue;
+        values[p.name] = p.kind === "toggle" ? el.checked : parseFloat(el.value);
+      }
+      return values;
+    }
+
+    $("reset").addEventListener("click", () => { renderParams(PARAMS); search(); });
+    $("go").addEventListener("click", search);
+    $("q").addEventListener("keydown", (e) => { if (e.key === "Enter") search(); });
+
+    let timer = null;
+    async function search() {
+      clearTimeout(timer);
+      const query = $("q").value;
+      const r = await fetch("/api/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query, params: readParams() }),
+      });
+      const d = await r.json();
+      renderArms(d.arms || []);
+      renderBlocks(d.blocks || []);
+    }
+
+    function renderArms(arms) {
+      const box = $("arms");
+      box.textContent = "";
+      arms.forEach((arm, i) => {
+        const card = document.createElement("div");
+        card.className = "arm" + (i === arms.length - 1 ? " hybrid" : "");
+        const name = document.createElement("div");
+        name.className = "name"; name.textContent = arm.label;
+        card.appendChild(name);
+        if (!arm.ranking || !arm.ranking.length) {
+          const e = document.createElement("div");
+          e.className = "empty"; e.textContent = "(nothing matched)";
+          card.appendChild(e);
+        } else {
+          const ol = document.createElement("ol");
+          for (const n of arm.ranking) {
+            const li = document.createElement("li"); li.textContent = n; ol.appendChild(li);
+          }
+          card.appendChild(ol);
+        }
+        box.appendChild(card);
+      });
+    }
+
+    function renderBlocks(blocks) {
+      const box = $("breakdown");
+      let h = "";
+      for (const b of blocks) {
+        if (b.kind === "note") {
+          h += '<div class="note">' + escHtml(b.text) + "</div>";
+        } else if (b.kind === "stats") {
+          h += '<div class="blk"><div class="stat-grid">' +
+            (b.items || []).map((s) =>
+              '<div class="stat"><div class="v">' + escHtml(s.v) +
+              '</div><div class="l">' + escHtml(s.l) + "</div></div>").join("") +
+            "</div></div>";
+        } else if (b.kind === "tokens") {
+          h += '<div class="blk">' + (b.title ? "<h4>" + escHtml(b.title) + "</h4>" : "") +
+            '<div>' + (b.items || []).map((t) =>
+              '<span class="tok' + (t.muted ? " miss" : "") + '">' + escHtml(t.text) +
+              (t.note ? " <b>" + escHtml(t.note) + "</b>" : "") + "</span>").join("") +
+            "</div></div>";
+        } else if (b.kind === "table") {
+          h += '<div class="blk">' + (b.title ? "<h4>" + escHtml(b.title) + "</h4>" : "") +
+            "<table><thead><tr>" +
+            (b.columns || []).map((c) => "<th>" + escHtml(c) + "</th>").join("") +
+            "</tr></thead><tbody>" +
+            (b.rows || []).map((row) => "<tr>" + row.map((cell) =>
+              '<td class="' + escHtml(cell.cls || "text") + '">' + escHtml(cell.v) + "</td>").join("") +
+              "</tr>").join("") +
+            "</tbody></table></div>";
+        }
+      }
+      box.innerHTML = h;
+    }
+
+    init();
+  </script>
+</body>
+</html>
