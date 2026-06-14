@@ -5,6 +5,7 @@ to the lesson directory, tolerant `lines` excerpt parsing, and the CSS-safe
 language-class token. No network, no third-party deps.
 """
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -15,6 +16,27 @@ sys.path.insert(0, str(ROOT / "tools"))
 import lesson  # noqa: E402
 
 L3 = ROOT / "lessons" / "03-hybrid-retrieval-reranking"
+
+
+def _l3_spec():
+    return json.loads((L3 / "lesson.json").read_text(encoding="utf-8"))
+
+
+def test_resolve_action_keeps_an_available_default():
+    # Lesson 3 defaults to `web`, which exists for Python — no fallback.
+    assert lesson.resolve_action(_l3_spec(), "web", "python", explicit=False) == "web"
+
+
+def test_resolve_action_falls_back_for_other_languages():
+    # The web GUI is Python-only, so a bare `--lang node|csharp` falls back to `demo`.
+    spec = _l3_spec()
+    assert lesson.resolve_action(spec, "web", "node", explicit=False) == "demo"
+    assert lesson.resolve_action(spec, "web", "csharp", explicit=False) == "demo"
+
+
+def test_resolve_action_never_overrides_an_explicit_action():
+    # `./run -l 3 web --lang node` should keep `web` and error clearly, not silently switch.
+    assert lesson.resolve_action(_l3_spec(), "web", "node", explicit=True) == "web"
 
 
 def test_read_ref_blocks_paths_outside_the_lesson():

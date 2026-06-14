@@ -51,6 +51,8 @@ def _coerce(params, raw):
         raw = {}  # defensive: a non-dict `params` falls back to all defaults, never raises
     out = {}
     for p in params:
+        if not isinstance(p, dict) or "name" not in p:
+            continue  # skip a malformed param spec rather than KeyError-ing the whole GUI
         name = p["name"]
         value = raw.get(name, p.get("default"))
         if p.get("kind") == "range":

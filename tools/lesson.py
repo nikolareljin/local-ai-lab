@@ -107,6 +107,24 @@ def matching_commands(lesson, action, lang):
     return cmds
 
 
+def resolve_action(lesson, action, lang, explicit):
+    """Pick the action to run for a language. The default action may be language-specific
+    (e.g. a Python-only `web` GUI); when the user picks another language with no *explicit*
+    action and that default has no command for it, fall back to an action that does exist
+    for that language (preferring `demo`), so `./run -l N --lang node` keeps working. An
+    explicit action is never overridden."""
+    if explicit or matching_commands(lesson, action, lang):
+        return action
+    avail = []
+    for e in lesson.get("elements", []):
+        if e.get("type") == "command" and e.get("action") and e.get("lang") in (None, lang):
+            if e["action"] not in avail:
+                avail.append(e["action"])
+    if not avail:
+        return action
+    return "demo" if "demo" in avail else avail[0]
+
+
 def cmd_run(args):
     ldir, lesson = load(args.number)
     if lesson.get("status") != "working":
@@ -115,20 +133,8 @@ def cmd_run(args):
     action = args.action or lesson.get("defaultAction", "demo")
     lang = args.lang or lesson.get("defaultLanguage", "python")
 
+    action = resolve_action(lesson, action, lang, explicit=bool(args.action))
     cmds = matching_commands(lesson, action, lang)
-    if not cmds and not args.action:
-        # The default action may be language-specific (e.g. a Python-only `web` GUI).
-        # When the user picks another language with no explicit action, fall back to
-        # an action that does exist for that language (preferring `demo`) so the
-        # language shortcut keeps working instead of erroring out.
-        avail = []
-        for e in lesson.get("elements", []):
-            if e.get("type") == "command" and e.get("action") and e.get("lang") in (None, lang):
-                if e["action"] not in avail:
-                    avail.append(e["action"])
-        fallback = "demo" if "demo" in avail else (avail[0] if avail else None)
-        if fallback:
-            action, cmds = fallback, matching_commands(lesson, fallback, lang)
     if not cmds:
         actions = sorted({e.get("action") for e in lesson.get("elements", [])
                           if e.get("type") == "command" and e.get("action")})
