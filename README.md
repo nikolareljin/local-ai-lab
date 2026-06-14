@@ -154,7 +154,8 @@ previewed, and published through one engine (`tools/lesson.py`).
 ```bash
 ./run -l 3                 # interactive experiment GUI: tune BM25 k1/b, RRF k, synonyms — live
 ./run -l 3 demo            # one-shot: print the BM25 / semantic / fused rankings and exit
-./run -l 3 --lang node|csharp demo   # the same algorithm, byte-identical, in the other ports
+./run -l 3 --lang node demo          # Node.js — the same algorithm, byte-identical
+./run -l 3 --lang csharp demo        # C# / .NET — the same algorithm, byte-identical
 ./run -l 3 test            # offline test pinning the lesson's claims
 ```
 

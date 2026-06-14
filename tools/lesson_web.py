@@ -13,9 +13,11 @@ controls and the wiring live here once.
 
 `search(query, values)` returns a dict the shell renders:
   {
-    "arms":   [ {"label": str, "ranking": [doc_name, ...]}, ... ],
+    "arms":   [ {"label": str, "ranking": [doc_name, ...], "highlight": bool}, ... ],
     "blocks": [ <block>, ... ]      # the "why" breakdown, rendered top-to-bottom
   }
+arms[].highlight is optional (default false); set it on the arm to emphasise (e.g. the
+fused result). Position is not used, so a single-arm lesson is never mis-highlighted.
 where each <block> is one of:
   {"kind": "stats",  "items": [{"v": str, "l": str}, ...]}
   {"kind": "tokens", "title": str, "items": [{"text": str, "note": str, "muted": bool}, ...]}

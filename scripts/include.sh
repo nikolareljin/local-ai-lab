@@ -94,6 +94,8 @@ lesson_procs() {
   local sigs=(
     "python:-m localrag"
     "mcp:mcp_server\.py"
+    "mcp:mcp_web\.py"
+    "web:python/web\.py"
     "node:cli\.js"
     "csharp:LocalRag"
     "csharp:dotnet run"
@@ -142,9 +144,9 @@ lesson_procs() {
       prog="$(ps -o comm= -p "$pid" 2>/dev/null || true)"
       prog="$(basename "${prog:-${cmd%% *}}")"
       case "$kind" in
-        python|mcp|docs) [[ "$prog" == *python* ]] || continue ;;
-        node)            [[ "$prog" == *node* ]]   || continue ;;
-        csharp)          [[ "$prog" == dotnet* || "$prog" == *LocalRag* ]] || continue ;;
+        python|mcp|docs|web) [[ "$prog" == *python* ]] || continue ;;
+        node)                [[ "$prog" == *node* ]]   || continue ;;
+        csharp)              [[ "$prog" == dotnet* || "$prog" == *LocalRag* ]] || continue ;;
       esac
       port="$(printf '%s' "$cmd" | grep -oE -- '--port[= ]+[0-9]+' | grep -oE '[0-9]+' | head -1 || true)"
       [[ -n "$port" ]] || port="-"

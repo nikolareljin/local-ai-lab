@@ -65,7 +65,7 @@ def _passage(text, full):
 def search(query, values):
     """Call the same retrieval `search_docs` wraps and present what the MCP host gets:
     the cited sources as an arm, the returned passages as a table, and the corpus."""
-    k = int(values["k"])
+    k = max(1, int(values["k"]))  # mirror search_docs()'s own max(1, int(k)) clamp
     full = values["full"]
     if not query:
         return {"arms": [], "blocks": [
@@ -80,8 +80,12 @@ def search(query, values):
     sources = [f'[{h["source"]}:{h["page_number"]}]' for h in hits]
     arms = [{"label": f"search_docs → {len(sources)} cited passage(s)", "ranking": sources}]
     if hits:
+        title = ("Returned passages — exactly what the model is handed (each tagged [source:page])"
+                 if full else
+                 "Returned passages (snippets — turn on “Show full passages” for the verbatim "
+                 "search_docs output; each tagged [source:page])")
         results = {"kind": "table",
-                   "title": "Returned passages — exactly what the model is handed (each tagged [source:page])",
+                   "title": title,
                    "columns": ["[source:page]", "passage"],
                    "rows": [[{"v": s, "cls": "text"}, {"v": _passage(h["text"], full), "cls": "text"}]
                             for s, h in zip(sources, hits)]}
