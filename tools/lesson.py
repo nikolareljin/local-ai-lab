@@ -143,7 +143,14 @@ RULE = "─" * 72
 
 def read_ref(ldir, el):
     if "file" in el:
-        path = ldir / el["file"]
+        ldir = Path(ldir).resolve()
+        path = (ldir / el["file"]).resolve()
+        # Keep reads inside the lesson directory: a lesson.json must not be able
+        # to reference files outside it (e.g. ../../secret) and embed them.
+        try:
+            path.relative_to(ldir)
+        except ValueError:
+            return f"[blocked path outside lesson: {el['file']}]"
         if not path.exists():
             return f"[missing file: {el['file']}]"
         text = path.read_text(encoding="utf-8")

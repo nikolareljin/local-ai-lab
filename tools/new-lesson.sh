@@ -16,7 +16,9 @@ dest="$root/lessons/${nn}-${slug}"
 cp -r "$root/lessons/_template" "$dest"
 # Fill the TITLE/SLUG placeholders. Done in Python so the values are JSON-escaped
 # correctly (a title with quotes or backslashes won't corrupt lesson.json).
-py="$(command -v python3 || command -v python)"
+# `|| true` keeps the substitution from aborting under `set -e` when neither
+# interpreter exists, so the explicit check below is reached.
+py="$(command -v python3 || command -v python || true)"
 [[ -n "$py" ]] || { echo "Python 3 is required." >&2; exit 1; }
 "$py" - "$dest/lesson.json" "$title" "$slug" <<'PY'
 import json, sys

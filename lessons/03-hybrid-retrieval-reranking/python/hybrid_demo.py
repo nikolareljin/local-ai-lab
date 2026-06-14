@@ -48,6 +48,8 @@ def load_docs():
 # --- Lexical arm: a compact BM25 (no external library) ----------------------
 def bm25_scores(query_tokens, docs):
     n = len(docs)
+    if n == 0:                      # empty corpus → no scores (avoid /0 on avgdl)
+        return []
     avgdl = sum(len(d["tokens"]) for d in docs) / n
     df = {}
     for d in docs:

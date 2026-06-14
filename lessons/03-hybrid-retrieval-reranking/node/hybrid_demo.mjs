@@ -46,9 +46,14 @@ function count(arr, value) {
   return c;
 }
 
+// Ordinal (code-unit) comparator — locale-independent, so the tie-break order
+// matches Python and .NET (StringComparer.Ordinal) for byte-identical output.
+const cmpOrdinal = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+
 // --- Lexical arm: a compact BM25 (no external library) ----------------------
 function bm25Scores(queryTokens, docs) {
   const n = docs.length;
+  if (n === 0) return []; // empty corpus → no scores (avoid Infinity/NaN on avgdl)
   const avgdl = docs.reduce((s, d) => s + d.tokens.length, 0) / n;
   const df = new Map();
   for (const d of docs) for (const t of new Set(d.tokens)) df.set(t, (df.get(t) ?? 0) + 1);
@@ -83,7 +88,7 @@ function rank(docs, scores) {
   return docs
     .map((d, i) => ({ name: d.name, score: scores[i] }))
     .filter((x) => x.score > 0)
-    .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
+    .sort((a, b) => b.score - a.score || cmpOrdinal(a.name, b.name))
     .map((x) => x.name);
 }
 
@@ -93,7 +98,7 @@ function rrf(rankings) {
     ranking.forEach((name, pos) => fused.set(name, (fused.get(name) ?? 0) + 1 / (RRF_K + pos + 1)));
   }
   return [...fused.entries()]
-    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .sort((a, b) => b[1] - a[1] || cmpOrdinal(a[0], b[0]))
     .map(([name]) => name);
 }
 

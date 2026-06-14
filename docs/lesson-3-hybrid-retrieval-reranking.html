@@ -61,6 +61,8 @@ Error E_2001 means internal storage is full. Delete old recordings to continue.<
     Regex.Matches(text.ToLowerInvariant(), <span class="hl-str">"[a-z0-9_]+"</span>).Select(m =&gt; m.Value).ToList();</code></pre></div></div></section>
 <section class='slide'><div class='step-no'>Step 3</div><h2>BM25 — rank by exact-term overlap</h2><p><strong>BM25</strong> scores a document by how many query terms it contains, weighting <strong>rare</strong> terms far more (a code like <code>E_4096</code> counts for much more than <code>the</code>) and damping very long documents. It is fast, needs no model, and is unbeatable when the user knows the exact string — but it can't match a synonym it has never seen.</p><div class='lang lang-python'><div class='block'><div class='label'>python/hybrid_demo.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> bm25_scores(query_tokens, docs):
     n = len(docs)
+    <span class="hl-kw">if</span> n == <span class="hl-num">0</span>:                      <span class="hl-com"># empty corpus → no scores (avoid /0 on avgdl)</span>
+        <span class="hl-kw">return</span> []
     avgdl = sum(len(d[<span class="hl-str">"tokens"</span>]) <span class="hl-kw">for</span> d <span class="hl-kw">in</span> docs) / n
     df = {}
     <span class="hl-kw">for</span> d <span class="hl-kw">in</span> docs:
@@ -79,6 +81,7 @@ Error E_2001 means internal storage is full. Delete old recordings to continue.<
         scores.append(score)
     <span class="hl-kw">return</span> scores</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/hybrid_demo.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> bm25Scores(queryTokens, docs) {
   <span class="hl-kw">const</span> n = docs.length;
+  <span class="hl-kw">if</span> (n === <span class="hl-num">0</span>) <span class="hl-kw">return</span> []; <span class="hl-com">// empty corpus → no scores (avoid Infinity/NaN on avgdl)</span>
   <span class="hl-kw">const</span> avgdl = docs.reduce((s, d) =&gt; s + d.tokens.length, <span class="hl-num">0</span>) / n;
   <span class="hl-kw">const</span> df = <span class="hl-kw">new</span> Map();
   <span class="hl-kw">for</span> (<span class="hl-kw">const</span> d <span class="hl-kw">of</span> docs) <span class="hl-kw">for</span> (<span class="hl-kw">const</span> t <span class="hl-kw">of</span> <span class="hl-kw">new</span> Set(d.tokens)) df.set(t, (df.get(t) ?? <span class="hl-num">0</span>) + <span class="hl-num">1</span>);
@@ -96,6 +99,7 @@ Error E_2001 means internal storage is full. Delete old recordings to continue.<
 }</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>List&lt;<span class="hl-kw">double</span>&gt; Bm25Scores(List&lt;<span class="hl-kw">string</span>&gt; queryTokens, List&lt;Doc&gt; corpus)
 {
     <span class="hl-kw">int</span> n = corpus.Count;
+    <span class="hl-kw">if</span> (n == <span class="hl-num">0</span>) <span class="hl-kw">return</span> <span class="hl-kw">new</span> List&lt;<span class="hl-kw">double</span>&gt;(); <span class="hl-com">// empty corpus → no scores (Average throws on empty)</span>
     <span class="hl-kw">double</span> avgdl = corpus.Average(d =&gt; d.Tokens.Count);
     <span class="hl-kw">var</span> df = <span class="hl-kw">new</span> Dictionary&lt;<span class="hl-kw">string</span>, <span class="hl-kw">int</span>&gt;();
     <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> d <span class="hl-kw">in</span> corpus)
@@ -163,7 +167,7 @@ Error E_2001 means internal storage is full. Delete old recordings to continue.<
   <span class="hl-kw">return</span> docs
     .map((d, i) =&gt; ({ name: d.name, score: scores[i] }))
     .filter((x) =&gt; x.score &gt; <span class="hl-num">0</span>)
-    .sort((a, b) =&gt; b.score - a.score || a.name.localeCompare(b.name))
+    .sort((a, b) =&gt; b.score - a.score || cmpOrdinal(a.name, b.name))
     .map((x) =&gt; x.name);
 }
 
@@ -173,7 +177,7 @@ Error E_2001 means internal storage is full. Delete old recordings to continue.<
     ranking.forEach((name, pos) =&gt; fused.set(name, (fused.get(name) ?? <span class="hl-num">0</span>) + <span class="hl-num">1</span> / (RRF_K + pos + <span class="hl-num">1</span>)));
   }
   <span class="hl-kw">return</span> [...fused.entries()]
-    .sort((a, b) =&gt; b[<span class="hl-num">1</span>] - a[<span class="hl-num">1</span>] || a[<span class="hl-num">0</span>].localeCompare(b[<span class="hl-num">0</span>]))
+    .sort((a, b) =&gt; b[<span class="hl-num">1</span>] - a[<span class="hl-num">1</span>] || cmpOrdinal(a[<span class="hl-num">0</span>], b[<span class="hl-num">0</span>]))
     .map(([name]) =&gt; name);
 }</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'><span class="hl-kw">static</span> List&lt;<span class="hl-kw">string</span>&gt; Rank(List&lt;Doc&gt; corpus, List&lt;<span class="hl-kw">double</span>&gt; scores) =&gt;
     corpus.Select((d, i) =&gt; (d.Name, Score: scores[i]))

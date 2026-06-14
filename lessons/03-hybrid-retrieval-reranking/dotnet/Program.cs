@@ -53,6 +53,7 @@ static List<string> Tokenize(string text) =>
 List<double> Bm25Scores(List<string> queryTokens, List<Doc> corpus)
 {
     int n = corpus.Count;
+    if (n == 0) return new List<double>(); // empty corpus → no scores (Average throws on empty)
     double avgdl = corpus.Average(d => d.Tokens.Count);
     var df = new Dictionary<string, int>();
     foreach (var d in corpus)

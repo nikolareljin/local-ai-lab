@@ -3,7 +3,7 @@
 Type a query; see the BM25, semantic, and fused (RRF) rankings side by side over
 the demo corpus. Reuses the demo's retrieval logic (no duplication).
 
-Run:  python web.py        (or:  ./run -l 3)
+Run:  python web.py        (or:  ./run -l 3 web)
 
 This is the interactive app for the lesson; the retrieval *algorithm* also ships
 as the polyglot one-shot `demo` (Python / Node / .NET).

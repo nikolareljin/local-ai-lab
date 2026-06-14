@@ -53,6 +53,15 @@ described by a single `lesson.json` and run, preview, and publish through one en
 - `show --html` (standalone file) now emits absolute `file://…/docs/` nav and brand links, so they stay
   usable when the page is written to an arbitrary location.
 - `tools/new-lesson.sh` opens `lesson.json` with a `with` block (no leaked file descriptor).
+- The BM25 arm in all three demos (Python / Node / C#) guards an **empty corpus** instead of dividing by
+  zero (`ZeroDivisionError` / `Infinity` / `Average` throw).
+- The Node demo uses an **ordinal** tie-break comparator instead of locale-dependent `localeCompare`, so
+  its ranking stays byte-identical with Python and .NET across locales.
+- `read_ref()` keeps file reads **inside the lesson directory**, so a `lesson.json` can't reference and
+  embed files outside it (`../../…`).
+- `./run list` and the `python3 || python` lookups in `new-lesson.sh` / `sync-curriculum.sh` no longer
+  abort under `set -euo pipefail` when the registry list or interpreter lookup fails.
+- The Lesson 3 `web.py` docstring shows the correct command (`./run -l 3 web`, not `./run -l 3`).
 
 ## [0.4.0]
 
