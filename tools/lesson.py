@@ -25,6 +25,7 @@ import shlex
 import shutil
 import socket
 import socketserver
+from urllib.parse import unquote
 import subprocess
 import sys
 from pathlib import Path
@@ -160,7 +161,8 @@ def cmd_show(args):
         # (Path.as_uri() is correct on Windows too, e.g. file:///C:/...).
         print(render_html(args.number, ldir, lesson, args.lang,
                           assets_href=(ROOT / "docs" / "assets").as_uri(),
-                          media_base=ldir.as_uri() + "/"))
+                          media_base=ldir.as_uri() + "/",
+                          nav_base=(ROOT / "docs").as_uri() + "/"))
         return 0
     lang = args.lang
     print(f"\n{RULE}\nLesson {args.number} · {lesson.get('title','')}")
@@ -407,25 +409,29 @@ def _langsel_html(langs, compact=False):
     return f'<div class="{cls}" role="group" aria-label="Language">{lbl}{btns}</div>'
 
 
-def _nav_html():
-    """The shared topbar nav: Home, a Lessons dropdown (built from the registry), Troubleshooting, About."""
-    items = [(1, "RAG from scratch", "./lesson-1-rag.html"), (2, "MCP servers", "./lesson-2-mcp.html")]
+def _nav_html(base="./"):
+    """The shared topbar nav: Home, a Lessons dropdown (built from the registry),
+    Troubleshooting, About. `base` prefixes every link — "./" for the relative
+    preview/published pages, or an absolute `file://…/docs/` URI for a standalone
+    `show --html` file written to an arbitrary location."""
+    items = [(1, "RAG from scratch", "lesson-1-rag.html"), (2, "MCP servers", "lesson-2-mcp.html")]
     reg = registry()
     for n in sorted(reg):
         with open(reg[n] / "lesson.json", encoding="utf-8") as fh:
             m = json.load(fh)
         slug = m.get("slug") or re.sub(r"^\d+-", "", reg[n].name)
         if m.get("status") == "working":
-            items.append((n, m.get("title", ""), f"./lesson-{n}-{slug}.html"))
-    links = "".join(f'<a href="{html.escape(h, quote=True)}">{n} · {_esc(t)}</a>' for n, t, h in items)
-    return ('<a href="./index.html">Home</a>'
+            items.append((n, m.get("title", ""), f"lesson-{n}-{slug}.html"))
+    href = lambda p: html.escape(base + p, quote=True)
+    links = "".join(f'<a href="{href(h)}">{n} · {_esc(t)}</a>' for n, t, h in items)
+    return (f'<a href="{href("index.html")}">Home</a>'
             '<details class="nav-dd"><summary>Lessons</summary>'
             f'<div class="nav-dd-menu">{links}</div></details>'
-            '<a href="./troubleshooting.html">Troubleshooting</a>'
-            '<a href="./about.html">About</a>')
+            f'<a href="{href("troubleshooting.html")}">Troubleshooting</a>'
+            f'<a href="{href("about.html")}">About</a>')
 
 
-def render_html(number, ldir, lesson, lang=None, assets_href="/assets", media_base=""):
+def render_html(number, ldir, lesson, lang=None, assets_href="/assets", media_base="", nav_base="./"):
     """Render a lesson to the step-by-step slideshow HTML, template-driven.
 
     Reads tools/templates/lesson-preview.html and fills it from lesson.json. Elements
@@ -465,7 +471,8 @@ def render_html(number, ldir, lesson, lang=None, assets_href="/assets", media_ba
     return (template
             .replace("{{LANG_INIT}}", lang_init)
             .replace("{{ASSETS}}", assets_href)
-            .replace("{{NAV}}", _nav_html())
+            .replace("{{NAV}}", _nav_html(nav_base))
+            .replace("{{HOME}}", html.escape(nav_base + "index.html", quote=True))
             .replace("{{NUMBER}}", str(number))
             .replace("{{TITLE}}", _esc(lesson.get("title", "")))
             .replace("{{SUMMARY}}", _inline(lesson.get("summary", "")))
@@ -506,7 +513,9 @@ def cmd_preview(args):
             super().do_GET()
 
         def translate_path(self, path):
-            rel = path.split("?", 1)[0].split("#", 1)[0].lstrip("/")
+            # URL-decode BEFORE normalizing, so percent-encoded traversal
+            # (e.g. %2e%2e/ -> ../) can't slip past the ".." check below.
+            rel = unquote(path.split("?", 1)[0].split("#", 1)[0]).lstrip("/")
             clean = os.path.normpath(rel)
             if clean in (".", "") or clean.startswith("..") or os.path.isabs(clean):
                 return str(Path(ldir) / "__not_found__")   # block traversal outside the roots

@@ -21,7 +21,8 @@ py="$(command -v python3 || command -v python)"
 "$py" - "$dest/lesson.json" "$title" "$slug" <<'PY'
 import json, sys
 path, title, slug = sys.argv[1:4]
-data = json.load(open(path, encoding="utf-8"))
+with open(path, encoding="utf-8") as fh:
+    data = json.load(fh)
 if data.get("title") == "TITLE":
     data["title"] = title
 if data.get("slug") == "SLUG":

@@ -48,6 +48,11 @@ described by a single `lesson.json` and run, preview, and publish through one en
 - The homepage curriculum cards now reflect the **reordered (Option A) curriculum** — all 15 lessons in
   their new positions (Lessons 1-3 Available; 4-15 Planned), so the cards match the nav dropdown and the
   generated `CURRICULUM.md`. The function-calling model note in Troubleshooting is renumbered to Lesson 9.
+- The preview server URL-decodes the request path before normalizing it, so percent-encoded traversal
+  (e.g. `%2e%2e/`) can no longer slip past the `..` guard.
+- `show --html` (standalone file) now emits absolute `file://…/docs/` nav and brand links, so they stay
+  usable when the page is written to an arbitrary location.
+- `tools/new-lesson.sh` opens `lesson.json` with a `with` block (no leaked file descriptor).
 
 ## [0.4.0]
 
