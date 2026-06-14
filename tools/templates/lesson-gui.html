@@ -191,6 +191,7 @@
     $("q").addEventListener("input", scheduleSearch);
 
     let timer = null;
+    let reqSeq = 0;  // guards against out-of-order responses (typing + slider changes overlap)
     function scheduleSearch() {
       clearTimeout(timer);
       timer = setTimeout(search, 250);
@@ -198,6 +199,7 @@
 
     async function search() {
       clearTimeout(timer);  // cancel any pending debounced run
+      const seq = ++reqSeq;
       const query = $("q").value;
       try {
         const r = await fetch("/api/search", {
@@ -207,10 +209,12 @@
         });
         if (!r.ok) throw new Error("server responded " + r.status);
         const d = await r.json();
+        if (seq !== reqSeq) return;  // a newer request landed first — drop this stale result
         renderArms(d.arms || []);
         renderBlocks(d.blocks || []);
       } catch (e) {
         // Surface network / parse failures instead of leaving the GUI stuck silently.
+        if (seq !== reqSeq) return;
         renderArms([]);
         renderBlocks([{ kind: "note", text: "Could not reach the local server: " + (e && e.message ? e.message : e) }]);
       }
@@ -219,9 +223,11 @@
     function renderArms(arms) {
       const box = $("arms");
       box.textContent = "";
-      arms.forEach((arm, i) => {
+      arms.forEach((arm) => {
         const card = document.createElement("div");
-        card.className = "arm" + (i === arms.length - 1 ? " hybrid" : "");
+        // The lesson decides which arm to emphasise (e.g. the fused result), so a
+        // single-arm lesson isn't mis-highlighted by position.
+        card.className = "arm" + (arm.highlight ? " hybrid" : "");
         const name = document.createElement("div");
         name.className = "name"; name.textContent = arm.label;
         card.appendChild(name);

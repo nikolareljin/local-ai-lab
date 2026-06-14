@@ -27,11 +27,6 @@ from localrag.config import load_config
 from localrag.engine import get_retriever
 from mcp_server import list_documents  # the real MCP tool, called as-is
 
-# Build the retriever once — it is exactly what `search_docs` wraps, so the GUI and
-# an MCP host return identical passages.
-CONFIG = load_config()
-RETRIEVER = get_retriever(CONFIG)
-
 PARAMS = [
     {"name": "k", "label": "search_docs · k — passages to return", "kind": "range",
      "min": 1, "max": 10, "step": 1, "default": 5},
@@ -70,7 +65,9 @@ def search(query, values):
                                      "MCP host (e.g. Claude Code) would make over stdio, and shows what it returns."},
             _corpus_block()]}
 
-    hits = RETRIEVER.search(query, k)
+    # Fetch the retriever per request — exactly the path `search_docs` takes — so the
+    # GUI reflects files added to / removed from documents/ while it is running.
+    hits = get_retriever(load_config()).search(query, k)
     sources = [f'{h["source"]}:{h["page_number"]}' for h in hits]
     arms = [{"label": f"search_docs → {len(sources)} cited passage(s)", "ranking": sources}]
     if hits:

@@ -175,7 +175,7 @@ def search(query, values):
     arms = [
         {"label": "BM25 (lexical)", "ranking": lexical},
         {"label": "Semantic (stand-in)", "ranking": semantic},
-        {"label": "Hybrid (RRF)", "ranking": fused},
+        {"label": "Hybrid (RRF)", "ranking": fused, "highlight": True},
     ]
     return {"arms": arms, "blocks": _why_blocks(q, bm, sem, lexical, semantic, rrf_k, synonyms)}
 

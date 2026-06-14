@@ -176,7 +176,8 @@ uses the **Claude Code CLI** as the AI — no API key, it just uses your existin
 ./run -l 1 ask "How do I reset the device?"  # one-shot question in the terminal
 ./run -l 1 repl                              # interactive Q&A loop
 ./run -l 1 test                              # run Lesson 1 tests
-./run -l 2                                   # demo the MCP server end-to-end (no LLM needed)
+./run -l 2                                   # launch the MCP tool GUI (auto-picks a free port)
+./run -l 2 demo                              # call the MCP tools over stdio in the terminal (no LLM needed)
 ./run -l 2 register                          # register the MCP server with Claude Code
 ./run -l 2 serve                             # run the MCP server over stdio
 ./run -l 2 test                              # run Lesson 2 tests
@@ -185,7 +186,8 @@ uses the **Claude Code CLI** as the AI — no API key, it just uses your existin
 ./run -h                                     # full help
 ```
 
-Lessons **3–8** are written guides for now: `./run -l 3` points you to `LESSON3.md`.
+Lesson **3** is interactive too — `./run -l 3` opens its experiment GUI (or `./run -l 3 demo` for the
+one-shot terminal run). Lessons **4–8** are written guides for now.
 
 First-time setup and per-lesson dependencies for **Linux, macOS, and Windows** (Python, Node.js,
 C#) are in **[INSTALL.md](./INSTALL.md)** ([PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)).

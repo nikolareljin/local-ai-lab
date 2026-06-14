@@ -36,9 +36,9 @@ from flask import Flask, Response, jsonify, request
 TEMPLATE = Path(__file__).resolve().parent / "templates" / "lesson-gui.html"
 
 
-def _free_port() -> int:
+def _free_port(host: str = "127.0.0.1") -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("127.0.0.1", 0))
+        s.bind((host, 0))  # pick a port free on the same interface serve() binds
         return s.getsockname()[1]
 
 
@@ -113,6 +113,6 @@ def serve(
             message = f"{type(exc).__name__}: {exc}"
             return jsonify({"arms": [], "blocks": [{"kind": "note", "text": f"Error — {message}"}]}), 200
 
-    chosen = port or _free_port()
+    chosen = port or _free_port(host)
     print(f"{title} → http://{host}:{chosen}  (Ctrl-C to stop)", flush=True)
     app.run(host=host, port=chosen, debug=False)
