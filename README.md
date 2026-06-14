@@ -137,7 +137,7 @@ claude mcp add local-ai-lab-docs -- python mcp_server.py
 
 **Polyglot:** the same server is also built on the official **Node.js**
 ([`node/lesson-2`](./node/lesson-2)) and **C# / .NET** ([`dotnet/lesson-2`](./dotnet/lesson-2))
-MCP SDKs — try `./run -l 2 demo --lang node` or `./run -l 2 demo --lang csharp`.
+MCP SDKs — try `./run -l 2 --lang node demo` or `./run -l 2 --lang csharp demo`.
 
 Full walkthrough: [LESSON2.md](./LESSON2.md) · [interactive lesson](https://nikolareljin.github.io/local-ai-lab/lesson-2-mcp.html).
 
@@ -154,7 +154,7 @@ previewed, and published through one engine (`tools/lesson.py`).
 ```bash
 ./run -l 3                 # interactive experiment GUI: tune BM25 k1/b, RRF k, synonyms — live
 ./run -l 3 demo            # one-shot: print the BM25 / semantic / fused rankings and exit
-./run -l 3 demo --lang node|csharp   # the same algorithm, byte-identical, in the other ports
+./run -l 3 --lang node|csharp demo   # the same algorithm, byte-identical, in the other ports
 ./run -l 3 test            # offline test pinning the lesson's claims
 ```
 
@@ -214,7 +214,7 @@ uses the **Claude Code CLI** as the AI — no API key, it just uses your existin
 ./run -l 2 serve                             # run the MCP server over stdio
 ./run -l 2 test                              # run Lesson 2 tests
 ./run -l 1 --lang node                       # Node.js impl (Lessons 1-3 ported; else points to Python)
-./run -l 2 demo --lang csharp                # C# MCP server, demoed end-to-end
+./run -l 2 --lang csharp demo                # C# MCP server, demoed end-to-end
 ./run -h                                     # full help
 ```
 

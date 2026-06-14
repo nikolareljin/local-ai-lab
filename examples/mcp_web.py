@@ -41,12 +41,20 @@ EXAMPLES = [
 ]
 
 
+# list_documents() returns this exact sentinel string when the corpus is empty.
+_EMPTY_CORPUS = "(no documents indexed yet)"
+
+
 def _corpus_block():
     """The list_documents() tool output, shown as chips — the corpus the server sees."""
-    names = [n for n in list_documents().splitlines() if n.strip()]
+    raw = list_documents().strip()
+    if not raw or raw == _EMPTY_CORPUS:
+        items = [{"text": _EMPTY_CORPUS, "muted": True}]  # don't render the sentinel as a real doc
+    else:
+        items = [{"text": n} for n in raw.splitlines() if n.strip()]
     return {"kind": "tokens",
             "title": "list_documents() — the corpus this MCP server exposes",
-            "items": [{"text": n} for n in names] or [{"text": "(no documents indexed)", "muted": True}]}
+            "items": items}
 
 
 def _passage(text, full):

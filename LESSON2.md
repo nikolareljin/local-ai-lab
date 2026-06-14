@@ -16,7 +16,7 @@
 > **Polyglot:** this lesson ships in **Python** (reference, below), **Node.js**
 > ([`node/lesson-2`](./node/lesson-2)) and **C# / .NET 8**
 > ([`dotnet/lesson-2`](./dotnet/lesson-2)) — each on its official MCP SDK, each
-> reusing its own Lesson 1 retriever. Run the demo of any of them with `./run -l 2 demo --lang python|node|csharp` (bare `./run -l 2` opens the interactive tool GUI).
+> reusing its own Lesson 1 retriever. Run the demo of any of them with `./run -l 2 --lang python|node|csharp demo` (bare `./run -l 2` opens the interactive tool GUI).
 
 ---
 
@@ -264,8 +264,8 @@ server over stdio and prints cited passages.
 
 ```bash
 ./run -l 2 demo                  # Python (reference) · FastMCP + mcp stdio client
-./run -l 2 demo --lang node      # Node.js     · @modelcontextprotocol/sdk (McpServer)
-./run -l 2 demo --lang csharp    # C# / .NET 8 · ModelContextProtocol ([McpServerTool])
+./run -l 2 --lang node demo      # Node.js     · @modelcontextprotocol/sdk (McpServer)
+./run -l 2 --lang csharp demo    # C# / .NET 8 · ModelContextProtocol ([McpServerTool])
 ```
 
 (Bare `./run -l 2` opens the interactive tool GUI instead; `demo` is the one-shot stdio client.)

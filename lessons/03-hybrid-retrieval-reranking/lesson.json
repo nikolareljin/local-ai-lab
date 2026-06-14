@@ -52,9 +52,9 @@
       "body": "Now run it — this executes the exact file you just read through, over the corpus from Step 1. It prints the BM25, semantic and fused (RRF) rankings for two contrasting queries, then exits — identical output in all three languages. (Bare `./run -l 3` opens the interactive GUI instead — that's the next step; `demo` is the one-shot print-and-exit.)",
       "display": "./run -l 3 demo", "shell": "python python/hybrid_demo.py" },
     { "type": "command", "action": "demo", "lang": "node", "group": "run-demo",
-      "display": "./run -l 3 demo --lang node", "shell": "node node/hybrid_demo.mjs" },
+      "display": "./run -l 3 --lang node demo", "shell": "node node/hybrid_demo.mjs" },
     { "type": "command", "action": "demo", "lang": "csharp", "group": "run-demo",
-      "display": "./run -l 3 demo --lang csharp", "shell": "dotnet run --project dotnet -c Release --nologo" },
+      "display": "./run -l 3 --lang csharp demo", "shell": "dotnet run --project dotnet -c Release --nologo" },
 
     { "type": "note", "kicker": "Run it", "title": "Read the output",
       "file": "expected-output.txt",

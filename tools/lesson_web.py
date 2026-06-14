@@ -53,7 +53,7 @@ def _coerce(params, raw):
             try:
                 value = float(value)
             except (TypeError, ValueError):
-                value = float(p.get("default", 0))
+                value = float(p.get("default") or 0)  # `or 0` so a missing/None default can't 500
         elif p.get("kind") == "toggle":
             # Coerce strings explicitly so "false"/"0"/"off"/"no"/"" read as False
             # (plain bool("false") is True, which would silently invert the toggle).

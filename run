@@ -36,7 +36,7 @@ Examples:
   ./run -l 2 demo                             # call the MCP tools over stdio in the terminal (no LLM needed)
   ./run -l 3                                  # launch Lesson 3's experiment GUI (auto-picks a free port)
   ./run -l 3 demo                             # one-shot demo: print the rankings and exit (Python)
-  ./run -l 3 demo --lang csharp               # the C#/.NET port of the Lesson 3 demo
+  ./run -l 3 --lang csharp demo               # the C#/.NET port of the Lesson 3 demo
   ./run -l 3 show                             # walk through Lesson 3's steps (terminal)
   ./run -l 3 preview                          # preview the instructions in a browser, locally
   ./run -l 3 show --html > /tmp/l3.html        # standalone HTML of the instructions

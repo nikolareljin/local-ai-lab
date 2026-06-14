@@ -77,7 +77,7 @@
     <section class="panel">
       <h2>Ask</h2>
       <div class="row">
-        <input id="q" type="text" placeholder="type a query…" autofocus />
+        <input id="q" type="text" placeholder="type a query…" aria-label="Search query" autofocus />
         <button id="go">Search ▶</button>
       </div>
       <div id="examples" class="examples"></div>
@@ -213,10 +213,10 @@
         renderArms(d.arms || []);
         renderBlocks(d.blocks || []);
       } catch (e) {
-        // Surface network / parse failures instead of leaving the GUI stuck silently.
+        // Covers network failures, non-2xx responses, and JSON parse errors alike.
         if (seq !== reqSeq) return;
         renderArms([]);
-        renderBlocks([{ kind: "note", text: "Could not reach the local server: " + (e && e.message ? e.message : e) }]);
+        renderBlocks([{ kind: "note", text: "Search request failed: " + (e && e.message ? e.message : e) }]);
       }
     }
 
