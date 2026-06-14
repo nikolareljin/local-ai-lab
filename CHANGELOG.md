@@ -45,8 +45,9 @@ described by a single `lesson.json` and run, preview, and publish through one en
 - `--lang` is constrained to `python|node|csharp` at parse time across `run`/`show`/`preview`/`build`,
   so an unknown value fails fast instead of rendering empty/hidden content.
 - `tools/sync-curriculum.sh` fails with a clear message when no Python interpreter is found.
-- The homepage curriculum card for Lesson 3 now matches the dropdown — **Hybrid retrieval & reranking
-  (Available)** instead of the stale "LangChain (Planned)".
+- The homepage curriculum cards now reflect the **reordered (Option A) curriculum** — all 15 lessons in
+  their new positions (Lessons 1-3 Available; 4-15 Planned), so the cards match the nav dropdown and the
+  generated `CURRICULUM.md`. The function-calling model note in Troubleshooting is renumbered to Lesson 9.
 
 ## [0.4.0]
 
