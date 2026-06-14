@@ -497,18 +497,24 @@ def render_html(number, ldir, lesson, lang=None, assets_href="/assets", media_ba
         lang_init = ("try{document.documentElement.dataset.lang="
                      "localStorage.getItem('localrag-lang')||'python'}"
                      "catch(e){document.documentElement.dataset.lang='python'}")
-    return (template
-            .replace("{{LANG_INIT}}", lang_init)
-            .replace("{{ASSETS}}", assets_href)
-            .replace("{{NAV}}", _nav_html(nav_base))
-            .replace("{{HOME}}", html.escape(nav_base + "index.html", quote=True))
-            .replace("{{ABOUT}}", html.escape(nav_base + "about.html", quote=True))
-            .replace("{{NUMBER}}", str(number))
-            .replace("{{TITLE}}", _esc(lesson.get("title", "")))
-            .replace("{{SUMMARY}}", _inline(lesson.get("summary", "")))
-            .replace("{{LANGSEL}}", _langsel_html(langs))
-            .replace("{{LANGSEL_COMPACT}}", _langsel_html(langs, compact=True))
-            .replace("{{SLIDES}}", slides))
+    out = (template
+           .replace("{{LANG_INIT}}", lang_init)
+           .replace("{{ASSETS}}", assets_href)
+           .replace("{{NAV}}", _nav_html(nav_base))
+           .replace("{{HOME}}", html.escape(nav_base + "index.html", quote=True))
+           .replace("{{ABOUT}}", html.escape(nav_base + "about.html", quote=True))
+           .replace("{{NUMBER}}", str(number))
+           .replace("{{TITLE}}", _esc(lesson.get("title", "")))
+           .replace("{{SUMMARY}}", _inline(lesson.get("summary", "")))
+           .replace("{{LANGSEL}}", _langsel_html(langs))
+           .replace("{{LANGSEL_COMPACT}}", _langsel_html(langs, compact=True))
+           .replace("{{SLIDES}}", slides))
+    # Inject the "generated" banner into the OUTPUT only — keeping it out of the
+    # template itself, which contributors are meant to edit.
+    banner = ("<!-- GENERATED FILE — do not edit by hand. Built by tools/lesson.py "
+              "(`./run -l N build`) from lessons/NN-slug/lesson.json; edit the lesson.json "
+              "or tools/templates/lesson-preview.html instead. -->")
+    return out.replace("<!doctype html>", "<!doctype html>\n" + banner, 1)
 
 
 def free_port():

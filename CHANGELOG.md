@@ -88,6 +88,12 @@ described by a single `lesson.json` and run, preview, and publish through one en
   lesson as success.
 - Media elements (`image`/`video`/`media`) are confined to the lesson directory like `read_ref()`, so a
   stray `file: "../.."` can't embed files from outside it in standalone `show --html` output.
+- The "generated file — do not edit" banner is injected into built pages by the engine rather than living
+  in `tools/templates/lesson-preview.html`, so the template itself is no longer mislabeled as generated.
+- `tools/renumber-lessons.sh swap` uses a PID-scoped temp directory, so a leftover from an interrupted
+  run can't collide and corrupt the swap.
+- `lessons/README.md` now correctly states that renumbering changes a lesson's published filename
+  (`lesson-<number>-<slug>.html`) and requires rebuilding the affected pages — the dir rename isn't enough.
 
 ## [0.4.0]
 

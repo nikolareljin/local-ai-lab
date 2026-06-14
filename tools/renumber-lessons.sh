@@ -29,9 +29,12 @@ case "${1:-}" in
     a="$(dir_for "$2")"; b="$(dir_for "$3")"
     [[ -n "$a" && -n "$b" ]] || { echo "both lessons must exist (got '$a' '$b')" >&2; exit 1; }
     na="$(printf '%02d' "$2")"; nb="$(printf '%02d' "$3")"
-    git mv "$a" "lessons/__tmp_renumber"
+    # PID-scoped temp name so an interrupted earlier run can't collide with us.
+    tmp="lessons/__tmp_renumber.$$"
+    [[ -e "$tmp" ]] && { echo "temp dir $tmp already exists; aborting" >&2; exit 1; }
+    git mv "$a" "$tmp"
     git mv "$b" "lessons/${na}-$(slug_of "$b")"
-    git mv "lessons/__tmp_renumber" "lessons/${nb}-$(slug_of "$a")"
+    git mv "$tmp" "lessons/${nb}-$(slug_of "$a")"
     echo "Swapped lessons $2 and $3."
     ;;
   move)

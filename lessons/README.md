@@ -82,7 +82,9 @@ tools/renumber-lessons.sh swap 5 6    # swap two lessons
 tools/renumber-lessons.sh move 7 4    # move a lesson to a free number
 ```
 
-Cross-lesson links use slugs (not numbers) so they survive a renumber.
+A published page's filename is `lesson-<number>-<slug>.html` and the nav links to it by that name, so
+renumbering changes the URL. After a `swap`/`move`, rebuild the affected pages (`./run -l N build`) and
+update any cross-lesson links — the directory rename alone isn't enough.
 
 ## Engine
 
