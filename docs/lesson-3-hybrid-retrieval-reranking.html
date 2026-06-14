@@ -29,59 +29,37 @@
     <div class="dots"></div>
 
     <div class="deck">
-<section class='slide'><div class='step-no'>Note</div><p>BM25 and embeddings are not enemies — they solve different retrieval problems. BM25 wins exact terms (error codes, IDs); embeddings win paraphrases. Fuse both with RRF.</p></section>
-<section class='slide'><div class='step-no'>Run</div><div class='block'><div class='label'>web · python</div><pre><code class='lang-bash'>$ python python/web.py</code></pre></div><ul class='remarks'><li>Interactive hybrid-search web UI — type a query, see all three rankings.</li></ul></section>
-<section class='slide'><div class='step-no'>Run the demo</div><div class='lang lang-python'><div class='block'><div class='label'>demo · python</div><pre><code class='lang-bash'>$ python python/hybrid_demo.py</code></pre></div><ul class='remarks'><li>One-shot ranking comparison (Python).</li></ul></div><div class='lang lang-node'><div class='block'><div class='label'>demo · node</div><pre><code class='lang-bash'>$ node node/hybrid_demo.mjs</code></pre></div><ul class='remarks'><li>The Node.js port — same rankings.</li></ul></div><div class='lang lang-csharp'><div class='block'><div class='label'>demo · csharp</div><pre><code class='lang-bash'>$ dotnet run --project dotnet -c Release --nologo</code></pre></div><ul class='remarks'><li>The C#/.NET port — same rankings.</li></ul></div></section>
-<section class='slide'><div class='step-no'>Run</div><div class='block'><div class='label'>test · python</div><pre><code class='lang-bash'>$ python -m pytest -q python/test_hybrid.py</code></pre></div><ul class='remarks'><li>Offline test of the lesson's claims.</li></ul></section>
-<section class='slide'><div class='step-no'>The implementation</div><div class='lang lang-python'><div class='block'><div class='label'>python/hybrid_demo.py</div><pre><code class='lang-python'><span class="hl-str">"""Lesson 3 - hybrid retrieval demo (Python).
+<section class='slide'><div class='step-no'>Overview</div><h2>What you'll build</h2><p>Two documents about the same problem rarely use the same words. <strong>Hybrid retrieval</strong> runs two searchers over your documents and merges their results, so you catch both the <em>exact</em> matches and the ones that only match in <em>meaning</em>.</p><p><strong>BM25</strong> is keyword search — unbeatable at exact terms like an error code or a product ID, but blind to synonyms. A <strong>semantic</strong> searcher (embeddings) matches by meaning, so it finds paraphrases BM25 misses. <strong>Reciprocal Rank Fusion (RRF)</strong> combines the two ranked lists into one.</p><p>You'll build all three by hand — in Python, Node.js and C# — over a tiny offline corpus, with identical results. Pick a language with the selector above; every step follows your choice. Press → to begin.</p><pre><code>                      ┌──────────────────────┐
+                ┌────▶│   BM25  (lexical)     │   exact terms: codes, IDs, names
+                │     └──────────┬───────────┘
+   query ───────┤                │  ranked list A
+                │                 ▼
+                │           ┌──────────┐
+                │           │   RRF    │  fuse by rank ──▶  ranked results
+                │           └──────────┘
+                │                 ▲
+                │                 │  ranked list B
+                │     ┌──────────┴───────────┐
+                └────▶│ semantic  (meaning)  │   paraphrases, synonyms
+                      └──────────────────────┘</code></pre></section>
+<section class='slide'><div class='step-no'>Setup</div><h2>What you need</h2><p>The demo is <strong>offline and dependency-free</strong> — nothing to install for Python. For the other ports you only need the runtime: <strong>Node.js 18+</strong> or the <strong>.NET 8 SDK</strong>. Everything runs through the dispatcher from the repo root:</p><div class='block'><div class='label'>run</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">3</span>            <span class="hl-com"># or:  ./run -l 3 --lang node  |  --lang csharp</span></code></pre></div></section>
+<section class='slide'><div class='step-no'>Step 1</div><h2>A tiny corpus of support docs</h2><p>Our "knowledge base" is three small Markdown files in <code>data/</code> — about error codes, power problems, and first-time setup. A deliberately tiny corpus keeps the rankings easy to eyeball. Here is one of them:</p><div class='block'><div class='label'>data/error_codes.md</div><pre><code class='lang-text'># Error code reference
 
-BM25 (lexical) + a semantic stand-in, fused with Reciprocal Rank Fusion (RRF).
-Dependency-free and offline: the same compact BM25 and the same synonym-expanded
-"semantic" score are implemented identically in the Node and .NET ports, so all
-three produce the same rankings.
+## E_4096 — overheating shutdown
 
-Run:  python hybrid_demo.py
+If you see **error E_4096**, the device detected an over-temperature condition and shut down to protect
+itself. Let it cool for ten minutes, clear any vents, then power it on again. If E_4096 returns, the
+fan may have failed.
 
-PRODUCTION (see the lesson README, "From demo to production"):
-- replace the semantic stand-in with real sentence embeddings,
-- add a cross-encoder reranker over the fused top-k.
-"""</span>
+## E_2001 — storage full
 
-<span class="hl-kw">import</span> math
-<span class="hl-kw">import</span> re
-<span class="hl-kw">from</span> pathlib <span class="hl-kw">import</span> Path
-
-DATA_DIR = Path(__file__).resolve().parent.parent / <span class="hl-str">"data"</span>
-
-<span class="hl-com"># BM25 parameters</span>
-K1 = <span class="hl-num">1.5</span>
-B = <span class="hl-num">0.75</span>
-<span class="hl-com"># RRF constant</span>
-RRF_K = <span class="hl-num">60</span>
-
-<span class="hl-com"># A few synonyms so the stand-in "semantic" arm matches paraphrases, the way real</span>
-<span class="hl-com"># embeddings would. Kept identical across the Python, Node and .NET ports.</span>
-SYNONYMS = {
-    <span class="hl-str">"turn"</span>: [<span class="hl-str">"power"</span>, <span class="hl-str">"start"</span>, <span class="hl-str">"startup"</span>, <span class="hl-str">"boot"</span>],
-    <span class="hl-str">"on"</span>: [<span class="hl-str">"up"</span>],
-    <span class="hl-str">"wont"</span>: [<span class="hl-str">"fail"</span>, <span class="hl-str">"fails"</span>, <span class="hl-str">"cannot"</span>, <span class="hl-str">"dead"</span>],
-    <span class="hl-str">"broken"</span>: [<span class="hl-str">"fail"</span>, <span class="hl-str">"fails"</span>, <span class="hl-str">"dead"</span>],
-}
-
-
-<span class="hl-kw">def</span> tokenize(text):
-    <span class="hl-kw">return</span> re.findall(r<span class="hl-str">"[a-z0-9_]+"</span>, text.lower())
-
-
-<span class="hl-kw">def</span> load_docs():
-    docs = []
-    <span class="hl-kw">for</span> path <span class="hl-kw">in</span> sorted(DATA_DIR.glob(<span class="hl-str">"*.md"</span>)):
-        docs.append({<span class="hl-str">"name"</span>: path.name, <span class="hl-str">"tokens"</span>: tokenize(path.read_text(encoding=<span class="hl-str">"utf-8"</span>))})
-    <span class="hl-kw">return</span> docs
-
-
-<span class="hl-com"># --- Lexical arm: a compact BM25 (no external library) ----------------------</span>
-<span class="hl-kw">def</span> bm25_scores(query_tokens, docs):
+Error E_2001 means internal storage is full. Delete old recordings to continue.</code></pre></div></section>
+<section class='slide'><div class='step-no'>Step 2</div><h2>Turn text into tokens</h2><p>Both searchers work on <strong>tokens</strong>, not raw text. We lowercase and split on runs of letters, digits and underscores — the <em>same</em> rule in every port, so the three implementations agree exactly.</p><div class='lang lang-python'><div class='block'><div class='label'>python/hybrid_demo.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> tokenize(text):
+    <span class="hl-kw">return</span> re.findall(r<span class="hl-str">"[a-z0-9_]+"</span>, text.lower())</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/hybrid_demo.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> tokenize(text) {
+  <span class="hl-kw">return</span> (text.toLowerCase().match(/[a-z0-<span class="hl-num">9_</span>]+/g) ?? []);
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'><span class="hl-kw">static</span> List&lt;<span class="hl-kw">string</span>&gt; Tokenize(<span class="hl-kw">string</span> text) =&gt;
+    Regex.Matches(text.ToLowerInvariant(), <span class="hl-str">"[a-z0-9_]+"</span>).Select(m =&gt; m.Value).ToList();</code></pre></div></div></section>
+<section class='slide'><div class='step-no'>Step 3</div><h2>BM25 — rank by exact-term overlap</h2><p><strong>BM25</strong> scores a document by how many query terms it contains, weighting <strong>rare</strong> terms far more (a code like <code>E_4096</code> counts for much more than <code>the</code>) and damping very long documents. It is fast, needs no model, and is unbeatable when the user knows the exact string — but it can't match a synonym it has never seen.</p><div class='lang lang-python'><div class='block'><div class='label'>python/hybrid_demo.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> bm25_scores(query_tokens, docs):
     n = len(docs)
     avgdl = sum(len(d[<span class="hl-str">"tokens"</span>]) <span class="hl-kw">for</span> d <span class="hl-kw">in</span> docs) / n
     df = {}
@@ -99,104 +77,7 @@ SYNONYMS = {
             tf = d[<span class="hl-str">"tokens"</span>].count(t)
             score += idf * (tf * (K1 + <span class="hl-num">1</span>)) / (tf + K1 * (<span class="hl-num">1</span> - B + B * dl / avgdl))
         scores.append(score)
-    <span class="hl-kw">return</span> scores
-
-
-<span class="hl-com"># --- Semantic stand-in: synonym-expanded overlap (no model needed) ----------</span>
-<span class="hl-kw">def</span> semantic_scores(query_tokens, docs):
-    q = set(query_tokens)
-    <span class="hl-kw">for</span> t <span class="hl-kw">in</span> list(q):
-        q.update(SYNONYMS.get(t, []))
-    scores = []
-    <span class="hl-kw">for</span> d <span class="hl-kw">in</span> docs:
-        toks = set(d[<span class="hl-str">"tokens"</span>])
-        scores.append(len(q &amp; toks) / (len(q) <span class="hl-kw">or</span> <span class="hl-num">1</span>))
-    <span class="hl-kw">return</span> scores
-
-
-<span class="hl-kw">def</span> rank(docs, scores):
-    <span class="hl-str">"""Best-first doc names, dropping zero-score (unmatched) docs so an arm that
-    finds nothing contributes nothing to RRF. Deterministic: score desc, name asc."""</span>
-    order = sorted(range(len(docs)), key=<span class="hl-kw">lambda</span> i: (-scores[i], docs[i][<span class="hl-str">"name"</span>]))
-    <span class="hl-kw">return</span> [docs[i][<span class="hl-str">"name"</span>] <span class="hl-kw">for</span> i <span class="hl-kw">in</span> order <span class="hl-kw">if</span> scores[i] &gt; <span class="hl-num">0</span>]
-
-
-<span class="hl-kw">def</span> rrf(rankings):
-    fused = {}
-    <span class="hl-kw">for</span> ranking <span class="hl-kw">in</span> rankings:
-        <span class="hl-kw">for</span> pos, name <span class="hl-kw">in</span> enumerate(ranking):
-            fused[name] = fused.get(name, <span class="hl-num">0.0</span>) + <span class="hl-num">1.0</span> / (RRF_K + pos + <span class="hl-num">1</span>)
-    <span class="hl-kw">return</span> [name <span class="hl-kw">for</span> name, _ <span class="hl-kw">in</span> sorted(fused.items(), key=<span class="hl-kw">lambda</span> kv: (-kv[<span class="hl-num">1</span>], kv[<span class="hl-num">0</span>]))]
-
-
-<span class="hl-kw">def</span> hybrid(query, docs):
-    q = tokenize(query)
-    lexical = rank(docs, bm25_scores(q, docs))
-    semantic = rank(docs, semantic_scores(q, docs))
-    <span class="hl-kw">return</span> lexical, semantic, rrf([lexical, semantic])
-
-
-<span class="hl-kw">def</span> main():
-    docs = load_docs()
-    <span class="hl-kw">for</span> query <span class="hl-kw">in</span> [<span class="hl-str">"error E_4096"</span>, <span class="hl-str">"broken gadget"</span>]:
-        lexical, semantic, fused = hybrid(query, docs)
-        print(f<span class="hl-str">'\nQuery: "{query}"'</span>)
-        print(f<span class="hl-str">"  BM25 (lexical):   {lexical}"</span>)
-        print(f<span class="hl-str">"  Semantic (stand): {semantic}"</span>)
-        print(f<span class="hl-str">"  Hybrid (RRF):     {fused}"</span>)
-
-
-<span class="hl-kw">if</span> __name__ == <span class="hl-str">"__main__"</span>:
-    main()</code></pre></div><ul class='remarks'><li>Pure-stdlib BM25 — no <code>rank-bm25</code> dependency, so the Python, Node and .NET ports produce identical rankings.</li><li><code>tokenize()</code> lowercases and splits on <code>[a-z0-9_]+</code>; the same rule is reimplemented in every port.</li><li><code>rrf()</code> fuses by **rank** (1/(k+rank)), not by score, so BM25 and the semantic arm get an equal vote.</li><li><code>SYNONYMS</code> is the offline stand-in for embeddings — swap in a real model in production and the fusion code is unchanged.</li></ul></div><div class='lang lang-node'><div class='block'><div class='label'>node/hybrid_demo.mjs</div><pre><code class='lang-js'><span class="hl-com">// Lesson 3 - hybrid retrieval demo (Node.js, ESM).</span>
-<span class="hl-com">//</span>
-<span class="hl-com">// BM25 (lexical) + a semantic stand-in, fused with Reciprocal Rank Fusion (RRF).</span>
-<span class="hl-com">// Dependency-free and offline. The same compact BM25 and synonym-expanded</span>
-<span class="hl-com">// "semantic" score are implemented identically in the Python and .NET ports, so</span>
-<span class="hl-com">// all three produce the same rankings.</span>
-<span class="hl-com">//</span>
-<span class="hl-com">// Run:  node hybrid_demo.mjs</span>
-<span class="hl-com">//</span>
-<span class="hl-com">// PRODUCTION (see the lesson README, "From demo to production"):</span>
-<span class="hl-com">// - replace the semantic stand-in with real sentence embeddings,</span>
-<span class="hl-com">// - add a cross-encoder reranker over the fused top-k.</span>
-
-<span class="hl-kw">import</span> { readdirSync, readFileSync } <span class="hl-kw">from</span> <span class="hl-str">"node:fs"</span>;
-<span class="hl-kw">import</span> { fileURLToPath } <span class="hl-kw">from</span> <span class="hl-str">"node:url"</span>;
-<span class="hl-kw">import</span> { dirname, join } <span class="hl-kw">from</span> <span class="hl-str">"node:path"</span>;
-
-<span class="hl-kw">const</span> DATA_DIR = join(dirname(fileURLToPath(<span class="hl-kw">import</span>.meta.url)), <span class="hl-str">".."</span>, <span class="hl-str">"data"</span>);
-
-<span class="hl-kw">const</span> K1 = <span class="hl-num">1.5</span>;
-<span class="hl-kw">const</span> B = <span class="hl-num">0.75</span>;
-<span class="hl-kw">const</span> RRF_K = <span class="hl-num">60</span>;
-
-<span class="hl-com">// Kept identical across the Python, Node and .NET ports.</span>
-<span class="hl-kw">const</span> SYNONYMS = {
-  turn: [<span class="hl-str">"power"</span>, <span class="hl-str">"start"</span>, <span class="hl-str">"startup"</span>, <span class="hl-str">"boot"</span>],
-  on: [<span class="hl-str">"up"</span>],
-  wont: [<span class="hl-str">"fail"</span>, <span class="hl-str">"fails"</span>, <span class="hl-str">"cannot"</span>, <span class="hl-str">"dead"</span>],
-  broken: [<span class="hl-str">"fail"</span>, <span class="hl-str">"fails"</span>, <span class="hl-str">"dead"</span>],
-};
-
-<span class="hl-kw">function</span> tokenize(text) {
-  <span class="hl-kw">return</span> (text.toLowerCase().match(/[a-z0-<span class="hl-num">9_</span>]+/g) ?? []);
-}
-
-<span class="hl-kw">function</span> loadDocs() {
-  <span class="hl-kw">return</span> readdirSync(DATA_DIR)
-    .filter((f) =&gt; f.endsWith(<span class="hl-str">".md"</span>))
-    .sort()
-    .map((name) =&gt; ({ name, tokens: tokenize(readFileSync(join(DATA_DIR, name), <span class="hl-str">"utf8"</span>)) }));
-}
-
-<span class="hl-kw">function</span> count(arr, value) {
-  <span class="hl-kw">let</span> c = <span class="hl-num">0</span>;
-  <span class="hl-kw">for</span> (<span class="hl-kw">const</span> x <span class="hl-kw">of</span> arr) <span class="hl-kw">if</span> (x === value) c++;
-  <span class="hl-kw">return</span> c;
-}
-
-<span class="hl-com">// --- Lexical arm: a compact BM25 (no external library) ----------------------</span>
-<span class="hl-kw">function</span> bm25Scores(queryTokens, docs) {
+    <span class="hl-kw">return</span> scores</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/hybrid_demo.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> bm25Scores(queryTokens, docs) {
   <span class="hl-kw">const</span> n = docs.length;
   <span class="hl-kw">const</span> avgdl = docs.reduce((s, d) =&gt; s + d.tokens.length, <span class="hl-num">0</span>) / n;
   <span class="hl-kw">const</span> df = <span class="hl-kw">new</span> Map();
@@ -212,111 +93,7 @@ SYNONYMS = {
     }
     <span class="hl-kw">return</span> score;
   });
-}
-
-<span class="hl-com">// --- Semantic stand-in: synonym-expanded overlap (no model needed) ----------</span>
-<span class="hl-kw">function</span> semanticScores(queryTokens, docs) {
-  <span class="hl-kw">const</span> q = <span class="hl-kw">new</span> Set(queryTokens);
-  <span class="hl-kw">for</span> (<span class="hl-kw">const</span> t <span class="hl-kw">of</span> [...q]) <span class="hl-kw">for</span> (<span class="hl-kw">const</span> s <span class="hl-kw">of</span> SYNONYMS[t] ?? []) q.add(s);
-  <span class="hl-kw">return</span> docs.map((d) =&gt; {
-    <span class="hl-kw">const</span> toks = <span class="hl-kw">new</span> Set(d.tokens);
-    <span class="hl-kw">let</span> overlap = <span class="hl-num">0</span>;
-    <span class="hl-kw">for</span> (<span class="hl-kw">const</span> t <span class="hl-kw">of</span> q) <span class="hl-kw">if</span> (toks.has(t)) overlap++;
-    <span class="hl-kw">return</span> overlap / (q.size || <span class="hl-num">1</span>);
-  });
-}
-
-<span class="hl-com">// Drop zero-score (unmatched) docs so an arm that finds nothing contributes</span>
-<span class="hl-com">// nothing to RRF. Deterministic: score desc, then name asc.</span>
-<span class="hl-kw">function</span> rank(docs, scores) {
-  <span class="hl-kw">return</span> docs
-    .map((d, i) =&gt; ({ name: d.name, score: scores[i] }))
-    .filter((x) =&gt; x.score &gt; <span class="hl-num">0</span>)
-    .sort((a, b) =&gt; b.score - a.score || a.name.localeCompare(b.name))
-    .map((x) =&gt; x.name);
-}
-
-<span class="hl-kw">function</span> rrf(rankings) {
-  <span class="hl-kw">const</span> fused = <span class="hl-kw">new</span> Map();
-  <span class="hl-kw">for</span> (<span class="hl-kw">const</span> ranking <span class="hl-kw">of</span> rankings) {
-    ranking.forEach((name, pos) =&gt; fused.set(name, (fused.get(name) ?? <span class="hl-num">0</span>) + <span class="hl-num">1</span> / (RRF_K + pos + <span class="hl-num">1</span>)));
-  }
-  <span class="hl-kw">return</span> [...fused.entries()]
-    .sort((a, b) =&gt; b[<span class="hl-num">1</span>] - a[<span class="hl-num">1</span>] || a[<span class="hl-num">0</span>].localeCompare(b[<span class="hl-num">0</span>]))
-    .map(([name]) =&gt; name);
-}
-
-<span class="hl-kw">function</span> hybrid(query, docs) {
-  <span class="hl-kw">const</span> q = tokenize(query);
-  <span class="hl-kw">const</span> lexical = rank(docs, bm25Scores(q, docs));
-  <span class="hl-kw">const</span> semantic = rank(docs, semanticScores(q, docs));
-  <span class="hl-kw">return</span> { lexical, semantic, fused: rrf([lexical, semantic]) };
-}
-
-<span class="hl-kw">function</span> main() {
-  <span class="hl-kw">const</span> docs = loadDocs();
-  <span class="hl-kw">for</span> (<span class="hl-kw">const</span> query <span class="hl-kw">of</span> [<span class="hl-str">"error E_4096"</span>, <span class="hl-str">"broken gadget"</span>]) {
-    <span class="hl-kw">const</span> { lexical, semantic, fused } = hybrid(query, docs);
-    console.log(<span class="hl-str">`\nQuery: ${JSON.stringify(query)}`</span>);
-    console.log(<span class="hl-str">`  BM25 (lexical):   [${lexical.map((s) =&gt; `</span><span class="hl-str">'${s}'</span><span class="hl-str">`).join(", ")}]`</span>);
-    console.log(<span class="hl-str">`  Semantic (stand): [${semantic.map((s) =&gt; `</span><span class="hl-str">'${s}'</span><span class="hl-str">`).join(", ")}]`</span>);
-    console.log(<span class="hl-str">`  Hybrid (RRF):     [${fused.map((s) =&gt; `</span><span class="hl-str">'${s}'</span><span class="hl-str">`).join(", ")}]`</span>);
-  }
-}
-
-main();</code></pre></div><ul class='remarks'><li>ESM, Node 18+, zero dependencies — the same algorithm as the Python port.</li><li><code>tokenize()</code> uses <code>/[a-z0-9_]+/g</code>; <code>bm25Scores</code>, <code>semanticScores</code> and <code>rrf</code> mirror the Python functions.</li><li>Reads the shared <code>../data</code> corpus and prints rankings byte-identical to Python and .NET.</li></ul></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'><span class="hl-com">// Lesson 3 - hybrid retrieval demo (C# / .NET).</span>
-<span class="hl-com">//</span>
-<span class="hl-com">// BM25 (lexical) + a semantic stand-in, fused with Reciprocal Rank Fusion (RRF).</span>
-<span class="hl-com">// Dependency-free and offline. The same compact BM25 and synonym-expanded</span>
-<span class="hl-com">// "semantic" score are implemented identically in the Python and Node ports, so</span>
-<span class="hl-com">// all three produce the same rankings.</span>
-<span class="hl-com">//</span>
-<span class="hl-com">// Run:  dotnet run</span>
-<span class="hl-com">//</span>
-<span class="hl-com">// PRODUCTION (see the lesson README, "From demo to production"):</span>
-<span class="hl-com">// - replace the semantic stand-in with real sentence embeddings,</span>
-<span class="hl-com">// - add a cross-encoder reranker over the fused top-k.</span>
-
-<span class="hl-kw">using</span> System.Text.RegularExpressions;
-
-const <span class="hl-kw">double</span> K1 = <span class="hl-num">1.5</span>;
-const <span class="hl-kw">double</span> B = <span class="hl-num">0.75</span>;
-const <span class="hl-kw">int</span> RrfK = <span class="hl-num">60</span>;
-
-<span class="hl-com">// Kept identical across the Python, Node and .NET ports.</span>
-<span class="hl-kw">var</span> synonyms = <span class="hl-kw">new</span> Dictionary&lt;<span class="hl-kw">string</span>, <span class="hl-kw">string</span>[]&gt;
-{
-    [<span class="hl-str">"turn"</span>] = <span class="hl-kw">new</span>[] { <span class="hl-str">"power"</span>, <span class="hl-str">"start"</span>, <span class="hl-str">"startup"</span>, <span class="hl-str">"boot"</span> },
-    [<span class="hl-str">"on"</span>] = <span class="hl-kw">new</span>[] { <span class="hl-str">"up"</span> },
-    [<span class="hl-str">"wont"</span>] = <span class="hl-kw">new</span>[] { <span class="hl-str">"fail"</span>, <span class="hl-str">"fails"</span>, <span class="hl-str">"cannot"</span>, <span class="hl-str">"dead"</span> },
-    [<span class="hl-str">"broken"</span>] = <span class="hl-kw">new</span>[] { <span class="hl-str">"fail"</span>, <span class="hl-str">"fails"</span>, <span class="hl-str">"dead"</span> },
-};
-
-<span class="hl-kw">var</span> dataDir = FindDataDir();
-<span class="hl-kw">var</span> docs = Directory.GetFiles(dataDir, <span class="hl-str">"*.md"</span>)
-    .Select(Path.GetFileName)
-    .OrderBy(n =&gt; n, StringComparer.Ordinal)
-    .Select(name =&gt; <span class="hl-kw">new</span> Doc(name!, Tokenize(File.ReadAllText(Path.Combine(dataDir, name!)))))
-    .ToList();
-
-<span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> query <span class="hl-kw">in</span> <span class="hl-kw">new</span>[] { <span class="hl-str">"error E_4096"</span>, <span class="hl-str">"broken gadget"</span> })
-{
-    <span class="hl-kw">var</span> q = Tokenize(query);
-    <span class="hl-kw">var</span> lexical = Rank(docs, Bm25Scores(q, docs));
-    <span class="hl-kw">var</span> semantic = Rank(docs, SemanticScores(q, docs));
-    <span class="hl-kw">var</span> fused = Rrf(<span class="hl-kw">new</span>[] { lexical, semantic });
-
-    Console.WriteLine(<span class="hl-str">$"\nQuery: \"{query}\""</span>);
-    Console.WriteLine(<span class="hl-str">$"  BM25 (lexical):   {Fmt(lexical)}"</span>);
-    Console.WriteLine(<span class="hl-str">$"  Semantic (stand): {Fmt(semantic)}"</span>);
-    Console.WriteLine(<span class="hl-str">$"  Hybrid (RRF):     {Fmt(fused)}"</span>);
-}
-
-<span class="hl-kw">static</span> List&lt;<span class="hl-kw">string</span>&gt; Tokenize(<span class="hl-kw">string</span> text) =&gt;
-    Regex.Matches(text.ToLowerInvariant(), <span class="hl-str">"[a-z0-9_]+"</span>).Select(m =&gt; m.Value).ToList();
-
-<span class="hl-com">// --- Lexical arm: a compact BM25 (no external library) ----------------------</span>
-List&lt;<span class="hl-kw">double</span>&gt; Bm25Scores(List&lt;<span class="hl-kw">string</span>&gt; queryTokens, List&lt;Doc&gt; corpus)
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>List&lt;<span class="hl-kw">double</span>&gt; Bm25Scores(List&lt;<span class="hl-kw">string</span>&gt; queryTokens, List&lt;Doc&gt; corpus)
 {
     <span class="hl-kw">int</span> n = corpus.Count;
     <span class="hl-kw">double</span> avgdl = corpus.Average(d =&gt; d.Tokens.Count);
@@ -338,10 +115,25 @@ List&lt;<span class="hl-kw">double</span>&gt; Bm25Scores(List&lt;<span class="hl
         }
         <span class="hl-kw">return</span> score;
     }).ToList();
-}
-
-<span class="hl-com">// --- Semantic stand-in: synonym-expanded overlap (no model needed) ----------</span>
-List&lt;<span class="hl-kw">double</span>&gt; SemanticScores(List&lt;<span class="hl-kw">string</span>&gt; queryTokens, List&lt;Doc&gt; corpus)
+}</code></pre></div></div><div class='why'>Reach for BM25 when the query is a literal: an error code, a SKU, a function name, a person's name.</div></section>
+<section class='slide'><div class='step-no'>Step 4</div><h2>A semantic arm — meaning, not keywords</h2><p>A real system embeds text into vectors and matches by <strong>meaning</strong>, so paraphrases land near each other even with no shared words. To stay offline we stand in a small <strong>synonym map</strong> (<code>broken → fail, dead</code>) and score by overlap — enough to behave like embeddings for the demo, recovering documents BM25 would miss.</p><div class='lang lang-python'><div class='block'><div class='label'>python/hybrid_demo.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> semantic_scores(query_tokens, docs):
+    q = set(query_tokens)
+    <span class="hl-kw">for</span> t <span class="hl-kw">in</span> list(q):
+        q.update(SYNONYMS.get(t, []))
+    scores = []
+    <span class="hl-kw">for</span> d <span class="hl-kw">in</span> docs:
+        toks = set(d[<span class="hl-str">"tokens"</span>])
+        scores.append(len(q &amp; toks) / (len(q) <span class="hl-kw">or</span> <span class="hl-num">1</span>))
+    <span class="hl-kw">return</span> scores</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/hybrid_demo.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> semanticScores(queryTokens, docs) {
+  <span class="hl-kw">const</span> q = <span class="hl-kw">new</span> Set(queryTokens);
+  <span class="hl-kw">for</span> (<span class="hl-kw">const</span> t <span class="hl-kw">of</span> [...q]) <span class="hl-kw">for</span> (<span class="hl-kw">const</span> s <span class="hl-kw">of</span> SYNONYMS[t] ?? []) q.add(s);
+  <span class="hl-kw">return</span> docs.map((d) =&gt; {
+    <span class="hl-kw">const</span> toks = <span class="hl-kw">new</span> Set(d.tokens);
+    <span class="hl-kw">let</span> overlap = <span class="hl-num">0</span>;
+    <span class="hl-kw">for</span> (<span class="hl-kw">const</span> t <span class="hl-kw">of</span> q) <span class="hl-kw">if</span> (toks.has(t)) overlap++;
+    <span class="hl-kw">return</span> overlap / (q.size || <span class="hl-num">1</span>);
+  });
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>List&lt;<span class="hl-kw">double</span>&gt; SemanticScores(List&lt;<span class="hl-kw">string</span>&gt; queryTokens, List&lt;Doc&gt; corpus)
 {
     <span class="hl-kw">var</span> q = <span class="hl-kw">new</span> HashSet&lt;<span class="hl-kw">string</span>&gt;(queryTokens);
     <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> t <span class="hl-kw">in</span> q.ToList())
@@ -354,11 +146,36 @@ List&lt;<span class="hl-kw">double</span>&gt; SemanticScores(List&lt;<span class
         <span class="hl-kw">int</span> overlap = q.Count(toks.Contains);
         <span class="hl-kw">return</span> (<span class="hl-kw">double</span>)overlap / Math.Max(q.Count, <span class="hl-num">1</span>);
     }).ToList();
+}</code></pre></div></div><div class='why'>Swap the synonym stand-in for a real embedding model in production — the fusion code below does not change.</div></section>
+<section class='slide'><div class='step-no'>Step 5</div><h2>Fuse the two with Reciprocal Rank Fusion</h2><p>Each arm produces a ranked list. <strong>RRF</strong> adds up <code>1 / (k + rank)</code> across the lists, so a document near the top of <em>either</em> list rises — it fuses by <strong>rank</strong>, not raw score, giving the two arms an equal vote. We also drop zero-score documents, so an arm that finds nothing contributes nothing.</p><div class='lang lang-python'><div class='block'><div class='label'>python/hybrid_demo.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> rank(docs, scores):
+    <span class="hl-str">"""Best-first doc names, dropping zero-score (unmatched) docs so an arm that
+    finds nothing contributes nothing to RRF. Deterministic: score desc, name asc."""</span>
+    order = sorted(range(len(docs)), key=<span class="hl-kw">lambda</span> i: (-scores[i], docs[i][<span class="hl-str">"name"</span>]))
+    <span class="hl-kw">return</span> [docs[i][<span class="hl-str">"name"</span>] <span class="hl-kw">for</span> i <span class="hl-kw">in</span> order <span class="hl-kw">if</span> scores[i] &gt; <span class="hl-num">0</span>]
+
+
+<span class="hl-kw">def</span> rrf(rankings):
+    fused = {}
+    <span class="hl-kw">for</span> ranking <span class="hl-kw">in</span> rankings:
+        <span class="hl-kw">for</span> pos, name <span class="hl-kw">in</span> enumerate(ranking):
+            fused[name] = fused.get(name, <span class="hl-num">0.0</span>) + <span class="hl-num">1.0</span> / (RRF_K + pos + <span class="hl-num">1</span>)
+    <span class="hl-kw">return</span> [name <span class="hl-kw">for</span> name, _ <span class="hl-kw">in</span> sorted(fused.items(), key=<span class="hl-kw">lambda</span> kv: (-kv[<span class="hl-num">1</span>], kv[<span class="hl-num">0</span>]))]</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/hybrid_demo.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> rank(docs, scores) {
+  <span class="hl-kw">return</span> docs
+    .map((d, i) =&gt; ({ name: d.name, score: scores[i] }))
+    .filter((x) =&gt; x.score &gt; <span class="hl-num">0</span>)
+    .sort((a, b) =&gt; b.score - a.score || a.name.localeCompare(b.name))
+    .map((x) =&gt; x.name);
 }
 
-<span class="hl-com">// Drop zero-score (unmatched) docs so an arm that finds nothing contributes</span>
-<span class="hl-com">// nothing to RRF. Deterministic: score desc, then name asc.</span>
-<span class="hl-kw">static</span> List&lt;<span class="hl-kw">string</span>&gt; Rank(List&lt;Doc&gt; corpus, List&lt;<span class="hl-kw">double</span>&gt; scores) =&gt;
+<span class="hl-kw">function</span> rrf(rankings) {
+  <span class="hl-kw">const</span> fused = <span class="hl-kw">new</span> Map();
+  <span class="hl-kw">for</span> (<span class="hl-kw">const</span> ranking <span class="hl-kw">of</span> rankings) {
+    ranking.forEach((name, pos) =&gt; fused.set(name, (fused.get(name) ?? <span class="hl-num">0</span>) + <span class="hl-num">1</span> / (RRF_K + pos + <span class="hl-num">1</span>)));
+  }
+  <span class="hl-kw">return</span> [...fused.entries()]
+    .sort((a, b) =&gt; b[<span class="hl-num">1</span>] - a[<span class="hl-num">1</span>] || a[<span class="hl-num">0</span>].localeCompare(b[<span class="hl-num">0</span>]))
+    .map(([name]) =&gt; name);
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'><span class="hl-kw">static</span> List&lt;<span class="hl-kw">string</span>&gt; Rank(List&lt;Doc&gt; corpus, List&lt;<span class="hl-kw">double</span>&gt; scores) =&gt;
     corpus.Select((d, i) =&gt; (d.Name, Score: scores[i]))
         .Where(x =&gt; x.Score &gt; <span class="hl-num">0</span>)
         .OrderByDescending(x =&gt; x.Score)
@@ -377,139 +194,9 @@ List&lt;<span class="hl-kw">double</span>&gt; SemanticScores(List&lt;<span class
         .ThenBy(kv =&gt; kv.Key, StringComparer.Ordinal)
         .Select(kv =&gt; kv.Key)
         .ToList();
-}
-
-<span class="hl-kw">static</span> <span class="hl-kw">string</span> Fmt(List&lt;<span class="hl-kw">string</span>&gt; names) =&gt; <span class="hl-str">"["</span> + <span class="hl-kw">string</span>.Join(<span class="hl-str">", "</span>, names.Select(s =&gt; <span class="hl-str">$"'{s}'"</span>)) + <span class="hl-str">"]"</span>;
-
-<span class="hl-com">// Walk up from the executable and the working directory to find the shared data/ folder.</span>
-<span class="hl-kw">static</span> <span class="hl-kw">string</span> FindDataDir()
-{
-    <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> start <span class="hl-kw">in</span> <span class="hl-kw">new</span>[] { AppContext.BaseDirectory, Directory.GetCurrentDirectory() })
-    {
-        <span class="hl-kw">var</span> dir = <span class="hl-kw">new</span> DirectoryInfo(start);
-        <span class="hl-kw">while</span> (dir != <span class="hl-kw">null</span>)
-        {
-            <span class="hl-kw">var</span> candidate = Path.Combine(dir.FullName, <span class="hl-str">"data"</span>, <span class="hl-str">"error_codes.md"</span>);
-            <span class="hl-kw">if</span> (File.Exists(candidate)) <span class="hl-kw">return</span> Path.Combine(dir.FullName, <span class="hl-str">"data"</span>);
-            dir = dir.Parent;
-        }
-    }
-    <span class="hl-kw">throw</span> <span class="hl-kw">new</span> DirectoryNotFoundException(<span class="hl-str">"Could not locate the lesson 'data/' directory."</span>);
-}
-
-<span class="hl-kw">record</span> Doc(<span class="hl-kw">string</span> Name, List&lt;<span class="hl-kw">string</span>&gt; Tokens);</code></pre></div><ul class='remarks'><li>.NET 8 top-level program, no NuGet packages — the same BM25 + RRF as the other ports.</li><li>Uses <code>Regex</code>, <code>Dictionary</code> and LINQ; tie-breaks with <code>StringComparer.Ordinal</code> so ordering matches the others.</li><li>Walks up from the build output to locate the shared <code>data/</code> corpus.</li></ul></div></section>
-<section class='slide'><div class='step-no'>python/web.py</div><div class='block'><div class='label'>python/web.py</div><pre><code class='lang-python'><span class="hl-str">"""Lesson 3 - interactive hybrid-search web UI.
-
-Type a query; see the BM25, semantic, and fused (RRF) rankings side by side over
-the demo corpus. Reuses the demo's retrieval logic (no duplication).
-
-Run:  python web.py        (or:  ./run -l 3)
-
-This is the interactive app for the lesson; the retrieval *algorithm* also ships
-as the polyglot one-shot `demo` (Python / Node / .NET).
-"""</span>
-
-<span class="hl-kw">import</span> html
-<span class="hl-kw">import</span> socket
-<span class="hl-kw">from</span> pathlib <span class="hl-kw">import</span> Path
-
-<span class="hl-kw">from</span> flask <span class="hl-kw">import</span> Flask, request
-
-<span class="hl-kw">from</span> hybrid_demo <span class="hl-kw">import</span> hybrid, tokenize
-
-app = Flask(__name__)
-
-<span class="hl-com"># The interactive UI searches the Fictive Story corpus (a richer, fun document) —</span>
-<span class="hl-com"># the best way to feel hybrid retrieval on real prose. The byte-checked `demo`</span>
-<span class="hl-com"># action keeps using the tiny data/ corpus.</span>
-STORY_DIR = Path(__file__).resolve().parent.parent / <span class="hl-str">"story"</span>
-
-
-<span class="hl-kw">def</span> load_story():
-    docs = []
-    <span class="hl-kw">for</span> path <span class="hl-kw">in</span> sorted(STORY_DIR.glob(<span class="hl-str">"*.md"</span>)):
-        docs.append({<span class="hl-str">"name"</span>: path.name, <span class="hl-str">"tokens"</span>: tokenize(path.read_text(encoding=<span class="hl-str">"utf-8"</span>))})
-    <span class="hl-kw">return</span> docs
-
-
-DOCS = load_story()
-
-PAGE = <span class="hl-str">"""&lt;!doctype html&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta charset="utf-8"&gt;&lt;title&gt;Lesson 3 · Hybrid search&lt;/title&gt;
-&lt;style&gt;
-  body {{ font: 16px/1.5 system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }}
-  h1 {{ font-size: 1.2rem; }}
-  form {{ display: flex; gap: .5rem; margin: 1rem 0; }}
-  input[type=text] {{ flex: 1; padding: .5rem; font-size: 1rem; }}
-  button {{ padding: .5rem 1rem; }}
-  table {{ border-collapse: collapse; width: 100%; margin-top: 1rem; }}
-  th, td {{ text-align: left; padding: .4rem .6rem; border-bottom: 1px solid #ddd; }}
-  th {{ width: 9rem; color: #444; }}
-  code {{ background: #f4f4f4; padding: .1rem .3rem; border-radius: 3px; }}
-  .hint {{ color: #666; }}
-&lt;/style&gt;&lt;/head&gt;&lt;body&gt;
-&lt;h1&gt;Lesson 3 · Hybrid search — &lt;em&gt;The Voyage of Caretta the Magnificent&lt;/em&gt;&lt;/h1&gt;
-&lt;p class="hint"&gt;Searching the 5-chapter fictive story. BM25 wins exact terms; the semantic stand-in wins
-paraphrases; RRF fuses both. Try an exact name like &lt;code&gt;Nuevo Edén&lt;/code&gt; or
-&lt;code&gt;Alpha Centauri&lt;/code&gt;, or a paraphrase like &lt;code&gt;who found the new planet&lt;/code&gt;.&lt;/p&gt;
-&lt;form method="get" action="/"&gt;
-  &lt;input type="text" name="q" value="{query}" placeholder="ask the docs…" autofocus&gt;
-  &lt;button type="submit"&gt;Search ▶&lt;/button&gt;
-&lt;/form&gt;
-{results}
-&lt;/body&gt;&lt;/html&gt;"""</span>
-
-
-<span class="hl-kw">def</span> render_results(query):
-    <span class="hl-kw">if</span> <span class="hl-kw">not</span> query:
-        <span class="hl-kw">return</span> <span class="hl-str">'&lt;p class="hint"&gt;Enter a query above.&lt;/p&gt;'</span>
-    lexical, semantic, fused = hybrid(query, DOCS)
-    rows = [
-        (<span class="hl-str">"BM25 (lexical)"</span>, lexical),
-        (<span class="hl-str">"Semantic (stand-in)"</span>, semantic),
-        (<span class="hl-str">"Hybrid (RRF)"</span>, fused),
-    ]
-    body = <span class="hl-str">""</span>.join(
-        f<span class="hl-str">"&lt;tr&gt;&lt;th&gt;{label}&lt;/th&gt;&lt;td&gt;{' · '.join(html.escape(n) for n in ranking)}&lt;/td&gt;&lt;/tr&gt;"</span>
-        <span class="hl-kw">for</span> label, ranking <span class="hl-kw">in</span> rows
-    )
-    <span class="hl-kw">return</span> f<span class="hl-str">"&lt;table&gt;{body}&lt;/table&gt;"</span>
-
-
-@app.route(<span class="hl-str">"/"</span>)
-<span class="hl-kw">def</span> index():
-    query = request.args.get(<span class="hl-str">"q"</span>, <span class="hl-str">""</span>)
-    <span class="hl-kw">return</span> PAGE.format(query=html.escape(query, quote=<span class="hl-kw">True</span>), results=render_results(query))
-
-
-<span class="hl-kw">def</span> free_port():
-    <span class="hl-kw">with</span> socket.socket(socket.AF_INET, socket.SOCK_STREAM) <span class="hl-kw">as</span> s:
-        s.bind((<span class="hl-str">"127.0.0.1"</span>, <span class="hl-num">0</span>))
-        <span class="hl-kw">return</span> s.getsockname()[<span class="hl-num">1</span>]
-
-
-<span class="hl-kw">def</span> main():
-    port = free_port()
-    print(f<span class="hl-str">"Lesson 3 · Hybrid search over the fictive story → http://127.0.0.1:{port}  (Ctrl-C to stop)"</span>, flush=<span class="hl-kw">True</span>)
-    app.run(host=<span class="hl-str">"127.0.0.1"</span>, port=port)
-
-
-<span class="hl-kw">if</span> __name__ == <span class="hl-str">"__main__"</span>:
-    main()</code></pre></div><ul class='remarks'><li>Reuses <code>hybrid()</code> from <code>hybrid_demo</code> — the retrieval logic is never duplicated.</li><li>Searches the 5-chapter <code>story/</code> corpus, not the tiny <code>data/</code> demo corpus.</li><li><code>free_port()</code> binds to port 0 to grab a free port, mirroring Lesson 1's web UI.</li></ul></section>
-<section class='slide'><div class='step-no'>data/error_codes.md</div><div class='block'><div class='label'>data/error_codes.md</div><pre><code class='lang-text'># Error code reference
-
-## E_4096 — overheating shutdown
-
-If you see **error E_4096**, the device detected an over-temperature condition and shut down to protect
-itself. Let it cool for ten minutes, clear any vents, then power it on again. If E_4096 returns, the
-fan may have failed.
-
-## E_2001 — storage full
-
-Error E_2001 means internal storage is full. Delete old recordings to continue.</code></pre></div><ul class='remarks'><li>One sample document from the tiny corpus.</li></ul></section>
-<section class='slide'><div class='step-no'>Exact-keyword query to try</div><div class='block'><pre><code>error E_4096</code></pre></div></section>
-<section class='slide'><div class='step-no'>Keyword-free paraphrase to try (BM25 finds nothing)</div><div class='block'><pre><code>broken gadget</code></pre></div></section>
-<section class='slide'><div class='step-no'>Expected output (all three languages)</div><pre><code>
+}</code></pre></div></div><div class='why'>RRF is the cheapest, most robust way to combine retrievers — a few lines, no score calibration.</div></section>
+<section class='slide'><div class='step-no'>Run it</div><h2>Run the demo</h2><p>Run the whole pipeline over the corpus. It prints the BM25, semantic and fused (RRF) rankings for two contrasting queries, then exits — identical output in all three languages.</p><div class='lang lang-python'><div class='block'><div class='label'>demo · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">3</span></code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>demo · node</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">3</span> --lang node</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>demo · csharp</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">3</span> --lang csharp</code></pre></div></div></section>
+<section class='slide'><div class='step-no'>Run it</div><h2>Read the output</h2><p>Look at the two queries. <strong><code>error E_4096</code></strong> is an exact code: BM25 nails <code>error_codes.md</code>, and the semantic arm finds it too. <strong><code>broken gadget</code></strong> is a paraphrase whose words appear in <strong>no</strong> document: BM25 returns <strong>nothing</strong>, yet the semantic arm maps <em>broken → fail/dead</em> and recovers <code>power_issues.md</code> — and the hybrid keeps that hit. That single example is the whole reason to fuse.</p><pre><code>
 Query: "error E_4096"
   BM25 (lexical):   ['error_codes.md']
   Semantic (stand): ['error_codes.md']
@@ -519,21 +206,14 @@ Query: "broken gadget"
   BM25 (lexical):   []
   Semantic (stand): ['power_issues.md']
   Hybrid (RRF):     ['power_issues.md']</code></pre></section>
-<section class='slide'><div class='step-no'>Note</div><p>Test it on a richer document: <code>./run -l 3 web</code> opens an interactive search over the 5-chapter fictive story (The Voyage of Caretta the Magnificent). Watch how an exact name vs a paraphrase pick different chapters.</p></section>
-<section class='slide'><div class='step-no'>story/04-nuevo-eden.md</div><div class='block'><div class='label'>story/04-nuevo-eden.md</div><pre><code class='lang-text'># Chapter the Fourth — The Discovery of Nuevo Edén
-
-They arrived at Alpha Centauri in the spring of 2126. The signal's source proved to be a natural
-pulsing of one of the stars, but Caretta led the Ocean's Memory toward a small, blue-green world
-orbiting the gentler star Alpha Centauri B — a planet no telescope from Earth had ever resolved.
-
-Caretta had felt it the way she once felt the tides: a world with oceans, a breathable atmosphere, and
-a gravity close to Earth's. The crew named it Nuevo Edén — New Eden — and when the first probe
-confirmed liquid water and free oxygen, the cabin erupted in joy. Nuevo Edén was the first world
-beyond our solar system confirmed habitable by Earthlings. Its discovery, on the second of May,
-2126, meant humanity was not bound forever to a single fragile world — and it had been found not by
-a machine nor a human, but by a turtle who could hear the stars sing.</code></pre></div><ul class='remarks'><li>One chapter of the fictive-story corpus the web UI searches.</li></ul></section>
-<section class='slide'><div class='step-no'>Story query — exact name (BM25 wins)</div><div class='block'><pre><code>Nuevo Edén</code></pre></div></section>
-<section class='slide'><div class='step-no'>Story query — paraphrase (semantic wins)</div><div class='block'><pre><code>who found the new planet</code></pre></div></section>
+<section class='slide'><div class='step-no'>Try it</div><h2>Try the exact-term query</h2><p>Edit <code>python/hybrid_demo.py</code>'s query list (or the corpus in <code>data/</code>) and re-run. Start with the exact code — BM25 pins the matching document:</p><div class='block'><pre><code>error E_4096</code></pre></div></section>
+<section class='slide'><div class='step-no'>Try it</div><h2>Try the keyword-free paraphrase</h2><p>Now one whose words appear in no document — BM25 returns nothing, the semantic arm recovers it, and the hybrid agrees:</p><div class='block'><pre><code>broken gadget</code></pre></div></section>
+<section class='slide'><div class='step-no'>Try it</div><h2>Confirm it with the test</h2><p>An offline test pins the lesson's claims: BM25 nails the exact term, BM25 finds nothing for the paraphrase, and the hybrid recovers it. No network, no model.</p><div class='block'><div class='label'>test · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">3</span> test</code></pre></div></section>
+<section class='slide'><div class='step-no'>Optional</div><h2>Search a story in your browser</h2><p>For a richer, hands-on feel, launch an interactive search over a bundled 5-chapter story (<em>The Voyage of Caretta the Magnificent</em>). Type a query and watch all three rankings update live. The web app reuses the same <code>hybrid()</code> you just built — no retrieval logic is duplicated.</p><div class='block'><div class='label'>web · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">3</span> web</code></pre></div></section>
+<section class='slide'><div class='step-no'>Optional</div><h2>Story query — an exact name</h2><p>An exact name BM25 loves:</p><div class='block'><pre><code>Nuevo Edén</code></pre></div></section>
+<section class='slide'><div class='step-no'>Optional</div><h2>Story query — a paraphrase</h2><p>…and a paraphrase the semantic arm recovers:</p><div class='block'><pre><code>who found the new planet</code></pre></div></section>
+<section class='slide'><div class='step-no'>Going further</div><h2>From demo to production</h2><p>This is a teaching demo. For real systems:</p><p>Replace the synonym stand-in with a real <strong>embedding model</strong> for the semantic arm. Add a <strong>cross-encoder reranker</strong> over the fused top-k — usually the single biggest quality win. <strong>Rewrite</strong> vague queries before retrieval, and <strong>filter by metadata</strong> (product, version, date). And <strong>measure</strong> it: a golden-question set tells you whether hybrid actually beats either arm on <em>your</em> data.</p></section>
+<section class='slide'><div class='step-no'>Recap</div><h2>What you learned</h2><p><strong>BM25</strong> wins exact terms; a <strong>semantic</strong> arm wins paraphrases; <strong>RRF</strong> fuses them so you keep whichever arm found the answer. You built all three by hand — the same algorithm in <strong>Python, Node.js and C#</strong>, with byte-identical results — and saw a query where keyword search returns nothing yet the hybrid still answers.</p><p>Next: <strong>Lesson 4 · RAG safety &amp; prompt injection</strong>.</p></section>
     </div><!-- /deck -->
 
     <div class="controls">

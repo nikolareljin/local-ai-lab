@@ -1,0 +1,13 @@
+                      ┌──────────────────────┐
+                ┌────▶│   BM25  (lexical)     │   exact terms: codes, IDs, names
+                │     └──────────┬───────────┘
+   query ───────┤                │  ranked list A
+                │                 ▼
+                │           ┌──────────┐
+                │           │   RRF    │  fuse by rank ──▶  ranked results
+                │           └──────────┘
+                │                 ▲
+                │                 │  ranked list B
+                │     ┌──────────┴───────────┐
+                └────▶│ semantic  (meaning)  │   paraphrases, synonyms
+                      └──────────────────────┘

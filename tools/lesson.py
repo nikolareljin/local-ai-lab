@@ -145,7 +145,11 @@ def read_ref(ldir, el):
         path = ldir / el["file"]
         if not path.exists():
             return f"[missing file: {el['file']}]"
-        return path.read_text(encoding="utf-8").rstrip("\n")
+        text = path.read_text(encoding="utf-8")
+        if el.get("lines"):  # focused excerpt, e.g. "30-45" (1-based, inclusive)
+            a, b = (int(x) for x in str(el["lines"]).split("-"))
+            text = "\n".join(text.splitlines()[a - 1:b])
+        return text.rstrip("\n")
     return el.get("text", "")
 
 
@@ -213,7 +217,10 @@ def _esc(s):
 
 
 def _inline(s):
-    return re.sub(r"`([^`]+)`", r"<code>\1</code>", _esc(s))
+    s = _esc(s)
+    s = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)   # bold first
+    s = re.sub(r"\*([^*\n]+)\*", r"<em>\1</em>", s)             # then italics
+    return re.sub(r"`([^`]+)`", r"<code>\1</code>", s)
 
 
 TEMPLATE_PATH = Path(__file__).resolve().parent / "templates" / "lesson-preview.html"
@@ -298,55 +305,80 @@ def _remarks_html(el):
     return ("<ul class='remarks'>" + "".join(f"<li>{_inline(x)}</li>" for x in items) + "</ul>") if items else ""
 
 
-def _content(ldir, el, asset_base):
-    """Return (step label, inner HTML) for one element — no <section> wrapper."""
-    t, title = el.get("type"), el.get("title")
-    remarks = _remarks_html(el)
-    label = title or (t or "step").capitalize()
-    if t == "note":
-        body = read_ref(ldir, el)
-        content = f"<pre><code>{_esc(body)}</code></pre>" if "file" in el else f"<p>{_inline(body)}</p>"
-    elif t == "command":
+def _paras(text):
+    """Markdown-ish prose: blank-line-separated paragraphs, inline code/bold."""
+    if not text:
+        return ""
+    return "".join(f"<p>{_inline(p.strip())}</p>" for p in re.split(r"\n\s*\n", text) if p.strip())
+
+
+def _body_of(el):
+    if el.get("body"):
+        return el["body"]
+    # legacy: a note's `text` (with no file) is its prose
+    if el.get("type") == "note" and "file" not in el and el.get("text"):
+        return el["text"]
+    return ""
+
+
+def _kicker(el):
+    return el.get("kicker") or (el.get("type") or "step").capitalize()
+
+
+def _artifact(ldir, el, asset_base):
+    """The type-specific block for an element — command, code, config, text, media,
+    or a note's referenced file. (Note prose is handled separately as `body`.)"""
+    t = el.get("type")
+    if t == "command":
         lab = el.get("action", "run") + (f" · {el['lang']}" if el.get("lang") else "")
-        content = (f"<div class='block'><div class='label'>{_esc(lab)}</div>"
-                   f"<pre><code class='lang-bash'>$ {highlight(el['shell'], 'bash')}</code></pre></div>{remarks}")
-        label = title or "Run"
-    elif t in ("code", "config"):
+        shown = el.get("display") or el["shell"]   # friendly command to type; runner uses `shell`
+        return (f"<div class='block'><div class='label'>{_esc(lab)}</div>"
+                f"<pre><code class='lang-bash'>$ {highlight(shown, 'bash')}</code></pre></div>")
+    if t in ("code", "config"):
         lang = lang_for(el)
-        content = (f"<div class='block'><div class='label'>{_esc(el.get('file', '(inline)'))}</div>"
-                   f"<pre><code class='lang-{lang or 'text'}'>{highlight(read_ref(ldir, el), lang)}</code></pre>"
-                   f"</div>{remarks}")
-        label = title or el.get("file", t)
-    elif t == "text":
-        content = f"<div class='block'><pre><code>{_esc(read_ref(ldir, el))}</code></pre></div>"
-    elif t in ("image", "media", "video"):
+        return (f"<div class='block'><div class='label'>{_esc(el.get('file', '(inline)'))}</div>"
+                f"<pre><code class='lang-{lang or 'text'}'>{highlight(read_ref(ldir, el), lang)}</code></pre></div>")
+    if t == "text":
+        return f"<div class='block'><pre><code>{_esc(read_ref(ldir, el))}</code></pre></div>"
+    if t in ("image", "media", "video"):
         kind = el.get("kind", t)
         ref = el.get("file") or el.get("url", "")
         src = ref if (ref.startswith("http") or not asset_base) else asset_base + ref
         cap = _esc(el.get("alt") or el.get("note") or "")
         media = f"<video controls src='{src}'></video>" if kind == "video" else f"<img src='{src}' alt='{cap}'>"
-        content = f"<figure>{media}<figcaption>{cap}</figcaption></figure>"
-        label = title or kind
-    else:
-        content = f"<p>[{_esc(str(t))}]</p>"
-    return label, content
+        return f"<figure>{media}<figcaption>{cap}</figcaption></figure>"
+    if t == "note" and "file" in el:
+        return f"<pre><code>{_esc(read_ref(ldir, el))}</code></pre>"
+    return ""
+
+
+def _why(el):
+    return f"<div class='why'>{_inline(el['why'])}</div>" if el.get("why") else ""
 
 
 def _slide(ldir, el, asset_base):
-    label, content = _content(ldir, el, asset_base)
-    return f"<section class='slide'><div class='step-no'>{_esc(label)}</div>{content}</section>"
+    """A guided step: kicker → h2 title → intro prose → artifact → notes → why."""
+    heading = f"<h2>{_inline(el['title'])}</h2>" if el.get("title") else ""
+    inner = _artifact(ldir, el, asset_base) + _remarks_html(el)
+    return (f"<section class='slide'><div class='step-no'>{_esc(_kicker(el))}</div>"
+            f"{heading}{_paras(_body_of(el))}{inner}{_why(el)}</section>")
 
 
 def _group_slide(ldir, els, asset_base):
-    """One step holding the per-language variants of the same thing. The language
-    selector shows just the active language, so paging never switches language."""
-    label = next((e["title"] for e in els if e.get("title")), None) or _content(ldir, els[0], asset_base)[0]
-    parts = []
+    """One step with per-language variants. The kicker/heading/intro/why come from
+    the group's first element; each language gets its own artifact + notes, wrapped
+    in .lang so the language selector shows just the active one (paging never
+    switches language)."""
+    first = els[0]
+    title = next((e.get("title") for e in els if e.get("title")), None)
+    heading = f"<h2>{_inline(title)}</h2>" if title else ""
+    variants = []
     for el in els:
-        _, content = _content(ldir, el, asset_base)
+        block = _artifact(ldir, el, asset_base) + _remarks_html(el)
         lang = el.get("lang")
-        parts.append(f"<div class='lang lang-{lang}'>{content}</div>" if lang else content)
-    return f"<section class='slide'><div class='step-no'>{_esc(label)}</div>{''.join(parts)}</section>"
+        variants.append(f"<div class='lang lang-{lang}'>{block}</div>" if lang else block)
+    return (f"<section class='slide'><div class='step-no'>{_esc(_kicker(first))}</div>"
+            f"{heading}{_paras(_body_of(first))}{''.join(variants)}{_why(first)}</section>")
 
 
 LANG_LABELS = {"python": "Python", "node": "Node.js", "csharp": "C#"}
