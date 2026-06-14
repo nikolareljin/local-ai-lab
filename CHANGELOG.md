@@ -30,6 +30,10 @@ described by a single `lesson.json` and run, preview, and publish through one en
   Lessons 1-2 keep their bespoke dispatch (unchanged).
 - The site top-nav is now a **Lessons dropdown** (all pages); switching a lesson's language restarts it
   at step 1 so paging never changes the chosen language.
+- Lesson page footers link to the **About** page instead of the LinkedIn / "Source on GitHub" links
+  (Lessons 1 and 2, and the Lesson 3 template), matching where those links now live.
+- Lesson 3's step prose makes explicit that the code **and** the data already ship in the repo — it's a
+  read-along walkthrough, with nothing to copy or create and a single command (`./run -l 3`) to run.
 
 ### Fixed
 - Single-language renders (`build`/`preview`/`show --html --lang …`) now pin the rendered language in the
