@@ -60,6 +60,7 @@
     .stat .l { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-top:2px; }
     table { width:100%; border-collapse:collapse; font-size:13px; }
     th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--edge); }
+    td { white-space:pre-wrap; vertical-align:top; }  /* preserve newlines in verbatim passages */
     th { color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase; }
     td.num { font-family:ui-monospace,Menlo,Consolas,monospace; color:var(--accent); }
     td.miss { font-family:ui-monospace,Menlo,Consolas,monospace; color:var(--muted); }
@@ -165,7 +166,9 @@
           const sl = document.createElement("input");
           sl.type = "range"; sl.id = "p_" + p.name;
           sl.min = p.min; sl.max = p.max; sl.step = p.step; sl.value = p.default;
-          sl.addEventListener("input", () => { val.textContent = sl.value; });
+          // Update the readout immediately and recompute live (debounced) while dragging,
+          // not only on release; `change` still fires an immediate search when committed.
+          sl.addEventListener("input", () => { val.textContent = sl.value; scheduleSearch(); });
           sl.addEventListener("change", search);
           wrap.append(lab, sl);
         }

@@ -58,8 +58,10 @@ def _corpus_block():
 
 
 def _passage(text, full):
-    flat = " ".join(text.split())
-    return flat if full else (flat[:240] + ("…" if len(flat) > 240 else ""))
+    if full:
+        return text  # verbatim — exactly what search_docs() hands the model, formatting intact
+    flat = " ".join(text.split())  # snippet: collapse whitespace to a tidy one-liner, then truncate
+    return flat[:240] + ("…" if len(flat) > 240 else "")
 
 
 def search(query, values):
