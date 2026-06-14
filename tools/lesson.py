@@ -344,9 +344,11 @@ def _artifact(ldir, el, asset_base):
         kind = el.get("kind", t)
         ref = el.get("file") or el.get("url", "")
         src = ref if (ref.startswith("http") or not asset_base) else asset_base + ref
-        cap = _esc(el.get("alt") or el.get("note") or "")
-        media = f"<video controls src='{src}'></video>" if kind == "video" else f"<img src='{src}' alt='{cap}'>"
-        return f"<figure>{media}<figcaption>{cap}</figcaption></figure>"
+        srca = html.escape(src, quote=True)          # quote attributes to avoid injection
+        alt = el.get("alt") or el.get("note") or ""
+        media = (f'<video controls src="{srca}"></video>' if kind == "video"
+                 else f'<img src="{srca}" alt="{html.escape(alt, quote=True)}">')
+        return f"<figure>{media}<figcaption>{_esc(alt)}</figcaption></figure>"
     if t == "note" and "file" in el:
         return f"<pre><code>{_esc(read_ref(ldir, el))}</code></pre>"
     return ""
@@ -472,7 +474,9 @@ def cmd_preview(args):
 
     class Handler(http.server.SimpleHTTPRequestHandler):
         def do_GET(self):
-            if self.path.split("?")[0] in ("/", "/index.html"):
+            # Only the root is the lesson; /index.html falls through to docs/index.html
+            # so the nav "Home" link works in the preview.
+            if self.path.split("?")[0] == "/":
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html; charset=utf-8")
                 self.send_header("Content-Length", str(len(page)))

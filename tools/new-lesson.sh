@@ -14,10 +14,20 @@ dest="$root/lessons/${nn}-${slug}"
 [[ -e "$dest" ]] && { echo "already exists: $dest" >&2; exit 1; }
 
 cp -r "$root/lessons/_template" "$dest"
-# Fill the two placeholders in the manifest (kept simple: TITLE / SLUG).
-# Portable in-place edit (BSD/macOS sed needs a backup suffix; GNU accepts it too).
-sed -i.bak "s/\"TITLE\"/\"${title//\//\\/}\"/; s/\"SLUG\"/\"${slug}\"/" "$dest/lesson.json"
-rm -f "$dest/lesson.json.bak"
+# Fill the TITLE/SLUG placeholders. Done in Python so the values are JSON-escaped
+# correctly (a title with quotes or backslashes won't corrupt lesson.json).
+python3 - "$dest/lesson.json" "$title" "$slug" <<'PY'
+import json, sys
+path, title, slug = sys.argv[1:4]
+data = json.load(open(path, encoding="utf-8"))
+if data.get("title") == "TITLE":
+    data["title"] = title
+if data.get("slug") == "SLUG":
+    data["slug"] = slug
+with open(path, "w", encoding="utf-8") as fh:
+    json.dump(data, fh, indent=2, ensure_ascii=False)
+    fh.write("\n")
+PY
 
 echo "Created $dest"
 echo "Next: add code under python/ node/ dotnet/, edit lesson.json elements, then:  ./run -l $1 show"
