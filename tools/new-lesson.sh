@@ -16,7 +16,9 @@ dest="$root/lessons/${nn}-${slug}"
 cp -r "$root/lessons/_template" "$dest"
 # Fill the TITLE/SLUG placeholders. Done in Python so the values are JSON-escaped
 # correctly (a title with quotes or backslashes won't corrupt lesson.json).
-python3 - "$dest/lesson.json" "$title" "$slug" <<'PY'
+py="$(command -v python3 || command -v python)"
+[[ -n "$py" ]] || { echo "Python 3 is required." >&2; exit 1; }
+"$py" - "$dest/lesson.json" "$title" "$slug" <<'PY'
 import json, sys
 path, title, slug = sys.argv[1:4]
 data = json.load(open(path, encoding="utf-8"))

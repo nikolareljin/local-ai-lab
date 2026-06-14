@@ -31,6 +31,16 @@ described by a single `lesson.json` and run, preview, and publish through one en
 - The site top-nav is now a **Lessons dropdown** (all pages); switching a lesson's language restarts it
   at step 1 so paging never changes the chosen language.
 
+### Fixed
+- Single-language renders (`build`/`preview`/`show --html --lang …`) now pin the rendered language in the
+  page head and skip the saved-language restore (there is no selector to recover from), so a different
+  `localStorage` choice can no longer hide every code block.
+- `pytest` is declared in `requirements.txt` and the `ensure_venv` check, so `./run -l N test` works on a
+  fresh clone/venv.
+- Lesson 3's Python test is self-contained (adds its own directory to `sys.path`), so pytest finds
+  `hybrid_demo` regardless of the working directory.
+- `tools/new-lesson.sh` resolves the interpreter as `python3 || python`, matching the rest of the repo.
+
 ## [0.4.0]
 
 **Lesson 2 (MCP) goes polyglot** — the MCP server now ships in Node.js and C# alongside Python.

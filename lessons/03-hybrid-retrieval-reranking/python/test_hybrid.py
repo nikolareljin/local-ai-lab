@@ -7,6 +7,12 @@ and the hybrid (RRF) keeps the right answer either way.
 Run:  python -m pytest test_hybrid.py
 """
 
+import sys
+from pathlib import Path
+
+# Make the import work regardless of where pytest is invoked from.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 from hybrid_demo import hybrid, load_docs
 
 

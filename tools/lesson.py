@@ -445,7 +445,17 @@ def render_html(number, ldir, lesson, lang=None, assets_href="/assets", media_ba
     # Only offer the selector for languages actually rendered (a single-language
     # render has no selector, so switching can't hide all the blocks).
     langs = [lang] if lang else lesson.get("languages", [])
+    # Initial <html data-lang>. A full render restores the reader's saved choice;
+    # a single-language render forces the one language it shipped (no selector to
+    # recover from, so localStorage must not be allowed to hide every block).
+    if lang:
+        lang_init = "document.documentElement.dataset.lang=%s" % json.dumps(lang)
+    else:
+        lang_init = ("try{document.documentElement.dataset.lang="
+                     "localStorage.getItem('localrag-lang')||'python'}"
+                     "catch(e){document.documentElement.dataset.lang='python'}")
     return (template
+            .replace("{{LANG_INIT}}", lang_init)
             .replace("{{ASSETS}}", assets_href)
             .replace("{{NAV}}", _nav_html())
             .replace("{{NUMBER}}", str(number))
