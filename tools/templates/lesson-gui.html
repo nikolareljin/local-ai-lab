@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>local-ai-lab · experiment</title>
+  <link rel="icon" href="data:," />  <!-- no-op icon: avoid a 404 for /favicon.ico on this local page -->
   <style>
     /* Same palette as Lesson 1's local GUI, so every lesson's experiment feels of-a-piece. */
     :root { --bg:#0f1115; --panel:#1a1d24; --edge:#2a2f3a; --txt:#e6e8ee; --muted:#8b93a7;
@@ -132,6 +133,7 @@
         if (p.kind === "toggle") {
           const lab = document.createElement("label");
           lab.textContent = p.label;
+          lab.htmlFor = "p_" + p.name;  // associate label with its control (a11y + click-to-focus)
           const r2 = document.createElement("div");
           r2.className = "row2";
           const cb = document.createElement("input");
@@ -146,6 +148,7 @@
         } else {
           const lab = document.createElement("label");
           lab.textContent = p.label + " ";
+          lab.htmlFor = "p_" + p.name;  // associate label with its slider (a11y + click-to-focus)
           const val = document.createElement("span");
           val.className = "val"; val.id = "v_" + p.name; val.textContent = p.default;
           lab.appendChild(val);
@@ -184,19 +187,33 @@
     $("reset").addEventListener("click", () => { renderParams(PARAMS); search(); });
     $("go").addEventListener("click", search);
     $("q").addEventListener("keydown", (e) => { if (e.key === "Enter") search(); });
+    // Live search as you type, debounced so we don't fire a request per keystroke.
+    $("q").addEventListener("input", scheduleSearch);
 
     let timer = null;
-    async function search() {
+    function scheduleSearch() {
       clearTimeout(timer);
+      timer = setTimeout(search, 250);
+    }
+
+    async function search() {
+      clearTimeout(timer);  // cancel any pending debounced run
       const query = $("q").value;
-      const r = await fetch("/api/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, params: readParams() }),
-      });
-      const d = await r.json();
-      renderArms(d.arms || []);
-      renderBlocks(d.blocks || []);
+      try {
+        const r = await fetch("/api/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query, params: readParams() }),
+        });
+        if (!r.ok) throw new Error("server responded " + r.status);
+        const d = await r.json();
+        renderArms(d.arms || []);
+        renderBlocks(d.blocks || []);
+      } catch (e) {
+        // Surface network / parse failures instead of leaving the GUI stuck silently.
+        renderArms([]);
+        renderBlocks([{ kind: "note", text: "Could not reach the local server: " + (e && e.message ? e.message : e) }]);
+      }
     }
 
     function renderArms(arms) {

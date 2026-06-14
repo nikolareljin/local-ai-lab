@@ -27,6 +27,7 @@ where each <block> is one of:
 from __future__ import annotations
 
 import socket
+import traceback
 from pathlib import Path
 from typing import Callable
 
@@ -54,7 +55,12 @@ def _coerce(params, raw):
             except (TypeError, ValueError):
                 value = float(p.get("default", 0))
         elif p.get("kind") == "toggle":
-            value = bool(value)
+            # Coerce strings explicitly so "false"/"0"/"off"/"no"/"" read as False
+            # (plain bool("false") is True, which would silently invert the toggle).
+            if isinstance(value, str):
+                value = value.strip().lower() not in ("", "false", "0", "off", "no")
+            else:
+                value = bool(value)
         out[name] = value
     return out
 
@@ -103,7 +109,9 @@ def serve(
         try:
             return jsonify(search(query, values))
         except Exception as exc:  # surface compute errors to the UI instead of 500-ing blank
-            return jsonify({"arms": [], "blocks": [{"kind": "note", "text": f"Error: {exc}"}]}), 200
+            traceback.print_exc()  # full stack to the server console for local debugging
+            message = f"{type(exc).__name__}: {exc}"
+            return jsonify({"arms": [], "blocks": [{"kind": "note", "text": f"Error — {message}"}]}), 200
 
     chosen = port or _free_port()
     print(f"{title} → http://{host}:{chosen}  (Ctrl-C to stop)", flush=True)

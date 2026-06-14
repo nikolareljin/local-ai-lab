@@ -116,6 +116,19 @@ def cmd_run(args):
     lang = args.lang or lesson.get("defaultLanguage", "python")
 
     cmds = matching_commands(lesson, action, lang)
+    if not cmds and not args.action:
+        # The default action may be language-specific (e.g. a Python-only `web` GUI).
+        # When the user picks another language with no explicit action, fall back to
+        # an action that does exist for that language (preferring `demo`) so the
+        # language shortcut keeps working instead of erroring out.
+        avail = []
+        for e in lesson.get("elements", []):
+            if e.get("type") == "command" and e.get("action") and e.get("lang") in (None, lang):
+                if e["action"] not in avail:
+                    avail.append(e["action"])
+        fallback = "demo" if "demo" in avail else (avail[0] if avail else None)
+        if fallback:
+            action, cmds = fallback, matching_commands(lesson, fallback, lang)
     if not cmds:
         actions = sorted({e.get("action") for e in lesson.get("elements", [])
                           if e.get("type") == "command" and e.get("action")})

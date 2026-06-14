@@ -74,8 +74,8 @@
       "display": "./run -l 3", "shell": "python python/web.py", "venv": true },
     { "type": "text", "kicker": "Experiment", "title": "Try — an exact name", "text": "Nuevo Edén",
       "body": "An exact name BM25 loves — watch it top the BM25 column, and check its IDF in the breakdown:" },
-    { "type": "text", "kicker": "Experiment", "title": "Try — a paraphrase, then turn synonyms off", "text": "who found the new planet",
-      "body": "A paraphrase the semantic arm recovers. Now toggle **synonyms off** and watch the semantic arm collapse toward BM25 — the breakdown shows exactly which document stops being recovered, and why." },
+    { "type": "text", "kicker": "Experiment", "title": "Try — a keyword-free query, then turn synonyms off", "text": "overheated",
+      "body": "No chapter contains the word *overheated*, so BM25 finds nothing — yet with synonyms on, the semantic arm maps it to *overheat* and recovers the fusion-drive chapter. Toggle **synonyms off** and watch that hit disappear: the breakdown shows exactly which document stops being recovered, and why." },
 
     { "type": "note", "kicker": "Going further", "title": "From demo to production",
       "body": "This is a teaching demo. For real systems:\n\nReplace the synonym stand-in with a real **embedding model** for the semantic arm. Add a **cross-encoder reranker** over the fused top-k — usually the single biggest quality win. **Rewrite** vague queries before retrieval, and **filter by metadata** (product, version, date). And **measure** it: a golden-question set tells you whether hybrid actually beats either arm on *your* data." },

@@ -27,7 +27,6 @@ from hybrid_demo import (
     B,
     K1,
     RRF_K,
-    SYNONYMS,
     bm25_scores,
     rank,
     rrf,
@@ -36,6 +35,23 @@ from hybrid_demo import (
 )
 
 STORY_DIR = Path(__file__).resolve().parent.parent / "story"
+
+# The GUI searches the *story* corpus, so it carries its own synonym map (the demo's
+# data/ corpus keeps hybrid_demo.SYNONYMS). Keys are words a reader might type that do
+# NOT appear literally in the story; each expands to words that DO — so toggling
+# synonyms visibly changes the rankings, e.g. "overheated" recovers the fusion-drive
+# chapter only with synonyms on, exactly the divergence fusion exists for.
+STORY_SYNONYMS = {
+    "overheated": ["overheat"],
+    "spaceship": ["ship", "vessel"],
+    "alien": ["signal", "interstellar"],
+    "reptile": ["turtle", "caretta"],
+    "alive": ["moist", "sustained"],
+    "planet": ["world", "eden"],
+    "discovered": ["discovery", "found"],
+    "keep": ["sustained", "recyclers", "moist"],
+    "space": ["interstellar", "stars"],
+}
 
 
 def load_story():
@@ -60,13 +76,16 @@ PARAMS = [
      "default": True},
 ]
 
-# Examples chosen for the *story* corpus this GUI searches (the byte-checked demo
-# uses the tiny data/ corpus, where "broken gadget" shows BM25 finding nothing).
+# Examples chosen for the *story* corpus this GUI searches. The middle two exercise
+# the synonyms toggle: "overheated" appears in no chapter, so BM25 finds nothing and
+# only the synonym-expanded semantic arm recovers the fusion-drive chapter; the turtle
+# paraphrase reorders when synonyms are on. (The byte-checked demo uses the tiny data/
+# corpus, where "broken gadget" shows the same divergence.)
 EXAMPLES = [
     {"label": "Exact name (BM25 nails it)", "query": "Nuevo Edén"},
+    {"label": "Keyword-free — synonyms recover it", "query": "overheated"},
+    {"label": "Paraphrase — turn synonyms off to compare", "query": "how did they keep the turtle alive in space"},
     {"label": "A star by name", "query": "Alpha Centauri"},
-    {"label": "Paraphrase — who discovered it", "query": "who found the new planet"},
-    {"label": "Paraphrase — the spacesuit chapter", "query": "how did they keep the turtle alive in space"},
 ]
 
 
@@ -85,9 +104,6 @@ def _why_blocks(q, bm, sem, lexical, semantic, rrf_k, synonyms):
     """Build the 'why' breakdown: the query as each arm sees it, then a per-document
     table of BM25/semantic scores, ranks, and the RRF contribution that fuses them."""
     idf = _idf(q, DOCS)
-    expanded = set(q)
-    for t in list(expanded):
-        expanded.update(synonyms.get(t, []))
     lex_pos = {name: i for i, name in enumerate(lexical)}
     sem_pos = {name: i for i, name in enumerate(semantic)}
 
@@ -146,7 +162,7 @@ def _why_blocks(q, bm, sem, lexical, semantic, rrf_k, synonyms):
 
 def search(query, values):
     k1, b, rrf_k = values["k1"], values["b"], values["rrf_k"]
-    synonyms = SYNONYMS if values["synonyms"] else {}
+    synonyms = STORY_SYNONYMS if values["synonyms"] else {}
     if not query:
         return {"arms": [], "blocks": [{"kind": "note", "text": "Type a query — or pick an example above."}]}
 
