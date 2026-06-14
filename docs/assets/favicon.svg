@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="local-ai-lab">
+  <title>local-ai-lab</title>
+  <defs>
+    <linearGradient id="bar" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#3a6fd8"/>
+      <stop offset="1" stop-color="#5b9dff"/>
+    </linearGradient>
+  </defs>
+  <!-- dark rounded tile, matching the site theme -->
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#0f1115" stroke="#2a2f3a" stroke-width="2"/>
+  <!-- ascending "learning steps" -->
+  <rect x="12" y="37" width="10" height="14" rx="2.5" fill="url(#bar)"/>
+  <rect x="27" y="28" width="10" height="23" rx="2.5" fill="url(#bar)"/>
+  <rect x="42" y="19" width="10" height="32" rx="2.5" fill="url(#bar)"/>
+  <!-- accent node (the brand "·" dot) -->
+  <circle cx="47" cy="13" r="4.5" fill="#5b9dff"/>
+</svg>

@@ -79,6 +79,9 @@ described by a single `lesson.json` and run, preview, and publish through one en
   silently dropping Lessons 3+.
 - Added `tests/test_lesson_engine.py` — unit tests for `read_ref()` path confinement, tolerant `lines`
   excerpt parsing, and the CSS-safe language token.
+- **Site favicon** — the published site had none (tabs showed nothing). Added a brand-matching icon
+  (`docs/assets/favicon.svg` + PNG/apple-touch + a multi-size `docs/favicon.ico`) and linked it from every
+  page and the lesson template.
 
 ## [0.4.0]
 
