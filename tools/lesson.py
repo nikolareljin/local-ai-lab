@@ -129,7 +129,7 @@ def cmd_run(args):
                 shell = shlex.quote(py) + shell[len("python"):]
         if args.rest:
             shell = shell + " " + " ".join(shlex.quote(a) for a in args.rest)
-        warn(f"Lesson {args.number} · {action} · {el_lang}:  {el['shell']}")
+        warn(f"Lesson {args.number} · {action} · {el_lang}:  {shell}")  # the command actually run
         rc = subprocess.run(shell, shell=True, cwd=ldir).returncode
         if rc != 0:
             return rc
@@ -409,7 +409,7 @@ def _nav_html():
         slug = m.get("slug") or re.sub(r"^\d+-", "", reg[n].name)
         if m.get("status") == "working":
             items.append((n, m.get("title", ""), f"./lesson-{n}-{slug}.html"))
-    links = "".join(f'<a href="{h}">{n} · {_esc(t)}</a>' for n, t, h in items)
+    links = "".join(f'<a href="{html.escape(h, quote=True)}">{n} · {_esc(t)}</a>' for n, t, h in items)
     return ('<a href="./index.html">Home</a>'
             '<details class="nav-dd"><summary>Lessons</summary>'
             f'<div class="nav-dd-menu">{links}</div></details>'
@@ -442,7 +442,9 @@ def render_html(number, ldir, lesson, lang=None, assets_href="/assets", media_ba
         _slide(ldir, val, media_base) if kind == "single" else _group_slide(ldir, groups[val], media_base)
         for kind, val in order
     )
-    langs = lesson.get("languages", [])
+    # Only offer the selector for languages actually rendered (a single-language
+    # render has no selector, so switching can't hide all the blocks).
+    langs = [lang] if lang else lesson.get("languages", [])
     return (template
             .replace("{{ASSETS}}", assets_href)
             .replace("{{NAV}}", _nav_html())
@@ -486,9 +488,12 @@ def cmd_preview(args):
             super().do_GET()
 
         def translate_path(self, path):
-            clean = os.path.normpath(path.split("?", 1)[0].split("#", 1)[0].lstrip("/")).lstrip("./")
-            if clean.startswith("assets/"):
-                return str(assets_dir / clean[len("assets/"):])
+            rel = path.split("?", 1)[0].split("#", 1)[0].lstrip("/")
+            clean = os.path.normpath(rel)
+            if clean in (".", "") or clean.startswith("..") or os.path.isabs(clean):
+                return str(Path(ldir) / "__not_found__")   # block traversal outside the roots
+            if clean == "assets" or clean.startswith("assets" + os.sep):
+                return str(assets_dir / clean[len("assets"):].lstrip(os.sep))
             local = Path(ldir) / clean
             if local.exists():           # media / data from the lesson dir
                 return str(local)
