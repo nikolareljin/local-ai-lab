@@ -59,7 +59,9 @@ def _corpus_block():
 
 def _passage(text, full):
     if full:
-        return text  # verbatim — exactly what search_docs() hands the model, formatting intact
+        # The passage text verbatim. (search_docs() additionally prefixes each with
+        # [source:page] and joins the passages into one blank-line-separated string.)
+        return text
     flat = " ".join(text.split())  # snippet: collapse whitespace to a tidy one-liner, then truncate
     return flat[:240] + ("…" if len(flat) > 240 else "")
 
@@ -82,10 +84,10 @@ def search(query, values):
     sources = [f'[{h["source"]}:{h["page_number"]}]' for h in hits]
     arms = [{"label": f"search_docs → {len(sources)} cited passage(s)", "ranking": sources}]
     if hits:
-        title = ("Returned passages — exactly what the model is handed (each tagged [source:page])"
+        title = ("Returned passages, each tagged [source:page] — full text"
                  if full else
-                 "Returned passages (snippets — turn on “Show full passages” for the verbatim "
-                 "search_docs output; each tagged [source:page])")
+                 "Returned passages, each tagged [source:page] — snippets "
+                 "(turn on “Show full passages” for each one in full)")
         results = {"kind": "table",
                    "title": title,
                    "columns": ["[source:page]", "passage"],
@@ -97,6 +99,9 @@ def search(query, values):
     blocks = [
         {"kind": "note", "text": f'MCP tool call:  search_docs(query="{query}", k={k})'},
         results,
+        {"kind": "note", "text": "Over MCP, search_docs returns these as a single string — each passage "
+                                 "prefixed with its [source:page] tag and separated by a blank line — which "
+                                 "the host hands to the model. The table just splits that out per row."},
         _corpus_block(),
     ]
     return {"arms": arms, "blocks": blocks}

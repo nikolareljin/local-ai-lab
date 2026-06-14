@@ -3,8 +3,9 @@
 Type a query and tune the knobs — BM25 `k1`/`b`, the RRF `k`, and the semantic
 arm's synonyms — then watch the three rankings *and the numbers behind them*
 change live. There is **nothing to edit**: the sliders feed the very same
-`hybrid()` the one-shot `demo` and the test use, so what you see here is the real
-algorithm, just made tweakable.
+`bm25_scores` / `semantic_scores` / `rank` / `rrf` functions the one-shot `demo`
+and the test use — called directly here (rather than through `hybrid()`) only so
+the GUI can also surface the intermediate scores for the "why" breakdown.
 
 Run:  ./run -l 3        (or:  ./run -l 3 web)
 
