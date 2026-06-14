@@ -406,9 +406,11 @@ SUPPORTED_LANGS = ("python", "node", "csharp")
 
 
 def _lang_token(lang):
-    """Escape a value before it lands inside a `lang-*` CSS class, so a stray or
-    malicious lesson.json `lang` can't break the attribute or inject markup."""
-    return html.escape(str(lang), quote=True)
+    """A safe CSS class token for a language: lowercased and restricted to
+    [a-z0-9_-]. Anything else (spaces, punctuation, markup) collapses to '-', so a
+    stray or malicious lesson.json `lang` can't inject, split into extra classes,
+    or break the `[data-lang] .lang-*` show/hide selectors."""
+    return re.sub(r"[^a-z0-9_-]+", "-", str(lang).lower())
 
 
 def _langsel_html(langs, compact=False):

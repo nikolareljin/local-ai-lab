@@ -75,8 +75,10 @@ list_lessons() {
   echo "  L1   RAG from scratch                    [working]  (python, node, csharp)"
   echo "  L2   MCP servers                         [working]  (python, node, csharp)"
   # Best-effort: a registry/list failure must not abort ./run (Lessons 1-2 above
-  # are always known), and `set -euo pipefail` would otherwise kill the script.
-  "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" list 2>/dev/null | sed 's/^/  /' || true
+  # are always known), but say so explicitly instead of silently dropping 3+.
+  if ! "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" list 2>/dev/null | sed 's/^/  /'; then
+    echo "  (could not load lessons 3+ — re-run with a working Python 3 to see them)"
+  fi
 }
 
 # --- parse a leading -l/--lesson flag, leave the rest as the action + args ---

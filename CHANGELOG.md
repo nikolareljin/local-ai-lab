@@ -71,6 +71,14 @@ described by a single `lesson.json` and run, preview, and publish through one en
   crashing the whole `show`/`preview`/`build` render.
 - Generated lesson pages carry a `GENERATED FILE — do not edit by hand` banner (from the template), so
   it's clear they come from `./run -l N build` and manual edits will be overwritten.
+- `tools/new-lesson.sh` and `tools/sync-curriculum.sh` validate that the resolved interpreter is actually
+  Python 3 (some systems alias `python` to Python 2), emitting the intended error instead of a traceback.
+- The language CSS-class token is normalized to `[a-z0-9_-]` (not just HTML-escaped), so a `lang` value
+  with spaces/punctuation can't split into extra classes or break the `[data-lang] .lang-*` selectors.
+- `./run list` prints an explicit fallback line when the lesson registry can't be loaded, instead of
+  silently dropping Lessons 3+.
+- Added `tests/test_lesson_engine.py` — unit tests for `read_ref()` path confinement, tolerant `lines`
+  excerpt parsing, and the CSS-safe language token.
 
 ## [0.4.0]
 

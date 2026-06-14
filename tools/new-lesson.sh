@@ -16,10 +16,13 @@ dest="$root/lessons/${nn}-${slug}"
 cp -r "$root/lessons/_template" "$dest"
 # Fill the TITLE/SLUG placeholders. Done in Python so the values are JSON-escaped
 # correctly (a title with quotes or backslashes won't corrupt lesson.json).
-# `|| true` keeps the substitution from aborting under `set -e` when neither
-# interpreter exists, so the explicit check below is reached.
+# Resolve Python 3: prefer python3, fall back to python only when it is actually
+# Python 3 (on some systems `python` is Python 2). `|| true` keeps the lookup from
+# aborting under `set -e` so we reach the explicit error below.
 py="$(command -v python3 || command -v python || true)"
-[[ -n "$py" ]] || { echo "Python 3 is required." >&2; exit 1; }
+if [[ -z "$py" ]] || ! "$py" -c 'import sys; sys.exit(0 if sys.version_info[0] >= 3 else 1)' 2>/dev/null; then
+  echo "Python 3 is required." >&2; exit 1
+fi
 "$py" - "$dest/lesson.json" "$title" "$slug" <<'PY'
 import json, sys
 path, title, slug = sys.argv[1:4]
