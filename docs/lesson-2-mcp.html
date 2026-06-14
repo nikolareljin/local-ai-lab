@@ -417,6 +417,22 @@ Claude: (calls search_docs "reset device")
 
       <!-- 11 -->
       <section class="slide">
+        <div class="step-no">Experiment</div>
+        <h2>Call the tools yourself — no MCP host needed</h2>
+        <p>Want to feel the tools without wiring up Claude Code? Run the interactive GUI. It makes the
+           <em>same</em> <code>search_docs</code> call an MCP host would make over stdio — over your real
+           <code>documents/</code> folder — and shows exactly what comes back.</p>
+        <div class="block"><div class="label">From the repo root</div><pre><code>./run -l 2          # interactive MCP tool GUI (default)
+./run -l 2 demo     # the same calls over a real stdio MCP connection, in the terminal</code></pre></div>
+        <p>Type a question, drag <code>k</code> to change how many passages <code>search_docs</code> returns,
+           and read the cited <code>[source:page]</code> snippets — the exact text the model is handed.
+           <code>list_documents</code> shows the corpus the server exposes. Nothing to edit.</p>
+        <div class="why"><b>Why it matters:</b> an MCP tool is just a function the assistant can call. Seeing
+          its real inputs and outputs in a browser makes the protocol concrete before you hand it to a host.</div>
+      </section>
+
+      <!-- 12 -->
+      <section class="slide">
         <div class="step-no">Recap</div>
         <h2>You built a working MCP server</h2>
         <table>

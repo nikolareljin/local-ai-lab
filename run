@@ -25,14 +25,15 @@ Usage:
 
 Lessons:
   -l 1   RAG app       actions:  web (default) · ask "question" · repl · index · test
-  -l 2   MCP server    actions:  demo (default) · serve · register · test
+  -l 2   MCP server    actions:  web (default) · demo · serve · register · test
   -l 3+  config-driven: actions are defined per lesson in lessons/NN-*/lesson.json (run + show)
 
 Examples:
   ./run -l 1                                  # launch the RAG web UI (auto-picks a free port)
   ./run -l 1 ask "How do I reset the device?" # one-shot question in the terminal
   ./run -l 1 test                             # run Lesson 1 tests
-  ./run -l 2                                  # demo the MCP server end-to-end (no LLM needed)
+  ./run -l 2                                  # launch the MCP tool GUI (auto-picks a free port)
+  ./run -l 2 demo                             # call the MCP tools over stdio in the terminal (no LLM needed)
   ./run -l 3                                  # launch Lesson 3's experiment GUI (auto-picks a free port)
   ./run -l 3 demo                             # one-shot demo: print the rankings and exit (Python)
   ./run -l 3 demo --lang csharp               # the C#/.NET port of the Lesson 3 demo
@@ -176,8 +177,12 @@ run_lesson_1() {
 
 run_lesson_2() {
   ensure_venv
-  case "${ACTION:-demo}" in
-    demo|"")
+  case "${ACTION:-web}" in
+    web|"")
+      log_info "Lesson 2 · MCP — interactive tool GUI (auto-picks a free port; Ctrl-C to stop)."
+      exec "$PYTHON_BIN" "$ROOT_DIR/examples/mcp_web.py"
+      ;;
+    demo)
       log_info "Lesson 2 · MCP — spawning the server over stdio and calling its tools ..."
       exec "$PYTHON_BIN" "$ROOT_DIR/examples/mcp_demo.py" "$@"
       ;;
@@ -194,7 +199,7 @@ run_lesson_2() {
       exec "$PYTHON_BIN" -m pytest -q "$ROOT_DIR/tests/test_mcp.py"
       ;;
     *)
-      log_error "Lesson 2 actions:  demo | serve | register | test"
+      log_error "Lesson 2 actions:  web | demo | serve | register | test"
       exit 1
       ;;
   esac
