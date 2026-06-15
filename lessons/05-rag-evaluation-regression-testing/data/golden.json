@@ -1,5 +1,5 @@
 {
-  "thresholds": { "recall_k": 3, "groundedness": 0.75, "correctness": 0.5 },
+  "thresholds": { "groundedness": 0.75, "correctness": 0.5 },
   "questions": [
     {
       "id": "refund-window",

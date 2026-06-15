@@ -162,7 +162,7 @@ def _drilldown(query, values):
         rows.append([
             {"v": d["name"], "cls": "text"},
             {"v": ("yes" if is_gold else "no") if gold else "n/a",
-             "cls": "num" if is_gold else "miss"},
+             "cls": ("num" if is_gold else "miss") if gold else "text"},
             {"v": "yes" if contributes else "no", "cls": "num" if contributes else "miss"},
         ])
     blocks.append({"kind": "table", "title": "Retrieved documents",

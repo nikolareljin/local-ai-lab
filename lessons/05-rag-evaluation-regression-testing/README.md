@@ -129,6 +129,15 @@ into its numbers — then move the sliders or flip on unsupported padding and wa
 > a tiny extractive stand-in: it returns the fact from the top retrieved document (optionally padding
 > in one unsupported sentence). Swap in your real pipeline and the golden set and metrics are unchanged.
 
+> **Why JSON + deterministic scoring (not YAML + an LLM judge)?** This lesson deliberately uses a JSON
+> golden set and three heuristic metrics so the whole thing runs **offline, model-free, and
+> byte-identically across Python, Node.js and C#** — the same constraint every lesson in this course
+> honours, and what makes the regression *reproducible* rather than a coin-flip. An LLM-as-judge,
+> groundedness against cited spans, and out-of-corpus "not found" questions are real and valuable — they
+> are the natural next step once a model is in the loop, covered under *From demo to production* below.
+> The point here is the **scaffold**: a versioned golden set scored on tracked numbers behind a gate.
+> Keep that shape and you can upgrade the scorer (JSON→YAML, keywords→judge) without changing the lesson.
+
 ---
 
 ## Concept 1 · Golden questions — the source of truth
@@ -229,6 +238,9 @@ output.
   increases.
 - **Strengthen the metrics** — pair keyword correctness with an LLM-as-judge or embedding similarity,
   score groundedness against cited spans, and track **latency and cost** alongside quality.
+- **Test "not found" too** — add out-of-corpus golden questions whose correct answer is *"I don't
+  know"*, and score whether the system abstains instead of confabulating. Honest refusal is a quality
+  metric, not a failure.
 - **Gate in CI** — fail the build when a tracked number drops below threshold, and store each scorecard
   so you can watch trends over time.
 - **Fold in safety** — add Lesson 4's poisoned-document cases so a safety regression also shows up as a
