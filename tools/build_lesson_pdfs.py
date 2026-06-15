@@ -115,31 +115,42 @@ def css() -> str:
 
 
 def _resolve_asset(uri: str, rel: str | None = None) -> str:
-    """Resolve <img>/url() references for xhtml2pdf to a real file path.
+    """Resolve <img>/url() references for xhtml2pdf to a real file path, confined
+    to the repo.
 
-    Markdown image paths in the sources are relative to the repo root (e.g.
-    ``docs/assets/hero-banner.png``); xhtml2pdf can't fetch those on its own.
+    The PDF sources are trusted (our own Markdown plus the @font-face CSS), so this
+    is defence-in-depth: it keeps builds deterministic and offline, and matches the
+    "assets live under the repo" intent.
 
-    - Remote/data URIs pass through untouched.
-    - ``file://`` URIs are normalized to a filesystem path, and any ``?``/``#``
-      suffix is dropped.
-    - Absolute paths (e.g. the bundled DejaVu font files referenced from @font-face)
-      are trusted as-is.
-    - Relative paths are resolved under ROOT and confined to it: a path that escapes
-      the repo via ``..`` is rejected, so a stray reference can't embed an arbitrary
-      file from disk into the PDF.
+    - ``data:`` URIs (inline, deterministic) pass through.
+    - Remote URIs (http/https/ftp) are rejected — the builder never fetches over the
+      network; commit a local file under ``docs/`` instead.
+    - ``file://`` URIs are normalized to a path; any ``?``/``#`` suffix is dropped.
+    - Absolute paths are allowed only inside the repo root or the discovered DejaVu
+      font directory (referenced from @font-face); anything else is rejected.
+    - Relative paths resolve under ROOT and may not escape it via ``..``.
     """
-    if uri.startswith(("http://", "https://", "data:")):
+    if uri.startswith("data:"):
         return uri
+    if uri.startswith(("http://", "https://", "ftp://")):
+        raise ValueError(f"remote asset not allowed (commit a local file): {uri!r}")
     if uri.startswith("file://"):
         uri = url2pathname(urlparse(uri).path)
     uri = uri.split("?", 1)[0].split("#", 1)[0]
+    root = ROOT.resolve()
     p = Path(uri)
     if p.is_absolute():
-        return str(p)
-    resolved = (ROOT / p).resolve()
+        resolved = p.resolve()
+        allowed = [root]
+        font_dir = _font_dir()
+        if font_dir is not None:
+            allowed.append(font_dir.resolve())
+        if any(resolved == base or base in resolved.parents for base in allowed):
+            return str(resolved)
+        raise ValueError(f"absolute asset path outside repo / font dir: {uri!r}")
+    resolved = (root / p).resolve()
     try:
-        resolved.relative_to(ROOT.resolve())
+        resolved.relative_to(root)
     except ValueError as exc:
         raise ValueError(f"asset path escapes repo root: {uri!r}") from exc
     return str(resolved)
