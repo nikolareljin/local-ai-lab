@@ -111,8 +111,9 @@
       var m = (location.hash || "").match(/step-(\d+)/);
       if (!m) return;
       var n = parseInt(m[1], 10);
+      if (!n || n < 1 || n > total) return;
       fire(slug + "/step-" + n);
-      if (n >= total) fire(slug + "/complete");
+      if (n === total) fire(slug + "/complete");
     }
 
     // slider.js advances via history.replaceState (which fires no event), so wrap
