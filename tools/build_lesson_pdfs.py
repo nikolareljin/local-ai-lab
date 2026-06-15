@@ -28,22 +28,38 @@ from xhtml2pdf import pisa
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "docs" / "pdf"
 
-# (source markdown path relative to repo root, output PDF stem).
-# Lessons 1-2 are hand-authored at the root; the planned framework-tour outlines live under
-# roadmap/ but publish as LESSON7..LESSON12 so their in-page "pdf/LESSONn.pdf" links resolve.
-# The live lessons 3-5 are config-driven under lessons/ and publish as HTML, not root PDFs.
-SOURCES = [
-    ("CHEATSHEET.md", "CHEATSHEET"),
-    ("INSTALL.md", "INSTALL"),
-    ("LESSON1.md", "LESSON1"),
-    ("LESSON2.md", "LESSON2"),
-    ("roadmap/LESSON7-langchain.md", "LESSON7"),
-    ("roadmap/LESSON8-langgraph.md", "LESSON8"),
-    ("roadmap/LESSON9-ollama.md", "LESSON9"),
-    ("roadmap/LESSON10-semantic-kernel.md", "LESSON10"),
-    ("roadmap/LESSON11-bedrock.md", "LESSON11"),
-    ("roadmap/LESSON12-google-adk.md", "LESSON12"),
-]
+def _lesson_sources() -> list[tuple[str, str]]:
+    """Auto-discover every lesson's Markdown source → ``(path, "LESSON<n>")`` output stem.
+
+    A new lesson is picked up with no edits here, as long as it follows the layout:
+      - Lessons 1-2 : root ``LESSON<n>.md``                 (hand-authored)
+      - Lessons 3+  : ``lessons/<NN>-slug/README.md``        (live, config-driven)
+      - Roadmap     : ``roadmap/LESSON<n>-slug.md``          (planned outlines)
+    The number drives the PDF name (``LESSON<n>.pdf``) so in-page ``pdf/LESSONn.pdf`` links resolve.
+    """
+    by_num: dict[int, tuple[str, str]] = {}
+
+    def take(path: Path, num_text: str | None) -> None:
+        if num_text is None:
+            return
+        n = int(num_text)
+        by_num[n] = (path.relative_to(ROOT).as_posix(), f"LESSON{n}")
+
+    for p in sorted(ROOT.glob("LESSON[0-9]*.md")):
+        m = re.match(r"LESSON(\d+)", p.name)
+        take(p, m.group(1) if m else None)
+    for p in sorted(ROOT.glob("lessons/[0-9]*/README.md")):
+        m = re.match(r"(\d+)", p.parent.name)
+        take(p, m.group(1) if m else None)
+    for p in sorted(ROOT.glob("roadmap/LESSON*.md")):
+        m = re.match(r"LESSON(\d+)", p.name)
+        take(p, m.group(1) if m else None)
+
+    return [by_num[n] for n in sorted(by_num)]
+
+
+# Standalone guides are fixed; lessons are discovered from disk.
+SOURCES = [("CHEATSHEET.md", "CHEATSHEET"), ("INSTALL.md", "INSTALL")] + _lesson_sources()
 
 # DejaVu covers arrows, box-drawing and ✓; emoji (astral plane) do not render in
 # PDF fonts, so map the ones we use to short text and strip the rest.
