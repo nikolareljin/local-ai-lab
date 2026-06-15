@@ -119,6 +119,9 @@ function correctness(answerText, keywords) {
 // --- One config over the whole golden set ------------------------------------
 function evaluate(golden, docs, config) {
   const thr = golden.thresholds;
+  if (golden.questions.length === 0) {
+    throw new Error("golden set has no questions — add at least one to data/golden.json");
+  }
   const rows = golden.questions.map((q) => {
     const retrieved = retrieve(q.question, docs, config.top_k);
     const ans = answer(retrieved, config.pad_unsupported);

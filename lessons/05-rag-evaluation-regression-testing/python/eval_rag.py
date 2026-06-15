@@ -138,6 +138,8 @@ def evaluate(golden, docs, config):
     """Score every golden question under `config` and aggregate the result.
     `config` = {"name", "top_k", "pad_unsupported"}."""
     thr = golden["thresholds"]
+    if not golden["questions"]:
+        raise ValueError("golden set has no questions — add at least one to data/golden.json")
     rows = []
     for q in golden["questions"]:
         retrieved = retrieve(q["question"], docs, config["top_k"])

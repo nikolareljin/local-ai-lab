@@ -120,6 +120,8 @@ double Correctness(string answerText, List<string> keywords)
 EvalResult Evaluate(GoldenSet g, List<Doc> corpus, Config config)
 {
     var thr = g.Thresholds;
+    if (g.Questions.Count == 0)
+        throw new InvalidOperationException("golden set has no questions — add at least one to data/golden.json");
     var rows = g.Questions.Select(q =>
     {
         var retrieved = Retrieve(q.Text, corpus, config.TopK);
@@ -181,7 +183,7 @@ static string FindDataDir()
         var dir = new DirectoryInfo(start);
         while (dir != null)
         {
-            var candidate = Path.Combine(dir.FullName, "data", "refund_policy.md");
+            var candidate = Path.Combine(dir.FullName, "data", "golden.json");
             if (File.Exists(candidate)) return Path.Combine(dir.FullName, "data");
             dir = dir.Parent;
         }

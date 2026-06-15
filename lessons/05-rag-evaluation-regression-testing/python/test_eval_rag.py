@@ -95,6 +95,14 @@ def test_correctness_counts_expected_keywords():
     assert correctness("nothing relevant here", ["reset", "password"]) == 0.0
 
 
+def test_empty_golden_set_fails_fast():
+    import pytest
+    golden, docs = _setup()
+    golden["questions"] = []
+    with pytest.raises(ValueError):
+        evaluate(golden, docs, BASELINE)
+
+
 def test_aggregate_is_mean_over_questions():
     golden, docs = _setup()
     result = evaluate(golden, docs, CANDIDATE)
