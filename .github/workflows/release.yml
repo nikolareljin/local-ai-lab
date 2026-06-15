@@ -28,7 +28,9 @@ jobs:
       - name: Read top version from CHANGELOG
         id: ver
         run: |
-          version=$(grep -m1 -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | tr -d '#[] ')
+          # `|| true` so "no semver heading" yields an empty version (the next
+          # step is skipped) instead of failing the step under bash -e -o pipefail.
+          version=$(grep -m1 -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | tr -d '#[] ' || true)
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "Top CHANGELOG version: ${version:-<none>}"
 
