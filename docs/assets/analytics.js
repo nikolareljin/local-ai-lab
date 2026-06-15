@@ -12,10 +12,17 @@
 (function () {
   "use strict";
 
+  // Scope to this repo's Pages site only. nikolareljin.github.io serves every
+  // project site, so the hostname alone isn't enough — also require the
+  // /local-ai-lab/ base path.
   var PROD_HOST = "nikolareljin.github.io";
-  if (location.hostname !== PROD_HOST) return; // prod-only: no count.js, no events
+  var PROD_BASE = "/local-ai-lab/";
+  if (location.hostname !== PROD_HOST || location.pathname.indexOf(PROD_BASE) !== 0) {
+    return; // prod-only: no count.js, no events
+  }
 
   var ENDPOINT = "https://nikolareljin.goatcounter.com/count";
+  var MAX_QUEUE = 50; // bound in-memory growth if count.js never loads
 
   // We control the pageview ourselves, so suppress count.js's own onload hit.
   window.goatcounter = { no_onload: true, endpoint: ENDPOINT };
@@ -23,6 +30,7 @@
   var seen = Object.create(null); // de-dupe within a visit (no storage, no id)
   var queue = [];                 // events fired before count.js finishes loading
   var ready = false;
+  var failed = false;             // count.js couldn't load — stop queuing
 
   function send(opts) {
     var g = window.goatcounter;
@@ -30,9 +38,12 @@
   }
 
   // Queue until count.js is ready, then flush — so early clicks/slides aren't lost.
+  // If loading fails, or the queue hits its cap, drop the event instead of growing
+  // memory unbounded.
   function track(opts) {
+    if (failed) return;
     if (ready) send(opts);
-    else queue.push(opts);
+    else if (queue.length < MAX_QUEUE) queue.push(opts);
   }
 
   function fire(path, title) {
@@ -53,6 +64,11 @@
     ready = true;
     send({}); // normal pageview (path + country)
     while (queue.length) send(queue.shift());
+  };
+  s.onerror = function () {
+    // Network error / blocked: never flips ready, so release the queue and stop.
+    failed = true;
+    queue.length = 0;
   };
   (document.head || document.documentElement).appendChild(s);
 
