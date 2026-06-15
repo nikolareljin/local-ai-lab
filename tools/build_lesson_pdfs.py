@@ -26,7 +26,7 @@ from xhtml2pdf import pisa
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "docs" / "pdf"
 
-SOURCES = ["INSTALL.md"] + [f"LESSON{i}.md" for i in range(1, 9)]
+SOURCES = ["CHEATSHEET.md", "INSTALL.md"] + [f"LESSON{i}.md" for i in range(1, 9)]
 
 # DejaVu covers arrows, box-drawing and ✓; emoji (astral plane) do not render in
 # PDF fonts, so map the ones we use to short text and strip the rest.
@@ -112,6 +112,21 @@ def css() -> str:
     """
 
 
+def _resolve_asset(uri: str, rel: str | None = None) -> str:
+    """Resolve <img>/url() references for xhtml2pdf.
+
+    Markdown image paths in the sources are relative to the repo root (e.g.
+    ``docs/assets/hero-banner.png``). xhtml2pdf can't fetch those on its own, so map
+    a relative URI to an absolute file under ROOT. Remote/data URIs pass through.
+    """
+    if uri.startswith(("http://", "https://", "data:")):
+        return uri
+    p = Path(uri)
+    if not p.is_absolute():
+        p = (ROOT / uri).resolve()
+    return str(p)
+
+
 def build(md_name: str) -> bool:
     md_path = ROOT / md_name
     if not md_path.is_file():
@@ -132,7 +147,9 @@ def build(md_name: str) -> bool:
     OUT.mkdir(parents=True, exist_ok=True)
     out_path = OUT / (md_path.stem + ".pdf")
     with open(out_path, "wb") as fh:
-        result = pisa.CreatePDF(src=html, dest=fh, encoding="utf-8")
+        result = pisa.CreatePDF(
+            src=html, dest=fh, encoding="utf-8", link_callback=_resolve_asset
+        )
     kb = out_path.stat().st_size // 1024
     print(f"  {'ok ' if not result.err else 'ERR'}  {out_path.relative_to(ROOT)}  ({kb} KB)")
     return not result.err
