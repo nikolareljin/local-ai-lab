@@ -9,6 +9,7 @@
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=nodedotjs&logoColor=white)
 ![.NET](https://img.shields.io/badge/.NET-8-512BD4?logo=dotnet&logoColor=white)
+[![GitHub stars](https://img.shields.io/github/stars/nikolareljin/local-ai-lab?style=social)](https://github.com/nikolareljin/local-ai-lab/stargazers)
 
 **A hands-on course for building local, private AI from scratch** — RAG, MCP, LangChain, and
 LangGraph that run on your own machine. Each lesson builds a small, fully working, *readable*
@@ -17,6 +18,10 @@ program, so you finish understanding how the thing actually works — not just h
 **Course site (interactive lessons):** https://nikolareljin.github.io/local-ai-lab/
 **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
 **Related projects:** [About page](https://nikolareljin.github.io/local-ai-lab/about.html) — selected local-first, developer-focused, AI-native tools.
+
+> ### ⭐ Star this repo
+> If local-ai-lab is helping you build local AI, **[give it a star](https://github.com/nikolareljin/local-ai-lab)** —
+> it helps other developers find the course and motivates new lessons. **[⭐ Star on GitHub →](https://github.com/nikolareljin/local-ai-lab)**
 
 > **How it runs:** with the language toolchains **directly — there is no Docker.** Install once,
 > then `./run -l <N>`. Full cross-platform setup (Linux · macOS · Windows) and per-lesson
