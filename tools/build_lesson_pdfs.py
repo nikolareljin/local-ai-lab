@@ -19,6 +19,8 @@ import os
 import re
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
+from urllib.request import url2pathname
 
 import markdown
 from xhtml2pdf import pisa
@@ -113,18 +115,34 @@ def css() -> str:
 
 
 def _resolve_asset(uri: str, rel: str | None = None) -> str:
-    """Resolve <img>/url() references for xhtml2pdf.
+    """Resolve <img>/url() references for xhtml2pdf to a real file path.
 
     Markdown image paths in the sources are relative to the repo root (e.g.
-    ``docs/assets/hero-banner.png``). xhtml2pdf can't fetch those on its own, so map
-    a relative URI to an absolute file under ROOT. Remote/data URIs pass through.
+    ``docs/assets/hero-banner.png``); xhtml2pdf can't fetch those on its own.
+
+    - Remote/data URIs pass through untouched.
+    - ``file://`` URIs are normalized to a filesystem path, and any ``?``/``#``
+      suffix is dropped.
+    - Absolute paths (e.g. the bundled DejaVu font files referenced from @font-face)
+      are trusted as-is.
+    - Relative paths are resolved under ROOT and confined to it: a path that escapes
+      the repo via ``..`` is rejected, so a stray reference can't embed an arbitrary
+      file from disk into the PDF.
     """
     if uri.startswith(("http://", "https://", "data:")):
         return uri
+    if uri.startswith("file://"):
+        uri = url2pathname(urlparse(uri).path)
+    uri = uri.split("?", 1)[0].split("#", 1)[0]
     p = Path(uri)
-    if not p.is_absolute():
-        p = (ROOT / uri).resolve()
-    return str(p)
+    if p.is_absolute():
+        return str(p)
+    resolved = (ROOT / p).resolve()
+    try:
+        resolved.relative_to(ROOT.resolve())
+    except ValueError as exc:
+        raise ValueError(f"asset path escapes repo root: {uri!r}") from exc
+    return str(resolved)
 
 
 def build(md_name: str) -> bool:
