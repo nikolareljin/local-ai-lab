@@ -475,6 +475,7 @@ def _nav_html(base="./"):
     return (f'<a href="{href("index.html")}">Home</a>'
             '<details class="nav-dd"><summary>Lessons</summary>'
             f'<div class="nav-dd-menu">{links}</div></details>'
+            f'<a href="{href("documentation.html")}">Documentation</a>'
             f'<a href="{href("troubleshooting.html")}">Troubleshooting</a>'
             f'<a href="{href("about.html")}">About</a>')
 

@@ -6,6 +6,20 @@ All notable changes to this project are documented here. This project follows
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-06-15
+
+### Added
+- **Documentation page** (`docs/documentation.html`): a single project-wide reference covering install,
+  run, test, experiment, and how everything works — with first-class **Windows** (PowerShell/cmd)
+  coverage using plain toolchain commands. Linked from the site nav (all pages) and the landing CTA.
+- **Automated releases** (`.github/workflows/release.yml`): merging a `release/X.Y.Z` branch to `main`
+  (which bumps `CHANGELOG.md`) creates the annotated tag and a GitHub Release with the changelog notes.
+
+### Changed
+- **Concise README**: trimmed from ~300 to ~110 lines. Keeps the pitch, badges, 60-second quickstart,
+  and the curriculum table (lesson + PDF links); the detailed `./run` reference, provider table, RAG
+  internals, and repository-layout tree now live on the Documentation page.
+
 ## [0.7.0] - 2026-06-15
 
 **Lesson 5 — RAG evaluation & regression testing.** Score a pipeline against a golden set on

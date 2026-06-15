@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32.png" />
+  <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
+  <title>Documentation — local-ai-lab</title>
+  <meta name="description" content="How to install, run, test, and experiment with local-ai-lab on Linux, macOS, and Windows — and how the whole thing works." />
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+  <div class="topbar"><div class="inner">
+    <span class="brand"><a href="./index.html" style="color:inherit">local-ai<span class="dot">·</span>lab</a></span>
+    <nav>
+      <a href="./index.html">Home</a>
+      <details class="nav-dd"><summary>Lessons</summary><div class="nav-dd-menu">
+        <a href="./lesson-1-rag.html">1 · RAG from scratch</a>
+        <a href="./lesson-2-mcp.html">2 · MCP servers</a>
+        <a href="./lesson-3-hybrid-retrieval-reranking.html">3 · Hybrid retrieval &amp; reranking</a>
+        <a href="./lesson-4-rag-safety-prompt-injection.html">4 · RAG safety &amp; prompt injection</a>
+        <a href="./lesson-5-rag-evaluation-regression-testing.html">5 · RAG evaluation &amp; regression testing</a>
+      </div></details>
+      <a href="./documentation.html">Documentation</a>
+      <a href="./troubleshooting.html">Troubleshooting</a>
+      <a href="./about.html">About</a>
+    </nav>
+  </div></div>
+
+  <div class="wrap">
+    <section class="hero">
+      <h1>Documentation</h1>
+      <p class="tag">Everything you need to <b>install</b>, <b>run</b>, <b>test</b>, and
+        <b>experiment</b> with the course locally — on <b>Linux, macOS, and Windows</b> — plus a tour
+        of how the whole thing works. Each lesson also has its own step-by-step page; this is the
+        project-wide reference.</p>
+    </section>
+
+    <p>For the full, printable setup guide see <a href="https://github.com/nikolareljin/local-ai-lab/blob/main/INSTALL.md">INSTALL.md</a>
+      (<a href="./pdf/INSTALL.pdf" target="_blank" rel="noopener">PDF</a>). Provider/API-key setup and common
+      errors live on the <a href="./troubleshooting.html">Troubleshooting</a> page. The internals are in
+      <a href="https://github.com/nikolareljin/local-ai-lab/blob/main/ARCHITECTURE.md">ARCHITECTURE.md</a>.</p>
+
+    <h2 id="how-it-runs">How it runs</h2>
+    <p>Everything runs with the language toolchains <b>directly — there is no Docker</b>. Install the
+      tools once, then run a lesson with one command. The course is <b>polyglot</b>: <b>Python</b> is
+      the reference implementation, and most lessons also ship <b>Node.js</b> and <b>C# / .NET</b>
+      ports that produce byte-identical results. The default AI is the <b>Claude Code CLI</b> (no API
+      key — it uses your existing Claude Code login); you can switch providers with one environment
+      variable.</p>
+
+    <h2 id="install">Install</h2>
+    <p>You need <b>Python 3.10+</b> for every lesson. Add <b>Node.js 18+</b> only for the Node ports and
+      the <b>.NET 8 SDK</b> only for the C# ports.</p>
+
+    <h3>Linux / macOS</h3>
+    <pre><code>python -m venv venv &amp;&amp; source venv/bin/activate
+pip install -r requirements.txt</code></pre>
+    <p>That is all the Python setup any lesson needs. <code>./run</code> also creates the virtualenv
+      automatically on first use, so this step is optional if you only use <code>./run</code>.</p>
+
+    <h3>Windows</h3>
+    <p>Install the toolchains (PowerShell, one-time) with <code>winget</code>:</p>
+    <pre><code>winget install Git.Git Python.Python.3.12
+winget install OpenJS.NodeJS.LTS         # only for the Node.js ports
+winget install Microsoft.DotNet.SDK.8    # only for the C# / .NET ports</code></pre>
+    <p>Create and activate the virtualenv, then install the Python dependencies:</p>
+    <pre><code># PowerShell
+python -m venv venv
+venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+
+# Command Prompt (cmd.exe)
+python -m venv venv
+venv\Scripts\activate.bat
+pip install -r requirements.txt</code></pre>
+    <div class="note"><b>Running on Windows.</b> <code>./run</code>, <code>./start</code>,
+      <code>./stop</code>, and <code>./status</code> are shell scripts — run them from <b>Git Bash</b>
+      or <b>WSL</b> (both come with, or alongside, Git for Windows). If you prefer native
+      <b>PowerShell</b> or <b>cmd</b>, call the toolchains directly instead (the
+      <a href="#run">Run a lesson</a> section shows the exact commands). The virtualenv layout differs
+      on Windows (<code>venv\Scripts\</code> instead of <code>venv/bin/</code>); the project handles
+      both automatically.</div>
+
+    <p>Full per-OS prerequisites, optional providers (Ollama, Gemini, OpenAI), and a per-lesson
+      dependency table are in <a href="https://github.com/nikolareljin/local-ai-lab/blob/main/INSTALL.md">INSTALL.md</a>
+      (<a href="./pdf/INSTALL.pdf" target="_blank" rel="noopener">PDF</a>).</p>
+
+    <h2 id="run">Run a lesson</h2>
+    <p>One command runs any lesson locally. It sets up the virtualenv on first use and, by default,
+      uses the Claude Code CLI as the AI.</p>
+    <pre><code>./run -l &lt;N&gt; [--lang python|node|csharp] [action]   # run a lesson
+./run -l &lt;N&gt; show                                   # walk through the lesson in the terminal
+./run -l &lt;N&gt; preview                                # serve the rendered lesson locally (browser)
+./run list                                          # list every lesson
+./run -h                                            # full help</code></pre>
+    <p>Each lesson defines its own actions. The common ones:</p>
+    <pre><code>./run -l 1                                   # Lesson 1: launch the RAG web UI (auto-picks a free port)
+./run -l 1 ask "How do I reset the device?"  # one-shot grounded answer in the terminal
+./run -l 1 repl                              # interactive Q&amp;A loop
+./run -l 1 index [--reindex]                 # build/refresh the index from documents/
+./run -l 2                                   # Lesson 2: launch the MCP tool GUI
+./run -l 2 demo                              # call the MCP tools over stdio (no LLM needed)
+./run -l 2 register                          # register the MCP server with Claude Code
+./run -l 3                                   # Lesson 3: hybrid-retrieval experiment GUI
+./run -l 4                                   # Lesson 4: RAG-safety defence playground
+./run -l 5                                   # Lesson 5: evaluation scorecard
+./run -l &lt;N&gt; demo                            # the one-shot, print-and-exit run for lessons 3–5
+./run -l &lt;N&gt; --lang node demo                # the Node.js port (byte-identical output)
+./run -l &lt;N&gt; --lang csharp demo              # the C# / .NET port (byte-identical output)</code></pre>
+
+    <h3>Switching the AI provider</h3>
+    <p>The default provider is Claude Code (no key). Override it with <code>RAG_PROVIDER</code>
+      (<code>claude</code> · <code>ollama</code> · <code>gemini</code> · <code>openai</code>); set keys
+      in a <code>.env</code> file (copy <code>.env.example</code> first). See
+      <a href="./troubleshooting.html">Troubleshooting</a> for per-provider setup.</p>
+    <pre><code>cp .env.example .env                         # then edit .env
+RAG_PROVIDER=ollama ./run -l 1 ask "How do I connect to Wi-Fi?"</code></pre>
+
+    <h3>On native Windows PowerShell / cmd</h3>
+    <p>If you are not using Git Bash or WSL, call each toolchain directly — these do exactly what
+      <code>./run</code> does:</p>
+    <pre><code># Python (Lesson 1 RAG app)
+python -m localrag web --port 5000
+python -m localrag ask "How do I reset the device?"
+
+# Python (Lesson 2 MCP server)
+python mcp_server.py
+
+# Node.js port
+cd node\lesson-1
+npm install
+node src\cli.js web --port 5000
+
+# C# / .NET port
+cd dotnet\lesson-1
+dotnet run -c Release -- web --port 5000</code></pre>
+
+    <h2 id="test">Test</h2>
+    <p>Every lesson ships an <b>offline</b> test (no network, no model) that pins its claims. Run a
+      lesson's test with the <code>test</code> action, or run the whole Python suite with
+      <code>pytest</code>:</p>
+    <pre><code>./run -l 1 test            # Lesson 1: extract + chunk + BM25 retrieval
+./run -l 2 test            # Lesson 2: spawn the MCP server over stdio and call a tool
+./run -l 3 test            # Lesson 3: BM25 / semantic / RRF rankings
+./run -l 4 test            # Lesson 4: the defences neutralise a poisoned document
+./run -l 5 test            # Lesson 5: the gate passes for the baseline, fails for the candidate
+
+pytest -q                  # the full offline suite (from the repo root, venv active)</code></pre>
+    <p><b>What success looks like:</b> tests pass with no network access, the demos print their
+      expected output, and the polyglot lessons produce <b>byte-identical</b> output across Python,
+      Node.js, and C#. On native Windows PowerShell, run the same tests with
+      <code>python -m pytest -q</code>.</p>
+
+    <h2 id="experiment">Experiment — the interactive GUIs</h2>
+    <p>Most lessons open a local, dark-themed web GUI where you tune parameters and watch the results
+      (and the numbers behind them) recompute live — no code editing. The published site stays static;
+      the experimenting happens on your machine.</p>
+    <table>
+      <tr><th>Lesson</th><th><code>./run</code></th><th>What you can tune</th></tr>
+      <tr><td>1 · RAG</td><td><code>./run -l 1</code></td><td>Drag-and-drop documents, ask questions, see cited <code>[file:page]</code> sources</td></tr>
+      <tr><td>2 · MCP</td><td><code>./run -l 2</code></td><td>Call the MCP tools and see exactly what a host receives</td></tr>
+      <tr><td>3 · Hybrid retrieval</td><td><code>./run -l 3</code></td><td>BM25 <code>k1</code>/<code>b</code>, the RRF <code>k</code>, a synonyms toggle — with a per-document score breakdown</td></tr>
+      <tr><td>4 · RAG safety</td><td><code>./run -l 4</code></td><td>Toggle quarantine / isolation / output-filter and watch an answer flip between hijacked and safe</td></tr>
+      <tr><td>5 · RAG evaluation</td><td><code>./run -l 5</code></td><td><code>top_k</code>, the groundedness/correctness gates, unsupported-padding — watch the gate flip</td></tr>
+    </table>
+    <p>The GUIs are a thin Flask app, so unlike the byte-checked <code>demo</code> they need one
+      dependency; <code>./run</code> installs it into the project virtualenv on first use. The GUI is
+      Python-only by convention; the cross-language parity lives in the <code>demo</code> ports.</p>
+
+    <h2 id="how-it-works">How everything works</h2>
+    <h3>The RAG pipeline (Lesson 1)</h3>
+    <p>The working app is a small, readable pipeline: <b>extract</b> text from PDF/DOCX/TXT/MD →
+      <b>chunk</b> it → <b>retrieve</b> the most relevant chunks (BM25 by default, or embeddings) →
+      ask the model to answer <b>grounded</b> in those chunks, citing each claim as
+      <code>[file:page]</code>. The system prompt forces the model to answer from the retrieved context
+      first, say plainly when something is not in the documents, and label any general knowledge it
+      adds — every answer ends with a <code>Sources:</code> line.</p>
+
+    <h3>Providers &amp; retrieval</h3>
+    <p>The provider and retriever are swappable with environment variables:</p>
+    <table>
+      <tr><th>Provider</th><th><code>RAG_PROVIDER</code></th><th>Needs</th><th>Embeddings?</th></tr>
+      <tr><td>Claude Code CLI (default)</td><td><code>claude</code></td><td><code>claude</code> on PATH (your login)</td><td>no</td></tr>
+      <tr><td>Ollama (local)</td><td><code>ollama</code></td><td>Ollama running + a pulled model</td><td>yes</td></tr>
+      <tr><td>Gemini</td><td><code>gemini</code></td><td><code>GEMINI_API_KEY</code></td><td>yes</td></tr>
+      <tr><td>OpenAI / compatible</td><td><code>openai</code></td><td><code>OPENAI_API_KEY</code></td><td>yes</td></tr>
+    </table>
+    <p><code>RAG_RETRIEVER=bm25</code> (default) is pure-Python keyword ranking with zero setup;
+      <code>RAG_RETRIEVER=embeddings</code> is semantic vector search and needs an embedding provider,
+      falling back to BM25 with a clear message if none is reachable. Full provider setup is on the
+      <a href="./troubleshooting.html">Troubleshooting</a> page.</p>
+
+    <h3>The lesson engine (Lessons 3+)</h3>
+    <p>From Lesson 3 onward each lesson is <b>config-driven</b>: a single
+      <code>lessons/NN-slug/lesson.json</code> describes both how to run it and how to present it. The
+      engine (<code>tools/lesson.py</code>) reads that file to run actions, render the terminal
+      walkthrough (<code>show</code>), serve a local preview (<code>preview</code>), and build the
+      published page (<code>build</code>). Adding code or steps is just dropping files and referencing
+      them in <code>lesson.json</code> — no engine changes.</p>
+
+    <h3>The published site &amp; PDFs</h3>
+    <p>The course site under <code>docs/</code> is plain static HTML served by GitHub Pages.
+      Lesson pages 3+ are generated from <code>lesson.json</code> with <code>./run -l &lt;N&gt; build</code>;
+      Lessons 1–2 and pages like this one are hand-authored. The per-lesson and install PDFs in
+      <code>docs/pdf/</code> are generated from the Markdown sources with
+      <code>python3 tools/build_lesson_pdfs.py</code>.</p>
+
+    <h2 id="layout">Repository layout</h2>
+    <pre><code>local-ai-lab/
+├── docs/                  # GitHub Pages course site (this page lives here)
+│   ├── index.html         #   landing + curriculum
+│   ├── lesson-1-rag.html  #   Lesson 1 (RAG) — hand-authored interactive lesson
+│   ├── lesson-2-mcp.html  #   Lesson 2 (MCP) — hand-authored interactive lesson
+│   ├── lesson-N-*.html     #   Lessons 3+ — generated from lessons/NN-*/lesson.json
+│   ├── documentation.html troubleshooting.html about.html
+│   ├── assets/            #   shared styles + slider.js
+│   └── pdf/               #   generated per-lesson and install PDFs
+├── documents/             # the RAG corpus — drop your files here
+├── localrag/              # Lesson 1 source (extract · chunk · retriever · prompts · engine · web)
+│   └── providers/         #   claude_code · ollama · gemini · openai
+├── mcp_server.py          # Lesson 2 — MCP server (search_docs, list_documents)
+├── lessons/               # config-driven lessons (3+): one lesson.json per lesson
+├── tools/                 # lesson engine (lesson.py) + shared GUI scaffold + PDF builder
+├── node/  dotnet/          # Node.js and C# / .NET ports of the lessons
+├── run                    # ./run -l <N> — run any lesson locally
+├── start  stop  status    # manage the Lesson 1 web app in the background
+├── tests/                 # offline smoke tests
+└── INSTALL.md  ARCHITECTURE.md  CHANGELOG.md  AGENTS.md</code></pre>
+    <p>See <a href="https://github.com/nikolareljin/local-ai-lab/blob/main/ARCHITECTURE.md">ARCHITECTURE.md</a>
+      for the data flow and module map.</p>
+
+    <div class="cta" style="margin-top:28px">
+      <a class="btn" href="./lesson-1-rag.html">Start Lesson 1: RAG →</a>
+      <a class="btn ghost" href="https://github.com/nikolareljin/local-ai-lab" target="_blank" rel="noopener">Source on GitHub</a>
+    </div>
+  </div>
+
+  <footer class="site"><div class="inner">
+    © 2023–2026 <a href="https://www.linkedin.com/in/nikolareljin" target="_blank" rel="noopener">Nik Reljin</a> ·
+    Source on <a href="https://github.com/nikolareljin/local-ai-lab" target="_blank" rel="noopener">GitHub</a> ·
+    <a href="./index.html">Home</a> ·
+    Built as a hands-on training course.
+  </div></footer>
+</body>
+</html>

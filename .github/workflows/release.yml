@@ -1,0 +1,56 @@
+name: Release
+
+# When a release/X.Y.Z branch lands on main it bumps CHANGELOG.md. This workflow
+# reads the top "## [X.Y.Z]" heading and, if no tag exists for it yet, creates an
+# annotated tag and a GitHub Release with that section's notes. Idempotent: a push
+# whose top version is already tagged does nothing.
+on:
+  push:
+    branches: [main]
+    paths:
+      - CHANGELOG.md
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  tag-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read top version from CHANGELOG
+        id: ver
+        run: |
+          version=$(grep -m1 -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | tr -d '#[] ')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Top CHANGELOG version: ${version:-<none>}"
+
+      - name: Create tag and release if new
+        if: steps.ver.outputs.version != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version="${{ steps.ver.outputs.version }}"
+          if git rev-parse -q --verify "refs/tags/$version" >/dev/null; then
+            echo "Tag $version already exists — nothing to release."
+            exit 0
+          fi
+          notes=$(awk -v v="$version" '
+            $0 ~ "^## \\[" v "\\]" {f=1; next}
+            /^## \[/ {f=0}
+            f {print}
+          ' CHANGELOG.md)
+          git config user.name "Nik Reljin"
+          git config user.email "nikola.reljin@gmail.com"
+          git tag -a "$version" -m "local-ai-lab $version"
+          git push origin "$version"
+          printf '%s\n' "$notes" | gh release create "$version" \
+            --title "$version" --notes-file - --target "$GITHUB_SHA"
