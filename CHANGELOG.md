@@ -4,6 +4,29 @@ All notable changes to this project are documented here. This project follows
 [Conventional Commits](https://www.conventionalcommits.org/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+**Interactive local experiment GUIs for Lessons 2 and 3.** A shared scaffold gives each lesson a
+local web UI — like Lesson 1's — where you tune parameters and watch the results, and the numbers
+behind them, recompute live, with no code editing. The published GitHub Pages stay static.
+
+### Added
+- **Shared GUI scaffold** (`tools/lesson_web.py` + `tools/templates/lesson-gui.html`): a self-contained,
+  dark UI a lesson drives with a param spec, examples, and a `search(query, values)` returning rankings
+  plus a "why" breakdown.
+- **Lesson 3 experiment GUI** (`lessons/03-…/python/web.py`): BM25 `k1`/`b`, RRF `k`, and a synonyms
+  toggle, with a per-document score breakdown (IDF, scores, ranks, RRF contribution).
+- **Lesson 2 MCP tool GUI** (`examples/mcp_web.py`): calls the same retriever `search_docs` wraps and
+  shows what an MCP host receives — the tool call, the cited `[source:page]` passages, and the
+  `list_documents()` corpus; a `k` slider tunes how many passages are returned.
+
+### Changed
+- `./run -l 2` and `./run -l 3` now open their interactive GUI by default (like `./run -l 1`); the
+  one-shot terminal runs remain available as `./run -l 2 demo` / `./run -l 3 demo`.
+- The engine falls back to an available action (preferring `demo`) when a lesson's default action has
+  no command for the chosen `--lang`, so `./run -l 3 --lang node` keeps working.
+- Unified the page footer across the lessons, home, and about pages.
+
 ## [0.5.0]
 
 **Config-driven lessons + Lesson 3 (Hybrid retrieval & reranking).** Lessons from 3 onward are
@@ -128,7 +151,7 @@ Cross-platform install docs, per-lesson PDFs, an easy lesson runner, and the pol
   `docs/pdf/LESSON1-8.pdf`; linked from each lesson, the README, and the course site.
 - **`./run` dispatcher** — `./run -l <N> [--lang python|node|csharp] [action]`; auto-creates the
   venv, auto-picks a free port, and announces the default AI (Claude Code).
-- **`examples/mcp_demo.py`** — stdio client used by `./run -l 2`.
+- **`examples/mcp_demo.py`** — stdio client used by `./run -l 2 demo`.
 - **Install slides** added to the Lesson 1 and Lesson 2 interactive sliders.
 
 ### Changed

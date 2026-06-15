@@ -22,27 +22,34 @@ program, so you finish understanding how the thing actually works — not just h
 > then `./run -l <N>`. Full cross-platform setup (Linux · macOS · Windows) and per-lesson
 > dependencies are in **[INSTALL.md](./INSTALL.md)** ([PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)).
 > The course is **polyglot** — **Python** is the reference, with **Node.js** and **C#** ports per
-> lesson via `./run -l <N> --lang node|csharp` (**Lessons 1 and 2** ship in all three today). Every lesson is also a **PDF** in
+> lesson via `./run -l <N> --lang node|csharp` (**Lessons 1, 2 and 3** ship in all three today). Every lesson is also a **PDF** in
 > [`docs/pdf/`](./docs/pdf/).
 
 ---
 
 ## Curriculum
 
-Every lesson comes in two forms: a **written guide** (`LESSONx.md`, full text + code) and an
-**interactive slider** on the course site (each step explains *what* and *why*, gives the exact
-command to type, and shows the code — steps are deep-linkable).
+Each available lesson is published as an **interactive slider** on the course site (every step explains
+*what* and *why*, gives the command to type, and shows the code — steps are deep-linkable) and as a
+**written guide**. **Lessons 1–3 are live and runnable today**; the rest are on the roadmap below.
 
-| # | Lesson | What you build | Read (Markdown) | Live (interactive) | Status |
-|---|--------|----------------|-----------------|--------------------|--------|
-| 1 | **RAG from scratch** | A drag-and-drop document Q&A app: extract → chunk → retrieve (BM25 + embeddings) → grounded answer with citations | [LESSON1.md](./LESSON1.md) | [open](https://nikolareljin.github.io/local-ai-lab/lesson-1-rag.html) | Available |
-| 2 | **MCP servers** | Expose your document search as a Model Context Protocol tool Claude Code can call (`mcp_server.py`) | [LESSON2.md](./LESSON2.md) | [open](https://nikolareljin.github.io/local-ai-lab/lesson-2-mcp.html) | Available |
-| 3 | **LangChain** | Rebuild the RAG pipeline with LangChain and compare trade-offs | [LESSON3.md](./LESSON3.md) | _on site soon_ | Planned |
-| 4 | **LangGraph** | Turn the pipeline into a stateful, self-correcting agent graph | [LESSON4.md](./LESSON4.md) | _on site soon_ | Planned |
-| 5 | **Ollama + Function Calling** | Give a local model real tools (function calling), 100% offline | [LESSON5.md](./LESSON5.md) | _on site soon_ | Planned |
-| 6 | **Microsoft Semantic Kernel** | Rebuild the agent in **C# / .NET** with SK plugins (runs locally) | [LESSON6.md](./LESSON6.md) | _on site soon_ | Planned |
-| 7 | **AWS Bedrock Agents** | Knowledge bases + action groups on a managed cloud agent, driven locally | [LESSON7.md](./LESSON7.md) | _on site soon_ | Planned |
-| 8 | **Google AI Development Kit** | Build & run a Gemini agent locally with Google's ADK | [LESSON8.md](./LESSON8.md) | _on site soon_ | Planned |
+| # | Lesson | What you build | Guide | Live | Status |
+|---|--------|----------------|-------|------|--------|
+| 1 | **RAG from scratch** | Extract → chunk → retrieve (BM25 + embeddings) → grounded answer with citations | [LESSON1.md](./LESSON1.md) | [open](https://nikolareljin.github.io/local-ai-lab/lesson-1-rag.html) | Available |
+| 2 | **MCP servers** | Expose your document search as a Model Context Protocol tool Claude Code can call natively | [LESSON2.md](./LESSON2.md) | [open](https://nikolareljin.github.io/local-ai-lab/lesson-2-mcp.html) | Available |
+| 3 | **Hybrid retrieval & reranking** | BM25 + a semantic arm fused with Reciprocal Rank Fusion — offline, in Python, Node.js and C# | [README](./lessons/03-hybrid-retrieval-reranking/README.md) | [open](https://nikolareljin.github.io/local-ai-lab/lesson-3-hybrid-retrieval-reranking.html) | Available |
+| 4 | **RAG safety & prompt injection** | Treat retrieved documents as untrusted input — defend against prompt injection and poisoned content | — | — | Planned |
+| 5 | **RAG evaluation & regression testing** | Golden questions, groundedness scoring, and regression tests — turn "seems good" into a tracked number | — | — | Planned |
+| 6 | **Repo-aware AI assistant** | Ground an assistant in your codebase so it answers with repo-specific context | — | — | Planned |
+| 7 | **LangChain** | Rebuild the RAG pipeline with LangChain and compare the trade-offs | — | — | Planned |
+| 8 | **LangGraph** | Turn the pipeline into a stateful agent graph with retries, tool routing, and memory | — | — | Planned |
+| 9 | **Ollama + Function Calling** | Give a local model real tools it can call (function calling) — 100% offline | — | — | Planned |
+| 10 | **Microsoft Semantic Kernel** | Rebuild the agent in **C# / .NET** with SK plugins and auto function calling | — | — | Planned |
+| 11 | **AWS Bedrock Agents** | Knowledge bases + action groups on a managed cloud agent, driven from your machine | — | — | Planned |
+| 12 | **Google AI Development Kit** | Build and run a Gemini agent locally with Google's open-source ADK | — | — | Planned |
+| 13 | **AI-assisted testing** | Generate, run, and review tests, and let failures guide the fix | — | — | Planned |
+| 14 | **AI code review & issue detection** | Use AI to catch the serious issues in review — real bugs, security, risky changes | — | — | Planned |
+| 15 | **Documentation from sprint changes** | Generate release notes and docs straight from a sprint's commits and pull requests | — | — | Planned |
 
 Every lesson's end goal: a **fully published slideshow lesson** with step-by-step instructions, and
 **all code runs locally**.
@@ -130,9 +137,29 @@ claude mcp add local-ai-lab-docs -- python mcp_server.py
 
 **Polyglot:** the same server is also built on the official **Node.js**
 ([`node/lesson-2`](./node/lesson-2)) and **C# / .NET** ([`dotnet/lesson-2`](./dotnet/lesson-2))
-MCP SDKs — try `./run -l 2 --lang node` or `./run -l 2 --lang csharp`.
+MCP SDKs — try `./run -l 2 --lang node demo` or `./run -l 2 --lang csharp demo`.
 
 Full walkthrough: [LESSON2.md](./LESSON2.md) · [interactive lesson](https://nikolareljin.github.io/local-ai-lab/lesson-2-mcp.html).
+
+---
+
+## Lesson 3: hybrid retrieval & reranking
+
+Lesson 3 combines **BM25** keyword search with a **semantic** arm and fuses them with **Reciprocal
+Rank Fusion (RRF)** — offline and dependency-free, with byte-identical results in **Python, Node.js
+and C#**. It's the first **config-driven** lesson: it lives under
+[`lessons/03-hybrid-retrieval-reranking/`](./lessons/03-hybrid-retrieval-reranking/) and is run,
+previewed, and published through one engine (`tools/lesson.py`).
+
+```bash
+./run -l 3                 # interactive experiment GUI: tune BM25 k1/b, RRF k, synonyms — live
+./run -l 3 demo            # one-shot: print the BM25 / semantic / fused rankings and exit
+./run -l 3 --lang node demo          # Node.js — the same algorithm, byte-identical
+./run -l 3 --lang csharp demo        # C# / .NET — the same algorithm, byte-identical
+./run -l 3 test            # offline test pinning the lesson's claims
+```
+
+Full walkthrough: [README](./lessons/03-hybrid-retrieval-reranking/README.md) · [interactive lesson](https://nikolareljin.github.io/local-ai-lab/lesson-3-hybrid-retrieval-reranking.html).
 
 ---
 
@@ -144,6 +171,7 @@ local-ai-lab/
 │   ├── index.html         #   landing + curriculum
 │   ├── lesson-1-rag.html  #   Lesson 1 (RAG) — full interactive lesson
 │   ├── lesson-2-mcp.html  #   Lesson 2 (MCP) — full interactive lesson
+│   ├── lesson-3-hybrid-retrieval-reranking.html  # Lesson 3 (generated from lessons/03-*)
 │   └── assets/            #   styles + slider.js
 ├── documents/             # the RAG corpus — drop your files here
 ├── localrag/              # Lesson 1 source code (the working app)
@@ -152,13 +180,18 @@ local-ai-lab/
 │   ├── web.py             #   Flask drag-and-drop UI
 │   └── templates/         #   index.html (web UI)
 ├── mcp_server.py          # Lesson 2 — MCP server (search_docs, list_documents)
-├── examples/mcp_demo.py   # Lesson 2 — stdio client demo (used by ./run -l 2)
+├── examples/
+│   ├── mcp_demo.py        # Lesson 2 — stdio client demo (used by ./run -l 2 demo)
+│   └── mcp_web.py         # Lesson 2 — interactive tool GUI (./run -l 2)
+├── lessons/               # config-driven lessons (3+): one lesson.json per lesson
+│   └── 03-hybrid-retrieval-reranking/   # Lesson 3 (Python · Node · C#)
+├── tools/                 # lesson engine (lesson.py) + shared experiment-GUI scaffold (lesson_web.py)
 ├── node/                  # Node.js ports — lesson-1/ (RAG) · lesson-2/ (MCP server)
 ├── dotnet/                # C# / .NET ports — lesson-1/ (RAG) · lesson-2/ (MCP server)
 ├── run                    # ./run -l <N> [--lang python|node|csharp] — run any lesson locally
 ├── scripts/               # script-helpers submodule + start/stop/status helpers
 ├── tests/                 # offline smoke tests (incl. MCP integration test)
-├── LESSON1.md … LESSON8.md   # full written lessons (linked to the live site)
+├── LESSON1.md, LESSON2.md, …   # written lesson guides (Lesson 3+ guides live in lessons/NN-*/README.md)
 ├── ARCHITECTURE.md  CHANGELOG.md  AGENTS.md
 ```
 
@@ -176,16 +209,18 @@ uses the **Claude Code CLI** as the AI — no API key, it just uses your existin
 ./run -l 1 ask "How do I reset the device?"  # one-shot question in the terminal
 ./run -l 1 repl                              # interactive Q&A loop
 ./run -l 1 test                              # run Lesson 1 tests
-./run -l 2                                   # demo the MCP server end-to-end (no LLM needed)
+./run -l 2                                   # launch the MCP tool GUI (auto-picks a free port)
+./run -l 2 demo                              # call the MCP tools over stdio in the terminal (no LLM needed)
 ./run -l 2 register                          # register the MCP server with Claude Code
 ./run -l 2 serve                             # run the MCP server over stdio
 ./run -l 2 test                              # run Lesson 2 tests
-./run -l 1 --lang node                       # Node.js impl (Lessons 1-2 ported; else points to Python)
-./run -l 2 --lang csharp                     # C# MCP server, demoed end-to-end
+./run -l 1 --lang node                       # Node.js impl (Lessons 1-3 ported; else points to Python)
+./run -l 2 --lang csharp demo                # C# MCP server, demoed end-to-end
 ./run -h                                     # full help
 ```
 
-Lessons **3–8** are written guides for now: `./run -l 3` points you to `LESSON3.md`.
+Lesson **3** is interactive too — `./run -l 3` opens its experiment GUI (or `./run -l 3 demo` for the
+one-shot terminal run). Lessons **4–8** are written guides for now.
 
 First-time setup and per-lesson dependencies for **Linux, macOS, and Windows** (Python, Node.js,
 C#) are in **[INSTALL.md](./INSTALL.md)** ([PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)).

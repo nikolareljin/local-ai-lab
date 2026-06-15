@@ -2,7 +2,7 @@
 
 Spawns ``mcp_server.py`` over stdio (exactly as an MCP host like Claude Code
 would), lists its tools, and calls them — proving the server works locally
-without needing an LLM. Run via:  ``./run -l 2``  or  ``python examples/mcp_demo.py "your question"``.
+without needing an LLM. Run via:  ``./run -l 2 demo``  or  ``python examples/mcp_demo.py "your question"``.
 """
 
 from __future__ import annotations

@@ -53,32 +53,35 @@ opposite directions:
 
 …and print the BM25 ranking, the semantic ranking, and the fused (RRF) ranking for each.
 
-### Run it (offline, no dependencies)
+### Run the comparison (offline, no dependencies)
 
-From the repo root — pick any language, all three give the **same** rankings:
-
-```bash
-./run -l 3                 # Python — prints the ranking comparison and exits (default)
-./run -l 3 --lang node     # Node.js — same output
-./run -l 3 --lang csharp   # C# / .NET 8 — same output
-./run -l 3 test            # the offline Python test
-./run -l 3 show            # walk through this lesson's steps (code, data, prompts, commands)
-./run -l 3 web             # optional: an interactive web UI (Python) — type a query, see all three rankings
-```
-
-> Lesson 3 is a focused **comparison**: by default it prints the BM25 / semantic / hybrid rankings
-> for two queries and exits — no server needed. The optional `web` action adds a live query box if you
-> want to poke at it interactively.
-
-### Test it with the Fictive Story
-
-The best hands-on test is the bundled short story — *The Voyage of Caretta the Magnificent* (the magic
-turtle who became an astronaut), split into five chapters in [`story/`](./story). Launch the
-interactive UI and search it:
+From the repo root — the `demo` action prints the rankings and exits, with **nothing to install**
+(pure standard library). Pick any language; all three give the **same** output:
 
 ```bash
-./run -l 3 web        # opens http://127.0.0.1:<port> — searching the 5-chapter story
+./run -l 3 demo                 # Python — print the BM25 / semantic / hybrid comparison and exit
+./run -l 3 --lang node demo     # Node.js — same output
+./run -l 3 --lang csharp demo   # C# / .NET 8 — same output
+./run -l 3 test                 # the offline Python test
+./run -l 3 show                 # walk through this lesson's steps (code, data, prompts, commands)
 ```
+
+> `./run -l 3 demo` is the dependency-free **comparison**: it prints the rankings for two queries and
+> exits — no server, no install, byte-identical across Python, Node.js and C#.
+
+### Experiment in the GUI (needs Flask)
+
+For a hands-on feel, bare `./run -l 3` opens an interactive **experiment GUI** over the bundled short
+story — *The Voyage of Caretta the Magnificent* (the magic turtle who became an astronaut), five
+chapters in [`story/`](./story). Type a query and watch the BM25, semantic and hybrid rankings (and the
+numbers behind them) recompute as you tune the knobs — no code editing.
+
+```bash
+./run -l 3            # opens http://127.0.0.1:<port> — the experiment GUI over the 5-chapter story
+```
+
+> The GUI is a small Flask app, so unlike the `demo` it needs one dependency. `./run` installs it into
+> the project venv automatically on first use (`pip install -r requirements.txt` if you prefer manual).
 
 Try these and watch the two retrievers diverge:
 
@@ -216,9 +219,9 @@ RRF) are the same; only the syntax changes.
 
 | Port | Entry point | Run |
 |------|-------------|-----|
-| [Python](./python) | `python/hybrid_demo.py` | `./run -l 3` · `./run -l 3 test` |
-| [Node.js](./node) | `node/hybrid_demo.mjs` | `./run -l 3 --lang node` |
-| [.NET 8](./dotnet) | `dotnet/Program.cs` | `./run -l 3 --lang csharp` |
+| [Python](./python) | `python/hybrid_demo.py` | `./run -l 3 demo` · `./run -l 3 test` |
+| [Node.js](./node) | `node/hybrid_demo.mjs` | `./run -l 3 --lang node demo` |
+| [.NET 8](./dotnet) | `dotnet/Program.cs` | `./run -l 3 --lang csharp demo` |
 
 > All three commands are declared once in [`lesson.json`](./lesson.json) — the single source of truth
 > the `./run` engine reads. `./run -l 3 show` renders this lesson's elements (notes, code, sample data,

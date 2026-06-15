@@ -46,7 +46,7 @@ def load_docs():
 
 
 # --- Lexical arm: a compact BM25 (no external library) ----------------------
-def bm25_scores(query_tokens, docs):
+def bm25_scores(query_tokens, docs, k1=K1, b=B):
     n = len(docs)
     if n == 0:                      # empty corpus → no scores (avoid /0 on avgdl)
         return []
@@ -64,16 +64,16 @@ def bm25_scores(query_tokens, docs):
                 continue
             idf = math.log(1 + (n - df[t] + 0.5) / (df[t] + 0.5))
             tf = d["tokens"].count(t)
-            score += idf * (tf * (K1 + 1)) / (tf + K1 * (1 - B + B * dl / avgdl))
+            score += idf * (tf * (k1 + 1)) / (tf + k1 * (1 - b + b * dl / avgdl))
         scores.append(score)
     return scores
 
 
 # --- Semantic stand-in: synonym-expanded overlap (no model needed) ----------
-def semantic_scores(query_tokens, docs):
+def semantic_scores(query_tokens, docs, synonyms=SYNONYMS):
     q = set(query_tokens)
     for t in list(q):
-        q.update(SYNONYMS.get(t, []))
+        q.update(synonyms.get(t, []))
     scores = []
     for d in docs:
         toks = set(d["tokens"])
@@ -88,19 +88,19 @@ def rank(docs, scores):
     return [docs[i]["name"] for i in order if scores[i] > 0]
 
 
-def rrf(rankings):
+def rrf(rankings, rrf_k=RRF_K):
     fused = {}
     for ranking in rankings:
         for pos, name in enumerate(ranking):
-            fused[name] = fused.get(name, 0.0) + 1.0 / (RRF_K + pos + 1)
+            fused[name] = fused.get(name, 0.0) + 1.0 / (rrf_k + pos + 1)
     return [name for name, _ in sorted(fused.items(), key=lambda kv: (-kv[1], kv[0]))]
 
 
-def hybrid(query, docs):
+def hybrid(query, docs, k1=K1, b=B, rrf_k=RRF_K, synonyms=SYNONYMS):
     q = tokenize(query)
-    lexical = rank(docs, bm25_scores(q, docs))
-    semantic = rank(docs, semantic_scores(q, docs))
-    return lexical, semantic, rrf([lexical, semantic])
+    lexical = rank(docs, bm25_scores(q, docs, k1, b))
+    semantic = rank(docs, semantic_scores(q, docs, synonyms))
+    return lexical, semantic, rrf([lexical, semantic], rrf_k)
 
 
 def main():

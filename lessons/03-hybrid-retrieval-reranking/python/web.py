@@ -1,28 +1,58 @@
-"""Lesson 3 - interactive hybrid-search web UI.
+"""Lesson 3 - interactive hybrid-search GUI (experiment locally).
 
-Type a query; see the BM25, semantic, and fused (RRF) rankings side by side over
-the demo corpus. Reuses the demo's retrieval logic (no duplication).
+Type a query and tune the knobs — BM25 `k1`/`b`, the RRF `k`, and the semantic
+arm's synonyms — then watch the three rankings *and the numbers behind them*
+change live. There is **nothing to edit**: the sliders feed the very same
+`bm25_scores` / `semantic_scores` / `rank` / `rrf` functions the one-shot `demo`
+and the test use — called directly here (rather than through `hybrid()`) only so
+the GUI can also surface the intermediate scores for the "why" breakdown.
 
-Run:  python web.py        (or:  ./run -l 3 web)
+Run:  ./run -l 3        (or:  ./run -l 3 web)
 
-This is the interactive app for the lesson; the retrieval *algorithm* also ships
-as the polyglot one-shot `demo` (Python / Node / .NET).
+The byte-checked `demo` action keeps using the tiny data/ corpus; this GUI searches
+the richer 5-chapter story so hybrid retrieval is fun to feel on real prose.
 """
 
-import html
-import socket
+import math
+import sys
 from pathlib import Path
 
-from flask import Flask, request
+# Reach the shared GUI scaffold under tools/ (this file runs with cwd = the lesson
+# dir, so locate the repo root from the file path, not the working directory).
+ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT / "tools"))
 
-from hybrid_demo import hybrid, tokenize
+from lesson_web import serve  # the shared L1-style experiment GUI
 
-app = Flask(__name__)
+from hybrid_demo import (
+    B,
+    K1,
+    RRF_K,
+    bm25_scores,
+    rank,
+    rrf,
+    semantic_scores,
+    tokenize,
+)
 
-# The interactive UI searches the Fictive Story corpus (a richer, fun document) —
-# the best way to feel hybrid retrieval on real prose. The byte-checked `demo`
-# action keeps using the tiny data/ corpus.
 STORY_DIR = Path(__file__).resolve().parent.parent / "story"
+
+# The GUI searches the *story* corpus, so it carries its own synonym map (the demo's
+# data/ corpus keeps hybrid_demo.SYNONYMS). Keys are words a reader might type that do
+# NOT appear literally in the story; each expands to words that DO — so toggling
+# synonyms visibly changes the rankings, e.g. "overheated" recovers the fusion-drive
+# chapter only with synonyms on, exactly the divergence fusion exists for.
+STORY_SYNONYMS = {
+    "overheated": ["overheat"],
+    "spaceship": ["ship", "vessel"],
+    "alien": ["signal", "interstellar"],
+    "reptile": ["turtle", "caretta"],
+    "alive": ["moist", "sustained"],
+    "planet": ["world", "eden"],
+    "discovered": ["discovery", "found"],
+    "keep": ["sustained", "recyclers", "moist"],
+    "space": ["interstellar", "stars"],
+}
 
 
 def load_story():
@@ -34,64 +64,133 @@ def load_story():
 
 DOCS = load_story()
 
-PAGE = """<!doctype html>
-<html><head><meta charset="utf-8"><title>Lesson 3 · Hybrid search</title>
-<style>
-  body {{ font: 16px/1.5 system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }}
-  h1 {{ font-size: 1.2rem; }}
-  form {{ display: flex; gap: .5rem; margin: 1rem 0; }}
-  input[type=text] {{ flex: 1; padding: .5rem; font-size: 1rem; }}
-  button {{ padding: .5rem 1rem; }}
-  table {{ border-collapse: collapse; width: 100%; margin-top: 1rem; }}
-  th, td {{ text-align: left; padding: .4rem .6rem; border-bottom: 1px solid #ddd; }}
-  th {{ width: 9rem; color: #444; }}
-  code {{ background: #f4f4f4; padding: .1rem .3rem; border-radius: 3px; }}
-  .hint {{ color: #666; }}
-</style></head><body>
-<h1>Lesson 3 · Hybrid search — <em>The Voyage of Caretta the Magnificent</em></h1>
-<p class="hint">Searching the 5-chapter fictive story. BM25 wins exact terms; the semantic stand-in wins
-paraphrases; RRF fuses both. Try an exact name like <code>Nuevo Edén</code> or
-<code>Alpha Centauri</code>, or a paraphrase like <code>who found the new planet</code>.</p>
-<form method="get" action="/">
-  <input type="text" name="q" value="{query}" placeholder="ask the docs…" autofocus>
-  <button type="submit">Search ▶</button>
-</form>
-{results}
-</body></html>"""
+# The knobs exposed in the GUI — defaults are the lesson's own constants, so the UI
+# opens on exactly the behaviour the demo and test pin.
+PARAMS = [
+    {"name": "k1", "label": "BM25 · k1 — term-frequency saturation", "kind": "range",
+     "min": 0.2, "max": 3.0, "step": 0.1, "default": K1},
+    {"name": "b", "label": "BM25 · b — length normalisation", "kind": "range",
+     "min": 0.0, "max": 1.0, "step": 0.05, "default": B},
+    {"name": "rrf_k", "label": "RRF · k — rank-fusion damping", "kind": "range",
+     "min": 1, "max": 120, "step": 1, "default": RRF_K},
+    {"name": "synonyms", "label": "Semantic arm — expand synonyms", "kind": "toggle",
+     "default": True},
+]
+
+# Examples chosen for the *story* corpus this GUI searches. The middle two exercise
+# the synonyms toggle: "overheated" appears in no chapter, so BM25 finds nothing and
+# only the synonym-expanded semantic arm recovers the fusion-drive chapter; the turtle
+# paraphrase reorders when synonyms are on. (The byte-checked demo uses the tiny data/
+# corpus, where "broken gadget" shows the same divergence.)
+EXAMPLES = [
+    {"label": "Exact name (BM25 nails it)", "query": "Nuevo Edén"},
+    {"label": "Keyword-free — synonyms recover it", "query": "overheated"},
+    {"label": "Paraphrase — turn synonyms off to compare", "query": "how did they keep the turtle alive in space"},
+    {"label": "A star by name", "query": "Alpha Centauri"},
+]
 
 
-def render_results(query):
-    if not query:
-        return '<p class="hint">Enter a query above.</p>'
-    lexical, semantic, fused = hybrid(query, DOCS)
-    rows = [
-        ("BM25 (lexical)", lexical),
-        ("Semantic (stand-in)", semantic),
-        ("Hybrid (RRF)", fused),
+def _idf(query_tokens, docs):
+    """Per-query-term IDF — the same rare-term weighting `bm25_scores` uses inside,
+    surfaced here so the GUI can show *why* one term outweighs another."""
+    n = len(docs)
+    df = {}
+    for d in docs:
+        for t in set(d["tokens"]):
+            df[t] = df.get(t, 0) + 1
+    return {t: math.log(1 + (n - df[t] + 0.5) / (df[t] + 0.5)) for t in set(query_tokens) if t in df}
+
+
+def _why_blocks(q, bm, sem, lexical, semantic, rrf_k, synonyms):
+    """Build the 'why' breakdown: the query as each arm sees it, then a per-document
+    table of BM25/semantic scores, ranks, and the RRF contribution that fuses them."""
+    idf = _idf(q, DOCS)
+    lex_pos = {name: i for i, name in enumerate(lexical)}
+    sem_pos = {name: i for i, name in enumerate(semantic)}
+
+    qtokens = [
+        {"text": t, "note": ("idf %.2f" % idf[t]) if t in idf else "not in corpus",
+         "muted": t not in idf}
+        for t in q
     ]
-    body = "".join(
-        f"<tr><th>{label}</th><td>{' · '.join(html.escape(n) for n in ranking)}</td></tr>"
-        for label, ranking in rows
-    )
-    return f"<table>{body}</table>"
+    blocks = [{"kind": "tokens",
+               "title": "Query terms — BM25 weights each by IDF (rarer = stronger)",
+               "items": qtokens}]
+
+    if synonyms:
+        syns = [{"text": s, "note": "← " + t, "muted": True}
+                for t in q for s in synonyms.get(t, [])]
+        blocks.append({"kind": "tokens",
+                       "title": "Synonym expansions the semantic arm also searches for"
+                                if syns else "No synonym expansions for this query",
+                       "items": syns})
+    else:
+        blocks.append({"kind": "note",
+                       "text": "Synonyms are OFF — the semantic arm now matches literal words only, "
+                               "so it collapses toward BM25 and paraphrases stop being recovered."})
+
+    columns = ["document", "BM25", "semantic", "BM25 rank", "sem rank", "RRF lex", "RRF sem", "fused RRF"]
+    rows = []
+    for i, d in enumerate(DOCS):
+        name = d["name"]
+        lr, sr = lex_pos.get(name), sem_pos.get(name)
+        lex_rrf = 1.0 / (rrf_k + lr + 1) if lr is not None else 0.0
+        sem_rrf = 1.0 / (rrf_k + sr + 1) if sr is not None else 0.0
+        fused = lex_rrf + sem_rrf
+        num_or_miss = lambda x, text: {"v": text, "cls": "num" if x else "miss"}
+        rows.append((fused, [
+            {"v": name, "cls": "text"},
+            num_or_miss(bm[i] > 0, "%.3f" % bm[i]),
+            num_or_miss(sem[i] > 0, "%.3f" % sem[i]),
+            num_or_miss(lr is not None, ("#%d" % (lr + 1)) if lr is not None else "—"),
+            num_or_miss(sr is not None, ("#%d" % (sr + 1)) if sr is not None else "—"),
+            num_or_miss(lex_rrf, ("%.4f" % lex_rrf) if lex_rrf else "—"),
+            num_or_miss(sem_rrf, ("%.4f" % sem_rrf) if sem_rrf else "—"),
+            num_or_miss(fused, ("%.4f" % fused) if fused else "—"),
+        ]))
+    rows.sort(key=lambda r: -r[0])  # best fused first — the order the hybrid returns
+    blocks.append({"kind": "table",
+                   "title": "Why each document ranks where it does",
+                   "columns": columns, "rows": [cells for _, cells in rows]})
+    blocks.append({"kind": "note",
+                   "text": "BM25 = Σ idf(term) · saturated term-frequency (shaped by k1 & b). "
+                           "Semantic = overlap with the synonym-expanded query. RRF fuses by rank: "
+                           "1/(k+rank) from each arm, summed. A blank means that arm didn't rank the "
+                           "document — which is exactly how a paraphrase scores 0 on BM25 yet the "
+                           "hybrid still answers via the semantic arm."})
+    return blocks
 
 
-@app.route("/")
-def index():
-    query = request.args.get("q", "")
-    return PAGE.format(query=html.escape(query, quote=True), results=render_results(query))
+def search(query, values):
+    k1, b, rrf_k = values["k1"], values["b"], values["rrf_k"]
+    synonyms = STORY_SYNONYMS if values["synonyms"] else {}
+    if not query:
+        return {"arms": [], "blocks": [{"kind": "note", "text": "Type a query — or pick an example above."}]}
 
-
-def free_port():
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("127.0.0.1", 0))
-        return s.getsockname()[1]
+    q = tokenize(query)
+    bm = bm25_scores(q, DOCS, k1, b)
+    sem = semantic_scores(q, DOCS, synonyms)
+    lexical = rank(DOCS, bm)
+    semantic = rank(DOCS, sem)
+    fused = rrf([lexical, semantic], rrf_k)
+    arms = [
+        {"label": "BM25 (lexical)", "ranking": lexical},
+        {"label": "Semantic (stand-in)", "ranking": semantic},
+        {"label": "Hybrid (RRF)", "ranking": fused, "highlight": True},
+    ]
+    return {"arms": arms, "blocks": _why_blocks(q, bm, sem, lexical, semantic, rrf_k, synonyms)}
 
 
 def main():
-    port = free_port()
-    print(f"Lesson 3 · Hybrid search over the fictive story → http://127.0.0.1:{port}  (Ctrl-C to stop)", flush=True)
-    app.run(host="127.0.0.1", port=port)
+    serve(
+        title="Lesson 3 · Hybrid search — The Voyage of Caretta the Magnificent",
+        subtitle="BM25 wins exact terms; the semantic stand-in wins paraphrases; RRF fuses both. "
+                 "Tune the knobs and watch the rankings — and the numbers behind them — change live.",
+        hint="Searching the bundled 5-chapter story. Try an exact name, then a paraphrase of it.",
+        params=PARAMS,
+        examples=EXAMPLES,
+        search=search,
+    )
 
 
 if __name__ == "__main__":

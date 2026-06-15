@@ -63,6 +63,36 @@ use (deep-linkable `#step-N`, dots, prev/next, copy buttons) and serves it on lo
 preview equals what gets published, with nothing deployed. `show` is the quick terminal version;
 `show --html` writes a standalone file (assets referenced by absolute path).
 
+## Experiment GUI (the shared `web` action)
+
+A lesson can ship a **local, interactive GUI** — the same dark, Lesson-1-style page every lesson
+shares — so a cloned-repo user can **tune parameters and watch the results (and the numbers behind
+them) change live, without editing any code**. The GitHub Pages page stays static; the experimenting
+happens locally.
+
+It is a thin convention, not new engine machinery:
+
+1. Add a `python/web.py` that imports the shared scaffold and supplies three things the lesson owns —
+   its tunable **PARAMS**, a few **EXAMPLES**, and a `search(query, values)` that runs the lesson's
+   own compute and returns rankings + a "why" breakdown. Start from
+   [`_template/python/web.py`](_template/python/web.py).
+2. Declare a `web` command element in `lesson.json`:
+   ```json
+   { "type": "command", "action": "web", "lang": "python", "venv": true, "shell": "python python/web.py" }
+   ```
+3. To make `./run -l N` open the GUI by default (like Lesson 1), set `"defaultAction": "web"`. Keep the
+   byte-checked one-shot reachable as `./run -l N demo`.
+
+The look, the live sliders/toggles, the `/api/config` + `/api/search` wiring, and the score-breakdown
+renderer all live once in [`../tools/lesson_web.py`](../tools/lesson_web.py) +
+[`../tools/templates/lesson-gui.html`](../tools/templates/lesson-gui.html). `serve(...)` takes the param
+spec + `search` fn; `search` returns `{"arms": [...], "blocks": [...]}` where each block is a
+`stats` / `tokens` / `table` / `note` (see the scaffold's module docstring). Lesson 3
+([`03-hybrid-retrieval-reranking/python/web.py`](03-hybrid-retrieval-reranking/python/web.py)) is the
+reference implementation: BM25 `k1`/`b`, the RRF `k`, and a synonyms toggle, with a per-document
+score breakdown. The GUI is Python-only by convention; cross-language **algorithm** parity stays in
+the byte-checked `demo` ports.
+
 ## Authoring a new lesson
 
 ```bash
