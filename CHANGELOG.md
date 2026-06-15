@@ -14,11 +14,23 @@ All notable changes to this project are documented here. This project follows
   (1 RAG → 2 MCP → 3 Hybrid → 4 Safety → 5 Eval → 6 Repo → 7–12 framework tour), so the live Lessons
   3–5 are reachable from the guides instead of being shadowed by the old outlines.
 - **PDF build** (`tools/build_lesson_pdfs.py`): emits `LESSON7–12.pdf` from the `roadmap/` sources under
-  their curriculum numbers; the stale `LESSON3–6.pdf` were removed.
+  their curriculum numbers; the stale `LESSON3–6.pdf` were removed. The builder now **auto-discovers**
+  lessons from disk (root `LESSON<n>.md`, `lessons/<NN>-slug/README.md`, `roadmap/LESSON<n>-slug.md`), so
+  a new lesson gets a PDF with no edits.
+- **Home page** lists every lesson PDF through two dropdowns (Lessons 1–5, Roadmap 7–12) instead of a
+  single Lesson-1 link.
 
 ### Added
 - **`roadmap/README.md`**: an index of the planned-lesson outlines that points back to where the live
   lessons live.
+- **Educator positioning** — a README "About the author" + "What you'll be able to do" section, a
+  "Who's teaching this" section on the site home, an "About the author" section on `docs/about.html`,
+  and a new **`SYLLABUS.md`** (clusters, per-lesson learning objectives, prerequisites matrix, and time
+  estimates).
+- **Printable PDFs for the live Lessons 3–5** (built from each lesson's `README.md`) — `docs/pdf/` now
+  covers Lessons 1–5 and 7–12.
+- **Auto-generated README "Lessons & downloads" table** via **`tools/sync-readme-downloads.py`**, listing
+  every lesson's Markdown guide and PDF plus the guide PDFs; `--check` mode fails CI when it's stale.
 
 ## [0.7.1] - 2026-06-15
 
