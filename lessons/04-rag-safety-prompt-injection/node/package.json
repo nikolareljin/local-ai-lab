@@ -1,0 +1,10 @@
+{
+  "name": "lesson04-rag-safety",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Lesson 4 - RAG safety & prompt injection, Node.js port",
+  "scripts": {
+    "start": "node safe_rag_demo.mjs"
+  }
+}
