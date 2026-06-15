@@ -22,7 +22,7 @@ program, so you finish understanding how the thing actually works — not just h
 > then `./run -l <N>`. Full cross-platform setup (Linux · macOS · Windows) and per-lesson
 > dependencies are in **[INSTALL.md](./INSTALL.md)** ([PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)).
 > The course is **polyglot** — **Python** is the reference, with **Node.js** and **C#** ports per
-> lesson via `./run -l <N> --lang node|csharp` (**Lessons 1–5** ship in all three today). Every lesson is also a **PDF** in
+> lesson via `./run -l <N> --lang node|csharp` (**Lessons 1–5** ship in all three). Every lesson is also a **PDF** in
 > [`docs/pdf/`](./docs/pdf/).
 
 ---
@@ -31,7 +31,7 @@ program, so you finish understanding how the thing actually works — not just h
 
 Each available lesson is published as an **interactive slider** on the course site (every step explains
 *what* and *why*, gives the command to type, and shows the code — steps are deep-linkable) and as a
-**written guide**. **Lessons 1–5 are live and runnable today**; the rest are on the roadmap below.
+**written guide**. **Lessons 1–5 are live and runnable**; the rest are on the roadmap below.
 
 | # | Lesson | What you build | Guide | Live | Status |
 |---|--------|----------------|-------|------|--------|
