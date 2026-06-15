@@ -6,6 +6,8 @@ All notable changes to this project are documented here. This project follows
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-06-15
+
 **Lesson 5 — RAG evaluation & regression testing.** Score a pipeline against a golden set on
 retrieval recall@k, groundedness and answer correctness, gate on the numbers, and catch a regression a
 candidate tweak slips in. Offline, dependency-free, and byte-identical across Python, Node.js and C#,
