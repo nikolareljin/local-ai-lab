@@ -1,0 +1,24 @@
+
+Config: baseline  (top_k=3, padding=off)
+  id               recall  grounded  correct  result
+  refund-window     1.00      1.00     1.00  PASS
+  shipping-speed    1.00      1.00     1.00  PASS
+  cannot-login      1.00      1.00     1.00  PASS
+  warranty-length   1.00      1.00     1.00  PASS
+  reset-password    1.00      1.00     1.00  PASS
+  Aggregate: recall 1.00  grounded 1.00  correct 1.00   5/5 passed   GATE: PASS
+
+Config: candidate  (top_k=1, padding=on)
+  id               recall  grounded  correct  result
+  refund-window     1.00      0.63     1.00  FAIL
+  shipping-speed    1.00      0.61     1.00  FAIL
+  cannot-login      1.00      0.56     1.00  FAIL
+  warranty-length   1.00      0.68     1.00  FAIL
+  reset-password    0.00      0.56     1.00  FAIL
+  Aggregate: recall 0.80  grounded 0.61  correct 1.00   0/5 passed   GATE: FAIL
+
+Regression vs baseline:
+  mean recall:       1.00 -> 0.80   (-0.20)
+  mean groundedness: 1.00 -> 0.61   (-0.39)   below threshold 0.75
+  mean correctness:  1.00 -> 1.00   (+0.00)
+  gate:              PASS -> FAIL

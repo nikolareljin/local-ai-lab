@@ -9,6 +9,7 @@
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=nodedotjs&logoColor=white)
 ![.NET](https://img.shields.io/badge/.NET-8-512BD4?logo=dotnet&logoColor=white)
+[![GitHub stars](https://img.shields.io/github/stars/nikolareljin/local-ai-lab?style=social)](https://github.com/nikolareljin/local-ai-lab/stargazers)
 
 **A hands-on course for building local, private AI from scratch** — RAG, MCP, LangChain, and
 LangGraph that run on your own machine. Each lesson builds a small, fully working, *readable*
@@ -18,11 +19,15 @@ program, so you finish understanding how the thing actually works — not just h
 **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
 **Related projects:** [About page](https://nikolareljin.github.io/local-ai-lab/about.html) — selected local-first, developer-focused, AI-native tools.
 
+> ### ⭐ Star this repo
+> If local-ai-lab is helping you build local AI, **[give it a star](https://github.com/nikolareljin/local-ai-lab)** —
+> it helps other developers find the course and motivates new lessons. **[⭐ Star on GitHub →](https://github.com/nikolareljin/local-ai-lab)**
+
 > **How it runs:** with the language toolchains **directly — there is no Docker.** Install once,
 > then `./run -l <N>`. Full cross-platform setup (Linux · macOS · Windows) and per-lesson
 > dependencies are in **[INSTALL.md](./INSTALL.md)** ([PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)).
 > The course is **polyglot** — **Python** is the reference, with **Node.js** and **C#** ports per
-> lesson via `./run -l <N> --lang node|csharp` (**Lessons 1, 2, 3 and 4** ship in all three today). Every lesson is also a **PDF** in
+> lesson via `./run -l <N> --lang node|csharp` (**Lessons 1–5** ship in all three). Every lesson is also a **PDF** in
 > [`docs/pdf/`](./docs/pdf/).
 
 ---
@@ -31,7 +36,7 @@ program, so you finish understanding how the thing actually works — not just h
 
 Each available lesson is published as an **interactive slider** on the course site (every step explains
 *what* and *why*, gives the command to type, and shows the code — steps are deep-linkable) and as a
-**written guide**. **Lessons 1–4 are live and runnable today**; the rest are on the roadmap below.
+**written guide**. **Lessons 1–5 are live and runnable**; the rest are on the roadmap below.
 
 | # | Lesson | What you build | Guide | Live | Status |
 |---|--------|----------------|-------|------|--------|
@@ -39,7 +44,7 @@ Each available lesson is published as an **interactive slider** on the course si
 | 2 | **MCP servers** | Expose your document search as a Model Context Protocol tool Claude Code can call natively | [LESSON2.md](./LESSON2.md) | [open](https://nikolareljin.github.io/local-ai-lab/lesson-2-mcp.html) | Available |
 | 3 | **Hybrid retrieval & reranking** | BM25 + a semantic arm fused with Reciprocal Rank Fusion — offline, in Python, Node.js and C# | [README](./lessons/03-hybrid-retrieval-reranking/README.md) | [open](https://nikolareljin.github.io/local-ai-lab/lesson-3-hybrid-retrieval-reranking.html) | Available |
 | 4 | **RAG safety & prompt injection** | Treat retrieved documents as untrusted input — defend against prompt injection and poisoned content, in Python, Node.js and C# | [README](./lessons/04-rag-safety-prompt-injection/README.md) | [open](https://nikolareljin.github.io/local-ai-lab/lesson-4-rag-safety-prompt-injection.html) | Available |
-| 5 | **RAG evaluation & regression testing** | Golden questions, groundedness scoring, and regression tests — turn "seems good" into a tracked number | — | — | Planned |
+| 5 | **RAG evaluation & regression testing** | Golden questions, groundedness scoring, and regression tests — turn "seems good" into a tracked number, in Python, Node.js and C# | [README](./lessons/05-rag-evaluation-regression-testing/README.md) | [open](https://nikolareljin.github.io/local-ai-lab/lesson-5-rag-evaluation-regression-testing.html) | Available |
 | 6 | **Repo-aware AI assistant** | Ground an assistant in your codebase so it answers with repo-specific context | — | — | Planned |
 | 7 | **LangChain** | Rebuild the RAG pipeline with LangChain and compare the trade-offs | — | — | Planned |
 | 8 | **LangGraph** | Turn the pipeline into a stateful agent graph with retries, tool routing, and memory | — | — | Planned |
@@ -184,6 +189,27 @@ Full walkthrough: [README](./lessons/04-rag-safety-prompt-injection/README.md) �
 
 ---
 
+## Lesson 5: RAG evaluation & regression testing
+
+"Seems good" is not a metric. Lesson 5 scores a pipeline against a small **golden set** on three
+axes — **retrieval recall@k**, **groundedness**, and **answer correctness** — and **gates** on the
+result. A **baseline** config clears the gate; a reasonable-looking **candidate** tweak (smaller
+top_k, a chattier answer) quietly regresses recall and groundedness while correctness holds steady —
+exactly the kind of regression an eyeball check misses and a gate catches. Offline and
+dependency-free, with byte-identical output in **Python, Node.js and C#**.
+
+```bash
+./run -l 5                 # interactive scorecard: move the gates, pad the answer, watch the gate flip
+./run -l 5 demo            # one-shot: print the baseline vs candidate scorecards + the regression and exit
+./run -l 5 --lang node demo          # Node.js — the same logic, byte-identical
+./run -l 5 --lang csharp demo        # C# / .NET — the same logic, byte-identical
+./run -l 5 test            # offline test pinning the lesson's claims
+```
+
+Full walkthrough: [README](./lessons/05-rag-evaluation-regression-testing/README.md) · [interactive lesson](https://nikolareljin.github.io/local-ai-lab/lesson-5-rag-evaluation-regression-testing.html).
+
+---
+
 ## Repository layout
 
 ```
@@ -194,6 +220,7 @@ local-ai-lab/
 │   ├── lesson-2-mcp.html  #   Lesson 2 (MCP) — full interactive lesson
 │   ├── lesson-3-hybrid-retrieval-reranking.html  # Lesson 3 (generated from lessons/03-*)
 │   ├── lesson-4-rag-safety-prompt-injection.html # Lesson 4 (generated from lessons/04-*)
+│   ├── lesson-5-rag-evaluation-regression-testing.html # Lesson 5 (generated from lessons/05-*)
 │   └── assets/            #   styles + slider.js
 ├── documents/             # the RAG corpus — drop your files here
 ├── localrag/              # Lesson 1 source code (the working app)
@@ -241,9 +268,9 @@ uses the **Claude Code CLI** as the AI — no API key, it just uses your existin
 ./run -h                                     # full help
 ```
 
-Lessons **3 and 4** are interactive too — `./run -l 3` opens its experiment GUI and `./run -l 4` opens
-the RAG-safety defence playground (or add `demo` for the one-shot terminal run). Lessons **5–8** are
-written guides for now.
+Lessons **3, 4 and 5** are interactive too — `./run -l 3` opens its experiment GUI, `./run -l 4` opens
+the RAG-safety defence playground, and `./run -l 5` opens the evaluation scorecard (or add `demo` for
+the one-shot terminal run). Lessons **6–8** are written guides for now.
 
 First-time setup and per-lesson dependencies for **Linux, macOS, and Windows** (Python, Node.js,
 C#) are in **[INSTALL.md](./INSTALL.md)** ([PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)).

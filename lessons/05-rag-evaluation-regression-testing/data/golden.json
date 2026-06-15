@@ -1,0 +1,35 @@
+{
+  "thresholds": { "groundedness": 0.75, "correctness": 0.5 },
+  "questions": [
+    {
+      "id": "refund-window",
+      "question": "how long do refunds take to arrive",
+      "gold_docs": ["refund_policy.md"],
+      "answer_keywords": ["30", "days", "5", "business"]
+    },
+    {
+      "id": "shipping-speed",
+      "question": "how fast is standard shipping",
+      "gold_docs": ["shipping_faq.md"],
+      "answer_keywords": ["3", "5", "business", "days"]
+    },
+    {
+      "id": "cannot-login",
+      "question": "i cannot log in to my account",
+      "gold_docs": ["account_help.md"],
+      "answer_keywords": ["reset", "password", "sign"]
+    },
+    {
+      "id": "warranty-length",
+      "question": "how long is the warranty",
+      "gold_docs": ["warranty_terms.md"],
+      "answer_keywords": ["12", "month", "warranty", "defects"]
+    },
+    {
+      "id": "reset-password",
+      "question": "how do i reset my password",
+      "gold_docs": ["password_reset.md"],
+      "answer_keywords": ["reset", "password", "sign"]
+    }
+  ]
+}

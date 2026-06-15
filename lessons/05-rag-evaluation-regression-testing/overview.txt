@@ -1,0 +1,17 @@
+RAG evaluation: turn "seems good" into a number you can track.
+
+  golden set ─▶ for each question ─▶ retrieve ─▶ answer ─▶ score on 3 axes
+  (question +                                              ┌─ recall@k    : gold doc in top-k?
+   gold doc +                                              ├─ groundedness: answer terms in context?
+   keywords)                                               └─ correctness : expected keywords present?
+                                                                    │
+                            pass = all three clear their thresholds │
+                            gate = every question passes            ▼
+        ┌───────────────────────────────────────────────────────────────────────┐
+        ▼                                                                         ▼
+   BASELINE  (top_k=3, no padding)                      CANDIDATE  (top_k=1, padding on)
+   recall 1.00  grounded 1.00  correct 1.00             recall 0.80  grounded 0.61  correct 1.00
+   GATE: PASS                                            GATE: FAIL  ← recall + groundedness regressed
+
+A candidate that "looks fine" still drops two tracked numbers. The eval catches
+it; an eyeball check (correctness held at 1.00) would not.
