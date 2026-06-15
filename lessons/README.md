@@ -101,7 +101,7 @@ tools/new-lesson.sh NN slug "Title"   # scaffold from lessons/_template/
 ./run -l NN show                      # check the walkthrough
 ./run -l NN preview                   # check the rendered page
 tools/sync-curriculum.sh              # regenerate lessons/CURRICULUM.md
-python tools/build_lesson_pdfs.py     # build the PDF (lessons are auto-discovered → docs/pdf/LESSONNN.pdf)
+python tools/build_lesson_pdfs.py     # build the PDF (lessons are auto-discovered → docs/pdf/LESSON<n>.pdf)
 python tools/sync-readme-downloads.py # refresh the README "Lessons & downloads" table
 ```
 

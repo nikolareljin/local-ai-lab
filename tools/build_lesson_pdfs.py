@@ -45,14 +45,17 @@ def _lesson_sources() -> list[tuple[str, str]]:
         n = int(num_text)
         by_num[n] = (path.relative_to(ROOT).as_posix(), f"LESSON{n}")
 
+    # Roadmap outlines first, so that if a lesson number exists in BOTH places — e.g. when a
+    # roadmap lesson graduates to a live lessons/<NN>-slug/ — the live source wins (it is scanned
+    # after and overwrites the roadmap entry).
+    for p in sorted(ROOT.glob("roadmap/LESSON*.md")):
+        m = re.match(r"LESSON(\d+)", p.name)
+        take(p, m.group(1) if m else None)
     for p in sorted(ROOT.glob("LESSON[0-9]*.md")):
         m = re.match(r"LESSON(\d+)", p.name)
         take(p, m.group(1) if m else None)
     for p in sorted(ROOT.glob("lessons/[0-9]*/README.md")):
         m = re.match(r"(\d+)", p.parent.name)
-        take(p, m.group(1) if m else None)
-    for p in sorted(ROOT.glob("roadmap/LESSON*.md")):
-        m = re.match(r"LESSON(\d+)", p.name)
         take(p, m.group(1) if m else None)
 
     return [by_num[n] for n in sorted(by_num)]

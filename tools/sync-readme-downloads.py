@@ -62,12 +62,15 @@ def _discover() -> list[dict]:
             "kind": kind,  # "live" | "roadmap"
         }
 
+    # Roadmap outlines first, so that if a lesson number exists in BOTH places (a roadmap outline
+    # and a live lesson directory), the live source wins — it is scanned after and overwrites the
+    # roadmap entry, and the row is marked live rather than 🚧.
+    for p in sorted(ROOT.glob("roadmap/LESSON*.md")):
+        add(p, "roadmap")
     for p in sorted(ROOT.glob("LESSON[0-9]*.md")):
         add(p, "live")
     for p in sorted(ROOT.glob("lessons/[0-9]*/README.md")):
         add(p, "live")
-    for p in sorted(ROOT.glob("roadmap/LESSON*.md")):
-        add(p, "roadmap")
 
     return [found[n] for n in sorted(found)]
 
