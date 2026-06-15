@@ -19,6 +19,8 @@ import os
 import re
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
+from urllib.request import url2pathname
 
 import markdown
 from xhtml2pdf import pisa
@@ -26,7 +28,7 @@ from xhtml2pdf import pisa
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "docs" / "pdf"
 
-SOURCES = ["INSTALL.md"] + [f"LESSON{i}.md" for i in range(1, 9)]
+SOURCES = ["CHEATSHEET.md", "INSTALL.md"] + [f"LESSON{i}.md" for i in range(1, 9)]
 
 # DejaVu covers arrows, box-drawing and ✓; emoji (astral plane) do not render in
 # PDF fonts, so map the ones we use to short text and strip the rest.
@@ -112,6 +114,48 @@ def css() -> str:
     """
 
 
+def _resolve_asset(uri: str, rel: str | None = None) -> str:
+    """Resolve <img>/url() references for xhtml2pdf to a real file path, confined
+    to the repo.
+
+    The PDF sources are trusted (our own Markdown plus the @font-face CSS), so this
+    is defence-in-depth: it keeps builds deterministic and offline, and matches the
+    "assets live under the repo" intent.
+
+    - ``data:`` URIs (inline, deterministic) pass through.
+    - Remote URIs (http/https/ftp) are rejected — the builder never fetches over the
+      network; commit a local file under ``docs/`` instead.
+    - ``file://`` URIs are normalized to a path; any ``?``/``#`` suffix is dropped.
+    - Absolute paths are allowed only inside the repo root or the discovered DejaVu
+      font directory (referenced from @font-face); anything else is rejected.
+    - Relative paths resolve under ROOT and may not escape it via ``..``.
+    """
+    if uri.startswith("data:"):
+        return uri
+    if uri.startswith(("http://", "https://", "ftp://")):
+        raise ValueError(f"remote asset not allowed (commit a local file): {uri!r}")
+    if uri.startswith("file://"):
+        uri = url2pathname(urlparse(uri).path)
+    uri = uri.split("?", 1)[0].split("#", 1)[0]
+    root = ROOT.resolve()
+    p = Path(uri)
+    if p.is_absolute():
+        resolved = p.resolve()
+        allowed = [root]
+        font_dir = _font_dir()
+        if font_dir is not None:
+            allowed.append(font_dir.resolve())
+        if any(resolved == base or base in resolved.parents for base in allowed):
+            return str(resolved)
+        raise ValueError(f"absolute asset path outside repo / font dir: {uri!r}")
+    resolved = (root / p).resolve()
+    try:
+        resolved.relative_to(root)
+    except ValueError as exc:
+        raise ValueError(f"asset path escapes repo root: {uri!r}") from exc
+    return str(resolved)
+
+
 def build(md_name: str) -> bool:
     md_path = ROOT / md_name
     if not md_path.is_file():
@@ -132,7 +176,9 @@ def build(md_name: str) -> bool:
     OUT.mkdir(parents=True, exist_ok=True)
     out_path = OUT / (md_path.stem + ".pdf")
     with open(out_path, "wb") as fh:
-        result = pisa.CreatePDF(src=html, dest=fh, encoding="utf-8")
+        result = pisa.CreatePDF(
+            src=html, dest=fh, encoding="utf-8", link_callback=_resolve_asset
+        )
     kb = out_path.stat().st_size // 1024
     print(f"  {'ok ' if not result.err else 'ERR'}  {out_path.relative_to(ROOT)}  ({kb} KB)")
     return not result.err
