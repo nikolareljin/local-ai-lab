@@ -1,9 +1,11 @@
 /* local-ai-lab — privacy-friendly usage analytics (GoatCounter).
  *
- * Cookieless, no personal data. This file is the ONLY place GoatCounter is
- * wired in: it loads count.js itself, over explicit https, and only on the
- * production Pages host — so local previews (localhost / 127.* / file://) never
- * load the script or send a pageview. On top of the normal pageview it records:
+ * Cookieless: no cookies and no persistent identifiers (GoatCounter derives a
+ * country from the IP transiently at ingest, then discards it — it is not stored).
+ * This file is the ONLY place GoatCounter is wired in: it loads count.js itself,
+ * over explicit https, and only on the production Pages host — so local previews
+ * (localhost / 127.* / file://) never load the script or send a pageview. On top
+ * of the normal pageview it records:
  *   - click tracking: PDF downloads (e.g. the cheat-sheet) and outbound links
  *   - slide depth:    per-lesson `lesson-N/step-K` and a `…/complete` event
  */
@@ -34,7 +36,9 @@
   }
 
   function fire(path, title) {
-    if (!path || seen[path]) return;
+    if (!path) return;
+    if (path.charAt(0) !== "/") path = "/" + path; // GoatCounter paths start with "/"
+    if (seen[path]) return;
     seen[path] = true;
     track({ path: path, title: title || path, event: true });
   }
