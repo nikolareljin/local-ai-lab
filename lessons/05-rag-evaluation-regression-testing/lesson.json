@@ -35,12 +35,13 @@
     { "type": "code", "file": "node/eval_rag.mjs", "lang": "node", "lines": "75-118", "group": "metrics" },
     { "type": "code", "file": "dotnet/Program.cs", "lang": "csharp", "lines": "75-117", "group": "metrics" },
 
-    { "type": "code", "file": "python/eval_rag.py", "lang": "python", "lines": "137-165", "group": "regression",
+    { "type": "code", "file": "python/eval_rag.py", "lang": "python", "lines": "137-167", "group": "regression",
       "kicker": "Step 4", "title": "The gate, and the two configs",
       "body": "`evaluate` runs every golden question under a **config** and aggregates the scores into means plus a single **gate** verdict: green only if every question passes. Two configs tell the story — a **baseline** (top_k=3, no padding) that clears the gate, and a **candidate** (top_k=1, padding on) that looks like a reasonable tweak but quietly drops two of the numbers.",
       "why": "The gate is what you wire into CI: a pull request that drops a tracked number below its threshold fails the build, so a regression is a red check, not a customer complaint three weeks later." },
-    { "type": "code", "file": "node/eval_rag.mjs", "lang": "node", "lines": "120-144", "group": "regression" },
-    { "type": "code", "file": "dotnet/Program.cs", "lang": "csharp", "lines": "120-142", "group": "regression" },
+    { "type": "code", "file": "node/eval_rag.mjs", "lang": "node", "lines": "120-147", "group": "regression" },
+    { "type": "code", "file": "dotnet/Program.cs", "lang": "csharp", "lines": "120-143", "group": "regression" },
+    { "type": "code", "file": "dotnet/Program.cs", "lang": "csharp", "lines": "45-46", "group": "regression" },
 
     { "type": "command", "action": "demo", "lang": "python", "group": "run-demo",
       "kicker": "Run it", "title": "Run the eval",

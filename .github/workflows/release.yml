@@ -1,0 +1,68 @@
+name: Release
+
+# When a release/X.Y.Z branch lands on main it bumps CHANGELOG.md. This workflow
+# reads the top "## [X.Y.Z]" heading and, if no tag exists for it yet, creates an
+# annotated tag and a GitHub Release with that section's notes. Idempotent: a push
+# whose top version is already tagged does nothing.
+on:
+  push:
+    branches: [main]
+    paths:
+      - CHANGELOG.md
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  tag-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read top version from CHANGELOG
+        id: ver
+        run: |
+          # `|| true` so "no semver heading" yields an empty version (the next
+          # step is skipped) instead of failing the step under bash -e -o pipefail.
+          version=$(grep -m1 -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | tr -d '#[] ' || true)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Top CHANGELOG version: ${version:-<none>}"
+
+      - name: Create tag and release if new
+        if: steps.ver.outputs.version != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version="${{ steps.ver.outputs.version }}"
+
+          # Create the annotated tag if it doesn't exist yet.
+          if git rev-parse -q --verify "refs/tags/$version" >/dev/null; then
+            echo "Tag $version already exists — skipping tag creation."
+          else
+            git config user.name "Nik Reljin"
+            git config user.email "nikola.reljin@gmail.com"
+            git tag -a "$version" -m "local-ai-lab $version"
+            git push origin "$version"
+          fi
+
+          # Create the GitHub Release if it doesn't exist yet. Kept separate from
+          # tagging so a failed/partial run is retryable: if the tag landed but the
+          # release didn't, re-running still publishes the release.
+          if gh release view "$version" >/dev/null 2>&1; then
+            echo "Release $version already exists — nothing to do."
+          else
+            notes=$(awk -v v="$version" '
+              $0 ~ "^## \\[" v "\\]" {f=1; next}
+              /^## \[/ {f=0}
+              f {print}
+            ' CHANGELOG.md)
+            printf '%s\n' "$notes" | gh release create "$version" \
+              --title "$version" --notes-file -
+          fi

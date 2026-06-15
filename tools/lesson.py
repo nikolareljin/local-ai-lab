@@ -459,9 +459,9 @@ def _langsel_html(langs, compact=False):
 
 def _nav_html(base="./"):
     """The shared topbar nav: Home, a Lessons dropdown (built from the registry),
-    Troubleshooting, About. `base` prefixes every link — "./" for the relative
-    preview/published pages, or an absolute `file://…/docs/` URI for a standalone
-    `show --html` file written to an arbitrary location."""
+    Documentation, Troubleshooting, About. `base` prefixes every link — "./" for the
+    relative preview/published pages, or an absolute `file://…/docs/` URI for a
+    standalone `show --html` file written to an arbitrary location."""
     items = [(1, "RAG from scratch", "lesson-1-rag.html"), (2, "MCP servers", "lesson-2-mcp.html")]
     reg = registry()
     for n in sorted(reg):
@@ -475,6 +475,7 @@ def _nav_html(base="./"):
     return (f'<a href="{href("index.html")}">Home</a>'
             '<details class="nav-dd"><summary>Lessons</summary>'
             f'<div class="nav-dd-menu">{links}</div></details>'
+            f'<a href="{href("documentation.html")}">Documentation</a>'
             f'<a href="{href("troubleshooting.html")}">Troubleshooting</a>'
             f'<a href="{href("about.html")}">About</a>')
 
