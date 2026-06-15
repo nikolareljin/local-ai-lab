@@ -1,0 +1,385 @@
+<!doctype html>
+<!-- GENERATED FILE — do not edit by hand. Built by tools/lesson.py (`./run -l N build`) from lessons/NN-slug/lesson.json; edit the lesson.json or tools/templates/lesson-preview.html instead. -->
+<html lang="en" data-lang="python">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lesson 5 · RAG Evaluation &amp; Regression Testing — local-ai-lab</title>
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32.png" />
+  <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
+  <!-- Reuse the published course assets (NOT inlined): the same stylesheet and
+       step slider Lessons 1-2 use, so the local preview matches the live pages. -->
+  <link rel="stylesheet" href="./assets/style.css" />
+  <link rel="stylesheet" href="./assets/highlight.css" />
+  <style>.lang-badge{font-size:.7rem;background:#eef;color:#225;padding:.05rem .45rem;border-radius:999px;margin-left:.5rem;vertical-align:middle;}</style>
+  <script>try{document.documentElement.dataset.lang=localStorage.getItem('localrag-lang')||'python'}catch(e){document.documentElement.dataset.lang='python'}</script>
+</head>
+<body>
+  <div class="topbar"><div class="inner">
+    <span class="brand"><a href="./index.html" style="color:inherit">local-ai<span class="dot">·</span>lab</a></span>
+    <nav><a href="./index.html">Home</a><details class="nav-dd"><summary>Lessons</summary><div class="nav-dd-menu"><a href="./lesson-1-rag.html">1 · RAG from scratch</a><a href="./lesson-2-mcp.html">2 · MCP servers</a><a href="./lesson-3-hybrid-retrieval-reranking.html">3 · Hybrid Retrieval &amp; Reranking</a><a href="./lesson-4-rag-safety-prompt-injection.html">4 · RAG Safety &amp; Prompt Injection</a><a href="./lesson-5-rag-evaluation-regression-testing.html">5 · RAG Evaluation &amp; Regression Testing</a></div></details><a href="./troubleshooting.html">Troubleshooting</a><a href="./about.html">About</a></nav>
+  </div></div>
+
+  <div class="wrap">
+    <div class="lesson-head">
+      <div class="eyebrow">Lesson 5</div>
+      <h1>RAG Evaluation &amp; Regression Testing</h1>
+      <p>"Seems good" is not a metric. Score a RAG pipeline against a golden set on retrieval recall@k, groundedness and answer correctness, gate on the numbers, and catch a regression a candidate tweak slips in — offline, polyglot, identical results in Python, Node and .NET.</p>
+      <div class="langsel" role="group" aria-label="Language"><span class="langsel-label">Follow along in:</span><button class="langsel-btn" data-setlang="python" aria-label="Python">Python</button><button class="langsel-btn" data-setlang="node" aria-label="Node.js">Node.js</button><button class="langsel-btn" data-setlang="csharp" aria-label="C#">C#</button></div>
+    </div>
+
+    <div class="progress"><span></span></div>
+    <div class="dots"></div>
+
+    <div class="deck">
+<section class='slide'><div class='step-no'>Overview</div><h2>What you'll build</h2><p>Lessons 1 and 3 made retrieval <em>work</em> and made it <em>better</em>; Lesson 4 made it <em>safe</em>. This lesson makes "better" and "safe" <strong>measurable</strong>. The golden rule of RAG evaluation: <strong>if you can't put a number on it, you can't tell when it breaks.</strong></p><p>You'll score a pipeline against a small <strong>golden set</strong> — questions paired with the document that <em>should</em> be retrieved and the keywords a correct answer must contain — on three axes: <strong>retrieval recall@k</strong>, <strong>groundedness</strong>, and <strong>answer correctness</strong>. A question <strong>passes</strong> only if all three clear their thresholds; the <strong>gate</strong> passes only if every question passes. Then you'll run a <strong>candidate</strong> tweak that looks harmless and watch the eval catch the regression it slips in. Everything is <strong>offline and dependency-free</strong>, implemented identically in <strong>Python, Node.js and C#</strong>. Pick a language with the selector above; press → to begin.</p><pre><code>RAG evaluation: turn "seems good" into a number you can track.
+
+  golden set ─▶ for each question ─▶ retrieve ─▶ answer ─▶ score on 3 axes
+  (question +                                              ┌─ recall@k    : gold doc in top-k?
+   gold doc +                                              ├─ groundedness: answer terms in context?
+   keywords)                                               └─ correctness : expected keywords present?
+                                                                    │
+                            pass = all three clear their thresholds │
+                            gate = every question passes            ▼
+        ┌───────────────────────────────────────────────────────────────────────┐
+        ▼                                                                         ▼
+   BASELINE  (top_k=3, no padding)                      CANDIDATE  (top_k=1, padding on)
+   recall 1.00  grounded 1.00  correct 1.00             recall 0.80  grounded 0.61  correct 1.00
+   GATE: PASS                                            GATE: FAIL  ← recall + groundedness regressed
+
+A candidate that "looks fine" still drops two tracked numbers. The eval catches
+it; an eyeball check (correctness held at 1.00) would not.</code></pre></section>
+<section class='slide'><div class='step-no'>Setup</div><h2>What you need</h2><p>You follow this lesson by <strong>reading and running</strong> — there's nothing to write. The eval engine, the golden set and the tiny corpus all live in the repo. The demo is <strong>offline and dependency-free</strong> (nothing to install for Python; for the other ports you only need <strong>Node.js 18+</strong> or the <strong>.NET 8 SDK</strong>). Run the comparison from the repo root — bare <code>./run -l 5</code> opens the interactive scorecard playground, which comes later:</p><div class='block'><div class='label'>run</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">5</span> demo       <span class="hl-com"># or:  ./run -l 5 --lang node demo  /  --lang csharp demo</span></code></pre></div></section>
+<section class='slide'><div class='step-no'>Step 1</div><h2>The golden set</h2><p>The golden set is the eval's source of truth: five questions, each tagged with the <strong>gold document(s)</strong> that should be retrieved and the <strong>answer keywords</strong> a correct answer must contain, plus the <strong>thresholds</strong> the gate enforces. All three language ports read this one file, so they score identically. A real eval set is bigger and grows every time a bug teaches you a new question — but the shape is exactly this.</p><div class='block'><div class='label'>data/golden.json</div><pre><code class='lang-json'>{
+  <span class="hl-str">"thresholds"</span>: { <span class="hl-str">"recall_k"</span>: <span class="hl-num">3</span>, <span class="hl-str">"groundedness"</span>: <span class="hl-num">0.75</span>, <span class="hl-str">"correctness"</span>: <span class="hl-num">0.5</span> },
+  <span class="hl-str">"questions"</span>: [
+    {
+      <span class="hl-str">"id"</span>: <span class="hl-str">"refund-window"</span>,
+      <span class="hl-str">"question"</span>: <span class="hl-str">"how long do refunds take to arrive"</span>,
+      <span class="hl-str">"gold_docs"</span>: [<span class="hl-str">"refund_policy.md"</span>],
+      <span class="hl-str">"answer_keywords"</span>: [<span class="hl-str">"30"</span>, <span class="hl-str">"days"</span>, <span class="hl-str">"5"</span>, <span class="hl-str">"business"</span>]
+    },
+    {
+      <span class="hl-str">"id"</span>: <span class="hl-str">"shipping-speed"</span>,
+      <span class="hl-str">"question"</span>: <span class="hl-str">"how fast is standard shipping"</span>,
+      <span class="hl-str">"gold_docs"</span>: [<span class="hl-str">"shipping_faq.md"</span>],
+      <span class="hl-str">"answer_keywords"</span>: [<span class="hl-str">"3"</span>, <span class="hl-str">"5"</span>, <span class="hl-str">"business"</span>, <span class="hl-str">"days"</span>]
+    },
+    {
+      <span class="hl-str">"id"</span>: <span class="hl-str">"cannot-login"</span>,
+      <span class="hl-str">"question"</span>: <span class="hl-str">"i cannot log in to my account"</span>,
+      <span class="hl-str">"gold_docs"</span>: [<span class="hl-str">"account_help.md"</span>],
+      <span class="hl-str">"answer_keywords"</span>: [<span class="hl-str">"reset"</span>, <span class="hl-str">"password"</span>, <span class="hl-str">"sign"</span>]
+    },
+    {
+      <span class="hl-str">"id"</span>: <span class="hl-str">"warranty-length"</span>,
+      <span class="hl-str">"question"</span>: <span class="hl-str">"how long is the warranty"</span>,
+      <span class="hl-str">"gold_docs"</span>: [<span class="hl-str">"warranty_terms.md"</span>],
+      <span class="hl-str">"answer_keywords"</span>: [<span class="hl-str">"12"</span>, <span class="hl-str">"month"</span>, <span class="hl-str">"warranty"</span>, <span class="hl-str">"defects"</span>]
+    },
+    {
+      <span class="hl-str">"id"</span>: <span class="hl-str">"reset-password"</span>,
+      <span class="hl-str">"question"</span>: <span class="hl-str">"how do i reset my password"</span>,
+      <span class="hl-str">"gold_docs"</span>: [<span class="hl-str">"password_reset.md"</span>],
+      <span class="hl-str">"answer_keywords"</span>: [<span class="hl-str">"reset"</span>, <span class="hl-str">"password"</span>, <span class="hl-str">"sign"</span>]
+    }
+  ]
+}</code></pre></div><div class='why'>Curate the golden set like code: version it, review changes, and add a case for every regression you ever hit. The thresholds encode your quality bar — raise them as the system improves.</div></section>
+<section class='slide'><div class='step-no'>Step 2</div><h2>Retrieve the candidates</h2><p>Evaluation starts where retrieval does. We reuse the same deterministic keyword retriever from Lesson 4 (distinct-term overlap, minus stopwords) so the same query always pulls the same documents in every language. The first metric will ask a simple question of this step's output: <strong>was the gold document in the top-k?</strong></p><div class='lang lang-python'><div class='block'><div class='label'>python/eval_rag.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> retrieve(query, docs, top_k):
+    <span class="hl-str">"""Top-k docs by how many distinct meaningful query terms they contain.
+    Deterministic: score desc, then name asc; zero-overlap docs are dropped."""</span>
+    q = terms(query)
+    scored = []
+    <span class="hl-kw">for</span> d <span class="hl-kw">in</span> docs:
+        score = len(q &amp; d[<span class="hl-str">"tokens"</span>])
+        <span class="hl-kw">if</span> score &gt; <span class="hl-num">0</span>:
+            scored.append((score, d))
+    scored.sort(key=<span class="hl-kw">lambda</span> s: (-s[<span class="hl-num">0</span>], s[<span class="hl-num">1</span>][<span class="hl-str">"name"</span>]))
+    <span class="hl-kw">return</span> [d <span class="hl-kw">for</span> _, d <span class="hl-kw">in</span> scored[:top_k]]</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/eval_rag.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> retrieve(query, docs, topK) {
+  <span class="hl-kw">const</span> q = terms(query);
+  <span class="hl-kw">const</span> scored = [];
+  <span class="hl-kw">for</span> (<span class="hl-kw">const</span> d <span class="hl-kw">of</span> docs) {
+    <span class="hl-kw">let</span> score = <span class="hl-num">0</span>;
+    <span class="hl-kw">for</span> (<span class="hl-kw">const</span> t <span class="hl-kw">of</span> q) <span class="hl-kw">if</span> (d.tokens.has(t)) score++;
+    <span class="hl-kw">if</span> (score &gt; <span class="hl-num">0</span>) scored.push({ score, d });
+  }
+  scored.sort((a, b) =&gt; b.score - a.score || cmpOrdinal(a.d.name, b.d.name));
+  <span class="hl-kw">return</span> scored.slice(<span class="hl-num">0</span>, topK).map((s) =&gt; s.d);
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>List&lt;Doc&gt; Retrieve(<span class="hl-kw">string</span> query, List&lt;Doc&gt; corpus, <span class="hl-kw">int</span> topK)
+{
+    <span class="hl-kw">var</span> q = Terms(query);
+    <span class="hl-kw">return</span> corpus
+        .Select(d =&gt; (Doc: d, Score: q.Count(d.TokenSet.Contains)))
+        .Where(x =&gt; x.Score &gt; <span class="hl-num">0</span>)
+        .OrderByDescending(x =&gt; x.Score)
+        .ThenBy(x =&gt; x.Doc.Name, StringComparer.Ordinal)
+        .Take(topK)
+        .Select(x =&gt; x.Doc)
+        .ToList();
+}</code></pre></div></div><div class='why'>Swap in any retriever you like — BM25, embeddings, the hybrid from Lesson 3. The eval measures <em>outcomes</em>, so it does not care how retrieval works, only whether the right documents come back.</div></section>
+<section class='slide'><div class='step-no'>Step 3</div><h2>Score the answer three ways</h2><p>An offline, deterministic answerer takes the fact from the top retrieved document (optionally <strong>padding</strong> it with one unsupported sentence — a stand-in for a model that adds a claim no document backs). Then three metrics turn the result into numbers: <strong>recall@k</strong> (did the gold document come back?), <strong>groundedness</strong> (what fraction of the answer's terms appear in the retrieved context?), and <strong>correctness</strong> (what fraction of the expected keywords are present?). Each is a fraction in 0…1.</p><div class='lang lang-python'><div class='block'><div class='label'>python/eval_rag.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> first_body_line(doc):
+    <span class="hl-str">"""The first non-heading, non-blank line of a doc (its one fact)."""</span>
+    <span class="hl-kw">for</span> line <span class="hl-kw">in</span> doc[<span class="hl-str">"raw"</span>].splitlines():
+        line = line.strip()
+        <span class="hl-kw">if</span> line <span class="hl-kw">and</span> <span class="hl-kw">not</span> line.startswith(<span class="hl-str">"#"</span>):
+            <span class="hl-kw">return</span> line
+    <span class="hl-kw">return</span> <span class="hl-str">""</span>
+
+
+<span class="hl-kw">def</span> answer(retrieved, pad_unsupported=<span class="hl-kw">False</span>):
+    <span class="hl-str">"""Extractive answer: the fact from the top retrieved doc. With
+    `pad_unsupported`, append a sentence that is *not* in any document — a
+    stand-in for a model that pads its answer with an unsupported claim."""</span>
+    <span class="hl-kw">if</span> <span class="hl-kw">not</span> retrieved:
+        <span class="hl-kw">return</span> <span class="hl-str">""</span>
+    text = first_body_line(retrieved[<span class="hl-num">0</span>])
+    <span class="hl-kw">if</span> pad_unsupported:
+        text = (text + <span class="hl-str">" "</span> + UNSUPPORTED).strip()
+    <span class="hl-kw">return</span> text
+
+
+<span class="hl-com"># --- The three metrics -------------------------------------------------------</span>
+<span class="hl-kw">def</span> recall_at_k(gold_docs, retrieved):
+    <span class="hl-str">"""Fraction of the gold documents that made it into the retrieved set."""</span>
+    <span class="hl-kw">if</span> <span class="hl-kw">not</span> gold_docs:
+        <span class="hl-kw">return</span> <span class="hl-num">1.0</span>
+    names = {d[<span class="hl-str">"name"</span>] <span class="hl-kw">for</span> d <span class="hl-kw">in</span> retrieved}
+    hit = sum(<span class="hl-num">1</span> <span class="hl-kw">for</span> g <span class="hl-kw">in</span> gold_docs <span class="hl-kw">if</span> g <span class="hl-kw">in</span> names)
+    <span class="hl-kw">return</span> hit / len(gold_docs)
+
+
+<span class="hl-kw">def</span> groundedness(answer_text, retrieved):
+    <span class="hl-str">"""Fraction of the answer's meaningful terms that appear in the retrieved
+    context. An unsupported (hallucinated) claim drags this below 1.0."""</span>
+    a = terms(answer_text)
+    <span class="hl-kw">if</span> <span class="hl-kw">not</span> a:
+        <span class="hl-kw">return</span> <span class="hl-num">1.0</span>
+    context = set()
+    <span class="hl-kw">for</span> d <span class="hl-kw">in</span> retrieved:
+        context |= terms(d[<span class="hl-str">"raw"</span>])
+    <span class="hl-kw">return</span> len(a &amp; context) / len(a)
+
+
+<span class="hl-kw">def</span> correctness(answer_text, keywords):
+    <span class="hl-str">"""Fraction of the expected-answer keywords present in the answer."""</span>
+    <span class="hl-kw">if</span> <span class="hl-kw">not</span> keywords:
+        <span class="hl-kw">return</span> <span class="hl-num">1.0</span>
+    toks = set(tokenize(answer_text))
+    hit = sum(<span class="hl-num">1</span> <span class="hl-kw">for</span> k <span class="hl-kw">in</span> keywords <span class="hl-kw">if</span> k <span class="hl-kw">in</span> toks)
+    <span class="hl-kw">return</span> hit / len(keywords)</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/eval_rag.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> firstBodyLine(doc) {
+  <span class="hl-kw">for</span> (<span class="hl-kw">const</span> raw <span class="hl-kw">of</span> doc.raw.split(<span class="hl-str">"\n"</span>)) {
+    <span class="hl-kw">const</span> line = raw.trim();
+    <span class="hl-kw">if</span> (line &amp;&amp; !line.startsWith(<span class="hl-str">"#"</span>)) <span class="hl-kw">return</span> line;
+  }
+  <span class="hl-kw">return</span> <span class="hl-str">""</span>;
+}
+
+<span class="hl-kw">function</span> answer(retrieved, padUnsupported = <span class="hl-kw">false</span>) {
+  <span class="hl-kw">if</span> (retrieved.length === <span class="hl-num">0</span>) <span class="hl-kw">return</span> <span class="hl-str">""</span>;
+  <span class="hl-kw">let</span> text = firstBodyLine(retrieved[<span class="hl-num">0</span>]);
+  <span class="hl-kw">if</span> (padUnsupported) text = (text + <span class="hl-str">" "</span> + UNSUPPORTED).trim();
+  <span class="hl-kw">return</span> text;
+}
+
+<span class="hl-com">// --- The three metrics -------------------------------------------------------</span>
+<span class="hl-kw">function</span> recallAtK(goldDocs, retrieved) {
+  <span class="hl-kw">if</span> (goldDocs.length === <span class="hl-num">0</span>) <span class="hl-kw">return</span> <span class="hl-num">1.0</span>;
+  <span class="hl-kw">const</span> names = <span class="hl-kw">new</span> Set(retrieved.map((d) =&gt; d.name));
+  <span class="hl-kw">const</span> hit = goldDocs.filter((g) =&gt; names.has(g)).length;
+  <span class="hl-kw">return</span> hit / goldDocs.length;
+}
+
+<span class="hl-kw">function</span> intersectCount(a, b) {
+  <span class="hl-kw">let</span> n = <span class="hl-num">0</span>;
+  <span class="hl-kw">for</span> (<span class="hl-kw">const</span> t <span class="hl-kw">of</span> a) <span class="hl-kw">if</span> (b.has(t)) n++;
+  <span class="hl-kw">return</span> n;
+}
+
+<span class="hl-kw">function</span> groundedness(answerText, retrieved) {
+  <span class="hl-kw">const</span> a = terms(answerText);
+  <span class="hl-kw">if</span> (a.size === <span class="hl-num">0</span>) <span class="hl-kw">return</span> <span class="hl-num">1.0</span>;
+  <span class="hl-kw">const</span> context = <span class="hl-kw">new</span> Set();
+  <span class="hl-kw">for</span> (<span class="hl-kw">const</span> d <span class="hl-kw">of</span> retrieved) <span class="hl-kw">for</span> (<span class="hl-kw">const</span> t <span class="hl-kw">of</span> terms(d.raw)) context.add(t);
+  <span class="hl-kw">return</span> intersectCount(a, context) / a.size;
+}
+
+<span class="hl-kw">function</span> correctness(answerText, keywords) {
+  <span class="hl-kw">if</span> (keywords.length === <span class="hl-num">0</span>) <span class="hl-kw">return</span> <span class="hl-num">1.0</span>;
+  <span class="hl-kw">const</span> toks = <span class="hl-kw">new</span> Set(tokenize(answerText));
+  <span class="hl-kw">const</span> hit = keywords.filter((k) =&gt; toks.has(k)).length;
+  <span class="hl-kw">return</span> hit / keywords.length;
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'><span class="hl-kw">string</span> FirstBodyLine(Doc doc)
+{
+    <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> raw <span class="hl-kw">in</span> doc.Raw.Split('\n'))
+    {
+        <span class="hl-kw">var</span> line = raw.Trim();
+        <span class="hl-kw">if</span> (line.Length &gt; <span class="hl-num">0</span> &amp;&amp; !line.StartsWith(<span class="hl-str">"#"</span>)) <span class="hl-kw">return</span> line;
+    }
+    <span class="hl-kw">return</span> <span class="hl-str">""</span>;
+}
+
+<span class="hl-kw">string</span> Answer(List&lt;Doc&gt; retrieved, <span class="hl-kw">bool</span> padUnsupported)
+{
+    <span class="hl-kw">if</span> (retrieved.Count == <span class="hl-num">0</span>) <span class="hl-kw">return</span> <span class="hl-str">""</span>;
+    <span class="hl-kw">var</span> text = FirstBodyLine(retrieved[<span class="hl-num">0</span>]);
+    <span class="hl-kw">if</span> (padUnsupported) text = (text + <span class="hl-str">" "</span> + Unsupported).Trim();
+    <span class="hl-kw">return</span> text;
+}
+
+<span class="hl-com">// --- The three metrics -------------------------------------------------------</span>
+<span class="hl-kw">double</span> RecallAtK(List&lt;<span class="hl-kw">string</span>&gt; goldDocs, List&lt;Doc&gt; retrieved)
+{
+    <span class="hl-kw">if</span> (goldDocs.Count == <span class="hl-num">0</span>) <span class="hl-kw">return</span> <span class="hl-num">1.0</span>;
+    <span class="hl-kw">var</span> names = retrieved.Select(d =&gt; d.Name).ToHashSet();
+    <span class="hl-kw">var</span> hit = goldDocs.Count(names.Contains);
+    <span class="hl-kw">return</span> (<span class="hl-kw">double</span>)hit / goldDocs.Count;
+}
+
+<span class="hl-kw">double</span> Groundedness(<span class="hl-kw">string</span> answerText, List&lt;Doc&gt; retrieved)
+{
+    <span class="hl-kw">var</span> a = Terms(answerText);
+    <span class="hl-kw">if</span> (a.Count == <span class="hl-num">0</span>) <span class="hl-kw">return</span> <span class="hl-num">1.0</span>;
+    <span class="hl-kw">var</span> context = <span class="hl-kw">new</span> HashSet&lt;<span class="hl-kw">string</span>&gt;();
+    <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> d <span class="hl-kw">in</span> retrieved) context.UnionWith(Terms(d.Raw));
+    <span class="hl-kw">return</span> (<span class="hl-kw">double</span>)a.Count(context.Contains) / a.Count;
+}
+
+<span class="hl-kw">double</span> Correctness(<span class="hl-kw">string</span> answerText, List&lt;<span class="hl-kw">string</span>&gt; keywords)
+{
+    <span class="hl-kw">if</span> (keywords.Count == <span class="hl-num">0</span>) <span class="hl-kw">return</span> <span class="hl-num">1.0</span>;
+    <span class="hl-kw">var</span> toks = Tokenize(answerText).ToHashSet();
+    <span class="hl-kw">var</span> hit = keywords.Count(toks.Contains);
+    <span class="hl-kw">return</span> (<span class="hl-kw">double</span>)hit / keywords.Count;
+}</code></pre></div></div><div class='why'>These three catch different failures, which is why you need all of them. Recall misses the document; groundedness catches a fluent answer that invents facts; correctness catches a grounded answer that is simply wrong. Any one alone is fooled by the others' blind spots.</div></section>
+<section class='slide'><div class='step-no'>Step 4</div><h2>The gate, and the two configs</h2><p><code>evaluate</code> runs every golden question under a <strong>config</strong> and aggregates the scores into means plus a single <strong>gate</strong> verdict: green only if every question passes. Two configs tell the story — a <strong>baseline</strong> (top_k=3, no padding) that clears the gate, and a <strong>candidate</strong> (top_k=1, padding on) that looks like a reasonable tweak but quietly drops two of the numbers.</p><div class='lang lang-python'><div class='block'><div class='label'>python/eval_rag.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> evaluate(golden, docs, config):
+    <span class="hl-str">"""Score every golden question under `config` and aggregate the result.
+    `config` = {"name", "top_k", "pad_unsupported"}."""</span>
+    thr = golden[<span class="hl-str">"thresholds"</span>]
+    rows = []
+    <span class="hl-kw">for</span> q <span class="hl-kw">in</span> golden[<span class="hl-str">"questions"</span>]:
+        retrieved = retrieve(q[<span class="hl-str">"question"</span>], docs, config[<span class="hl-str">"top_k"</span>])
+        ans = answer(retrieved, config[<span class="hl-str">"pad_unsupported"</span>])
+        rec = recall_at_k(q[<span class="hl-str">"gold_docs"</span>], retrieved)
+        gnd = groundedness(ans, retrieved)
+        cor = correctness(ans, q[<span class="hl-str">"answer_keywords"</span>])
+        passed = rec &gt;= <span class="hl-num">1.0</span> <span class="hl-kw">and</span> gnd &gt;= thr[<span class="hl-str">"groundedness"</span>] <span class="hl-kw">and</span> cor &gt;= thr[<span class="hl-str">"correctness"</span>]
+        rows.append({<span class="hl-str">"id"</span>: q[<span class="hl-str">"id"</span>], <span class="hl-str">"recall"</span>: rec, <span class="hl-str">"groundedness"</span>: gnd,
+                     <span class="hl-str">"correctness"</span>: cor, <span class="hl-str">"passed"</span>: passed, <span class="hl-str">"answer"</span>: ans})
+    n = len(rows)
+    agg = {
+        <span class="hl-str">"mean_recall"</span>: sum(r[<span class="hl-str">"recall"</span>] <span class="hl-kw">for</span> r <span class="hl-kw">in</span> rows) / n,
+        <span class="hl-str">"mean_groundedness"</span>: sum(r[<span class="hl-str">"groundedness"</span>] <span class="hl-kw">for</span> r <span class="hl-kw">in</span> rows) / n,
+        <span class="hl-str">"mean_correctness"</span>: sum(r[<span class="hl-str">"correctness"</span>] <span class="hl-kw">for</span> r <span class="hl-kw">in</span> rows) / n,
+        <span class="hl-str">"pass_count"</span>: sum(<span class="hl-num">1</span> <span class="hl-kw">for</span> r <span class="hl-kw">in</span> rows <span class="hl-kw">if</span> r[<span class="hl-str">"passed"</span>]),
+        <span class="hl-str">"total"</span>: n,
+    }
+    <span class="hl-kw">return</span> {<span class="hl-str">"config_name"</span>: config[<span class="hl-str">"name"</span>], <span class="hl-str">"rows"</span>: rows, <span class="hl-str">"aggregate"</span>: agg,
+            <span class="hl-str">"gate_passed"</span>: agg[<span class="hl-str">"pass_count"</span>] == n}
+
+
+<span class="hl-com"># Two configs that tell the regression story.</span>
+BASELINE = {<span class="hl-str">"name"</span>: <span class="hl-str">"baseline"</span>, <span class="hl-str">"top_k"</span>: <span class="hl-num">3</span>, <span class="hl-str">"pad_unsupported"</span>: <span class="hl-kw">False</span>}
+CANDIDATE = {<span class="hl-str">"name"</span>: <span class="hl-str">"candidate"</span>, <span class="hl-str">"top_k"</span>: <span class="hl-num">1</span>, <span class="hl-str">"pad_unsupported"</span>: <span class="hl-kw">True</span>}</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/eval_rag.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> evaluate(golden, docs, config) {
+  <span class="hl-kw">const</span> thr = golden.thresholds;
+  <span class="hl-kw">const</span> rows = golden.questions.map((q) =&gt; {
+    <span class="hl-kw">const</span> retrieved = retrieve(q.question, docs, config.top_k);
+    <span class="hl-kw">const</span> ans = answer(retrieved, config.pad_unsupported);
+    <span class="hl-kw">const</span> recall = recallAtK(q.gold_docs, retrieved);
+    <span class="hl-kw">const</span> grounded = groundedness(ans, retrieved);
+    <span class="hl-kw">const</span> correct = correctness(ans, q.answer_keywords);
+    <span class="hl-kw">const</span> passed = recall &gt;= <span class="hl-num">1.0</span> &amp;&amp; grounded &gt;= thr.groundedness &amp;&amp; correct &gt;= thr.correctness;
+    <span class="hl-kw">return</span> { id: q.id, recall, groundedness: grounded, correctness: correct, passed };
+  });
+  <span class="hl-kw">const</span> n = rows.length;
+  <span class="hl-kw">const</span> sum = (f) =&gt; rows.reduce((s, r) =&gt; s + f(r), <span class="hl-num">0</span>);
+  <span class="hl-kw">const</span> aggregate = {
+    mean_recall: sum((r) =&gt; r.recall) / n,
+    mean_groundedness: sum((r) =&gt; r.groundedness) / n,
+    mean_correctness: sum((r) =&gt; r.correctness) / n,
+    pass_count: rows.filter((r) =&gt; r.passed).length,
+    total: n,
+  };
+  <span class="hl-kw">return</span> { config_name: config.name, rows, aggregate, gate_passed: aggregate.pass_count === n };
+}
+
+<span class="hl-kw">const</span> BASELINE = { name: <span class="hl-str">"baseline"</span>, top_k: <span class="hl-num">3</span>, pad_unsupported: <span class="hl-kw">false</span> };
+<span class="hl-kw">const</span> CANDIDATE = { name: <span class="hl-str">"candidate"</span>, top_k: <span class="hl-num">1</span>, pad_unsupported: <span class="hl-kw">true</span> };</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>EvalResult Evaluate(GoldenSet g, List&lt;Doc&gt; corpus, Config config)
+{
+    <span class="hl-kw">var</span> thr = g.Thresholds;
+    <span class="hl-kw">var</span> rows = g.Questions.Select(q =&gt;
+    {
+        <span class="hl-kw">var</span> retrieved = Retrieve(q.Text, corpus, config.TopK);
+        <span class="hl-kw">var</span> ans = Answer(retrieved, config.PadUnsupported);
+        <span class="hl-kw">var</span> recall = RecallAtK(q.GoldDocs, retrieved);
+        <span class="hl-kw">var</span> grounded = Groundedness(ans, retrieved);
+        <span class="hl-kw">var</span> correct = Correctness(ans, q.AnswerKeywords);
+        <span class="hl-kw">var</span> passed = recall &gt;= <span class="hl-num">1.0</span> &amp;&amp; grounded &gt;= thr.Groundedness &amp;&amp; correct &gt;= thr.Correctness;
+        <span class="hl-kw">return</span> <span class="hl-kw">new</span> Row(q.Id, recall, grounded, correct, passed);
+    }).ToList();
+    <span class="hl-kw">var</span> n = rows.Count;
+    <span class="hl-kw">var</span> agg = <span class="hl-kw">new</span> Aggregate(
+        rows.Sum(r =&gt; r.Recall) / n,
+        rows.Sum(r =&gt; r.Groundedness) / n,
+        rows.Sum(r =&gt; r.Correctness) / n,
+        rows.Count(r =&gt; r.Passed),
+        n);
+    <span class="hl-kw">return</span> <span class="hl-kw">new</span> EvalResult(config.Name, rows, agg, agg.PassCount == n);
+}</code></pre></div></div><div class='why'>The gate is what you wire into CI: a pull request that drops a tracked number below its threshold fails the build, so a regression is a red check, not a customer complaint three weeks later.</div></section>
+<section class='slide'><div class='step-no'>Run it</div><h2>Run the eval</h2><p>Now run it — this scores the golden set under both configs and prints the scorecards side by side, then a regression summary, and exits — identical output in all three languages. (Bare <code>./run -l 5</code> opens the interactive scorecard instead; <code>demo</code> is the one-shot print-and-exit.)</p><div class='lang lang-python'><div class='block'><div class='label'>demo · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">5</span> demo</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>demo · node</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">5</span> --lang node demo</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>demo · csharp</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">5</span> --lang csharp demo</code></pre></div></div></section>
+<section class='slide'><div class='step-no'>Run it</div><h2>Read the output</h2><p>The <strong>baseline</strong> scorecard is all green — every question clears recall, groundedness and correctness, so the gate passes. The <strong>candidate</strong> looks like a harmless tweak (fewer documents retrieved, a chattier answer) but the numbers tell the truth: <strong>mean recall</strong> drops because one question's gold document fell out of the smaller top-k, and <strong>mean groundedness</strong> falls below its threshold everywhere because the padded sentence is unsupported. <strong>Correctness never moved</strong> — the answer still contains the right keywords, which is exactly how this regression would sail through a manual eyeball check. The gate flips PASS → FAIL.</p><pre><code>
+Config: baseline  (top_k=3, padding=off)
+  id               recall  grounded  correct  result
+  refund-window     1.00      1.00     1.00  PASS
+  shipping-speed    1.00      1.00     1.00  PASS
+  cannot-login      1.00      1.00     1.00  PASS
+  warranty-length   1.00      1.00     1.00  PASS
+  reset-password    1.00      1.00     1.00  PASS
+  Aggregate: recall 1.00  grounded 1.00  correct 1.00   5/5 passed   GATE: PASS
+
+Config: candidate  (top_k=1, padding=on)
+  id               recall  grounded  correct  result
+  refund-window     1.00      0.63     1.00  FAIL
+  shipping-speed    1.00      0.61     1.00  FAIL
+  cannot-login      1.00      0.56     1.00  FAIL
+  warranty-length   1.00      0.68     1.00  FAIL
+  reset-password    0.00      0.56     1.00  FAIL
+  Aggregate: recall 0.80  grounded 0.61  correct 1.00   0/5 passed   GATE: FAIL
+
+Regression vs baseline:
+  mean recall:       1.00 -&gt; 0.80   (-0.20)
+  mean groundedness: 1.00 -&gt; 0.61   (-0.39)   below threshold 0.75
+  mean correctness:  1.00 -&gt; 1.00   (+0.00)
+  gate:              PASS -&gt; FAIL</code></pre></section>
+<section class='slide'><div class='step-no'>Try it</div><h2>A question whose gold document ranks first</h2><p>Want to experiment? You don't edit any code — the next step opens an interactive scorecard where you type and toggle. Start with a question whose gold document is the top hit, so it survives even a tiny top-k:</p><div class='block'><pre><code>how long do refunds take to arrive</code></pre></div></section>
+<section class='slide'><div class='step-no'>Try it</div><h2>A question whose gold document ranks second</h2><p>This one's gold document sits behind a near-duplicate distractor, so shrinking top_k to 1 drops it from the results — recall falls to 0 even though the answer still reads fine. (Prefer the terminal? <code>./run -l 5 demo</code> runs both configs and exits.)</p><div class='block'><pre><code>how do i reset my password</code></pre></div></section>
+<section class='slide'><div class='step-no'>Try it</div><h2>Confirm it with the test</h2><p>An offline test pins the lesson's claims: the baseline clears the gate; the candidate fails it; the candidate regresses <strong>mean recall</strong> and <strong>mean groundedness</strong> below where the baseline sits while <strong>correctness holds steady</strong>; groundedness flags the unsupported sentence; and recall drops for the rank-2 question when top_k shrinks. No network, no model.</p><div class='block'><div class='label'>test · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">5</span> test</code></pre></div></section>
+<section class='slide'><div class='step-no'>Experiment</div><h2>Tinker in the scorecard — no code editing</h2><p>This is the payoff: <code>./run -l 5</code> (the default) opens an interactive scorecard over the golden set. Leave the box empty to see the <strong>whole set scored as one card</strong> — the three means and the gate. Pick a question to <strong>drill into its three numbers</strong>, the keywords it hit or missed, and what each retrieved document contributed. Then move the sliders — <strong>top_k</strong>, the <strong>groundedness</strong> and <strong>correctness</strong> gates — or flip on <strong>unsupported padding</strong>, and watch a number cross its threshold and the gate flip. Nothing to edit: the controls feed the very same <code>evaluate</code> the demo and test use.</p><div class='block'><div class='label'>web · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">5</span></code></pre></div></section>
+<section class='slide'><div class='step-no'>Experiment</div><h2>Try — shrink top_k to 1</h2><p>Drag the top_k slider down to 1 and watch this question's recall fall to 0: its gold document was the second hit, and a smaller top-k no longer reaches it. The answer still looks reasonable — that's the point.</p><div class='block'><pre><code>how do i reset my password</code></pre></div></section>
+<section class='slide'><div class='step-no'>Experiment</div><h2>Try — turn on unsupported padding</h2><p>Leave the box empty for the full scorecard, then flip on <strong>unsupported padding</strong>. Groundedness drops below its gate for every question even though correctness stays at 1.00 — a fluent, on-topic answer that still smuggles in a claim no document supports.</p><div class='block'><pre><code>how long is the warranty</code></pre></div></section>
+<section class='slide'><div class='step-no'>Going further</div><h2>From demo to production</h2><p>This is a teaching demo; the answerer is a deterministic extractive stand-in so the lesson is reproducible. For real systems:</p><p><strong>Keep the golden set, swap the pipeline</strong> — point <code>evaluate</code> at your real retriever and model and the metrics still apply. <strong>Grow the set</strong> — add a question for every bug, so the eval only ever gets stricter. <strong>Strengthen the metrics</strong> — pair keyword correctness with an LLM-as-judge or embedding similarity, score groundedness against cited spans, and track latency and cost alongside quality. <strong>Gate in CI</strong> — fail the build when a tracked number drops below threshold, and store the scorecard so you can see trends over time. Fold Lesson 4's untrusted-document handling into the same set so a safety regression also shows up as a number.</p></section>
+<section class='slide'><div class='step-no'>Recap</div><h2>What you learned</h2><p>"Seems good" is not a metric. A <strong>golden set</strong> plus three scores — <strong>recall@k</strong>, <strong>groundedness</strong> and <strong>correctness</strong> — and a <strong>gate</strong> turn quality into a number you can track. A candidate that looks fine can still regress a metric, and the eval catches it where an eyeball check would not: correctness held steady while recall and groundedness quietly dropped. Same algorithm in <strong>Python, Node.js and C#</strong>, byte-identical output, plus a scorecard playground where you watched the gate flip.</p><p>Next: <strong>Lesson 6 · Repo-aware AI assistant</strong> — ground an assistant in your own codebase.</p></section>
+    </div><!-- /deck -->
+
+    <div class="controls">
+      <button class="nav-btn" data-prev>&larr; Prev</button>
+      <div class="langsel compact" role="group" aria-label="Language"><button class="langsel-btn" data-setlang="python" aria-label="Python">Py</button><button class="langsel-btn" data-setlang="node" aria-label="Node.js">Node</button><button class="langsel-btn" data-setlang="csharp" aria-label="C#">C#</button></div>
+      <span class="spacer"></span>
+      <span class="counter"></span>
+      <button class="nav-btn" data-next>Next &rarr;</button>
+    </div>
+    <div class="kbd-hint">Use <kbd>&larr;</kbd> <kbd>&rarr;</kbd> arrow keys, the dots, or the buttons. Deep-link a step with <code>#step-N</code>.</div>
+  </div>
+
+  <footer class="site"><div class="inner">
+    &copy; 2023&ndash;2026 <a href="https://www.linkedin.com/in/nikolareljin" target="_blank" rel="noopener">Nik Reljin</a> &middot;
+    Source on <a href="https://github.com/nikolareljin/local-ai-lab" target="_blank" rel="noopener">GitHub</a> &middot;
+    <a href="./index.html">Home</a> &middot; <a href="./about.html">About</a> &middot;
+    Built as a hands-on training course.
+  </div></footer>
+
+  <!-- The same slider that powers the published lessons: steps, dots, progress,
+       #step-N deep links, copy buttons. Read from the file, not inlined. -->
+  <script src="./assets/slider.js"></script>
+</body>
+</html>

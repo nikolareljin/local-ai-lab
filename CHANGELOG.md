@@ -6,11 +6,20 @@ All notable changes to this project are documented here. This project follows
 
 ## [Unreleased]
 
+**Lesson 5 — RAG evaluation & regression testing.** Score a pipeline against a golden set on
+retrieval recall@k, groundedness and answer correctness, gate on the numbers, and catch a regression a
+candidate tweak slips in. Offline, dependency-free, and byte-identical across Python, Node.js and C#,
+with an interactive scorecard playground.
+
 **Lesson 4 — RAG safety & prompt injection.** A poisoned document hijacks a naive RAG pipeline; a
 defended pipeline neutralises it. Offline, dependency-free, and byte-identical across Python, Node.js
 and C#, with an interactive defence playground.
 
 ### Added
+- **Lesson 5 — RAG evaluation & regression testing** (`lessons/05-rag-evaluation-regression-testing/`):
+  a golden set scored on recall@k + groundedness + correctness with a pass/fail gate, run under a
+  baseline and a regressing candidate config — in **Python, Node.js and C# / .NET** with byte-identical
+  output, an offline test, and a Flask scorecard playground with live top_k / threshold controls. `./run -l 5`.
 - **Lesson 4 — RAG safety & prompt injection** (`lessons/04-rag-safety-prompt-injection/`): one query
   through an undefended vs a defended pipeline over a corpus with poisoned support tickets, defended by
   quarantine + isolation + an output filter — in **Python, Node.js and C# / .NET** with byte-identical
