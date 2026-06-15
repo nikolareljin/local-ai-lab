@@ -22,7 +22,7 @@ program, so you finish understanding how the thing actually works — not just h
 > then `./run -l <N>`. Full cross-platform setup (Linux · macOS · Windows) and per-lesson
 > dependencies are in **[INSTALL.md](./INSTALL.md)** ([PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)).
 > The course is **polyglot** — **Python** is the reference, with **Node.js** and **C#** ports per
-> lesson via `./run -l <N> --lang node|csharp` (**Lessons 1, 2 and 3** ship in all three today). Every lesson is also a **PDF** in
+> lesson via `./run -l <N> --lang node|csharp` (**Lessons 1, 2, 3 and 4** ship in all three today). Every lesson is also a **PDF** in
 > [`docs/pdf/`](./docs/pdf/).
 
 ---
@@ -31,14 +31,14 @@ program, so you finish understanding how the thing actually works — not just h
 
 Each available lesson is published as an **interactive slider** on the course site (every step explains
 *what* and *why*, gives the command to type, and shows the code — steps are deep-linkable) and as a
-**written guide**. **Lessons 1–3 are live and runnable today**; the rest are on the roadmap below.
+**written guide**. **Lessons 1–4 are live and runnable today**; the rest are on the roadmap below.
 
 | # | Lesson | What you build | Guide | Live | Status |
 |---|--------|----------------|-------|------|--------|
 | 1 | **RAG from scratch** | Extract → chunk → retrieve (BM25 + embeddings) → grounded answer with citations | [LESSON1.md](./LESSON1.md) | [open](https://nikolareljin.github.io/local-ai-lab/lesson-1-rag.html) | Available |
 | 2 | **MCP servers** | Expose your document search as a Model Context Protocol tool Claude Code can call natively | [LESSON2.md](./LESSON2.md) | [open](https://nikolareljin.github.io/local-ai-lab/lesson-2-mcp.html) | Available |
 | 3 | **Hybrid retrieval & reranking** | BM25 + a semantic arm fused with Reciprocal Rank Fusion — offline, in Python, Node.js and C# | [README](./lessons/03-hybrid-retrieval-reranking/README.md) | [open](https://nikolareljin.github.io/local-ai-lab/lesson-3-hybrid-retrieval-reranking.html) | Available |
-| 4 | **RAG safety & prompt injection** | Treat retrieved documents as untrusted input — defend against prompt injection and poisoned content | — | — | Planned |
+| 4 | **RAG safety & prompt injection** | Treat retrieved documents as untrusted input — defend against prompt injection and poisoned content, in Python, Node.js and C# | [README](./lessons/04-rag-safety-prompt-injection/README.md) | [open](https://nikolareljin.github.io/local-ai-lab/lesson-4-rag-safety-prompt-injection.html) | Available |
 | 5 | **RAG evaluation & regression testing** | Golden questions, groundedness scoring, and regression tests — turn "seems good" into a tracked number | — | — | Planned |
 | 6 | **Repo-aware AI assistant** | Ground an assistant in your codebase so it answers with repo-specific context | — | — | Planned |
 | 7 | **LangChain** | Rebuild the RAG pipeline with LangChain and compare the trade-offs | — | — | Planned |
@@ -163,6 +163,27 @@ Full walkthrough: [README](./lessons/03-hybrid-retrieval-reranking/README.md) ·
 
 ---
 
+## Lesson 4: RAG safety & prompt injection
+
+A retrieved document is **untrusted input**. Lesson 4 runs one query through two pipelines over a
+corpus that ships with **poisoned** support tickets: the **undefended** pipeline obeys an injected
+instruction (or leaks a secret), while the **defended** pipeline layers three cheap defences —
+**quarantine** (drop instruction-like docs), **isolation** (treat retrieved text as data), and an
+**output filter** (block leaks). Offline and dependency-free, with byte-identical output in **Python,
+Node.js and C#**.
+
+```bash
+./run -l 4                 # interactive playground: toggle the defences and watch hijacked → safe
+./run -l 4 demo            # one-shot: print the undefended vs defended answers and exit
+./run -l 4 --lang node demo          # Node.js — the same logic, byte-identical
+./run -l 4 --lang csharp demo        # C# / .NET — the same logic, byte-identical
+./run -l 4 test            # offline test pinning the lesson's claims
+```
+
+Full walkthrough: [README](./lessons/04-rag-safety-prompt-injection/README.md) · [interactive lesson](https://nikolareljin.github.io/local-ai-lab/lesson-4-rag-safety-prompt-injection.html).
+
+---
+
 ## Repository layout
 
 ```
@@ -172,6 +193,7 @@ local-ai-lab/
 │   ├── lesson-1-rag.html  #   Lesson 1 (RAG) — full interactive lesson
 │   ├── lesson-2-mcp.html  #   Lesson 2 (MCP) — full interactive lesson
 │   ├── lesson-3-hybrid-retrieval-reranking.html  # Lesson 3 (generated from lessons/03-*)
+│   ├── lesson-4-rag-safety-prompt-injection.html # Lesson 4 (generated from lessons/04-*)
 │   └── assets/            #   styles + slider.js
 ├── documents/             # the RAG corpus — drop your files here
 ├── localrag/              # Lesson 1 source code (the working app)
@@ -219,8 +241,9 @@ uses the **Claude Code CLI** as the AI — no API key, it just uses your existin
 ./run -h                                     # full help
 ```
 
-Lesson **3** is interactive too — `./run -l 3` opens its experiment GUI (or `./run -l 3 demo` for the
-one-shot terminal run). Lessons **4–8** are written guides for now.
+Lessons **3 and 4** are interactive too — `./run -l 3` opens its experiment GUI and `./run -l 4` opens
+the RAG-safety defence playground (or add `demo` for the one-shot terminal run). Lessons **5–8** are
+written guides for now.
 
 First-time setup and per-lesson dependencies for **Linux, macOS, and Windows** (Python, Node.js,
 C#) are in **[INSTALL.md](./INSTALL.md)** ([PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)).
