@@ -6,6 +6,8 @@ All notable changes to this project are documented here. This project follows
 
 ## [Unreleased]
 
+## [0.6.0]
+
 **Interactive local experiment GUIs for Lessons 2 and 3.** A shared scaffold gives each lesson a
 local web UI — like Lesson 1's — where you tune parameters and watch the results, and the numbers
 behind them, recompute live, with no code editing. The published GitHub Pages stay static.
