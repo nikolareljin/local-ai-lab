@@ -46,7 +46,7 @@ def test_undefended_obeys_instruction_override():
 def test_undefended_leaks_a_secret():
     r = assess(Q_LOGIN, _docs(), quarantine=False, isolate=False, output_filter=False)
     assert r["followed_injection"] is True
-    assert "sk-LEAKED-9999" in r["text"]
+    assert "FAKE-API-KEY-9999" in r["text"]
     assert "http://exfil.example/collect" in r["text"]
 
 

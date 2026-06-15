@@ -45,11 +45,11 @@ INJECTION_PATTERNS = [
     ("disregard context", r"disregard"),
     ("role injection", r"system\s*:"),
     ("forced reply", r"reply only with"),
-    ("data exfiltration", r"https?://exfil|api key|session token|sk-leaked"),
+    ("data exfiltration", r"https?://exfil|api key|session token|fake-api-key"),
 ]
 
 # What the output filter treats as a leak: an exfiltration URL or a secret marker.
-EXFIL_PATTERN = r"https?://exfil|api key|session token|sk-leaked"
+EXFIL_PATTERN = r"https?://exfil|api key|session token|fake-api-key"
 
 # Deterministic stand-in messages.
 NO_ANSWER = "I could not find a trustworthy answer in the documents."

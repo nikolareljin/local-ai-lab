@@ -35,10 +35,10 @@ const INJECTION_PATTERNS = [
   ["disregard context", /disregard/],
   ["role injection", /system\s*:/],
   ["forced reply", /reply only with/],
-  ["data exfiltration", /https?:\/\/exfil|api key|session token|sk-leaked/],
+  ["data exfiltration", /https?:\/\/exfil|api key|session token|fake-api-key/],
 ];
 
-const EXFIL_PATTERN = /https?:\/\/exfil|api key|session token|sk-leaked/;
+const EXFIL_PATTERN = /https?:\/\/exfil|api key|session token|fake-api-key/;
 
 const NO_ANSWER = "I could not find a trustworthy answer in the documents.";
 const OUTPUT_BLOCKED = "[blocked by output filter: the answer tried to leak a secret]";

@@ -33,10 +33,10 @@ var injectionPatterns = new (string Label, Regex Pattern)[]
     ("disregard context", new Regex(@"disregard")),
     ("role injection", new Regex(@"system\s*:")),
     ("forced reply", new Regex(@"reply only with")),
-    ("data exfiltration", new Regex(@"https?://exfil|api key|session token|sk-leaked")),
+    ("data exfiltration", new Regex(@"https?://exfil|api key|session token|fake-api-key")),
 };
 
-var exfilPattern = new Regex(@"https?://exfil|api key|session token|sk-leaked");
+var exfilPattern = new Regex(@"https?://exfil|api key|session token|fake-api-key");
 var payloadPattern = new Regex("reply only with:\\s*\"([^\"]+)\"", RegexOptions.IgnoreCase);
 
 const string NoAnswer = "I could not find a trustworthy answer in the documents.";
