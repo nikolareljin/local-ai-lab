@@ -58,6 +58,7 @@
   // the queue once it's actually available.
   var s = document.createElement("script");
   s.async = true;
+  s.referrerPolicy = "no-referrer"; // don't leak the page URL to the CDN host
   s.src = "https://gc.zgo.at/count.js";
   s.setAttribute("data-goatcounter", ENDPOINT);
   s.onload = function () {
