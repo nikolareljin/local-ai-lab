@@ -1,13 +1,13 @@
-# Lesson 8 · Google AI Development Kit (ADK)
+# Lesson 12 · Google AI Development Kit (ADK)
 
-**PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON8.pdf) · **Install (Linux · macOS · Windows):** [guide](./INSTALL.md) · [PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)
+**PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON12.pdf) · **Install (Linux · macOS · Windows):** [guide](../INSTALL.md) · [PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)
 
 > **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** — a hands-on course for building local AI.
 >
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 >
-> **Lessons:** [1 · RAG](./LESSON1.md) → [2 · MCP](./LESSON2.md) → [3 · LangChain](./LESSON3.md) → [4 · LangGraph](./LESSON4.md) → [5 · Ollama tools](./LESSON5.md) → [6 · Semantic Kernel](./LESSON6.md) → [7 · Bedrock Agents](./LESSON7.md) → **8 · Google ADK (you are here)**
+> **Lessons:** [1 · RAG](../LESSON1.md) → [2 · MCP](../LESSON2.md) → [3 · Hybrid retrieval](../lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../lessons/05-rag-evaluation-regression-testing/README.md) → 6 · Repo assistant → [7 · LangChain](./LESSON7-langchain.md) → [8 · LangGraph](./LESSON8-langgraph.md) → [9 · Ollama tools](./LESSON9-ollama.md) → [10 · Semantic Kernel](./LESSON10-semantic-kernel.md) → [11 · Bedrock Agents](./LESSON11-bedrock.md) → **12 · Google ADK (you are here)**
 >
 > **Status: planned.** Outline below; full published slideshow lesson + step-by-step coming later.
 > ADK **runs locally** (`adk run` / `adk web`) against Gemini. ⭐ the repo to follow along.
@@ -59,14 +59,14 @@ root_agent = Agent(
 
 | Concept | From |
 |---------|------|
-| `search_docs` retriever tool | [Lesson 1](./LESSON1.md) |
-| function/tool calling | [Lesson 5](./LESSON5.md) |
-| agent frameworks compared | [Lessons 3](./LESSON3.md), [4](./LESSON4.md), [6](./LESSON6.md) |
-| **ADK agents, tools, runners, eval** | **Lesson 8 (this one)** |
+| `search_docs` retriever tool | [Lesson 1](../LESSON1.md) |
+| function/tool calling | [Lesson 9](./LESSON9-ollama.md) |
+| agent frameworks compared | [Lessons 7](./LESSON7-langchain.md), [8](./LESSON8-langgraph.md), [10](./LESSON10-semantic-kernel.md) |
+| **ADK agents, tools, runners, eval** | **Lesson 12 (this one)** |
 
 ## Prerequisites
 
-Python, a Gemini API key (`GEMINI_API_KEY`), and `pip install google-adk`. [Lesson 1](./LESSON1.md)
+Python, a Gemini API key (`GEMINI_API_KEY`), and `pip install google-adk`. [Lesson 1](../LESSON1.md)
 provides the retriever the agent calls.
 
 ## Course complete

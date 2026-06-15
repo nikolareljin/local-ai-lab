@@ -64,12 +64,12 @@ guide**, and runs **100% locally**. **Lessons 1–5 are live and runnable**; the
 | 4 | **RAG safety & prompt injection** | Treat retrieved documents as untrusted input — defend against prompt injection and poisoned content | [README](./lessons/04-rag-safety-prompt-injection/README.md) | [open](https://nikolareljin.github.io/local-ai-lab/lesson-4-rag-safety-prompt-injection.html) | ✅ Available |
 | 5 | **RAG evaluation & regression testing** | Golden questions, groundedness scoring, and regression tests — turn "seems good" into a tracked number | [README](./lessons/05-rag-evaluation-regression-testing/README.md) | [open](https://nikolareljin.github.io/local-ai-lab/lesson-5-rag-evaluation-regression-testing.html) | ✅ Available |
 | 6 | **Repo-aware AI assistant** | Ground an assistant in your codebase so it answers with repo-specific context | — | — | Planned |
-| 7 | **LangChain** | Rebuild the RAG pipeline with LangChain and compare the trade-offs | — | — | Planned |
-| 8 | **LangGraph** | Turn the pipeline into a stateful agent graph with retries, tool routing, and memory | — | — | Planned |
-| 9 | **Ollama + Function Calling** | Give a local model real tools it can call (function calling) — 100% offline | — | — | Planned |
-| 10 | **Microsoft Semantic Kernel** | Rebuild the agent in **C# / .NET** with SK plugins and auto function calling | — | — | Planned |
-| 11 | **AWS Bedrock Agents** | Knowledge bases + action groups on a managed cloud agent, driven from your machine | — | — | Planned |
-| 12 | **Google AI Development Kit** | Build and run a Gemini agent locally with Google's open-source ADK | — | — | Planned |
+| 7 | **LangChain** | Rebuild the RAG pipeline with LangChain and compare the trade-offs | [outline](./roadmap/LESSON7-langchain.md) | — | Planned |
+| 8 | **LangGraph** | Turn the pipeline into a stateful agent graph with retries, tool routing, and memory | [outline](./roadmap/LESSON8-langgraph.md) | — | Planned |
+| 9 | **Ollama + Function Calling** | Give a local model real tools it can call (function calling) — 100% offline | [outline](./roadmap/LESSON9-ollama.md) | — | Planned |
+| 10 | **Microsoft Semantic Kernel** | Rebuild the agent in **C# / .NET** with SK plugins and auto function calling | [outline](./roadmap/LESSON10-semantic-kernel.md) | — | Planned |
+| 11 | **AWS Bedrock Agents** | Knowledge bases + action groups on a managed cloud agent, driven from your machine | [outline](./roadmap/LESSON11-bedrock.md) | — | Planned |
+| 12 | **Google AI Development Kit** | Build and run a Gemini agent locally with Google's open-source ADK | [outline](./roadmap/LESSON12-google-adk.md) | — | Planned |
 | 13 | **AI-assisted testing** | Generate, run, and review tests, and let failures guide the fix | — | — | Planned |
 | 14 | **AI code review & issue detection** | Use AI to catch the serious issues in review — real bugs, security, risky changes | — | — | Planned |
 | 15 | **Documentation from sprint changes** | Generate release notes and docs straight from a sprint's commits and pull requests | — | — | Planned |

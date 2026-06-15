@@ -9,7 +9,7 @@
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 > **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
 >
-> **Lessons:** **1 · RAG (you are here)** → [2 · MCP](./LESSON2.md) → [3 · LangChain](./LESSON3.md) → [4 · LangGraph](./LESSON4.md) → [5 · Ollama tools](./LESSON5.md) → [6 · Semantic Kernel](./LESSON6.md) → [7 · Bedrock Agents](./LESSON7.md) → [8 · Google ADK](./LESSON8.md)
+> **Lessons:** **1 · RAG (you are here)** → [2 · MCP](./LESSON2.md) → [3 · Hybrid retrieval](./lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](./lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](./lessons/05-rag-evaluation-regression-testing/README.md) → 6 · Repo assistant → 7 · LangChain → … → 15 · Docs from changes
 
 ---
 
@@ -357,7 +357,7 @@ uniformity is the whole point.
 
 > **Teaching point.** This is the pattern every "LLM framework" is built around — a provider
 > interface plus adapters. Once you've written it by hand, LangChain's `ChatModel` and friends stop
-> looking like magic. (You'll see exactly that in [Lesson 3](./LESSON3.md).)
+> looking like magic. (You'll see exactly that in [Lesson 7 · LangChain](./roadmap/LESSON7-langchain.md).)
 
 ---
 

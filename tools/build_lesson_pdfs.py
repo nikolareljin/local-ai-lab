@@ -28,7 +28,22 @@ from xhtml2pdf import pisa
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "docs" / "pdf"
 
-SOURCES = ["CHEATSHEET.md", "INSTALL.md"] + [f"LESSON{i}.md" for i in range(1, 9)]
+# (source markdown path relative to repo root, output PDF stem).
+# Lessons 1-2 are hand-authored at the root; the planned framework-tour outlines live under
+# roadmap/ but publish as LESSON7..LESSON12 so their in-page "pdf/LESSONn.pdf" links resolve.
+# The live lessons 3-5 are config-driven under lessons/ and publish as HTML, not root PDFs.
+SOURCES = [
+    ("CHEATSHEET.md", "CHEATSHEET"),
+    ("INSTALL.md", "INSTALL"),
+    ("LESSON1.md", "LESSON1"),
+    ("LESSON2.md", "LESSON2"),
+    ("roadmap/LESSON7-langchain.md", "LESSON7"),
+    ("roadmap/LESSON8-langgraph.md", "LESSON8"),
+    ("roadmap/LESSON9-ollama.md", "LESSON9"),
+    ("roadmap/LESSON10-semantic-kernel.md", "LESSON10"),
+    ("roadmap/LESSON11-bedrock.md", "LESSON11"),
+    ("roadmap/LESSON12-google-adk.md", "LESSON12"),
+]
 
 # DejaVu covers arrows, box-drawing and ✓; emoji (astral plane) do not render in
 # PDF fonts, so map the ones we use to short text and strip the rest.
@@ -156,7 +171,8 @@ def _resolve_asset(uri: str, rel: str | None = None) -> str:
     return str(resolved)
 
 
-def build(md_name: str) -> bool:
+def build(spec: tuple[str, str]) -> bool:
+    md_name, out_stem = spec
     md_path = ROOT / md_name
     if not md_path.is_file():
         print(f"  ERR  {md_name}  (source not found)")
@@ -174,7 +190,7 @@ def build(md_name: str) -> bool:
         f"<style>{css()}</style></head><body>{body}</body></html>"
     )
     OUT.mkdir(parents=True, exist_ok=True)
-    out_path = OUT / (md_path.stem + ".pdf")
+    out_path = OUT / (out_stem + ".pdf")
     with open(out_path, "wb") as fh:
         result = pisa.CreatePDF(
             src=html, dest=fh, encoding="utf-8", link_callback=_resolve_asset

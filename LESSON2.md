@@ -8,7 +8,7 @@
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab · the working server is [`mcp_server.py`](./mcp_server.py)
 >
-> **Lessons:** [1 · RAG](./LESSON1.md) → **2 · MCP (you are here)** → [3 · LangChain](./LESSON3.md) → [4 · LangGraph](./LESSON4.md) → [5 · Ollama tools](./LESSON5.md) → [6 · Semantic Kernel](./LESSON6.md) → [7 · Bedrock Agents](./LESSON7.md) → [8 · Google ADK](./LESSON8.md)
+> **Lessons:** [1 · RAG](./LESSON1.md) → **2 · MCP (you are here)** → [3 · Hybrid retrieval](./lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](./lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](./lessons/05-rag-evaluation-regression-testing/README.md) → 6 · Repo assistant → 7 · LangChain → … → 15 · Docs from changes
 >
 > **Status: complete & working.** Runnable code: [`mcp_server.py`](./mcp_server.py), tested by
 > [`tests/test_mcp.py`](./tests/test_mcp.py). Runs 100% locally.
@@ -244,8 +244,8 @@ retriever, reachable from any MCP host.
 | `claude mcp add` | registers it so Claude Code can call it |
 
 > **The through-line:** `search_docs` is the same capability you'll rebuild in every later lesson —
-> as an [Ollama function call](./LESSON5.md), a [Semantic Kernel plugin](./LESSON6.md), a
-> [Bedrock action group](./LESSON7.md), and a [Google ADK tool](./LESSON8.md). Master the primitive
+> as an [Ollama function call](./roadmap/LESSON9-ollama.md), a [Semantic Kernel plugin](./roadmap/LESSON10-semantic-kernel.md), a
+> [Bedrock action group](./roadmap/LESSON11-bedrock.md), and a [Google ADK tool](./roadmap/LESSON12-google-adk.md). Master the primitive
 > once; the frameworks are just wrappers.
 
 ## Exercises
@@ -283,8 +283,8 @@ the [interactive slides](https://nikolareljin.github.io/local-ai-lab/lesson-2-mc
 
 ## Next lesson
 
-[**Lesson 3 · LangChain →**](./LESSON3.md) — rebuild the RAG pipeline with LangChain and compare it,
-honestly, against your from-scratch version.
+[**Lesson 3 · Hybrid Retrieval & Reranking →**](./lessons/03-hybrid-retrieval-reranking/README.md) — fuse
+BM25 with a semantic arm using Reciprocal Rank Fusion, then rerank the merged list.
 
 ---
 

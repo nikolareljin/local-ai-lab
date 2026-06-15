@@ -6,6 +6,20 @@ All notable changes to this project are documented here. This project follows
 
 ## [Unreleased]
 
+### Changed
+- **Lesson numbering aligned across the repo.** The six planned framework-tour outlines moved from the
+  repo root into `roadmap/` and were renumbered to their curriculum numbers — LangChain `3→7`,
+  LangGraph `4→8`, Ollama `5→9`, Semantic Kernel `6→10`, Bedrock `7→11`, Google ADK `8→12`. Every
+  written guide's navigation chain, cross-references, and "next lesson" links now follow the real order
+  (1 RAG → 2 MCP → 3 Hybrid → 4 Safety → 5 Eval → 6 Repo → 7–12 framework tour), so the live Lessons
+  3–5 are reachable from the guides instead of being shadowed by the old outlines.
+- **PDF build** (`tools/build_lesson_pdfs.py`): emits `LESSON7–12.pdf` from the `roadmap/` sources under
+  their curriculum numbers; the stale `LESSON3–6.pdf` were removed.
+
+### Added
+- **`roadmap/README.md`**: an index of the planned-lesson outlines that points back to where the live
+  lessons live.
+
 ## [0.7.1] - 2026-06-15
 
 ### Added
