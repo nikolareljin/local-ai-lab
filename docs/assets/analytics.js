@@ -1,7 +1,7 @@
 /* local-ai-lab — privacy-friendly usage analytics (GoatCounter).
  *
- * Cookieless: no cookies and no persistent identifiers (GoatCounter derives a
- * country from the IP transiently at ingest, then discards it — it is not stored).
+ * Cookieless: no cookies and no persistent identifiers (GoatCounter derives a country
+ * code from the IP at ingest; the IP address is then discarded and not stored).
  * This file is the ONLY place GoatCounter is wired in: it loads count.js itself,
  * over explicit https, and only on the production Pages host — so local previews
  * (localhost / 127.* / file://) never load the script or send a pageview. On top
