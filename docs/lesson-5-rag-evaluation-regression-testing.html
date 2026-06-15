@@ -280,7 +280,9 @@ it; an eyeball check (correctness held at 1.00) would not.</code></pre></section
             <span class="hl-str">"gate_passed"</span>: agg[<span class="hl-str">"pass_count"</span>] == n}
 
 
-<span class="hl-com"># Two configs that tell the regression story.</span></code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/eval_rag.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> evaluate(golden, docs, config) {
+<span class="hl-com"># Two configs that tell the regression story.</span>
+BASELINE = {<span class="hl-str">"name"</span>: <span class="hl-str">"baseline"</span>, <span class="hl-str">"top_k"</span>: <span class="hl-num">3</span>, <span class="hl-str">"pad_unsupported"</span>: <span class="hl-kw">False</span>}
+CANDIDATE = {<span class="hl-str">"name"</span>: <span class="hl-str">"candidate"</span>, <span class="hl-str">"top_k"</span>: <span class="hl-num">1</span>, <span class="hl-str">"pad_unsupported"</span>: <span class="hl-kw">True</span>}</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/eval_rag.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> evaluate(golden, docs, config) {
   <span class="hl-kw">const</span> thr = golden.thresholds;
   <span class="hl-kw">if</span> (golden.questions.length === <span class="hl-num">0</span>) {
     <span class="hl-kw">throw</span> <span class="hl-kw">new</span> Error(<span class="hl-str">"golden set has no questions — add at least one to data/golden.json"</span>);
@@ -304,7 +306,10 @@ it; an eyeball check (correctness held at 1.00) would not.</code></pre></section
     total: n,
   };
   <span class="hl-kw">return</span> { config_name: config.name, rows, aggregate, gate_passed: aggregate.pass_count === n };
-}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>EvalResult Evaluate(GoldenSet g, List&lt;Doc&gt; corpus, Config config)
+}
+
+<span class="hl-kw">const</span> BASELINE = { name: <span class="hl-str">"baseline"</span>, top_k: <span class="hl-num">3</span>, pad_unsupported: <span class="hl-kw">false</span> };
+<span class="hl-kw">const</span> CANDIDATE = { name: <span class="hl-str">"candidate"</span>, top_k: <span class="hl-num">1</span>, pad_unsupported: <span class="hl-kw">true</span> };</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>EvalResult Evaluate(GoldenSet g, List&lt;Doc&gt; corpus, Config config)
 {
     <span class="hl-kw">var</span> thr = g.Thresholds;
     <span class="hl-kw">if</span> (g.Questions.Count == <span class="hl-num">0</span>)
@@ -326,7 +331,9 @@ it; an eyeball check (correctness held at 1.00) would not.</code></pre></section
         rows.Sum(r =&gt; r.Correctness) / n,
         rows.Count(r =&gt; r.Passed),
         n);
-    <span class="hl-kw">return</span> <span class="hl-kw">new</span> EvalResult(config.Name, rows, agg, agg.PassCount == n);</code></pre></div></div><div class='why'>The gate is what you wire into CI: a pull request that drops a tracked number below its threshold fails the build, so a regression is a red check, not a customer complaint three weeks later.</div></section>
+    <span class="hl-kw">return</span> <span class="hl-kw">new</span> EvalResult(config.Name, rows, agg, agg.PassCount == n);
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'><span class="hl-kw">var</span> baseline = <span class="hl-kw">new</span> Config(<span class="hl-str">"baseline"</span>, <span class="hl-num">3</span>, <span class="hl-kw">false</span>);
+<span class="hl-kw">var</span> candidate = <span class="hl-kw">new</span> Config(<span class="hl-str">"candidate"</span>, <span class="hl-num">1</span>, <span class="hl-kw">true</span>);</code></pre></div></div><div class='why'>The gate is what you wire into CI: a pull request that drops a tracked number below its threshold fails the build, so a regression is a red check, not a customer complaint three weeks later.</div></section>
 <section class='slide'><div class='step-no'>Run it</div><h2>Run the eval</h2><p>Now run it — this scores the golden set under both configs and prints the scorecards side by side, then a regression summary, and exits — identical output in all three languages. (Bare <code>./run -l 5</code> opens the interactive scorecard instead; <code>demo</code> is the one-shot print-and-exit.)</p><div class='lang lang-python'><div class='block'><div class='label'>demo · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">5</span> demo</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>demo · node</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">5</span> --lang node demo</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>demo · csharp</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">5</span> --lang csharp demo</code></pre></div></div></section>
 <section class='slide'><div class='step-no'>Run it</div><h2>Read the output</h2><p>The <strong>baseline</strong> scorecard is all green — every question clears recall, groundedness and correctness, so the gate passes. The <strong>candidate</strong> looks like a harmless tweak (fewer documents retrieved, a chattier answer) but the numbers tell the truth: <strong>mean recall</strong> drops because one question's gold document fell out of the smaller top-k, and <strong>mean groundedness</strong> falls below its threshold everywhere because the padded sentence is unsupported. <strong>Correctness never moved</strong> — the answer still contains the right keywords, which is exactly how this regression would sail through a manual eyeball check. The gate flips PASS → FAIL.</p><pre><code>
 Config: baseline  (top_k=3, padding=off)

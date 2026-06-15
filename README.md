@@ -34,7 +34,7 @@ program, so you finish understanding how the thing actually works — not just h
 Needs **Python 3.10+** (add **Node.js 18+** / **.NET 8 SDK** only for those ports).
 
 ```bash
-python -m venv venv && source venv/bin/activate    # Windows: venv\Scripts\Activate.ps1
+python -m venv venv && source venv/bin/activate    # Windows (PowerShell): .\venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 
 ./run -l 1                     # launch the RAG web UI (the default AI is Claude Code — no API key)

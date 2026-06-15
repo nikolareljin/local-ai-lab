@@ -39,18 +39,28 @@ jobs:
         run: |
           set -euo pipefail
           version="${{ steps.ver.outputs.version }}"
+
+          # Create the annotated tag if it doesn't exist yet.
           if git rev-parse -q --verify "refs/tags/$version" >/dev/null; then
-            echo "Tag $version already exists — nothing to release."
-            exit 0
+            echo "Tag $version already exists — skipping tag creation."
+          else
+            git config user.name "Nik Reljin"
+            git config user.email "nikola.reljin@gmail.com"
+            git tag -a "$version" -m "local-ai-lab $version"
+            git push origin "$version"
           fi
-          notes=$(awk -v v="$version" '
-            $0 ~ "^## \\[" v "\\]" {f=1; next}
-            /^## \[/ {f=0}
-            f {print}
-          ' CHANGELOG.md)
-          git config user.name "Nik Reljin"
-          git config user.email "nikola.reljin@gmail.com"
-          git tag -a "$version" -m "local-ai-lab $version"
-          git push origin "$version"
-          printf '%s\n' "$notes" | gh release create "$version" \
-            --title "$version" --notes-file - --target "$GITHUB_SHA"
+
+          # Create the GitHub Release if it doesn't exist yet. Kept separate from
+          # tagging so a failed/partial run is retryable: if the tag landed but the
+          # release didn't, re-running still publishes the release.
+          if gh release view "$version" >/dev/null 2>&1; then
+            echo "Release $version already exists — nothing to do."
+          else
+            notes=$(awk -v v="$version" '
+              $0 ~ "^## \\[" v "\\]" {f=1; next}
+              /^## \[/ {f=0}
+              f {print}
+            ' CHANGELOG.md)
+            printf '%s\n' "$notes" | gh release create "$version" \
+              --title "$version" --notes-file -
+          fi
