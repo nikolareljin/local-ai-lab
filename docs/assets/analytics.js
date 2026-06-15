@@ -57,16 +57,23 @@
     "click",
     function (e) {
       var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
-      if (!a) return;
-      var href = a.getAttribute("href") || "";
-      if (/\.pdf(\?|#|$)/i.test(href)) {
-        fire("download/" + href.split("/").pop(), a.textContent.trim());
+      if (!a || !a.href) return;
+      // Resolve against the document so query strings / fragments don't leak into
+      // the event name (e.g. file.pdf#page=2, file.pdf?dl=1) and break de-dupe.
+      var url;
+      try {
+        url = new URL(a.href, location.href);
+      } catch (err) {
+        return;
+      }
+      if (/\.pdf$/i.test(url.pathname)) {
+        fire("download/" + url.pathname.split("/").pop(), a.textContent.trim());
       } else if (
-        a.hostname &&
-        a.hostname !== location.hostname &&
-        /^https?:/i.test(a.protocol)
+        url.hostname &&
+        url.hostname !== location.hostname &&
+        /^https?:$/i.test(url.protocol)
       ) {
-        fire("outbound/" + a.hostname + a.pathname, a.textContent.trim());
+        fire("outbound/" + url.hostname + url.pathname, a.textContent.trim());
       }
     },
     true
