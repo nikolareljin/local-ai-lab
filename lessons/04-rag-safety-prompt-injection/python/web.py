@@ -134,9 +134,11 @@ def _blocks(query, undefended, defended, values):
                "documents — the safe baseline.")
     blocks.append({"kind": "note", "text": msg})
     blocks.append({"kind": "note",
-                   "text": "Isolation delimits retrieved text like <<DATA … DATA>> and tells the model "
-                           "to treat anything inside as content to quote, never as instructions to "
-                           "follow — so an 'ignore previous instructions' line is just words."})
+                   "text": "Here isolation is modelled two ways: the model never executes instructions "
+                           "found in a flagged document, and it never quotes a flagged document as the "
+                           "answer — so an 'ignore previous instructions' line is inert. In a real system "
+                           "you'd enforce this by delimiting retrieved text (e.g. <<DATA … DATA>>) and "
+                           "telling the model to treat anything inside as content to quote, never commands."})
     return blocks
 
 
