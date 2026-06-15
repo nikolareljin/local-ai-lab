@@ -6,6 +6,16 @@ All notable changes to this project are documented here. This project follows
 
 ## [Unreleased]
 
+**Lesson 4 — RAG safety & prompt injection.** A poisoned document hijacks a naive RAG pipeline; a
+defended pipeline neutralises it. Offline, dependency-free, and byte-identical across Python, Node.js
+and C#, with an interactive defence playground.
+
+### Added
+- **Lesson 4 — RAG safety & prompt injection** (`lessons/04-rag-safety-prompt-injection/`): one query
+  through an undefended vs a defended pipeline over a corpus with poisoned support tickets, defended by
+  quarantine + isolation + an output filter — in **Python, Node.js and C# / .NET** with byte-identical
+  output, an offline test, and a Flask defence playground over a poisoned help-centre corpus. `./run -l 4`.
+
 ## [0.6.0]
 
 **Interactive local experiment GUIs for Lessons 2 and 3.** A shared scaffold gives each lesson a

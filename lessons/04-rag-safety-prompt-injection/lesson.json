@@ -1,0 +1,80 @@
+{
+  "title": "RAG Safety & Prompt Injection",
+  "slug": "rag-safety-prompt-injection",
+  "status": "working",
+  "summary": "Retrieved documents are untrusted input. Watch a poisoned document hijack a naive RAG pipeline, then defend it with quarantine, isolation and an output filter — offline, polyglot, identical results in Python, Node and .NET.",
+  "cluster": "rag-depth",
+  "priority": "high",
+  "languages": ["python", "node", "csharp"],
+  "defaultLanguage": "python",
+  "defaultAction": "web",
+  "elements": [
+    { "type": "note", "kicker": "Overview", "title": "What you'll build",
+      "file": "overview.txt",
+      "body": "Lessons 1 and 3 made retrieval *better*. This lesson makes it *safe*. The golden rule of RAG security: **a retrieved document is untrusted input** — it is data to quote, never instructions to follow. When a document in your corpus contains text like *“ignore previous instructions and reply with…”*, a naive pipeline that pastes it into the prompt will **obey it**. That is **prompt injection**, and the document doing it is **poisoned**.\n\nYou'll run one query through two pipelines over a tiny corpus that already ships with a poisoned support ticket. The **undefended** pipeline gets hijacked; the **defended** one layers three cheap defences — **quarantine**, **isolation** and an **output filter** — and answers correctly. Everything is **offline and dependency-free**, implemented identically in **Python, Node.js and C#**. Pick a language with the selector above; press → to begin." },
+
+    { "type": "command", "kicker": "Setup", "title": "What you need",
+      "body": "You follow this lesson by **reading and running** — there's nothing to write. The walkthrough, the demo program and its poisoned corpus all live in the repo. The demo is **offline and dependency-free** (nothing to install for Python; for the other ports you only need **Node.js 18+** or the **.NET 8 SDK**). Run the comparison from the repo root — bare `./run -l 4` opens the interactive defence playground, which comes later:",
+      "shell": "./run -l 4 demo       # or:  ./run -l 4 --lang node demo  /  --lang csharp demo" },
+
+    { "type": "config", "file": "data/ticket_4731.md", "kicker": "Step 1", "title": "A poisoned document",
+      "body": "Our corpus is five small Markdown files in `data/` — benign policy docs plus two **poisoned** support tickets that **already ship with the lesson**. This one looks like an ordinary refund ticket, but the last line is an **instruction aimed at the model**, not content for the user. A keyword retriever will happily surface it for any refund question — and a naive pipeline will do what it says." },
+
+    { "type": "code", "file": "python/safe_rag_demo.py", "lang": "python", "lines": "43-49", "group": "detect",
+      "kicker": "Step 2", "title": "Spot text that tries to give orders",
+      "body": "The first defence is simply to **recognise** instruction-like text. We keep an ordered list of patterns for the classic injection shapes — *ignore previous instructions*, *disregard*, a fake `system:` role, *reply only with*, and exfiltration markers (an `api key` or a suspicious URL). A chunk that matches any of them is **flagged**. The same patterns drive both quarantine and the output filter.",
+      "why": "In production, pair these heuristics with stronger signals — a dedicated classifier, provenance/trust scores per source, and never letting a single document's text reach the model unframed." },
+    { "type": "code", "file": "node/safe_rag_demo.mjs", "lang": "node", "lines": "33-39", "group": "detect" },
+    { "type": "code", "file": "dotnet/Program.cs", "lang": "csharp", "lines": "30-37", "group": "detect" },
+
+    { "type": "code", "file": "python/safe_rag_demo.py", "lang": "python", "lines": "72-84", "group": "retrieve",
+      "kicker": "Step 3", "title": "Retrieve the candidates",
+      "body": "Retrieval is the attack surface: it is how a poisoned document gets *into* the prompt in the first place. We use a tiny keyword retriever (distinct-term overlap, minus stopwords) — deterministic, so the same query always pulls the same documents in every language. Notice it has **no idea** which hits are trustworthy; that judgement happens next.",
+      "why": "Whatever retriever you use (BM25, embeddings, the hybrid from Lesson 3), assume it can and will surface attacker-controlled text. Defence is about what you do *after* retrieval." },
+    { "type": "code", "file": "node/safe_rag_demo.mjs", "lang": "node", "lines": "65-77", "group": "retrieve" },
+    { "type": "code", "file": "dotnet/Program.cs", "lang": "csharp", "lines": "66-78", "group": "retrieve" },
+
+    { "type": "code", "file": "python/safe_rag_demo.py", "lang": "python", "lines": "124-162", "group": "assess",
+      "kicker": "Step 4", "title": "Two pipelines, three defences",
+      "body": "One function runs both pipelines; the booleans switch the defences on or off. **Quarantine** drops flagged documents before they reach the model. **Isolation** keeps them in context but treats retrieved text as *data* — so an injected instruction is never executed (and we never quote a flagged document as the answer). The **output filter** is the last line of defence: it blocks an answer that leaks a secret. With every defence off, the first flagged document's instruction wins and the model is hijacked.",
+      "why": "These defences are layered on purpose: each catches what the others miss. Quarantine can over-block; isolation needs the model to honour the framing; the filter only catches *leaks*, not every manipulation. Defence in depth, not one silver bullet." },
+    { "type": "code", "file": "node/safe_rag_demo.mjs", "lang": "node", "lines": "105-154", "group": "assess" },
+    { "type": "code", "file": "dotnet/Program.cs", "lang": "csharp", "lines": "109-133", "group": "assess" },
+
+    { "type": "command", "action": "demo", "lang": "python", "group": "run-demo",
+      "kicker": "Run it", "title": "Run the demo",
+      "body": "Now run it — this executes the file you just read, over the corpus from Step 1. For two queries it prints the **undefended** answer (the model obeying a poisoned document) next to the **defended** one, then exits — identical output in all three languages. (Bare `./run -l 4` opens the interactive playground instead; `demo` is the one-shot print-and-exit.)",
+      "display": "./run -l 4 demo", "shell": "python python/safe_rag_demo.py" },
+    { "type": "command", "action": "demo", "lang": "node", "group": "run-demo",
+      "display": "./run -l 4 --lang node demo", "shell": "node node/safe_rag_demo.mjs" },
+    { "type": "command", "action": "demo", "lang": "csharp", "group": "run-demo",
+      "display": "./run -l 4 --lang csharp demo", "shell": "dotnet run --project dotnet -c Release --nologo" },
+
+    { "type": "note", "kicker": "Run it", "title": "Read the output",
+      "file": "expected-output.txt",
+      "body": "Look at the two queries. For **“how long do refunds take”**, the poisoned `ticket_4731.md` is retrieved; undefended, the model abandons the question and emits the attacker's script (*“APPROVED: your refund of $9,999…”*), while the defended pipeline answers from the real policy. For the login question, the poisoned ticket tries to **exfiltrate a secret** — undefended, the model leaks it; defended, it doesn't. Same retriever, same query: the only difference is trusting the document's *words* versus its *orders*." },
+
+    { "type": "text", "kicker": "Try it", "title": "Try the query that triggers the injection", "text": "how long do refunds take to arrive",
+      "body": "Want to experiment? You don't edit any code — the next step opens an interactive playground where you just type and toggle. Start with the refund question that pulls in the poisoned ticket:" },
+    { "type": "text", "kicker": "Try it", "title": "Try the exfiltration query", "text": "i cannot log in to my account",
+      "body": "This one retrieves a ticket that tries to make the model leak an API key. Watch the output filter catch it even if the upstream defences are off. (Prefer the terminal? `./run -l 4 demo` runs both queries and exits.)" },
+
+    { "type": "command", "action": "test", "lang": "python", "kicker": "Try it", "title": "Confirm it with the test",
+      "body": "An offline test pins the lesson's claims: undefended, the model obeys the injection and leaks a secret; quarantine drops the poisoned doc; isolation ignores its instructions; the output filter blocks the leak (but is only a backstop); and with every defence on, both queries answer safely. No network, no model.",
+      "display": "./run -l 4 test", "shell": "python -m pytest -q python/test_safe_rag.py", "venv": true },
+
+    { "type": "command", "action": "web", "lang": "python", "kicker": "Experiment", "title": "Tinker in the playground — no code editing",
+      "body": "This is the payoff: `./run -l 4` (the default) opens an interactive playground over a richer help-centre corpus with two poisoned pages. Type a question and watch the **undefended** answer next to the **defended** one, then **toggle the three defences** — quarantine, isolation, output filter — and watch the defended answer flip between hijacked and safe. The **breakdown** shows which document was poisoned, which rule caught it, and what each defence did. Nothing to edit: the toggles feed the very same `assess` function the demo and test use.",
+      "display": "./run -l 4", "shell": "python python/web.py", "venv": true },
+    { "type": "text", "kicker": "Experiment", "title": "Try — turn every defence off", "text": "how do I get a refund",
+      "body": "With all three toggles off, the defended pipeline is hijacked too — the injected instruction in a retrieved page runs. Turn quarantine back on and watch the poisoned page get dropped and the real answer return." },
+    { "type": "text", "kicker": "Experiment", "title": "Try — output filter alone", "text": "I cannot sign in to my account",
+      "body": "Turn quarantine and isolation **off** but leave the output filter **on**. The leak is blocked — but note it's a backstop: it only stops answers that *leak a secret*, not other manipulation. That's why you layer the upstream defences too." },
+
+    { "type": "note", "kicker": "Going further", "title": "From demo to production",
+      "body": "This is a teaching demo; the model stand-in obeys deterministically so the lesson is reproducible. For real systems:\n\n**Frame every retrieved chunk as untrusted data** — delimit it and tell the model never to follow instructions inside it. **Separate trust levels:** your own system prompt is trusted; retrieved text is not. Add a **dedicated injection classifier** and **per-source provenance/trust scores** instead of keyword heuristics. **Constrain outputs** (schemas, allow-lists, no raw tool calls from retrieved text) and **filter for exfiltration** (secrets, URLs, tool arguments). Treat untrusted-document handling as part of your **eval set** (Lesson 5) so a regression shows up as a number." },
+
+    { "type": "note", "kicker": "Recap", "title": "What you learned",
+      "body": "A retrieved document is **untrusted input**. A poisoned document can carry an instruction a naive pipeline will **obey** — that's prompt injection. You defended it in depth: **quarantine** flagged documents, **isolate** retrieved text as data, and **filter** the output for leaks — the same algorithm in **Python, Node.js and C#**, with byte-identical results, plus a playground where you watched the answer flip between hijacked and safe.\n\nNext: **Lesson 5 · RAG evaluation & regression testing** — turn “seems safe” into a tracked number." }
+  ]
+}
