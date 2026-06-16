@@ -1,13 +1,13 @@
-# Lesson 5 · Ollama + Function Calling
+# Lesson 9 · Ollama + Function Calling
 
-**PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON5.pdf) · **Install (Linux · macOS · Windows):** [guide](./INSTALL.md) · [PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)
+**PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON9.pdf) · **Install (Linux · macOS · Windows):** [guide](../INSTALL.md) · [PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)
 
 > **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** — a hands-on course for building local AI.
 >
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 >
-> **Lessons:** [1 · RAG](./LESSON1.md) → [2 · MCP](./LESSON2.md) → [3 · LangChain](./LESSON3.md) → [4 · LangGraph](./LESSON4.md) → **5 · Ollama tools (you are here)** → [6 · Semantic Kernel](./LESSON6.md) → [7 · Bedrock Agents](./LESSON7.md) → [8 · Google ADK](./LESSON8.md)
+> **Lessons:** [1 · RAG](../LESSON1.md) → [2 · MCP](../LESSON2.md) → [3 · Hybrid retrieval](../lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../lessons/05-rag-evaluation-regression-testing/README.md) → 6 · Repo assistant → [7 · LangChain](./LESSON7-langchain.md) → [8 · LangGraph](./LESSON8-langgraph.md) → **9 · Ollama tools (you are here)** → 10 · Semantic Kernel → 11 · Bedrock Agents → 12 · Google ADK → … → 15 · Docs from changes
 >
 > **Status: planned.** Outline below; full published slideshow lesson + step-by-step coming later. **Runs 100% locally** (Ollama, no cloud). ⭐ the repo to follow along.
 
@@ -19,7 +19,7 @@ A chat model that can only talk is limited. **Function calling** (a.k.a. tool us
 decide to call *your* functions — search documents, do math, hit an API — and use the results to
 answer. In this lesson you give a **local Ollama model** real tools, fully offline.
 
-This is the bridge between [Lesson 1's RAG](./LESSON1.md) and [Lesson 2's MCP](./LESSON2.md): same
+This is the bridge between [Lesson 1's RAG](../LESSON1.md) and [Lesson 2's MCP](../LESSON2.md): same
 `search_docs` capability, but now the *model* chooses when to call it.
 
 ## What you'll learn
@@ -68,18 +68,18 @@ def chat(messages):
 
 | Concept | From |
 |---------|------|
-| `get_retriever()` / `search_docs` | [Lesson 1](./LESSON1.md) |
-| the same tool exposed over a protocol | [Lesson 2 (MCP)](./LESSON2.md) |
-| **the model deciding to call tools** | **Lesson 5 (this one)** |
+| `get_retriever()` / `search_docs` | [Lesson 1](../LESSON1.md) |
+| the same tool exposed over a protocol | [Lesson 2 (MCP)](../LESSON2.md) |
+| **the model deciding to call tools** | **Lesson 9 (this one)** |
 
 ## Prerequisites
 
-[Lesson 1](./LESSON1.md), plus Ollama installed with a tool-capable model pulled
+[Lesson 1](../LESSON1.md), plus Ollama installed with a tool-capable model pulled
 (`ollama pull llama3.1`).
 
 ## Next lesson
 
-[**Lesson 6 · Microsoft Semantic Kernel (C#) →**](./LESSON6.md)
+[**Lesson 10 · Microsoft Semantic Kernel (C#) →**](./LESSON10-semantic-kernel.md)
 
 ---
 

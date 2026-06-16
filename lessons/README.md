@@ -101,7 +101,14 @@ tools/new-lesson.sh NN slug "Title"   # scaffold from lessons/_template/
 ./run -l NN show                      # check the walkthrough
 ./run -l NN preview                   # check the rendered page
 tools/sync-curriculum.sh              # regenerate lessons/CURRICULUM.md
+python3 tools/build_lesson_pdfs.py     # build the PDF (Windows: python tools/build_lesson_pdfs.py; lessons are auto-discovered → docs/pdf/LESSON<n>.pdf)
+python3 tools/sync-readme-downloads.py # refresh the README "Lessons & downloads" table (Windows: python tools/sync-readme-downloads.py)
 ```
+
+Both `build_lesson_pdfs.py` and `sync-readme-downloads.py` **auto-discover** lessons from disk
+(root `LESSON<n>.md`, `lessons/<NN>-slug/README.md`, `roadmap/LESSON<n>-slug.md`) — so a new lesson is
+picked up with no edits to either tool. Run `sync-readme-downloads.py --check` in CI to fail when the
+README table is stale.
 
 ## Reordering
 

@@ -28,7 +28,41 @@ from xhtml2pdf import pisa
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "docs" / "pdf"
 
-SOURCES = ["CHEATSHEET.md", "INSTALL.md"] + [f"LESSON{i}.md" for i in range(1, 9)]
+def _lesson_sources() -> list[tuple[str, str]]:
+    """Auto-discover every lesson's Markdown source → ``(path, "LESSON<n>")`` output stem.
+
+    A new lesson is picked up with no edits here, as long as it follows the layout:
+      - Lessons 1-2 : root ``LESSON<n>.md``                 (hand-authored)
+      - Lessons 3+  : ``lessons/<NN>-slug/README.md``        (live, config-driven)
+      - Roadmap     : ``roadmap/LESSON<n>-slug.md``          (planned outlines)
+    The number drives the PDF name (``LESSON<n>.pdf``) so in-page ``pdf/LESSON<n>.pdf`` links resolve.
+    """
+    by_num: dict[int, tuple[str, str]] = {}
+
+    def take(path: Path, num_text: str | None) -> None:
+        if num_text is None:
+            return
+        n = int(num_text)
+        by_num[n] = (path.relative_to(ROOT).as_posix(), f"LESSON{n}")
+
+    # Roadmap outlines first, so that if a lesson number exists in BOTH places — e.g. when a
+    # roadmap lesson graduates to a live lessons/<NN>-slug/ — the live source wins (it is scanned
+    # after and overwrites the roadmap entry).
+    for p in sorted(ROOT.glob("roadmap/LESSON*.md")):
+        m = re.match(r"LESSON(\d+)", p.name)
+        take(p, m.group(1) if m else None)
+    for p in sorted(ROOT.glob("LESSON[0-9]*.md")):
+        m = re.match(r"LESSON(\d+)", p.name)
+        take(p, m.group(1) if m else None)
+    for p in sorted(ROOT.glob("lessons/[0-9]*/README.md")):
+        m = re.match(r"(\d+)", p.parent.name)
+        take(p, m.group(1) if m else None)
+
+    return [by_num[n] for n in sorted(by_num)]
+
+
+# Standalone guides are fixed; lessons are discovered from disk.
+SOURCES = [("CHEATSHEET.md", "CHEATSHEET"), ("INSTALL.md", "INSTALL")] + _lesson_sources()
 
 # DejaVu covers arrows, box-drawing and ✓; emoji (astral plane) do not render in
 # PDF fonts, so map the ones we use to short text and strip the rest.
@@ -36,6 +70,9 @@ EMOJI = {
     "🏠": "", "💻": "", "👤": "", "💡": "", "🎓": "", "📄": "", "📘": "",
     "🐙": "", "💼": "", "🧰": "", "🧩": "", "🔗": "", "▶": "▶",
     "✅": "[done] ", "🚧": "[planned] ", "⚠": "", "◔": "(planned)",
+    # ⭐ (U+2B50) is a BMP char, so the astral-plane filter below won't strip it; map it
+    # explicitly to text so "⭐ the repo" doesn't render as a missing-glyph box.
+    "⭐": "Star",
 }
 
 
@@ -156,7 +193,8 @@ def _resolve_asset(uri: str, rel: str | None = None) -> str:
     return str(resolved)
 
 
-def build(md_name: str) -> bool:
+def build(spec: tuple[str, str]) -> bool:
+    md_name, out_stem = spec
     md_path = ROOT / md_name
     if not md_path.is_file():
         print(f"  ERR  {md_name}  (source not found)")
@@ -174,7 +212,7 @@ def build(md_name: str) -> bool:
         f"<style>{css()}</style></head><body>{body}</body></html>"
     )
     OUT.mkdir(parents=True, exist_ok=True)
-    out_path = OUT / (md_path.stem + ".pdf")
+    out_path = OUT / (out_stem + ".pdf")
     with open(out_path, "wb") as fh:
         result = pisa.CreatePDF(
             src=html, dest=fh, encoding="utf-8", link_callback=_resolve_asset

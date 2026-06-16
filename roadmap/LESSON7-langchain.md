@@ -1,13 +1,13 @@
-# Lesson 3 · Rebuild RAG with LangChain
+# Lesson 7 · Rebuild RAG with LangChain
 
-**PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON3.pdf) · **Install (Linux · macOS · Windows):** [guide](./INSTALL.md) · [PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)
+**PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON7.pdf) · **Install (Linux · macOS · Windows):** [guide](../INSTALL.md) · [PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)
 
 > **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** — a hands-on course for building local AI.
 >
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 >
-> **Lessons:** [1 · RAG](./LESSON1.md) → [2 · MCP](./LESSON2.md) → **3 · LangChain (you are here)** → [4 · LangGraph](./LESSON4.md) → [5 · Ollama tools](./LESSON5.md) → [6 · Semantic Kernel](./LESSON6.md) → [7 · Bedrock Agents](./LESSON7.md) → [8 · Google ADK](./LESSON8.md)
+> **Lessons:** [1 · RAG](../LESSON1.md) → [2 · MCP](../LESSON2.md) → [3 · Hybrid retrieval](../lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../lessons/05-rag-evaluation-regression-testing/README.md) → 6 · Repo assistant → **7 · LangChain (you are here)** → 8 · LangGraph → 9 · Ollama tools → 10 · Semantic Kernel → 11 · Bedrock Agents → 12 · Google ADK → … → 15 · Docs from changes
 >
 > **Status: planned.** Outline below; full step-by-step coming later. ⭐ the repo to follow along.
 
@@ -15,7 +15,7 @@
 
 ## The idea
 
-In [Lesson 1](./LESSON1.md) you built every RAG primitive by hand: a loader, a splitter, a
+In [Lesson 1](../LESSON1.md) you built every RAG primitive by hand: a loader, a splitter, a
 retriever, a prompt, and a provider abstraction. **LangChain** ships all of those as components.
 This lesson rebuilds the *same* document Q&A app with LangChain — and then asks the honest question:
 **what did the framework buy us, and what did it cost?**
@@ -36,7 +36,7 @@ read LangChain and see *exactly* which of your hand-rolled pieces each component
 
 ## Maps directly onto Lesson 1
 
-| You built by hand (Lesson 1) | LangChain component (Lesson 3) |
+| You built by hand (Lesson 1) | LangChain component (Lesson 7) |
 |------------------------------|--------------------------------|
 | `extract.py` | `DocumentLoaders` (`PyPDFLoader`, `Docx2txtLoader`, …) |
 | `chunk.py` | `RecursiveCharacterTextSplitter` |
@@ -51,12 +51,12 @@ read LangChain and see *exactly* which of your hand-rolled pieces each component
 
 ## Prerequisites
 
-Finish [Lesson 1](./LESSON1.md). Bring the same `documents/` corpus — we'll get the same answers,
+Finish [Lesson 1](../LESSON1.md). Bring the same `documents/` corpus — we'll get the same answers,
 built a different way.
 
 ## Next lesson
 
-[**Lesson 4 · LangGraph →**](./LESSON4.md) — turn the chain into a stateful agent graph.
+[**Lesson 8 · LangGraph →**](./LESSON8-langgraph.md) — turn the chain into a stateful agent graph.
 
 ---
 
