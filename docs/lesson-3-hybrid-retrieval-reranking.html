@@ -46,16 +46,18 @@
                 │     ┌──────────┴───────────┐
                 └────▶│ semantic  (meaning)  │   paraphrases, synonyms
                       └──────────────────────┘</code></pre></section>
-<section class='slide'><div class='step-no'>Setup</div><h2>What you need</h2><p>You follow this lesson by <strong>reading and running</strong> - not by writing code. Clone the repo and <code>cd</code> into it; the walkthrough, the demo program and its data all live inside. The demo is <strong>offline and dependency-free</strong> - nothing to install for Python; for the other ports you only need the runtime (<strong>Node.js 18+</strong> or the <strong>.NET 8 SDK</strong>). Run the dependency-free comparison from the repo root (bare <code>./run -l 3</code> opens the interactive GUI - that comes later):</p><div class='block'><div class='label'>run</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">3</span> demo       <span class="hl-com"># or:  ./run -l 3 --lang node demo  /  --lang csharp demo</span></code></pre></div></section>
+<section class='slide'><div class='step-no'>Setup</div><h2>What you need</h2><p>You follow this lesson by <strong>reading and running</strong> - not by writing code. Clone the repo and <code>cd</code> into it; the walkthrough, the demo program and its data all live inside. It is <strong>offline and dependency-free</strong> - nothing to install for Python; for the other ports you only need the runtime (<strong>Node.js 18+</strong> or the <strong>.NET 8 SDK</strong>). Run it from the repo root. For <strong>Python</strong>, bare <code>./run -l 3</code> opens the interactive GUI; add <code>demo</code> for the one-shot print-and-exit comparison. The <strong>Node and C#</strong> ports are one-shot only (no GUI), and the <code>demo</code> word is optional - bare <code>--lang node</code> / <code>--lang csharp</code> runs the same comparison:</p><div class='block'><div class='label'>run</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">3</span>                 <span class="hl-com"># Python: interactive GUI</span>
+./run -l <span class="hl-num">3</span> demo            <span class="hl-com"># Python: one-shot, print and exit</span>
+./run -l <span class="hl-num">3</span> --lang node     <span class="hl-com"># Node one-shot  (or: --lang csharp)</span></code></pre></div></section>
 <section class='slide'><div class='step-no'>Step 1</div><h2>A tiny corpus of support docs</h2><p>Our "knowledge base" is three small Markdown files that <strong>already ship with the lesson</strong> in <code>data/</code> - about error codes, power problems, and first-time setup. <strong>You don't create these - they're already there;</strong> this step just shows what the demo searches over. A deliberately tiny corpus keeps the rankings easy to eyeball. Here is one of them:</p><div class='block'><div class='label'>data/error_codes.md</div><pre><code class='lang-text'># Error code reference
 
-## E_4096 - overheating shutdown
+## E_4096 — overheating shutdown
 
 If you see **error E_4096**, the device detected an over-temperature condition and shut down to protect
 itself. Let it cool for ten minutes, clear any vents, then power it on again. If E_4096 returns, the
 fan may have failed.
 
-## E_2001 - storage full
+## E_2001 — storage full
 
 Error E_2001 means internal storage is full. Delete old recordings to continue.</code></pre></div></section>
 <section class='slide'><div class='step-no'>Step 2</div><h2>Turn text into tokens</h2><p>The next four steps walk through the program that already lives in the repo - <code>python/hybrid_demo.py</code> and its Node/C# twins. *<em>Just read along to see how it works - nothing to copy, and nothing to run until </em>Run the demo<em> below.</em>*</p><p>Both searchers work on <strong>tokens</strong>, not raw text. We lowercase and split on runs of letters, digits and underscores - the <em>same</em> rule in every port, so the three implementations agree exactly.</p><div class='lang lang-python'><div class='block'><div class='label'>python/hybrid_demo.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> tokenize(text):
@@ -235,7 +237,7 @@ Query: "broken gadget"
   </div>
 
   <footer class="site"><div class="inner">
-    &copy; 2023-2026 <a href="https://www.linkedin.com/in/nikolareljin" target="_blank" rel="noopener">Nik Reljin</a> &middot;
+    &copy; 2023&ndash;2026 <a href="https://www.linkedin.com/in/nikolareljin" target="_blank" rel="noopener">Nik Reljin</a> &middot;
     Source on <a href="https://github.com/nikolareljin/local-ai-lab" target="_blank" rel="noopener">GitHub</a> &middot;
     <a href="./index.html">Home</a> &middot; <a href="./about.html">About</a> &middot;
     Built as a hands-on training course.

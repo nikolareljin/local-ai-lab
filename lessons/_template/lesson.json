@@ -14,7 +14,7 @@
     { "type": "code", "file": "python/demo.py", "lang": "python", "note": "The demo code." },
     { "type": "text", "title": "Prompt to try", "text": "..." },
     { "type": "command", "action": "web", "lang": "python", "venv": true, "shell": "python python/web.py",
-      "display": "./run -l N", "kicker": "Experiment", "title": "Tinker in the GUI — no code editing",
+      "display": "./run -l N", "kicker": "Experiment", "title": "Tinker in the GUI - no code editing",
       "note": "Optional but encouraged: the shared L1-style GUI (python/web.py + tools/lesson_web.py) lets users tune params and read the score breakdown live. Set defaultAction:\"web\" above to make ./run -l N open it by default." }
   ]
 }

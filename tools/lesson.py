@@ -532,7 +532,7 @@ def render_html(number, ldir, lesson, lang=None, assets_href="/assets", media_ba
            .replace("{{SLIDES}}", slides))
     # Inject the "generated" banner into the OUTPUT only — keeping it out of the
     # template itself, which contributors are meant to edit.
-    banner = ("<!-- GENERATED FILE — do not edit by hand. Built by tools/lesson.py "
+    banner = ("<!-- GENERATED FILE - do not edit by hand. Built by tools/lesson.py "
               "(`./run -l N build`) from lessons/NN-slug/lesson.json; edit the lesson.json "
               "or tools/templates/lesson-preview.html instead. -->")
     return out.replace("<!doctype html>", "<!doctype html>\n" + banner, 1)

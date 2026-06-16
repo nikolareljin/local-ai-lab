@@ -3,7 +3,7 @@
 "Seems good" is not a metric. This demo turns the quality of a RAG pipeline into
 **numbers you can track**: a small **golden set** of questions (each with the
 document that *should* be retrieved and the keywords a correct answer must
-contain) scored on three axes —
+contain) scored on three axes -
 
   - retrieval recall@k : was the gold document in the top-k results?
   - groundedness       : is every claim in the answer supported by the context?
@@ -11,7 +11,7 @@ contain) scored on three axes —
 
 A question PASSES only if all three clear their thresholds; the **gate** passes
 only if every question passes. We run two configs over the same golden set: a
-BASELINE that clears the gate, and a CANDIDATE — a reasonable-looking tweak
+BASELINE that clears the gate, and a CANDIDATE - a reasonable-looking tweak
 (smaller top_k, an answer that pads in an unsupported sentence) that *looks* fine
 but silently regresses two of the numbers. The eval catches it.
 
@@ -92,7 +92,7 @@ def first_body_line(doc):
 
 def answer(retrieved, pad_unsupported=False):
     """Extractive answer: the fact from the top retrieved doc. With
-    `pad_unsupported`, append a sentence that is *not* in any document — a
+    `pad_unsupported`, append a sentence that is *not* in any document - a
     stand-in for a model that pads its answer with an unsupported claim."""
     if not retrieved:
         return ""
@@ -139,7 +139,7 @@ def evaluate(golden, docs, config):
     `config` = {"name", "top_k", "pad_unsupported"}."""
     thr = golden["thresholds"]
     if not golden["questions"]:
-        raise ValueError("golden set has no questions — add at least one to data/golden.json")
+        raise ValueError("golden set has no questions - add at least one to data/golden.json")
     rows = []
     for q in golden["questions"]:
         retrieved = retrieve(q["question"], docs, config["top_k"])
