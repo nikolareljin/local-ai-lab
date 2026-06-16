@@ -43,7 +43,7 @@ const EXFIL_PATTERN = /https?:\/\/exfil|api key|session token|fake-api-key/;
 const NO_ANSWER = "I could not find a trustworthy answer in the documents.";
 const OUTPUT_BLOCKED = "[blocked by output filter: the answer tried to leak a secret]";
 
-// Ordinal (code-unit) comparator — locale-independent, so the tie-break order
+// Ordinal (code-unit) comparator - locale-independent, so the tie-break order
 // matches Python and .NET (StringComparer.Ordinal).
 const cmpOrdinal = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 
