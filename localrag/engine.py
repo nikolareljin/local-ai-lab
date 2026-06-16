@@ -8,7 +8,7 @@ switched. Thread-safe so the Flask dev server can handle concurrent requests.
 from __future__ import annotations
 
 import threading
-from typing import Any, Dict, List
+from typing import Dict, List, cast
 
 from .chunk import Chunk
 from .config import Config
@@ -18,7 +18,7 @@ from .retriever import Retriever, build_retriever
 from .store import build_index, is_stale, load_chunks
 
 _lock = threading.Lock()
-_cache: Dict[str, Any] = {"retriever": None, "key": None}
+_cache: Dict[str, object] = {"retriever": None, "key": None}
 
 
 def refresh_index(config: Config) -> tuple[list[Chunk], int]:
@@ -40,7 +40,8 @@ def get_retriever(config: Config) -> Retriever:
             chunks: List[Chunk] = load_chunks(config)
             _cache["retriever"] = build_retriever(chunks, config)
             _cache["key"] = config.retriever
-        return _cache["retriever"]
+        # The cache holds heterogeneous values; narrow to the retriever at the return site.
+        return cast(Retriever, _cache["retriever"])
 
 
 def dedup_sources(hits: List[Chunk]) -> List[str]:
