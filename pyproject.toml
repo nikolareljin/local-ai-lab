@@ -36,7 +36,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.0"]
+dev = ["pytest>=7.0", "ruff", "mypy"]
 
 [project.urls]
 Homepage = "https://nikolareljin.github.io/local-ai-lab/"
@@ -63,12 +63,24 @@ version = { attr = "localrag.__version__" }
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
-# Config homes pinned here so tooling has one place to live. Not yet enforced in CI
-# (wiring ruff/mypy into the pipeline is tracked under Priority 3).
+# Tooling config. CI runs ruff and mypy — see .github/workflows/ci.yml for the exact paths.
 [tool.ruff]
 line-length = 100
 target-version = "py310"
 
+[tool.ruff.lint]
+# Conservative, high-signal rules: pycodestyle errors, pyflakes, import sorting.
+select = ["E", "F", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+# tools/ and examples/ are teaching scripts: HTML/string-heavy, with deliberate sys.path setup
+# before imports. Keep the high-value checks (pyflakes F, import order I) but skip cosmetic
+# line-length (E501) and script-pattern rules so the demo code stays as-written and readable.
+"tools/**" = ["E501", "E402", "E731"]
+"examples/**" = ["E501", "E402"]
+
 [tool.mypy]
 python_version = "3.10"
 ignore_missing_imports = true
+# Type-check the package only; the demo's course code and scripts are intentionally untyped.
+files = ["localrag"]

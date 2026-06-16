@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 from .chunk import Chunk, chunk_pages
 from .config import Config

@@ -83,7 +83,9 @@ class Bm25Retriever:
             "num_chunks": n,
             "vocabulary": len(idf) if n else 0,
             "avg_doc_length": round(float(getattr(bm, "avgdl", 0.0)), 2) if n else 0.0,
-            "top_terms": [{"term": t, "idf": round(float(v), 3)} for t, v in top_terms] if n else [],
+            "top_terms": (
+                [{"term": t, "idf": round(float(v), 3)} for t, v in top_terms] if n else []
+            ),
             "sample_chunk": sample,
         }
 
@@ -146,7 +148,9 @@ class EmbeddingRetriever:
 
         if not self.chunks:
             return []
-        q = np.asarray(embed_texts(self.config.embed_provider, self.config, [query]), dtype="float32")
+        q = np.asarray(
+            embed_texts(self.config.embed_provider, self.config, [query]), dtype="float32"
+        )
         q = self._normalize(q)[0]
         sims = self._vectors @ q
         ranked = np.argsort(sims)[::-1][:k]

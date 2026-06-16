@@ -21,7 +21,7 @@ _lock = threading.Lock()
 _cache: Dict[str, object] = {"retriever": None, "key": None}
 
 
-def refresh_index(config: Config):
+def refresh_index(config: Config) -> tuple[list[Chunk], int]:
     """Force a rebuild of the on-disk index and invalidate the retriever cache."""
     with _lock:
         chunks, n_files = build_index(config)

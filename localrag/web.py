@@ -40,12 +40,15 @@ def create_app(base_config: Config | None = None) -> Flask:
         switching back to BM25 when the server defaults to embeddings.
         """
         data = request.get_json(silent=True) or {}
-        overrides = {}
+        overrides: dict[str, str] = {}
         for key in ("provider", "retriever"):
             value = data.get(key) or request.args.get(key)
             if value:
                 overrides[key] = str(value).lower()
-        return dataclasses.replace(base_config, **overrides) if overrides else base_config
+        if not overrides:
+            return base_config
+        # Keys are constrained to the str fields provider/retriever.
+        return dataclasses.replace(base_config, **overrides)  # type: ignore[arg-type]
 
     @app.get("/")
     def index():

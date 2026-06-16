@@ -25,3 +25,8 @@ documents/*
 !documents/.gitkeep
 !documents/sample_manual.md
 !documents/rag_tutorial.md
+
+# Internal working/planning docs — kept local, never committed.
+/PLAN.md
+/ANALYTICS_PLAN.md
+/REORGANIZE_PLAN.md
