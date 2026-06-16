@@ -1,4 +1,4 @@
-# Production notes — what this demo deliberately keeps simple
+# Production notes - what this demo deliberately keeps simple
 
 `local-ai-lab` is a **teaching project**. It favors small, readable code so you can see exactly how
 each piece works — a retriever, a chunker, a provider adapter, an evaluation gate — without a
