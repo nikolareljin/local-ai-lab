@@ -40,3 +40,16 @@ def test_status_endpoint_reports_config_and_files(tmp_path):
     assert data["provider"] and data["retriever"] == "bm25"
     assert any("sample_manual.md" in f for f in data["files"])
     assert data["supported"], "expected a non-empty list of supported extensions"
+
+
+def test_vector_cache_invalidates_when_embed_provider_changes(tmp_path):
+    import numpy as np
+
+    from localrag import store
+
+    cfg = dataclasses.replace(load_config(), cache_dir=tmp_path, embed_provider="ollama")
+    store.save_vectors(cfg, np.zeros((2, 3), dtype="float32"))
+
+    assert store.load_vectors(cfg) is not None  # same embedder -> reused
+    other = dataclasses.replace(cfg, embed_provider="openai")
+    assert store.load_vectors(other) is None  # different embedder -> not reused

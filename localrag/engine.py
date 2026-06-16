@@ -36,10 +36,13 @@ def get_retriever(config: Config) -> Retriever:
         if is_stale(config):
             build_index(config)
             _cache["retriever"] = None
-        if _cache["retriever"] is None or _cache["key"] != config.retriever:
+        # Key on both the retriever type and the embed provider, so switching either
+        # rebuilds instead of reusing a retriever built for the other.
+        key = (config.retriever, config.embed_provider)
+        if _cache["retriever"] is None or _cache["key"] != key:
             chunks: List[Chunk] = load_chunks(config)
             _cache["retriever"] = build_retriever(chunks, config)
-            _cache["key"] = config.retriever
+            _cache["key"] = key
         # The cache holds heterogeneous values; narrow to the retriever at the return site.
         return cast(Retriever, _cache["retriever"])
 
