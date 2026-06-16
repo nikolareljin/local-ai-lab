@@ -68,8 +68,7 @@ alongside the Python and Node servers.
 
 - **Tools:** `search_docs` and `list_documents`, identical shape and citation
   format (`[filename:page]`) to [`mcp_server.py`](../../mcp_server.py).
-- **Engine:** reuses the C# Lesson 1 retriever, so the same parity notes apply
-  - **BM25 only** (no embeddings). See [`dotnet/lesson-1/README.md`](../lesson-1/README.md).
+- **Engine:** reuses the C# Lesson 1 retriever, so the same parity notes apply - **BM25 only** (no embeddings). See [`dotnet/lesson-1/README.md`](../lesson-1/README.md).
 - **Cache:** shares the .NET index under `<repoRoot>/.localrag/dotnet/`, so it
   never clobbers the Python index.
 

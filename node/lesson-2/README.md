@@ -65,8 +65,7 @@ alongside the Python server.
 
 - **Tools:** `search_docs` and `list_documents`, identical shape and citation
   format (`[filename:page]`) to [`mcp_server.py`](../../mcp_server.py).
-- **Engine:** reuses the Node Lesson 1 retriever, so the same parity notes apply
-  - **BM25 only** (no embeddings), `claude`/`ollama` providers, and PDFs as a
+- **Engine:** reuses the Node Lesson 1 retriever, so the same parity notes apply - **BM25 only** (no embeddings), `claude`/`ollama` providers, and PDFs as a
   single page. See [`node/lesson-1/README.md`](../lesson-1/README.md).
 - **Cache:** shares the Node index under `<repoRoot>/.localrag/node/`, so it
   never clobbers the Python index.

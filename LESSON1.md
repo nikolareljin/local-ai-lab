@@ -530,8 +530,7 @@ The surest way to prove a RAG system actually *reads your files* (instead of rec
 data) is to feed it something no model has ever seen. Download this short **fictional** story and
 watch the app answer questions about it - with citations.
 
-**Download:** [The_Magic_Turtle_Astronaut.pdf](https://nikolareljin.github.io/local-ai-lab/pdf/The_Magic_Turtle_Astronaut.pdf)
-- it's also in the repo at `docs/pdf/The_Magic_Turtle_Astronaut.pdf`.
+**Download:** [The_Magic_Turtle_Astronaut.pdf](https://nikolareljin.github.io/local-ai-lab/pdf/The_Magic_Turtle_Astronaut.pdf) - it's also in the repo at `docs/pdf/The_Magic_Turtle_Astronaut.pdf`.
 
 It's a made-up legend, *"The Voyage of Caretta the Magnificent,"* so no language model could know
 its details unless it read the file.

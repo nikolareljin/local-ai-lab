@@ -199,8 +199,7 @@ exit code explicitly if you like:
 ### Check the RAG behaviour (needs an AI provider, e.g. Claude Code from §3)
 The best proof that RAG reads *your* file is to feed it something no model has seen. **Download and
 read** the short **fictional** story *The Voyage of Caretta the Magnificent*
-([The_Magic_Turtle_Astronaut.pdf](https://nikolareljin.github.io/local-ai-lab/pdf/The_Magic_Turtle_Astronaut.pdf))
-- a magic turtle astronaut. Read it first so you can judge the answers yourself; because it's
+([The_Magic_Turtle_Astronaut.pdf](https://nikolareljin.github.io/local-ai-lab/pdf/The_Magic_Turtle_Astronaut.pdf)) - a magic turtle astronaut. Read it first so you can judge the answers yourself; because it's
 invented, a plain LLM can't know it. Then add it to the corpus - **drop it into `documents/`, or
 upload it in the web UI** - and ask both a grounded question and one the story can't answer (works in
 any of the three languages - swap in `--lang node` / `--lang csharp`):
