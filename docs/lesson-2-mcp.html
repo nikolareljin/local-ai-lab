@@ -6,7 +6,7 @@
   <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
   <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32.png" />
   <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
-  <title>Lesson 2 · MCP servers — local-ai-lab</title>
+  <title>Lesson 2 · MCP servers - local-ai-lab</title>
   <meta name="description" content="Build a working Model Context Protocol (MCP) server that exposes your local document search as a tool Claude Code can call natively. Follow along in Python, Node.js, or C#." />
   <link rel="stylesheet" href="./assets/style.css" />
   <!-- Apply the saved language before first paint to avoid a flash of the wrong code. -->
@@ -34,7 +34,7 @@
       <div class="eyebrow">Lesson 2</div>
       <h1>Build an MCP server</h1>
       <p>Expose the document search from Lesson 1 as a Model Context Protocol tool, so Claude Code
-         can query your <code>documents/</code> folder natively — no copy-paste. Build it in
+         can query your <code>documents/</code> folder natively - no copy-paste. Build it in
          <span class="lang lang-python">Python</span><span class="lang lang-node">Node.js</span><span class="lang lang-csharp">C#</span>,
          each on the official MCP SDK.</p>
       <div class="langsel" role="group" aria-label="Choose a language for this lesson">
@@ -79,7 +79,7 @@
            name, description, and input schema); the <b>host</b> (Claude Code) lists them, and the
            model calls them when useful, feeding results back into its answer.</p>
         <div class="why"><b>Three core ideas:</b> <b>tools</b> (functions the model can call),
-          <b>the transport</b> (we use <b>stdio</b> — the host launches your server as a subprocess
+          <b>the transport</b> (we use <b>stdio</b> - the host launches your server as a subprocess
           and talks over stdin/stdout), and <b>the handshake</b> (initialize → list tools → call
           tools). The official SDK handles all the protocol plumbing, so you just write functions:
           <span class="lang lang-python">Python's <code>FastMCP</code> turns decorated functions into tools.</span><span class="lang lang-node">Node's <code>McpServer.registerTool</code> turns a handler + Zod schema into a tool.</span><span class="lang lang-csharp">C#'s <code>[McpServerTool]</code> attribute turns a method into a tool.</span></div>
@@ -89,7 +89,7 @@
       <section class="slide">
         <div class="step-no">Setup</div>
         <h2>Prerequisites</h2>
-        <p>Finish <a href="./lesson-1-rag.html">Lesson 1</a> first — the MCP server is a thin wrapper
+        <p>Finish <a href="./lesson-1-rag.html">Lesson 1</a> first - the MCP server is a thin wrapper
            over the retriever you built there. Then add the official MCP SDK for your language:</p>
         <div class="lang lang-python">
           <div class="block"><div class="label">Type this</div><pre class="cmd"><code>pip install mcp        # the official Model Context Protocol Python SDK</code></pre></div>
@@ -107,9 +107,9 @@
       <!-- 3b · Install -->
       <section class="slide">
         <div class="step-no">Install</div>
-        <h2>Dependencies — Linux · macOS · Windows</h2>
+        <h2>Dependencies - Linux · macOS · Windows</h2>
         <p>Lesson 2 builds on Lesson 1's environment and adds the official MCP SDK for your language.
-           <b>No Docker.</b> The repo-root <code>./run -l 2 --lang …</code> dispatcher sets everything
+           <b>No Docker.</b> The repo-root <code>./run -l 2 --lang ...</code> dispatcher sets everything
            up on first use.</p>
         <div class="lang lang-python">
           <div class="block"><div class="label">Linux / macOS</div><pre class="cmd"><code>python3 -m venv venv &amp;&amp; source venv/bin/activate
@@ -126,7 +126,7 @@ pip install -r requirements.txt</code></pre></div>
 ./run -l 2 --lang csharp test   # restores + builds on first use, then drives the server</code></pre></div>
         </div>
         <div class="block"><div class="label">Claude Code CLI (to register the server)</div><pre class="cmd"><code>npm install -g @anthropic-ai/claude-code &amp;&amp; claude</code></pre></div>
-        <div class="why"><b>MCP is multi-language</b> — there are official SDKs for Python, Node.js
+        <div class="why"><b>MCP is multi-language</b> - there are official SDKs for Python, Node.js
           and C#, and this lesson ships a working server in all three. Pick a language above; full
           per-OS setup is in <a href="./pdf/INSTALL.pdf" target="_blank" rel="noopener">INSTALL (PDF)</a>.</div>
       </section>
@@ -137,7 +137,7 @@ pip install -r requirements.txt</code></pre></div>
         <h2>The server skeleton</h2>
         <p>Create <code>mcp_server.py</code>. <code>FastMCP</code> gives you a server object; tools
            are just decorated functions. Their docstring becomes the description the model sees, and
-           the type hints become the input schema — so write them for the model to read.</p>
+           the type hints become the input schema - so write them for the model to read.</p>
         <div class="lang lang-python">
           <div class="block"><div class="label">mcp_server.py</div><pre><code>from mcp.server.fastmcp import FastMCP
 
@@ -200,7 +200,7 @@ await builder.Build().RunAsync();</code></pre></div>
         <p>The star of the show. It runs the Lesson 1 retriever and returns passages tagged
            <code>[source:page]</code> so the model can cite them.</p>
         <div class="lang lang-python">
-          <div class="block"><div class="label">mcp_server.py — add the tool</div><pre><code>@mcp.tool()
+          <div class="block"><div class="label">mcp_server.py - add the tool</div><pre><code>@mcp.tool()
 def search_docs(query: str, k: int = 5) -&gt; str:
     """Search the user's local documents and return the most relevant passages.
 
@@ -216,8 +216,8 @@ def search_docs(query: str, k: int = 5) -&gt; str:
         f"[{h['source']}:{h['page_number']}] {h['text']}" for h in hits)</code></pre></div>
         </div>
         <div class="lang lang-node">
-          <div class="block"><div class="label">server.js — add the tool</div><pre><code>server.registerTool("search_docs", {
-  // This description is a prompt — the model reads it to decide when to call.
+          <div class="block"><div class="label">server.js - add the tool</div><pre><code>server.registerTool("search_docs", {
+  // This description is a prompt - the model reads it to decide when to call.
   description:
     "Search the user's local documents and return the most relevant passages. " +
     "Each passage is prefixed with its source as [filename:page] so the model " +
@@ -234,7 +234,7 @@ def search_docs(query: str, k: int = 5) -&gt; str:
 });</code></pre></div>
         </div>
         <div class="lang lang-csharp">
-          <div class="block"><div class="label">Program.cs — add the tool</div><pre><code>[McpServerToolType]
+          <div class="block"><div class="label">Program.cs - add the tool</div><pre><code>[McpServerToolType]
 public static class DocTools
 {
     // The [Description] attributes ARE the prompt the model reads.
@@ -257,7 +257,7 @@ public static class DocTools
         <div class="why"><b>The description is a prompt.</b> Whether it's a
           <span class="lang lang-python">docstring</span><span class="lang lang-node">description string</span><span class="lang lang-csharp"><code>[Description]</code> attribute</span>,
           the model reads it to decide <i>when</i> to call the tool, so it explicitly says "to ground
-          answers… instead of relying on training data." Good tool descriptions are as important as
+          answers... instead of relying on training data." Good tool descriptions are as important as
           good code.</div>
       </section>
 
@@ -266,9 +266,9 @@ public static class DocTools
         <div class="step-no">Step 3</div>
         <h2>A second tool: <code>list_documents</code></h2>
         <p>Servers usually expose more than one tool. This one lets the model see what's in the
-           corpus before searching — handy for "what do you have on X?" questions.</p>
+           corpus before searching - handy for "what do you have on X?" questions.</p>
         <div class="lang lang-python">
-          <div class="block"><div class="label">mcp_server.py — add another tool</div><pre><code>@mcp.tool()
+          <div class="block"><div class="label">mcp_server.py - add another tool</div><pre><code>@mcp.tool()
 def list_documents() -&gt; str:
     """List the documents currently available to search in the local corpus."""
     config = load_config()
@@ -276,7 +276,7 @@ def list_documents() -&gt; str:
     return "\n".join(names) if names else "(no documents indexed yet)"</code></pre></div>
         </div>
         <div class="lang lang-node">
-          <div class="block"><div class="label">server.js — add another tool</div><pre><code>server.registerTool("list_documents", {
+          <div class="block"><div class="label">server.js - add another tool</div><pre><code>server.registerTool("list_documents", {
   description: "List the documents currently available to search in the local corpus.",
   inputSchema: z.object({}),
 }, async () =&gt; {
@@ -287,7 +287,7 @@ def list_documents() -&gt; str:
 });</code></pre></div>
         </div>
         <div class="lang lang-csharp">
-          <div class="block"><div class="label">Program.cs — add another tool (inside DocTools)</div><pre><code>[McpServerTool(Name = "list_documents"), Description(
+          <div class="block"><div class="label">Program.cs - add another tool (inside DocTools)</div><pre><code>[McpServerTool(Name = "list_documents"), Description(
     "List the documents currently available to search in the local corpus.")]
 public static string ListDocuments()
 {
@@ -297,8 +297,8 @@ public static string ListDocuments()
 }</code></pre></div>
         </div>
         <div class="why"><b>Tool design tip:</b> keep each tool small and single-purpose with a clear
-          name. The model composes them — it might call <code>list_documents</code>, then
-          <code>search_docs</code> — just like you'd chain functions.</div>
+          name. The model composes them - it might call <code>list_documents</code>, then
+          <code>search_docs</code> - just like you'd chain functions.</div>
       </section>
 
       <!-- 7 -->
@@ -307,7 +307,7 @@ public static string ListDocuments()
         <h2>Run it over stdio</h2>
         <p>The server defaults to the <b>stdio</b> transport: it reads JSON-RPC from
            stdin and writes to stdout. That's exactly how a host like Claude Code launches a local
-           server — as a subprocess it talks to over pipes.</p>
+           server - as a subprocess it talks to over pipes.</p>
         <div class="lang lang-python">
           <div class="block"><div class="label">Type this</div><pre class="cmd"><code>python mcp_server.py          # waits silently for an MCP client to connect</code></pre></div>
         </div>
@@ -317,7 +317,7 @@ public static string ListDocuments()
         <div class="lang lang-csharp">
           <div class="block"><div class="label">Type this</div><pre class="cmd"><code>./run -l 2 --lang csharp serve  # waits silently for an MCP client to connect</code></pre></div>
         </div>
-        <div class="why">It looks like it's hanging — that's correct. The server is waiting for a
+        <div class="why">It looks like it's hanging - that's correct. The server is waiting for a
           client to speak the protocol over stdin. You won't talk to it by hand; the next step uses a
           client to drive it.</div>
       </section>
@@ -327,7 +327,7 @@ public static string ListDocuments()
         <div class="step-no">Step 5</div>
         <h2>Test it with an stdio client</h2>
         <p>The SDK includes a client. This spawns the server, does the handshake, lists tools, and
-           calls <code>search_docs</code> — a real integration test, no LLM needed.</p>
+           calls <code>search_docs</code> - a real integration test, no LLM needed.</p>
         <div class="lang lang-python">
           <div class="block"><div class="label">tests/test_mcp.py (essence)</div><pre><code>from mcp import ClientSession
 from mcp.client.stdio import StdioServerParameters, stdio_client
@@ -360,7 +360,7 @@ const res = await client.callTool({ name: "search_docs",
           <div class="block"><div class="label">Run it</div><pre class="cmd"><code>./run -l 2 --lang node test     # spawns the server, lists tools, calls search_docs</code></pre></div>
         </div>
         <div class="lang lang-csharp">
-          <div class="block"><div class="label">Program.cs — the demo client (essence)</div><pre><code>using ModelContextProtocol.Client;
+          <div class="block"><div class="label">Program.cs - the demo client (essence)</div><pre><code>using ModelContextProtocol.Client;
 
 var transport = new StdioClientTransport(new StdioClientTransportOptions {
     Command = "dotnet", Arguments = [dll, "serve"],
@@ -374,7 +374,7 @@ var text = res.Content.OfType&lt;TextContentBlock&gt;().First().Text;</code></pr
         </div>
         <div class="why"><b>The handshake in code:</b> initialize → list tools → call tool. That's the
           entire MCP lifecycle, and it's the same three steps in every language. The result contains
-          "power button" and <code>sample_manual.md</code> — grounded, cited, verified, no LLM
+          "power button" and <code>sample_manual.md</code> - grounded, cited, verified, no LLM
           needed.</div>
       </section>
 
@@ -404,9 +404,9 @@ claude mcp list                         # confirm it's registered</code></pre></
       <!-- 10 -->
       <section class="slide">
         <div class="step-no">Step 7</div>
-        <h2>See it work — RAG, native to the assistant</h2>
+        <h2>See it work - RAG, native to the assistant</h2>
         <p>Open Claude Code in the repo and just ask. The model will call <code>search_docs</code>
-           against your <code>documents/</code> folder and answer with citations — no copy-paste,
+           against your <code>documents/</code> folder and answer with citations - no copy-paste,
            no custom UI.</p>
         <div class="block"><div class="label">In Claude Code chat</div><pre><code>You:    How do I reset the device?
 
@@ -420,10 +420,10 @@ Claude: (calls search_docs "reset device")
       <!-- 11 -->
       <section class="slide">
         <div class="step-no">Experiment</div>
-        <h2>Call the tools yourself — no MCP host needed</h2>
+        <h2>Call the tools yourself - no MCP host needed</h2>
         <p>Want to feel the tools without wiring up Claude Code? Run the interactive GUI. It makes the
-           <em>same</em> <code>search_docs</code> call an MCP host would make over stdio — over your real
-           <code>documents/</code> folder — and shows what comes back.</p>
+           <em>same</em> <code>search_docs</code> call an MCP host would make over stdio - over your real
+           <code>documents/</code> folder - and shows what comes back.</p>
         <div class="block"><div class="label">From the repo root</div><pre><code>./run -l 2          # interactive MCP tool GUI (default)
 ./run -l 2 demo     # the same calls over a real stdio MCP connection, in the terminal</code></pre></div>
         <p>Type a question, drag <code>k</code> to change how many passages <code>search_docs</code> returns,
@@ -440,14 +440,14 @@ Claude: (calls search_docs "reset device")
         <h2>You built a working MCP server</h2>
         <table>
           <tr><th>Piece</th><th>What it does</th></tr>
-          <tr><td><code class="lang lang-python">FastMCP("…")</code><code class="lang lang-node">new McpServer(…)</code><code class="lang lang-csharp">AddMcpServer()</code></td><td>the server; handles all protocol plumbing</td></tr>
-          <tr><td><code class="lang lang-python">@mcp.tool()</code><code class="lang lang-node">registerTool(…)</code><code class="lang lang-csharp">[McpServerTool]</code></td><td>turns a function into a callable tool (description = prompt, types = schema)</td></tr>
+          <tr><td><code class="lang lang-python">FastMCP("...")</code><code class="lang lang-node">new McpServer(...)</code><code class="lang lang-csharp">AddMcpServer()</code></td><td>the server; handles all protocol plumbing</td></tr>
+          <tr><td><code class="lang lang-python">@mcp.tool()</code><code class="lang lang-node">registerTool(...)</code><code class="lang lang-csharp">[McpServerTool]</code></td><td>turns a function into a callable tool (description = prompt, types = schema)</td></tr>
           <tr><td><code>search_docs</code> / <code>list_documents</code></td><td>your tools, reusing the Lesson 1 engine</td></tr>
           <tr><td><code class="lang lang-python">mcp.run()</code><code class="lang lang-node">server.connect(stdio)</code><code class="lang lang-csharp">WithStdioServerTransport()</code></td><td>serves over stdio for the host to launch</td></tr>
           <tr><td><code>claude mcp add</code></td><td>registers it so Claude Code can call it</td></tr>
         </table>
         <div class="why"><b>The through-line:</b> <code>search_docs</code> is the same capability you'll
-          rebuild in every later lesson — as an Ollama function call, a Semantic Kernel plugin, a
+          rebuild in every later lesson - as an Ollama function call, a Semantic Kernel plugin, a
           Bedrock action group, and a Google ADK tool. Master the primitive once; the frameworks are
           just wrappers.</div>
         <div class="cta">
@@ -475,7 +475,7 @@ Claude: (calls search_docs "reset device")
   </div>
 
   <footer class="site"><div class="inner">
-    © 2023–2026 <a href="https://www.linkedin.com/in/nikolareljin" target="_blank" rel="noopener">Nik Reljin</a> ·
+    © 2023-2026 <a href="https://www.linkedin.com/in/nikolareljin" target="_blank" rel="noopener">Nik Reljin</a> ·
     Source on <a href="https://github.com/nikolareljin/local-ai-lab" target="_blank" rel="noopener">GitHub</a> ·
     <a href="./index.html">Home</a> · <a href="./about.html">About</a> ·
     Built as a hands-on training course.

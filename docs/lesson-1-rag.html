@@ -6,7 +6,7 @@
   <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
   <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32.png" />
   <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
-  <title>Lesson 1 · RAG from scratch — local-ai-lab</title>
+  <title>Lesson 1 · RAG from scratch - local-ai-lab</title>
   <meta name="description" content="Build a complete Retrieval-Augmented Generation system from scratch: extract, chunk, retrieve (BM25 + embeddings), ground, and answer with citations. Follow along in Python, Node.js, or C#." />
   <link rel="stylesheet" href="./assets/style.css" />
   <!-- Apply the saved language before first paint to avoid a flash of the wrong code. -->
@@ -33,7 +33,7 @@
     <div class="lesson-head">
       <div class="eyebrow">Lesson 1</div>
       <h1>Build a RAG system from scratch</h1>
-      <p>Drag in a document, ask a question, get an answer grounded in it — with citations.
+      <p>Drag in a document, ask a question, get an answer grounded in it - with citations.
          A few hundred lines of readable <span class="lang lang-python">Python</span><span class="lang lang-node">JavaScript</span><span class="lang lang-csharp">C#</span>, no heavyweight frameworks.</p>
       <div class="langsel" role="group" aria-label="Choose a language for this lesson">
         <span class="langsel-label">Follow along in:</span>
@@ -66,7 +66,7 @@
                  │  build + cache index (.localrag/)
                  ▼
          ┌────────────────┐
-         │   retriever    │   BM25 (keyword)  —or—  embeddings (semantic)
+         │   retriever    │   BM25 (keyword)  -or-  embeddings (semantic)
          └───────┬────────┘
                  │  top-k chunks for the question
                  ▼
@@ -80,7 +80,7 @@
           answer <i>from that text</i> and cite it. That's the difference between a demo and
           something you can trust.</div>
         <div class="why"><b>Polyglot:</b> pick <b>Python</b> (the reference), <b>Node.js</b>, or
-          <b>C#</b> with the selector above — every step's code and commands follow your choice all
+          <b>C#</b> with the selector above - every step's code and commands follow your choice all
           the way to the end. The ports are faithful module-for-module translations; a couple of
           gaps (semantic embeddings, the <code>gemini</code>/<code>openai</code> providers) are
           Python-only and called out where they come up.</div>
@@ -106,16 +106,16 @@ pip install pypdf python-docx rank-bm25 numpy requests python-dotenv flask</code
 ./run -l 1 --lang csharp test   # restores + builds on first use, then indexes</code></pre></div>
         </div>
         <div class="why"><b>The only AI you need to start</b> is the <b>Claude Code CLI</b>. If you
-          can run <code>claude</code> in your terminal, you're set — no API key. Every language
+          can run <code>claude</code> in your terminal, you're set - no API key. Every language
           defaults to it; Ollama is the local fallback.</div>
       </section>
 
       <!-- 2b · Install -->
       <section class="slide">
         <div class="step-no">Install</div>
-        <h2>Dependencies — Linux · macOS · Windows</h2>
+        <h2>Dependencies - Linux · macOS · Windows</h2>
         <p>Same idea on every OS. <b>No Docker.</b> The quickest path is always
-           <code>./run -l 1<span class="lang lang-node"> --lang node</span><span class="lang lang-csharp"> --lang csharp</span></code> — it sets up everything on first use.</p>
+           <code>./run -l 1<span class="lang lang-node"> --lang node</span><span class="lang lang-csharp"> --lang csharp</span></code> - it sets up everything on first use.</p>
 
         <div class="lang lang-python">
           <div class="block"><div class="label">Linux / macOS</div><pre class="cmd"><code>python3 -m venv venv &amp;&amp; source venv/bin/activate
@@ -128,7 +128,7 @@ pip install -r requirements.txt</code></pre></div>
           <div class="block"><div class="label">1 · Install Node.js 18+</div><pre class="cmd"><code>sudo apt install -y nodejs npm              # Linux (Debian/Ubuntu)
 brew install node                           # macOS
 winget install -e --id OpenJS.NodeJS.LTS    # Windows</code></pre></div>
-          <div class="block"><div class="label">2 · Manual setup (optional — ./run does this for you)</div><pre class="cmd"><code>cd node/lesson-1 &amp;&amp; npm install</code></pre></div>
+          <div class="block"><div class="label">2 · Manual setup (optional - ./run does this for you)</div><pre class="cmd"><code>cd node/lesson-1 &amp;&amp; npm install</code></pre></div>
           <div class="block"><div class="label">Windows without Git Bash (PowerShell / cmd)</div><pre class="cmd"><code>cd node\lesson-1
 npm install
 node src\cli.js index      # validate; then: node src\cli.js web</code></pre></div>
@@ -138,15 +138,15 @@ node src\cli.js index      # validate; then: node src\cli.js web</code></pre></d
           <div class="block"><div class="label">1 · Install the .NET 8 SDK</div><pre class="cmd"><code># Linux: see learn.microsoft.com/dotnet/core/install/linux
 brew install dotnet@8                          # macOS
 winget install -e --id Microsoft.DotNet.SDK.8  # Windows</code></pre></div>
-          <div class="block"><div class="label">2 · Manual setup (optional — ./run does this for you)</div><pre class="cmd"><code>cd dotnet/lesson-1 &amp;&amp; dotnet restore &amp;&amp; dotnet build -c Release</code></pre></div>
+          <div class="block"><div class="label">2 · Manual setup (optional - ./run does this for you)</div><pre class="cmd"><code>cd dotnet/lesson-1 &amp;&amp; dotnet restore &amp;&amp; dotnet build -c Release</code></pre></div>
           <div class="block"><div class="label">Windows without Git Bash (PowerShell / cmd)</div><pre class="cmd"><code>cd dotnet\lesson-1
 dotnet run -c Release -- index   # validate; then: dotnet run -c Release -- web</code></pre></div>
         </div>
 
-        <div class="block"><div class="label">Default AI — Claude Code CLI (no API key)</div><pre class="cmd"><code>npm install -g @anthropic-ai/claude-code &amp;&amp; claude</code></pre></div>
+        <div class="block"><div class="label">Default AI - Claude Code CLI (no API key)</div><pre class="cmd"><code>npm install -g @anthropic-ai/claude-code &amp;&amp; claude</code></pre></div>
         <div class="why"><b>Full per-OS, per-language guide:</b>
           <a href="./pdf/INSTALL.pdf" target="_blank" rel="noopener">INSTALL (PDF)</a>.
-          <span class="lang lang-node">The Node index is cached separately in <code>.localrag/node</code>, so it never clobbers the Python one.</span><span class="lang lang-csharp">The .NET index is cached separately in <code>.localrag/dotnet</code>, so it never clobbers the Python one.</span><span class="lang lang-python">Or just run <code>./run -l 1</code> — it creates the venv and installs everything for you.</span></div>
+          <span class="lang lang-node">The Node index is cached separately in <code>.localrag/node</code>, so it never clobbers the Python one.</span><span class="lang lang-csharp">The .NET index is cached separately in <code>.localrag/dotnet</code>, so it never clobbers the Python one.</span><span class="lang lang-python">Or just run <code>./run -l 1</code> - it creates the venv and installs everything for you.</span></div>
       </section>
 
       <!-- 3 · Step 1 Extract -->
@@ -154,7 +154,7 @@ dotnet run -c Release -- index   # validate; then: dotnet run -c Release -- web<
         <div class="step-no">Step 1</div>
         <h2>Extract text from documents</h2>
         <p>RAG starts by turning files into plain text. We dispatch on file extension and
-           normalize everything to a list of <b>pages</b> — each carrying its text, a page number,
+           normalize everything to a list of <b>pages</b> - each carrying its text, a page number,
            and the source filename (we need those for citations).</p>
         <div class="lang lang-python">
           <div class="block"><div class="label">localrag/extract.py</div><pre><code>from pathlib import Path
@@ -249,7 +249,7 @@ public static List&lt;Page&gt; ExtractPages(string path)
         </div>
         <div class="why"><b>Why pages?</b> PDFs have real pages, so a citation like
           <code>manual.pdf:4</code> points to the exact spot. Extraction is the unglamorous 80% of
-          real RAG — garbage text in, garbage answers out.</div>
+          real RAG - garbage text in, garbage answers out.</div>
         <div class="lang lang-node"><div class="note"><b>Parity note:</b> <code>pdf-parse</code> returns
           whole-document text, so a PDF emits a single page (<code>page_number 1</code>) rather than
           one page per physical page. DOCX/TXT/MD match the Python reference exactly.</div></div>
@@ -345,7 +345,7 @@ public static List&lt;Page&gt; ExtractPages(string path)
 }</code></pre></div>
         </div>
         <div class="why"><b>Chunk size is a dial.</b> Too large → imprecise retrieval; too small →
-          lost context. 800–1200 chars with 10–20% overlap is a sane default. Each chunk keeps its
+          lost context. 800-1200 chars with 10-20% overlap is a sane default. Each chunk keeps its
           <code>source</code> and <code>page_number</code> so we can cite it later. The algorithm is
           identical across all three languages.</div>
       </section>
@@ -426,7 +426,7 @@ public static (List&lt;Chunk&gt; Chunks, int FileCount) BuildIndex(Config config
 }</code></pre></div>
         </div>
         <div class="why"><b>This is the "drop a file and ask again" loop.</b> The index is just a
-          JSON file — no database, no vector server to run. Perfect for a local demo and trivial to
+          JSON file - no database, no vector server to run. Perfect for a local demo and trivial to
           inspect.</div>
       </section>
 
@@ -436,7 +436,7 @@ public static (List&lt;Chunk&gt; Chunks, int FileCount) BuildIndex(Config config
         <h2>Retrieve with BM25 (zero setup)</h2>
         <p>Given a question, which chunks are relevant? The simplest robust answer is <b>BM25</b>, a
            classic keyword-ranking algorithm. It needs no model and no embedding service, so it
-           works with <i>any</i> provider — including Claude Code, which can't embed.</p>
+           works with <i>any</i> provider - including Claude Code, which can't embed.</p>
         <div class="lang lang-python">
           <div class="block"><div class="label">localrag/retriever.py</div><pre><code>import re
 from rank_bm25 import BM25Okapi
@@ -464,7 +464,7 @@ class Bm25Retriever:
 }
 
 class Bm25Retriever {
-  // The constructor builds idf + per-doc term frequencies (k1=1.5, b=0.75) —
+  // The constructor builds idf + per-doc term frequencies (k1=1.5, b=0.75) -
   // a from-scratch BM25 Okapi, since there's no rank-bm25 in Node.
   search(query, k) {
     if (!this.chunks.length || k &lt;= 0) return [];
@@ -478,7 +478,7 @@ class Bm25Retriever {
 }</code></pre></div>
         </div>
         <div class="lang lang-csharp">
-          <div class="block"><div class="label">dotnet/lesson-1/Retriever.cs</div><pre><code>// The constructor builds idf + per-doc term frequencies (k1=1.5, b=0.75) —
+          <div class="block"><div class="label">dotnet/lesson-1/Retriever.cs</div><pre><code>// The constructor builds idf + per-doc term frequencies (k1=1.5, b=0.75) -
 // a from-scratch BM25 Okapi, since there's no rank-bm25 in .NET.
 public List&lt;Chunk&gt; Search(string query, int k)
 {
@@ -494,9 +494,9 @@ public List&lt;Chunk&gt; Search(string query, int k)
 }</code></pre></div>
         </div>
         <div class="note"><b>A real bug worth knowing.</b> BM25's IDF goes <i>negative</i> when a
-          word appears in every chunk — common on a tiny corpus. An early version filtered with
+          word appears in every chunk - common on a tiny corpus. An early version filtered with
           <code>score &gt; 0</code> and returned <b>nothing</b>. The fix: don't apply an absolute
-          cutoff — return top-k by rank and let the grounding prompt judge relevance. Retrieval
+          cutoff - return top-k by rank and let the grounding prompt judge relevance. Retrieval
           retrieves; the LLM decides. All three ports carry the same fix.</div>
       </section>
 
@@ -516,7 +516,7 @@ of the user's own documents. Follow these rules exactly:
 2. If the answer is not contained in the document context, say so plainly:
    "This is not covered in your documents." You may then add general
    knowledge, but you MUST prefix it with
-   "(general knowledge — not from your documents)".
+   "(general knowledge - not from your documents)".
 3. Never invent document contents, quotes, or citations.
 4. Be concise. Prefer the documents' own wording.
 """
@@ -536,7 +536,7 @@ the user's own documents. Follow these rules exactly:
 1. Answer from the DOCUMENT CONTEXT below FIRST. For every claim that comes from
 the documents, cite the source like [filename:page].
 2. If the answer is not in the context, say so plainly: "This is not covered in
-your documents." Prefix any general knowledge with "(general knowledge — ...)".
+your documents." Prefix any general knowledge with "(general knowledge - ...)".
 3. Never invent document contents, quotes, or citations.
 4. Be concise. Prefer the documents' own wording.`;
 
@@ -557,7 +557,7 @@ export function buildUserPrompt(question, chunks) {
     "the user's own documents. Follow these rules exactly:\n\n" +
     "1. Answer from the DOCUMENT CONTEXT below FIRST. Cite each claim like [filename:page].\n" +
     "2. If the answer is not in the context, say so plainly, then prefix any general " +
-    "knowledge with \"(general knowledge — not from your documents)\".\n" +
+    "knowledge with \"(general knowledge - not from your documents)\".\n" +
     "3. Never invent document contents, quotes, or citations.\n" +
     "4. Be concise. Prefer the documents' own wording.\n";
 
@@ -576,7 +576,7 @@ public static string BuildUserPrompt(string question, List&lt;Chunk&gt; chunks)
         <div class="why"><b>RAG quality = retrieval quality + prompt quality.</b> A strict prompt
           with bad retrieval answers "not in your documents" to everything; a sloppy prompt with
           perfect retrieval still hallucinates. You need both. Cite, admit ignorance, label general
-          knowledge — that's the minimum anti-hallucination contract.</div>
+          knowledge - that's the minimum anti-hallucination contract.</div>
       </section>
 
       <!-- 8 · Step 6 Providers -->
@@ -603,7 +603,7 @@ def get_provider(name, config):
     if name == "openai":
         from .openai import OpenAIProvider; return OpenAIProvider(config)
     raise ValueError(f"Unknown provider '{name}'")</code></pre></div>
-          <div class="block"><div class="label">The default: Claude Code CLI — no API key</div><pre><code>import shutil, subprocess
+          <div class="block"><div class="label">The default: Claude Code CLI - no API key</div><pre><code>import shutil, subprocess
 
 class ClaudeCodeProvider:
     name = "claude"
@@ -626,16 +626,16 @@ export function getProvider(name, config) {
   if (name === "claude") return new ClaudeCodeProvider(config);
   if (name === "ollama") return new OllamaProvider(config);
   if (name === "gemini" || name === "openai") {
-    throw new Error(`Provider '${name}' is not ported in Node yet — use the Python reference.`);
+    throw new Error(`Provider '${name}' is not ported in Node yet - use the Python reference.`);
   }
   throw new Error(`Unknown provider '${name}'. Choose one of: claude, ollama.`);
 }</code></pre></div>
-          <div class="block"><div class="label">The default: Claude Code CLI — no API key</div><pre><code>export class ClaudeCodeProvider {
+          <div class="block"><div class="label">The default: Claude Code CLI - no API key</div><pre><code>export class ClaudeCodeProvider {
   constructor(config) { this.name = "claude"; this.bin = config.claudeBin; }
   isAvailable() { return resolveBin(this.bin) !== null; }
   chat(system, user) {
     const resolved = resolveBin(this.bin);   // find claude on PATH, no shell
-    // The prompt goes on STDIN — no argv-length limits, no shell quoting.
+    // The prompt goes on STDIN - no argv-length limits, no shell quoting.
     const out = execFileSync(resolved, ["-p"], {
       input: `${system}\n\n${user}`, encoding: "utf-8", timeout: 180000,
     });
@@ -644,7 +644,7 @@ export function getProvider(name, config) {
 }</code></pre></div>
           <div class="note"><b>Parity note:</b> the Node port ships <code>claude</code> + <code>ollama</code>.
             Asking for <code>gemini</code>/<code>openai</code> throws a clear error pointing back to the
-            Python reference (<code>./run -l 1 --provider gemini …</code>).</div>
+            Python reference (<code>./run -l 1 --provider gemini ...</code>).</div>
         </div>
         <div class="lang lang-csharp">
           <div class="block"><div class="label">dotnet/lesson-1/Providers/ILlmProvider.cs</div><pre><code>public interface ILlmProvider
@@ -664,7 +664,7 @@ public static class ProviderFactory
             "claude" =&gt; new ClaudeCodeProvider(config),
             "ollama" =&gt; new OllamaProvider(config),
             "gemini" or "openai" =&gt; throw new InvalidOperationException(
-                $"Provider '{name}' is not ported in C# yet — use the Python reference."),
+                $"Provider '{name}' is not ported in C# yet - use the Python reference."),
             _ =&gt; throw new InvalidOperationException($"Unknown provider '{name}'."),
         };
     }
@@ -673,7 +673,7 @@ public static class ProviderFactory
             Asking for <code>gemini</code>/<code>openai</code> throws a clear error pointing back to the
             Python reference.</div>
         </div>
-        <div class="why"><b>This is the pattern every LLM framework is built around</b> — a provider
+        <div class="why"><b>This is the pattern every LLM framework is built around</b> - a provider
           interface plus adapters. Write it once by hand and LangChain's <code>ChatModel</code>
           stops looking like magic.</div>
       </section>
@@ -700,7 +700,7 @@ public static class ProviderFactory
 python -m localrag ask "How do I reset the device?"</code></pre></div>
         </div>
         <div class="lang lang-node">
-          <div class="block"><div class="label">node/lesson-1/src/cli.js — the core query function</div><pre><code>async function answer(question, retriever, config) {
+          <div class="block"><div class="label">node/lesson-1/src/cli.js - the core query function</div><pre><code>async function answer(question, retriever, config) {
   const hits = retriever.search(question, config.topK);
   const provider = getProvider(config.provider, config);
   const reply = await provider.chat(SYSTEM_PROMPT, buildUserPrompt(question, hits));
@@ -716,7 +716,7 @@ python -m localrag ask "How do I reset the device?"</code></pre></div>
 ./run -l 1 --lang node ask "How do I reset the device?"</code></pre></div>
         </div>
         <div class="lang lang-csharp">
-          <div class="block"><div class="label">dotnet/lesson-1/Program.cs — the core query function</div><pre><code>void PrintAnswer(string question, IRetriever retriever)
+          <div class="block"><div class="label">dotnet/lesson-1/Program.cs - the core query function</div><pre><code>void PrintAnswer(string question, IRetriever retriever)
 {
     var hits = retriever.Search(question, config.TopK);
     var provider = ProviderFactory.GetProvider(config.Provider, config);
@@ -741,10 +741,10 @@ Sources: sample_manual.md:1</code></pre></div>
         <div class="step-no">Step 8 · Upgrade</div>
         <h2>Semantic retrieval with embeddings</h2>
         <p>BM25 matches <b>words</b>. "How do I power-cycle it?" won't match a doc that says
-           "restart" — no shared keywords. <b>Embeddings</b> match <b>meaning</b>: turn each chunk
+           "restart" - no shared keywords. <b>Embeddings</b> match <b>meaning</b>: turn each chunk
            into a vector and rank by cosine similarity to the question.</p>
         <div class="lang lang-python">
-          <div class="block"><div class="label">localrag/retriever.py — EmbeddingRetriever</div><pre><code>class EmbeddingRetriever:
+          <div class="block"><div class="label">localrag/retriever.py - EmbeddingRetriever</div><pre><code>class EmbeddingRetriever:
     name = "embeddings"
     def __init__(self, chunks, config):
         import numpy as np
@@ -777,7 +777,7 @@ Sources: sample_manual.md:1</code></pre></div>
           <div class="note"><b>Semantic embeddings are Python-only.</b> The Node port keeps the same
             "never dead-end" design: ask for embeddings and it prints a notice and falls back to
             BM25. For the full embeddings path, use the Python reference (<code>./run -l 1</code>).</div>
-          <div class="block"><div class="label">node/lesson-1/src/retriever.js — graceful fallback</div><pre><code>export function buildRetriever(chunks, config) {
+          <div class="block"><div class="label">node/lesson-1/src/retriever.js - graceful fallback</div><pre><code>export function buildRetriever(chunks, config) {
   // Embeddings are not ported in Node; fall back to BM25 with a clear message,
   // mirroring the Python "never dead-end" design.
   if (config.retriever === "embeddings") {
@@ -793,7 +793,7 @@ Sources: sample_manual.md:1</code></pre></div>
           <div class="note"><b>Semantic embeddings are Python-only.</b> The C# port keeps the same
             "never dead-end" design: ask for embeddings and it prints a notice and falls back to
             BM25. For the full embeddings path, use the Python reference (<code>./run -l 1</code>).</div>
-          <div class="block"><div class="label">dotnet/lesson-1/Retriever.cs — graceful fallback</div><pre><code>public static class RetrieverFactory
+          <div class="block"><div class="label">dotnet/lesson-1/Retriever.cs - graceful fallback</div><pre><code>public static class RetrieverFactory
 {
     /// &lt;summary&gt;Pick a retriever from config. Embeddings fall back to BM25 in this port.&lt;/summary&gt;
     public static IRetriever BuildRetriever(List&lt;Chunk&gt; chunks, Config config)
@@ -806,7 +806,7 @@ Sources: sample_manual.md:1</code></pre></div>
         </div>
         <div class="why"><b>BM25 vs embeddings:</b> BM25 is free, instant, great for exact terms and
           codes. Embeddings catch paraphrases but cost an embed call. Production often runs both
-          (hybrid) and merges rankings. <span class="lang lang-python">You now have both — try the same question each way.</span><span class="lang lang-node">In Python you have both — try the same question each way.</span><span class="lang lang-csharp">In Python you have both — try the same question each way.</span></div>
+          (hybrid) and merges rankings. <span class="lang lang-python">You now have both - try the same question each way.</span><span class="lang lang-node">In Python you have both - try the same question each way.</span><span class="lang lang-csharp">In Python you have both - try the same question each way.</span></div>
       </section>
 
       <!-- 11 · Step 9 Web UI -->
@@ -890,7 +890,7 @@ python -m localrag ask "What is the capital of France?"</code></pre></div>
         <div class="block"><div class="label">Output</div><pre><code>→ 24 months from purchase date [warranty.txt:1]        # grounded, cited
 
 → This is not covered in your documents.
-  (general knowledge — not from your documents) The capital of France is Paris.</code></pre></div>
+  (general knowledge - not from your documents) The capital of France is Paris.</code></pre></div>
         <p>A tiny <b>offline test</b> locks in the retrieval core (no network, no LLM):</p>
         <div class="lang lang-python">
           <div class="block"><div class="label">tests/test_smoke.py + run</div><pre><code>def test_bm25_finds_reset_instructions():
@@ -911,8 +911,8 @@ python -m localrag ask "What is the capital of France?"</code></pre></div>
             Python reference; the ports ship a <code>test</code> command that exercises the same
             extract → chunk → index path end to end.</div>
         </div>
-        <div class="why"><b>That clean separation</b> — cited facts vs. clearly-labeled general
-          knowledge — is the payoff of the grounding prompt. It's what makes RAG trustworthy.</div>
+        <div class="why"><b>That clean separation</b> - cited facts vs. clearly-labeled general
+          knowledge - is the payoff of the grounding prompt. It's what makes RAG trustworthy.</div>
       </section>
 
       <!-- 12b · Try it yourself -->
@@ -922,26 +922,26 @@ python -m localrag ask "What is the capital of France?"</code></pre></div>
         <p>Prove the app reads <i>your</i> files, not training data: feed it a story no model has ever
            seen. Download
            <a href="./pdf/The_Magic_Turtle_Astronaut.pdf" target="_blank" rel="noopener">The_Magic_Turtle_Astronaut.pdf</a>
-           — a made-up legend — and drag it onto the web UI
+           - a made-up legend - and drag it onto the web UI
            (<code>./run -l 1<span class="lang lang-node"> --lang node</span><span class="lang lang-csharp"> --lang csharp</span></code>).</p>
-        <div class="block"><div class="label">Grounded — each answer should cite [file:page]</div><pre><code>What was the name of the magic turtle, and what species was she?
+        <div class="block"><div class="label">Grounded - each answer should cite [file:page]</div><pre><code>What was the name of the magic turtle, and what species was she?
 Who discovered the turtle's secret, and how?
 What was the spaceship called, and how long did the journey take?
 What planet did Caretta discover, and which star does it orbit?
 On what date was the habitable planet discovered?</code></pre></div>
-        <div class="block"><div class="label">NOT in the story — should say "not covered in your documents"</div><pre><code>How much did the spaceship cost to build?
+        <div class="block"><div class="label">NOT in the story - should say "not covered in your documents"</div><pre><code>How much did the spaceship cost to build?
 What did the turtle eat during the twelve-year voyage?
 Who was the President of Earth when the mission launched?</code></pre></div>
-        <div class="why"><b>The honest "not covered" answers are the real test</b> — the prompt staying
+        <div class="why"><b>The honest "not covered" answers are the real test</b> - the prompt staying
           truthful instead of inventing. Talk trick: ask <i>"What is the nearest star system to the
-          Sun?"</i> — the story says Alpha Centauri (~4.25 ly), so it answers <i>from the document,
-          with a citation</i>, even though it's general knowledge — retrieval preferring your text.</div>
+          Sun?"</i> - the story says Alpha Centauri (~4.25 ly), so it answers <i>from the document,
+          with a citation</i>, even though it's general knowledge - retrieval preferring your text.</div>
       </section>
 
       <!-- 13 · Recap -->
       <section class="slide">
         <div class="step-no">Recap</div>
-        <h2>You built a RAG system — and understand every line</h2>
+        <h2>You built a RAG system - and understand every line</h2>
         <p>From scratch, you assembled:</p>
         <table>
           <tr><th>Stage</th><th>What it does</th></tr>
@@ -953,7 +953,7 @@ Who was the President of Earth when the mission launched?</code></pre></div>
           <tr><td>Providers</td><td>one interface,<span class="lang lang-python"> four back ends,</span><span class="lang lang-node"> claude + ollama,</span><span class="lang lang-csharp"> claude + ollama,</span> env-var switch</td></tr>
           <tr><td>Web UI</td><td>drag-and-drop, same engine underneath</td></tr>
         </table>
-        <div class="why"><b>No LangChain, no vector database, no cloud</b> — and you understand every
+        <div class="why"><b>No LangChain, no vector database, no cloud</b> - and you understand every
           line. That understanding is the point: frameworks become easy once you know what they
           automate.<span class="lang lang-node"> You followed the Node.js port; the Python reference adds semantic embeddings and the gemini/openai providers.</span><span class="lang lang-csharp"> You followed the C# port; the Python reference adds semantic embeddings and the gemini/openai providers.</span></div>
         <p><b>Exercises:</b> merge BM25 + embedding rankings (hybrid); chunk on Markdown headings;
@@ -981,7 +981,7 @@ Who was the President of Earth when the mission launched?</code></pre></div>
   </div>
 
   <footer class="site"><div class="inner">
-    © 2023–2026 <a href="https://www.linkedin.com/in/nikolareljin" target="_blank" rel="noopener">Nik Reljin</a> ·
+    © 2023-2026 <a href="https://www.linkedin.com/in/nikolareljin" target="_blank" rel="noopener">Nik Reljin</a> ·
     Source on <a href="https://github.com/nikolareljin/local-ai-lab" target="_blank" rel="noopener">GitHub</a> ·
     <a href="./index.html">Home</a> · <a href="./about.html">About</a> ·
     Built as a hands-on training course.
