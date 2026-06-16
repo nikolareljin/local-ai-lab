@@ -5,8 +5,9 @@ each piece by hand once — a retriever, a chunker, a provider adapter, an evalu
 framework that wraps those pieces stops looking like magic. You can read it, judge it, and decide when
 it's worth the dependency.
 
-Everything runs **100% locally** (no Docker), and the live lessons ship in **Python, Node.js, and
-C# / .NET** with byte-identical output, so you can follow in the language you work in.
+The live lessons run **100% locally** (no Docker) and ship in **Python, Node.js, and
+C# / .NET** with byte-identical output, so you can follow in the language you work in. A few
+roadmap framework tours (Lessons 11–12, AWS Bedrock and Google ADK) reach out to cloud services.
 
 - **Course site:** https://nikolareljin.github.io/local-ai-lab/
 - **Curriculum table (status at a glance):** [README](./README.md#curriculum)

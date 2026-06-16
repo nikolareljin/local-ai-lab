@@ -45,7 +45,8 @@ code, pre, kbd { font-family: "SF Mono", ui-monospace, "Cascadia Code", Menlo, C
 .nav-dd-menu a:hover { background: var(--panel2); text-decoration: none; }
 
 /* inline dropdowns inside page content (e.g. the home-page PDF menus) */
-.nav-dd.inline { display: inline-block; vertical-align: middle; margin: 0 4px; }
+.pdf-menus { margin: 4px 0 8px; }
+.nav-dd.inline { display: inline-block; vertical-align: middle; margin: 0 8px 4px 0; }
 .nav-dd.inline > .nav-dd-menu { left: 0; right: auto; }
 
 .wrap { max-width: var(--maxw); margin: 0 auto; padding: 28px 20px 64px; }
