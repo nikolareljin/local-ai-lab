@@ -97,7 +97,8 @@ export OLLAMA_URL=http://localhost:11434</code></pre>
 curl -fsSL https://claude.ai/install.sh -o claude-install.sh
 less claude-install.sh        # review before running
 bash claude-install.sh
-# Windows (PowerShell):  irm https://claude.ai/install.ps1 | iex
+# Windows (PowerShell): download, inspect, then run
+#   irm https://claude.ai/install.ps1 -OutFile claude-install.ps1; .\claude-install.ps1
 
 # Alternative - via npm (needs Node.js 18+):
 npm install -g @anthropic-ai/claude-code

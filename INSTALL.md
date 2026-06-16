@@ -121,9 +121,11 @@ is **no API key to manage**.
   less claude-install.sh        # review before running
   bash claude-install.sh
   ```
-- **Windows (PowerShell):**
+- **Windows (PowerShell)** (download, inspect, then run):
   ```powershell
-  irm https://claude.ai/install.ps1 | iex
+  irm https://claude.ai/install.ps1 -OutFile claude-install.ps1
+  notepad claude-install.ps1     # review before running
+  .\claude-install.ps1
   ```
 
 **Alternative - via npm (if you already run [Node.js](https://nodejs.org) 18+):**
