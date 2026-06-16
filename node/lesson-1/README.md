@@ -44,8 +44,9 @@ sample documents and exits `0`:
 ## Check the RAG behaviour (needs an AI provider)
 
 Download the **fictional** story *The Voyage of Caretta the Magnificent*
-([PDF](https://nikolareljin.github.io/local-ai-lab/pdf/The_Magic_Turtle_Astronaut.pdf)) - it's
-user-supplied, not committed - and drop it into `documents/` (or upload it in the web UI). Then ask
+([PDF](https://nikolareljin.github.io/local-ai-lab/pdf/The_Magic_Turtle_Astronaut.pdf)) - it ships
+with the repo but isn't in the indexed corpus by default - so drop it into `documents/` (or upload it
+in the web UI). Then ask
 a grounded question and one the story can't answer:
 
 ```bash
