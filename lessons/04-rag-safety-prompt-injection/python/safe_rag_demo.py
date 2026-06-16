@@ -7,7 +7,7 @@ contains poisoned support tickets:
 
   - Undefended: the retrieved text is pasted into the prompt as-is, so the model
     obeys the injected instruction and emits the attacker's scripted payload.
-  - Defended: three layers neutralise it — quarantine (drop docs that look like
+  - Defended: three layers neutralise it - quarantine (drop docs that look like
     instructions), isolate (treat retrieved text as data, never as commands), and
     an output filter (block answers that leak secrets / exfiltration URLs).
 
@@ -109,7 +109,7 @@ def legit_answer(docs, flagged):
     """A grounded answer from *trusted* text: the first body line (skipping the
     Markdown heading) of the top document that is not flagged as injected. Even
     when isolation keeps a poisoned doc in context, we never quote it as the
-    answer — its content is untrusted, not just its instructions."""
+    answer - its content is untrusted, not just its instructions."""
     for d in docs:
         if flagged.get(d["name"]):
             continue
