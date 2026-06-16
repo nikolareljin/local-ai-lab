@@ -1,12 +1,14 @@
 # Lesson 3 · Hybrid Retrieval & Reranking
 
-**Install (Linux · macOS · Windows):** [guide](../../INSTALL.md)
+**PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON3.pdf) · **Install (Linux · macOS · Windows):** [guide](../../INSTALL.md)
 
 > **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** - a hands-on course for building local AI.
 >
+> **Interactive version (slides):** https://nikolareljin.github.io/local-ai-lab/lesson-3-hybrid-retrieval-reranking.html
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 > **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
+> **Time:** ~30-45 min · **Prerequisites:** Lesson 1 · full objectives in [SYLLABUS.md](../../SYLLABUS.md)
 >
 > **Lessons:** [1 · RAG](../../LESSON1.md) → [2 · MCP](../../LESSON2.md) → **3 · Hybrid retrieval (you are here)** → 4 · RAG safety → 5 · RAG evaluation → 6 · Repo assistant → 7 · LangChain → ... → 15 · Docs from changes
 >
@@ -241,15 +243,23 @@ RRF) are the same; only the syntax changes.
 
 ## From demo to production
 
-- **Real embeddings** for the semantic arm (a local sentence-embedding model, or the repo's optional
-  embedding path) - the demo's synonym stand-in is only to stay offline.
-- **A cross-encoder reranker** over the fused top-k - usually the biggest single quality win, at some
-  latency/compute cost.
-- **Query rewriting / expansion** as an LLM step before retrieval for vague queries.
-- **A metadata-rich index** so you can filter by product, version, date, and module.
-- **Tune `RRF_K`, the top-k, and per-arm weights** per corpus.
-- **Measure it** - pair with **Lesson 5 · RAG evaluation** (coming) and prove hybrid actually beats
-  single retrievers on your golden set before shipping it.
+- **Swap in real embeddings** for the semantic arm - a local sentence-embedding model, or the repo's
+  optional embedding path. The demo's synonym stand-in exists only to stay 100% offline; a real
+  embedder is what lets the semantic arm recover the paraphrases BM25 misses.
+- **Add a cross-encoder reranker** over the fused top-k. This is usually the single biggest quality
+  win: a reranker scores each (query, passage) pair jointly instead of independently, at some extra
+  latency and compute. Rerank only the top-k and cache the scores to keep it affordable.
+- **Rewrite and expand the query** with an LLM step before retrieval - split multi-part questions, add
+  synonyms, and resolve pronouns - so vague or conversational queries still reach the right chunks.
+- **Index richer metadata** so you can filter before you rank: product, version, date, language, and
+  section. A lot of "wrong answer" bugs are really "retrieved the wrong document" bugs that a metadata
+  filter would have prevented.
+- **Tune the knobs per corpus** - `RRF_K`, the per-arm top-k, and the per-arm weights all shift the
+  fusion. There is no universal setting; the right values depend on how lexical vs. semantic your
+  corpus is.
+- **Prove it with numbers** - pair this with **[Lesson 5 - RAG evaluation](../05-rag-evaluation-regression-testing/README.md)**
+  and show hybrid actually beats either arm alone on your golden set before you ship it. "Felt better"
+  is not a reason to add a reranker.
 
 ## Next lesson
 

@@ -50,6 +50,22 @@
       key — it uses your existing Claude Code login); you can switch providers with one environment
       variable.</p>
 
+    <h2 id="faq">FAQ</h2>
+    <p><b>Why build from scratch?</b> Frameworks are great once you know what they hide. Writing a
+      retriever, a chunker, a provider adapter, and an evaluation gate by hand - once - means every
+      framework that wraps them stops looking like magic: you can read it, judge it, and decide when
+      it is worth the dependency.</p>
+    <p><b>Do I need Docker?</b> No. Everything runs with the language toolchains directly - see
+      <a href="#how-it-runs">How it runs</a> above.</p>
+    <p><b>Can I use my own model?</b> Yes. The default is the Claude Code CLI (no API key), and you can
+      switch to Ollama, Gemini, or OpenAI with the <code>RAG_PROVIDER</code> environment variable -
+      see <a href="#run">Run a lesson</a> for the options.</p>
+    <p><b>What do I need to know first?</b> Comfort writing and running code in one language (Python is
+      the reference). No machine-learning background is assumed; each lesson builds the concepts it
+      needs.</p>
+    <p><b>Does it work on Windows?</b> Yes - the <a href="#install">Install</a> section has
+      first-class PowerShell and cmd instructions alongside Linux and macOS.</p>
+
     <h2 id="install">Install</h2>
     <p>You need <b>Python 3.10+</b> for every lesson. Add <b>Node.js 18+</b> only for the Node ports and
       the <b>.NET 8 SDK</b> only for the C# ports.</p>

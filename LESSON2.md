@@ -7,6 +7,7 @@
 > **Interactive version (slides):** https://nikolareljin.github.io/local-ai-lab/lesson-2-mcp.html
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab · the working server is [`mcp_server.py`](./mcp_server.py)
+> **Time:** ~30-45 min · **Prerequisites:** Lesson 1 · full objectives in [SYLLABUS.md](./SYLLABUS.md)
 >
 > **Lessons:** [1 · RAG](./LESSON1.md) → **2 · MCP (you are here)** → [3 · Hybrid retrieval](./lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](./lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](./lessons/05-rag-evaluation-regression-testing/README.md) → 6 · Repo assistant → 7 · LangChain → ... → 15 · Docs from changes
 >

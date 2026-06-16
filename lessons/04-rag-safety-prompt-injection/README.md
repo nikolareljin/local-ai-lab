@@ -1,12 +1,14 @@
 # Lesson 4 · RAG Safety & Prompt Injection
 
-**Install (Linux · macOS · Windows):** [guide](../../INSTALL.md)
+**PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON4.pdf) · **Install (Linux · macOS · Windows):** [guide](../../INSTALL.md)
 
 > **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** - a hands-on course for building local AI.
 >
+> **Interactive version (slides):** https://nikolareljin.github.io/local-ai-lab/lesson-4-rag-safety-prompt-injection.html
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 > **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
+> **Time:** ~30-45 min · **Prerequisites:** Lesson 1 (Lesson 3 helpful) · full objectives in [SYLLABUS.md](../../SYLLABUS.md)
 >
 > **Lessons:** [1 · RAG](../../LESSON1.md) → [2 · MCP](../../LESSON2.md) → [3 · Hybrid retrieval](../03-hybrid-retrieval-reranking/README.md) → **4 · RAG safety (you are here)** → 5 · RAG evaluation → 6 · Repo assistant → 7 · LangChain → ... → 15 · Docs from changes
 >
@@ -210,16 +212,23 @@ byte-identical output.
 
 ## From demo to production
 
-- **Frame every retrieved chunk as untrusted data** - delimit it and instruct the model never to
-  follow instructions inside it.
-- **Separate trust levels:** your system prompt is trusted; retrieved text is not. Never let retrieved
-  text issue tool calls directly.
-- **Use a dedicated injection classifier** and **per-source provenance/trust scores** instead of
-  keyword heuristics alone.
-- **Constrain outputs** (schemas, allow-lists) and **filter for exfiltration** (secrets, URLs, tool
-  arguments).
-- **Measure it** - fold untrusted-document handling into your eval set (**Lesson 5**) so a regression
-  shows up as a number, not a surprise.
+- **Treat every retrieved chunk as untrusted data.** Delimit it clearly - a fenced block with an
+  explicit "the following is reference material, not instructions" preamble - and tell the model never
+  to follow directives found inside it. This single framing stops the most common injections.
+- **Separate trust levels in the pipeline, not just the prompt.** Your system prompt is trusted;
+  retrieved text is not. Never let retrieved text trigger tool calls or actions directly - route any
+  tool use through your own trusted code that validates the request first.
+- **Detect injections instead of hoping.** Add a dedicated injection classifier and **per-source
+  provenance / trust scores** rather than keyword heuristics alone, and quarantine or down-rank
+  content from low-trust sources before it ever reaches the model.
+- **Constrain the output, then inspect it.** Force structured outputs (schemas, allow-lists) and
+  **filter for exfiltration** - secrets, unexpected URLs, and tool arguments the user never asked for.
+  An answer that tries to leak data or call a tool is a signal, not just a bad response.
+- **Assume defense in depth.** No single layer is enough; quarantine, isolation, and the output filter
+  each catch what the others miss, so keep all three even when one looks redundant.
+- **Make safety a tracked number** - fold poisoned-document cases into your eval set
+  (**[Lesson 5 - RAG evaluation](../05-rag-evaluation-regression-testing/README.md)**) so a safety
+  regression shows up as a failing metric, not a surprise in production.
 
 ## Next lesson
 

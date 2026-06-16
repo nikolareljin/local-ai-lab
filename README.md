@@ -53,6 +53,9 @@ providers (Ollama, Gemini, OpenAI) are in **[INSTALL.md](./INSTALL.md)**
 
 ## Curriculum
 
+> **Learn it by building it.** Each lesson has you write a small, working piece of a local AI system
+> by hand, so you understand how RAG, MCP, and evaluation actually work - not just how to call an SDK.
+
 Each available lesson is a deep-linkable **interactive slideshow** on the course site and a **written
 guide**, and runs **100% locally**. **Lessons 1-5 are live and runnable**; the rest are on the roadmap.
 

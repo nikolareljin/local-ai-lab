@@ -16,6 +16,12 @@ All notable changes to this project are documented here. This project follows
   (prompt-injection handling → Lesson 4, web-UI auth, comprehensive tests, batch embeddings, logging)
   and what you'd harden for real-world use. Linked from the README and CONTRIBUTING.
 
+### Changed
+- **Docs polish** - a one-line learning-outcomes summary above the README curriculum, an FAQ section
+  on the documentation page, consistent lesson headers across Lessons 1-5 (PDF + interactive-slides
+  links and a time/prerequisites line), fuller "from demo to production" guidance in Lessons 3 and 4,
+  and a general update pass over the Markdown files.
+
 ## [0.8.0] - 2026-06-15
 
 ### Changed

@@ -1,12 +1,14 @@
 # Lesson 5 · RAG Evaluation & Regression Testing
 
-**Install (Linux · macOS · Windows):** [guide](../../INSTALL.md)
+**PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON5.pdf) · **Install (Linux · macOS · Windows):** [guide](../../INSTALL.md)
 
 > **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** - a hands-on course for building local AI.
 >
+> **Interactive version (slides):** https://nikolareljin.github.io/local-ai-lab/lesson-5-rag-evaluation-regression-testing.html
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 > **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
+> **Time:** ~30-45 min · **Prerequisites:** Lesson 1 (Lessons 3-4 helpful) · full objectives in [SYLLABUS.md](../../SYLLABUS.md)
 >
 > **Lessons:** [1 · RAG](../../LESSON1.md) → [2 · MCP](../../LESSON2.md) → [3 · Hybrid retrieval](../03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../04-rag-safety-prompt-injection/README.md) → **5 · RAG evaluation (you are here)** → 6 · Repo assistant → 7 · LangChain → ... → 15 · Docs from changes
 >

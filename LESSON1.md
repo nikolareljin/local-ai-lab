@@ -8,6 +8,7 @@
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 > **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
+> **Time:** ~60-90 min · **Prerequisites:** Python basics (no prior AI) · full objectives in [SYLLABUS.md](./SYLLABUS.md)
 >
 > **Lessons:** **1 · RAG (you are here)** → [2 · MCP](./LESSON2.md) → [3 · Hybrid retrieval](./lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](./lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](./lessons/05-rag-evaluation-regression-testing/README.md) → 6 · Repo assistant → 7 · LangChain → ... → 15 · Docs from changes
 
