@@ -6,6 +6,8 @@ All notable changes to this project are documented here. This project follows
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-06-16
+
 ### Added
 - **Packaging** - a `pyproject.toml` makes `localrag` pip-installable (`pip install -e '.[dev]'`) with
   a `localrag` console entry point. The version has a single home (`localrag/__init__.py`, read
@@ -15,12 +17,25 @@ All notable changes to this project are documented here. This project follows
 - **`PRODUCTION_NOTES.md`** - an honest checklist of what the teaching demo keeps simple on purpose
   (prompt-injection handling → Lesson 4, web-UI auth, comprehensive tests, batch embeddings, logging)
   and what you'd harden for real-world use. Linked from the README and CONTRIBUTING.
+- **CI lint + type gate** - CI now runs `ruff` and `mypy` (provider HTTP calls type-checked via
+  `types-requests`) alongside the tests, plus a few offline smoke tests for the engine retriever cache
+  and the web `/api/status` route.
 
 ### Changed
 - **Docs polish** - a one-line learning-outcomes summary above the README curriculum, an FAQ section
   on the documentation page, consistent lesson headers across Lessons 1-5 (PDF + interactive-slides
   links and a time/prerequisites line), fuller "from demo to production" guidance in Lessons 3 and 4,
   and a general update pass over the Markdown files.
+- **Consistent site navigation** - every docs page now shows the same top menu (Lessons, Documentation,
+  Cheat-sheet, Troubleshooting, About, Install), the title tile links home, and PDF-download links
+  carry a small download glyph.
+
+### Fixed
+- **Embedding vector cache invalidates on embedder change** - switching the embed provider or model no
+  longer silently reuses vectors built by the previous embedder; the cache is tagged with the embedding
+  signature and rebuilt on mismatch.
+- **`EmbeddingRetriever.search` guards non-positive `k`** - returns no hits for `k <= 0`, matching
+  `Bm25Retriever` (a negative `k` previously sliced from the end and returned most results).
 
 ## [0.8.0] - 2026-06-15
 

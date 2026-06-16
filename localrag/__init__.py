@@ -5,4 +5,4 @@ and get answers grounded in those documents with cited sources. Designed to be
 small and readable for a live demo about building a local RAG system.
 """
 
-__version__ = "0.8.0"
+__version__ = "0.9.0"
