@@ -6,6 +6,8 @@ All notable changes to this project are documented here. This project follows
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-06-15
+
 ### Changed
 - **Lesson numbering aligned across the repo.** The six planned framework-tour outlines moved from the
   repo root into `roadmap/` and were renumbered to their curriculum numbers — LangChain `3→7`,
@@ -32,6 +34,15 @@ All notable changes to this project are documented here. This project follows
   covers Lessons 1–5 and 7–12.
 - **Auto-generated README "Lessons & downloads" table** via **`tools/sync-readme-downloads.py`**, listing
   every lesson's Markdown guide and PDF plus the guide PDFs; `--check` mode fails CI when it's stale.
+- **Cookieless usage analytics** (`docs/assets/analytics.js`): privacy-friendly GoatCounter that loads
+  on the production site only, over HTTPS, scoped to the `/local-ai-lab/` path, with queued early events
+  and lightweight click/slide tracking. Wired into every `docs/*.html` page.
+- **AI-for-developers cheat-sheet** — a printable `docs/pdf/CHEATSHEET.pdf` plus a nav link in the
+  generated lesson pages; the About page now links the related NikOS and leak-lock projects.
+
+### Fixed
+- **Hardened the PDF asset resolver** (`tools/build_lesson_pdfs.py`): `_resolve_asset` now rejects
+  remote URIs and out-of-tree absolute paths, so the build can't pull in assets outside the repo.
 
 ## [0.7.1] - 2026-06-15
 
