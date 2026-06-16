@@ -6,6 +6,13 @@ All notable changes to this project are documented here. This project follows
 
 ## [Unreleased]
 
+### Added
+- **Packaging** — a `pyproject.toml` makes `localrag` pip-installable (`pip install -e '.[dev]'`) with
+  a `localrag` console entry point. The version has a single home (`localrag/__init__.py`, read
+  dynamically), and ruff/mypy/pytest config now lives in one place.
+- **OSS governance files** — `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md` (Contributor
+  Covenant 2.1), GitHub issue templates (lesson request + bug report) and a pull-request template.
+
 ## [0.8.0] - 2026-06-15
 
 ### Changed

@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Course site & documentation
+    url: https://nikolareljin.github.io/local-ai-lab/documentation.html
+    about: Install, run, and troubleshooting guides — check here before filing an issue.
+  - name: Security report
+    url: https://github.com/nikolareljin/local-ai-lab/blob/main/SECURITY.md
+    about: Found a vulnerability? Please report it privately — do not open a public issue.
