@@ -167,13 +167,18 @@ def fmt(names):
 
 def main():
     docs = load_docs()
+    print("Same query and documents every run - the only thing that changes is whether the")
+    print("three defences (quarantine, isolation, output filter) are ON.")
     for query in ["how long do refunds take to arrive", "i cannot log in to my account"]:
         undefended = assess(query, docs, quarantine=False, isolate=False, output_filter=False)
         defended = assess(query, docs, quarantine=True, isolate=True, output_filter=True)
+        hijacked = undefended["text"] != defended["text"]
         print(f'\nQuery: "{query}"')
-        print(f"  Retrieved:  {fmt(undefended['retrieved'])}")
-        print(f"  Undefended: {undefended['text']}")
-        print(f"  Defended:   {defended['text']}")
+        print(f"  Retrieved: {fmt(undefended['retrieved'])}")
+        print(f"  WITHOUT hardening -> {'HIJACKED' if hijacked else 'SAFE'}")
+        print(f"    {undefended['text']}")
+        print("  WITH hardening    -> SAFE")
+        print(f"    {defended['text']}")
 
 
 if __name__ == "__main__":

@@ -142,9 +142,18 @@ def _blocks(query, undefended, defended, values):
     return blocks
 
 
+def _outcome(result):
+    """One-word outcome for an answer, so WITH vs WITHOUT reads at a glance."""
+    if result["followed_injection"]:
+        return "HIJACKED"
+    if result["blocked"]:
+        return "SAFE (leak blocked)"
+    return "SAFE"
+
+
 def search(query, values):
     if not query:
-        return {"arms": [], "blocks": [{"kind": "note", "text": "Type a query — or pick an example above."}]}
+        return {"arms": [], "blocks": [{"kind": "note", "text": "Type a query - or pick an example above."}]}
 
     undefended = assess(query, DOCS, quarantine=False, isolate=False, output_filter=False)
     defended = assess(query, DOCS,
@@ -152,8 +161,8 @@ def search(query, values):
                       isolate=values["isolate"],
                       output_filter=values["output_filter"])
     arms = [
-        {"label": "Undefended — model obeys the document", "ranking": [undefended["text"]]},
-        {"label": "Defended — answers from data only", "ranking": [defended["text"]], "highlight": True},
+        {"label": f"WITHOUT hardening  ->  {_outcome(undefended)}", "ranking": [undefended["text"]]},
+        {"label": f"WITH hardening  ->  {_outcome(defended)}", "ranking": [defended["text"]], "highlight": True},
     ]
     return {"arms": arms, "blocks": _blocks(query, undefended, defended, values)}
 
