@@ -6,8 +6,8 @@
   <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
   <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32.png" />
   <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
-  <title>local-ai-lab — Troubleshooting & AI providers</title>
-  <meta name="description" content="Fix common local-ai-lab issues and set up an AI provider: Claude Code, Ollama (local), Google Gemini (free), and OpenAI — API keys, models, and the errors you'll hit." />
+  <title>local-ai-lab - Troubleshooting & AI providers</title>
+  <meta name="description" content="Fix common local-ai-lab issues and set up an AI provider: Claude Code, Ollama (local), Google Gemini (free), and OpenAI - API keys, models, and the errors you'll hit." />
   <link rel="stylesheet" href="./assets/style.css" />
 </head>
 <body>
@@ -32,7 +32,7 @@
     <section class="hero">
       <h1>Troubleshooting &amp; AI providers</h1>
       <p class="tag">Most problems are one of two things: <b>no AI provider configured</b>, or the
-        <b>wrong model name</b>. This page covers each provider — Claude Code, Ollama, Gemini, OpenAI —
+        <b>wrong model name</b>. This page covers each provider - Claude Code, Ollama, Gemini, OpenAI -
         how to set one up (including a <b>free</b> Gemini key), which model to use, and the errors
         you're most likely to see.</p>
     </section>
@@ -40,7 +40,7 @@
     <h2>How providers are selected</h2>
     <p>The app answers with one provider at a time, chosen by <code>RAG_PROVIDER</code>
       (<code>claude</code> · <code>ollama</code> · <code>gemini</code> · <code>openai</code>). The
-      default is <code>claude</code> — no API key. Set values in a <code>.env</code> file at the repo
+      default is <code>claude</code> - no API key. Set values in a <code>.env</code> file at the repo
       root (copy <code>.env.example</code> first), or as environment variables, then <b>restart the
       app</b>. In the web UI you can also pick a provider from the dropdown for a single question.</p>
     <pre><code>cp .env.example .env        # then edit .env
@@ -59,7 +59,7 @@ RAG_PROVIDER=ollama         # claude | ollama | gemini | openai</code></pre>
       <a href="https://github.com/nikolareljin/ai-runner" target="_blank" rel="noopener">ai-runner</a>
       wraps exactly that.)</span></p>
 
-    <h3>Error: <code>404 (Not Found)</code> / “model … not found”</h3>
+    <h3>Error: <code>404 (Not Found)</code> / "model ... not found"</h3>
     <p>Ollama is running, but the model you asked for isn't installed. The default is
       <code>llama3.1:8b</code>. Either pull it, or point the app at a model you already have:</p>
     <pre><code>ollama list                 # what you already have
@@ -72,7 +72,7 @@ export OLLAMA_MODEL=qwen2.5:7b
 $env:OLLAMA_MODEL = "qwen2.5:7b"</code></pre>
     <p>To make it permanent, set <code>OLLAMA_MODEL</code> in <code>.env</code>.</p>
 
-    <h3>Error: connection refused / “Ollama unavailable”</h3>
+    <h3>Error: connection refused / "Ollama unavailable"</h3>
     <p>The Ollama server isn't running or is on a different address. Start it and check the URL:</p>
     <pre><code>ollama serve                            # start the server
 curl http://localhost:11434/api/tags    # should list your models
@@ -90,21 +90,21 @@ export OLLAMA_URL=http://localhost:11434</code></pre>
 
     <h2 id="claude">Claude Code (default, no API key)</h2>
     <p>Uses your existing Claude Code CLI login, so there's nothing to configure.</p>
-    <h3>Error: “Claude Code CLI 'claude' not found on PATH”</h3>
+    <h3>Error: "Claude Code CLI 'claude' not found on PATH"</h3>
     <p>Install the CLI and sign in once:</p>
     <pre><code>npm install -g @anthropic-ai/claude-code
 claude                 # first run signs you in
 claude --version</code></pre>
     <p>Custom install path? Point the app at it with <code>CLAUDE_BIN=/full/path/to/claude</code>.
-      No API key is needed — it reuses your Claude login. Claude Code can't produce embeddings, so
+      No API key is needed - it reuses your Claude login. Claude Code can't produce embeddings, so
       for <code>RAG_RETRIEVER=embeddings</code> use Ollama, Gemini, or OpenAI as the embed provider.</p>
 
     <h2 id="gemini">Google Gemini (free tier)</h2>
-    <p>Google's hosted models, with a generous free tier — a good no-cost cloud option.</p>
+    <p>Google's hosted models, with a generous free tier - a good no-cost cloud option.</p>
     <h3>Open a free account &amp; get an API key</h3>
     <ol>
       <li>Go to <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">aistudio.google.com/app/apikey</a> (Google AI Studio).</li>
-      <li>Sign in with any Google account — the free tier needs <b>no billing / no credit card</b>.</li>
+      <li>Sign in with any Google account - the free tier needs <b>no billing / no credit card</b>.</li>
       <li>Click <b>Create API key</b> (a new Google Cloud project is created for you), then copy the key.</li>
       <li>Put it in <code>.env</code> and select Gemini:</li>
     </ol>
@@ -112,14 +112,14 @@ claude --version</code></pre>
 GEMINI_API_KEY=AIza...your-key...
 GEMINI_MODEL=gemini-2.5-flash        # fast & free-tier friendly (default)
 GEMINI_EMBED_MODEL=text-embedding-004</code></pre>
-    <p><b>Which model?</b> <code>gemini-2.5-flash</code> is the default — fast and free-tier friendly.
+    <p><b>Which model?</b> <code>gemini-2.5-flash</code> is the default - fast and free-tier friendly.
       For higher quality use <code>gemini-2.5-pro</code>. Embeddings use <code>text-embedding-004</code>.</p>
     <h3>Common errors</h3>
     <table>
       <tr><th>You see</th><th>Cause &amp; fix</th></tr>
       <tr><td><code>400 API key not valid</code> / <code>403</code></td><td>Wrong or missing <code>GEMINI_API_KEY</code>. Re-copy it from AI Studio (no quotes, no spaces).</td></tr>
       <tr><td><code>404 model not found</code></td><td><code>GEMINI_MODEL</code> name is wrong or unavailable to your key. Use <code>gemini-2.5-flash</code>.</td></tr>
-      <tr><td><code>429</code> / quota exceeded</td><td>Free-tier rate limit hit — wait a minute and retry, or slow down requests.</td></tr>
+      <tr><td><code>429</code> / quota exceeded</td><td>Free-tier rate limit hit - wait a minute and retry, or slow down requests.</td></tr>
     </table>
 
     <h2 id="openai">OpenAI (or any OpenAI-compatible endpoint)</h2>
@@ -148,11 +148,11 @@ OPENAI_BASE_URL=https://api.openai.com/v1</code></pre>
     <h2>Other common issues</h2>
     <table>
       <tr><th>Symptom</th><th>Fix</th></tr>
-      <tr><td>Answer says “not covered in your documents”</td><td>That's correct behaviour when the answer isn't in your files — it's the anti-hallucination guard. Add relevant documents to <code>documents/</code>.</td></tr>
-      <tr><td>No sources / “nothing relevant found”</td><td>The corpus is empty or the question doesn't match. Drop files into <code>documents/</code> (PDF/DOCX/TXT/MD); the index auto-refreshes.</td></tr>
+      <tr><td>Answer says "not covered in your documents"</td><td>That's correct behaviour when the answer isn't in your files - it's the anti-hallucination guard. Add relevant documents to <code>documents/</code>.</td></tr>
+      <tr><td>No sources / "nothing relevant found"</td><td>The corpus is empty or the question doesn't match. Drop files into <code>documents/</code> (PDF/DOCX/TXT/MD); the index auto-refreshes.</td></tr>
       <tr><td>Embeddings mode falls back to BM25</td><td>The embed provider was unreachable. Set <code>RAG_EMBED_PROVIDER</code> to ollama/gemini/openai and ensure it's configured.</td></tr>
       <tr><td>Web UI won't start / port in use</td><td><code>./run</code> auto-picks a free port. To force one: <code>WEB_PORT=5050 ./run -l 1</code>.</td></tr>
-      <tr><td>Changed <code>.env</code> but nothing changed</td><td>Restart the app — config is read at startup.</td></tr>
+      <tr><td>Changed <code>.env</code> but nothing changed</td><td>Restart the app - config is read at startup.</td></tr>
     </table>
 
     <h2>Environment variables (quick reference)</h2>
@@ -162,9 +162,9 @@ OPENAI_BASE_URL=https://api.openai.com/v1</code></pre>
       <tr><td><code>RAG_RETRIEVER</code></td><td><code>bm25</code></td><td>Retrieval: bm25 (keyword) · embeddings (semantic)</td></tr>
       <tr><td><code>OLLAMA_URL</code></td><td><code>http://localhost:11434</code></td><td>Ollama server address</td></tr>
       <tr><td><code>OLLAMA_MODEL</code></td><td><code>llama3.1:8b</code></td><td>Ollama chat model (must be pulled)</td></tr>
-      <tr><td><code>GEMINI_API_KEY</code></td><td>—</td><td>Gemini key (from AI Studio)</td></tr>
+      <tr><td><code>GEMINI_API_KEY</code></td><td>-</td><td>Gemini key (from AI Studio)</td></tr>
       <tr><td><code>GEMINI_MODEL</code></td><td><code>gemini-2.5-flash</code></td><td>Gemini chat model</td></tr>
-      <tr><td><code>OPENAI_API_KEY</code></td><td>—</td><td>OpenAI key (needs billing)</td></tr>
+      <tr><td><code>OPENAI_API_KEY</code></td><td>-</td><td>OpenAI key (needs billing)</td></tr>
       <tr><td><code>OPENAI_MODEL</code></td><td><code>gpt-4o-mini</code></td><td>OpenAI chat model</td></tr>
       <tr><td><code>CLAUDE_BIN</code></td><td><code>claude</code></td><td>Path to the Claude Code CLI</td></tr>
     </table>
@@ -177,7 +177,7 @@ OPENAI_BASE_URL=https://api.openai.com/v1</code></pre>
   </div>
 
   <footer class="site"><div class="inner">
-    © 2023–2026 <a href="https://www.linkedin.com/in/nikolareljin" target="_blank" rel="noopener">Nik Reljin</a> ·
+    © 2023-2026 <a href="https://www.linkedin.com/in/nikolareljin" target="_blank" rel="noopener">Nik Reljin</a> ·
     Source on <a href="https://github.com/nikolareljin/local-ai-lab" target="_blank" rel="noopener">GitHub</a> ·
     Built as a hands-on training course.
   </div></footer>

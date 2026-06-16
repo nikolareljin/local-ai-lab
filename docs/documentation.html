@@ -6,8 +6,8 @@
   <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
   <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32.png" />
   <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
-  <title>Documentation — local-ai-lab</title>
-  <meta name="description" content="How to install, run, test, and experiment with local-ai-lab on Linux, macOS, and Windows — and how the whole thing works." />
+  <title>Documentation - local-ai-lab</title>
+  <meta name="description" content="How to install, run, test, and experiment with local-ai-lab on Linux, macOS, and Windows - and how the whole thing works." />
   <link rel="stylesheet" href="./assets/style.css" />
 </head>
 <body>
@@ -31,7 +31,7 @@
     <section class="hero">
       <h1>Documentation</h1>
       <p class="tag">Everything you need to <b>install</b>, <b>run</b>, <b>test</b>, and
-        <b>experiment</b> with the course locally — on <b>Linux, macOS, and Windows</b> — plus a tour
+        <b>experiment</b> with the course locally - on <b>Linux, macOS, and Windows</b> - plus a tour
         of how the whole thing works. Each lesson also has its own step-by-step page; this is the
         project-wide reference.</p>
     </section>
@@ -42,11 +42,11 @@
       <a href="https://github.com/nikolareljin/local-ai-lab/blob/main/ARCHITECTURE.md">ARCHITECTURE.md</a>.</p>
 
     <h2 id="how-it-runs">How it runs</h2>
-    <p>Everything runs with the language toolchains <b>directly — there is no Docker</b>. Install the
+    <p>Everything runs with the language toolchains <b>directly - there is no Docker</b>. Install the
       tools once, then run a lesson with one command. The course is <b>polyglot</b>: <b>Python</b> is
       the reference implementation, and most lessons also ship <b>Node.js</b> and <b>C# / .NET</b>
       ports that produce byte-identical results. The default AI is the <b>Claude Code CLI</b> (no API
-      key — it uses your existing Claude Code login); you can switch providers with one environment
+      key - it uses your existing Claude Code login); you can switch providers with one environment
       variable.</p>
 
     <h2 id="faq">FAQ</h2>
@@ -91,7 +91,7 @@ python -m venv venv
 venv\Scripts\activate.bat
 pip install -r requirements.txt</code></pre>
     <div class="note"><b>Running on Windows.</b> <code>./run</code>, <code>./start</code>,
-      <code>./stop</code>, and <code>./status</code> are shell scripts — run them from <b>Git Bash</b>
+      <code>./stop</code>, and <code>./status</code> are shell scripts - run them from <b>Git Bash</b>
       or <b>WSL</b> (both come with, or alongside, Git for Windows). If you prefer native
       <b>PowerShell</b> or <b>cmd</b>, call the toolchains directly instead (the
       <a href="#run">Run a lesson</a> section shows the exact commands). The virtualenv layout differs
@@ -121,7 +121,7 @@ pip install -r requirements.txt</code></pre>
 ./run -l 3                                   # Lesson 3: hybrid-retrieval experiment GUI
 ./run -l 4                                   # Lesson 4: RAG-safety defence playground
 ./run -l 5                                   # Lesson 5: evaluation scorecard
-./run -l &lt;N&gt; demo                            # the one-shot, print-and-exit run for lessons 3–5
+./run -l &lt;N&gt; demo                            # the one-shot, print-and-exit run for lessons 3-5
 ./run -l &lt;N&gt; --lang node demo                # the Node.js port (byte-identical output)
 ./run -l &lt;N&gt; --lang csharp demo              # the C# / .NET port (byte-identical output)</code></pre>
 
@@ -134,7 +134,7 @@ pip install -r requirements.txt</code></pre>
 RAG_PROVIDER=ollama ./run -l 1 ask "How do I connect to Wi-Fi?"</code></pre>
 
     <h3>On native Windows PowerShell / cmd</h3>
-    <p>If you are not using Git Bash or WSL, call each toolchain directly — these do exactly what
+    <p>If you are not using Git Bash or WSL, call each toolchain directly - these do exactly what
       <code>./run</code> does:</p>
     <pre><code># Python (Lesson 1 RAG app)
 python -m localrag web --port 5000
@@ -168,17 +168,17 @@ pytest -q                  # the full offline suite (from the repo root, venv ac
       Node.js, and C#. On native Windows PowerShell, run the same tests with
       <code>python -m pytest -q</code>.</p>
 
-    <h2 id="experiment">Experiment — the interactive GUIs</h2>
+    <h2 id="experiment">Experiment - the interactive GUIs</h2>
     <p>Most lessons open a local, dark-themed web GUI where you tune parameters and watch the results
-      (and the numbers behind them) recompute live — no code editing. The published site stays static;
+      (and the numbers behind them) recompute live - no code editing. The published site stays static;
       the experimenting happens on your machine.</p>
     <table>
       <tr><th>Lesson</th><th><code>./run</code></th><th>What you can tune</th></tr>
       <tr><td>1 · RAG</td><td><code>./run -l 1</code></td><td>Drag-and-drop documents, ask questions, see cited <code>[file:page]</code> sources</td></tr>
       <tr><td>2 · MCP</td><td><code>./run -l 2</code></td><td>Call the MCP tools and see exactly what a host receives</td></tr>
-      <tr><td>3 · Hybrid retrieval</td><td><code>./run -l 3</code></td><td>BM25 <code>k1</code>/<code>b</code>, the RRF <code>k</code>, a synonyms toggle — with a per-document score breakdown</td></tr>
+      <tr><td>3 · Hybrid retrieval</td><td><code>./run -l 3</code></td><td>BM25 <code>k1</code>/<code>b</code>, the RRF <code>k</code>, a synonyms toggle - with a per-document score breakdown</td></tr>
       <tr><td>4 · RAG safety</td><td><code>./run -l 4</code></td><td>Toggle quarantine / isolation / output-filter and watch an answer flip between hijacked and safe</td></tr>
-      <tr><td>5 · RAG evaluation</td><td><code>./run -l 5</code></td><td><code>top_k</code>, the groundedness/correctness gates, unsupported-padding — watch the gate flip</td></tr>
+      <tr><td>5 · RAG evaluation</td><td><code>./run -l 5</code></td><td><code>top_k</code>, the groundedness/correctness gates, unsupported-padding - watch the gate flip</td></tr>
     </table>
     <p>The GUIs are a thin Flask app, so unlike the byte-checked <code>demo</code> they need one
       dependency; <code>./run</code> installs it into the project virtualenv on first use. The GUI is
@@ -191,7 +191,7 @@ pytest -q                  # the full offline suite (from the repo root, venv ac
       ask the model to answer <b>grounded</b> in those chunks, citing each claim as
       <code>[file:page]</code>. The system prompt forces the model to answer from the retrieved context
       first, say plainly when something is not in the documents, and label any general knowledge it
-      adds — every answer ends with a <code>Sources:</code> line.</p>
+      adds - every answer ends with a <code>Sources:</code> line.</p>
 
     <h3>Providers &amp; retrieval</h3>
     <p>The provider and retriever are swappable with environment variables:</p>
@@ -213,12 +213,12 @@ pytest -q                  # the full offline suite (from the repo root, venv ac
       engine (<code>tools/lesson.py</code>) reads that file to run actions, render the terminal
       walkthrough (<code>show</code>), serve a local preview (<code>preview</code>), and build the
       published page (<code>build</code>). Adding code or steps is just dropping files and referencing
-      them in <code>lesson.json</code> — no engine changes.</p>
+      them in <code>lesson.json</code> - no engine changes.</p>
 
     <h3>The published site &amp; PDFs</h3>
     <p>The course site under <code>docs/</code> is plain static HTML served by GitHub Pages.
       Lesson pages 3+ are generated from <code>lesson.json</code> with <code>./run -l &lt;N&gt; build</code>;
-      Lessons 1–2 and pages like this one are hand-authored. The per-lesson and install PDFs in
+      Lessons 1-2 and pages like this one are hand-authored. The per-lesson and install PDFs in
       <code>docs/pdf/</code> are generated from the Markdown sources with
       <code>python3 tools/build_lesson_pdfs.py</code>.</p>
 
@@ -226,20 +226,20 @@ pytest -q                  # the full offline suite (from the repo root, venv ac
     <pre><code>local-ai-lab/
 ├── docs/                  # GitHub Pages course site (this page lives here)
 │   ├── index.html         #   landing + curriculum
-│   ├── lesson-1-rag.html  #   Lesson 1 (RAG) — hand-authored interactive lesson
-│   ├── lesson-2-mcp.html  #   Lesson 2 (MCP) — hand-authored interactive lesson
-│   ├── lesson-N-*.html     #   Lessons 3+ — generated from lessons/NN-*/lesson.json
+│   ├── lesson-1-rag.html  #   Lesson 1 (RAG) - hand-authored interactive lesson
+│   ├── lesson-2-mcp.html  #   Lesson 2 (MCP) - hand-authored interactive lesson
+│   ├── lesson-N-*.html     #   Lessons 3+ - generated from lessons/NN-*/lesson.json
 │   ├── documentation.html troubleshooting.html about.html
 │   ├── assets/            #   shared styles + slider.js
 │   └── pdf/               #   generated per-lesson and install PDFs
-├── documents/             # the RAG corpus — drop your files here
+├── documents/             # the RAG corpus - drop your files here
 ├── localrag/              # Lesson 1 source (extract · chunk · retriever · prompts · engine · web)
 │   └── providers/         #   claude_code · ollama · gemini · openai
-├── mcp_server.py          # Lesson 2 — MCP server (search_docs, list_documents)
+├── mcp_server.py          # Lesson 2 - MCP server (search_docs, list_documents)
 ├── lessons/               # config-driven lessons (3+): one lesson.json per lesson
 ├── tools/                 # lesson engine (lesson.py) + shared GUI scaffold + PDF builder
 ├── node/  dotnet/          # Node.js and C# / .NET ports of the lessons
-├── run                    # ./run -l <N> — run any lesson locally
+├── run                    # ./run -l <N> - run any lesson locally
 ├── start  stop  status    # manage the Lesson 1 web app in the background
 ├── tests/                 # offline smoke tests
 └── INSTALL.md  ARCHITECTURE.md  CHANGELOG.md  AGENTS.md</code></pre>
@@ -253,7 +253,7 @@ pytest -q                  # the full offline suite (from the repo root, venv ac
   </div>
 
   <footer class="site"><div class="inner">
-    © 2023–2026 <a href="https://www.linkedin.com/in/nikolareljin" target="_blank" rel="noopener">Nik Reljin</a> ·
+    © 2023-2026 <a href="https://www.linkedin.com/in/nikolareljin" target="_blank" rel="noopener">Nik Reljin</a> ·
     Source on <a href="https://github.com/nikolareljin/local-ai-lab" target="_blank" rel="noopener">GitHub</a> ·
     <a href="./index.html">Home</a> ·
     Built as a hands-on training course.
