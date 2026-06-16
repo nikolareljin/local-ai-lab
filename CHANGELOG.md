@@ -7,12 +7,12 @@ All notable changes to this project are documented here. This project follows
 ## [Unreleased]
 
 ### Added
-- **Packaging** — a `pyproject.toml` makes `localrag` pip-installable (`pip install -e '.[dev]'`) with
+- **Packaging** - a `pyproject.toml` makes `localrag` pip-installable (`pip install -e '.[dev]'`) with
   a `localrag` console entry point. The version has a single home (`localrag/__init__.py`, read
   dynamically), and ruff/mypy/pytest config now lives in one place.
-- **OSS governance files** — `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md` (Contributor
+- **OSS governance files** - `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md` (Contributor
   Covenant 2.1), GitHub issue templates (lesson request + bug report) and a pull-request template.
-- **`PRODUCTION_NOTES.md`** — an honest checklist of what the teaching demo keeps simple on purpose
+- **`PRODUCTION_NOTES.md`** - an honest checklist of what the teaching demo keeps simple on purpose
   (prompt-injection handling → Lesson 4, web-UI auth, comprehensive tests, batch embeddings, logging)
   and what you'd harden for real-world use. Linked from the README and CONTRIBUTING.
 
@@ -20,34 +20,34 @@ All notable changes to this project are documented here. This project follows
 
 ### Changed
 - **Lesson numbering aligned across the repo.** The six planned framework-tour outlines moved from the
-  repo root into `roadmap/` and were renumbered to their curriculum numbers — LangChain `3→7`,
+  repo root into `roadmap/` and were renumbered to their curriculum numbers - LangChain `3→7`,
   LangGraph `4→8`, Ollama `5→9`, Semantic Kernel `6→10`, Bedrock `7→11`, Google ADK `8→12`. Every
   written guide's navigation chain, cross-references, and "next lesson" links now follow the real order
-  (1 RAG → 2 MCP → 3 Hybrid → 4 Safety → 5 Eval → 6 Repo → 7–12 framework tour), so the live Lessons
-  3–5 are reachable from the guides instead of being shadowed by the old outlines.
-- **PDF build** (`tools/build_lesson_pdfs.py`): emits `LESSON7–12.pdf` from the `roadmap/` sources under
-  their curriculum numbers, while `LESSON3–5.pdf` are now built from the live lesson READMEs; the stale
-  outline-based PDFs under the old 3–6 numbering were dropped. The builder now **auto-discovers**
+  (1 RAG → 2 MCP → 3 Hybrid → 4 Safety → 5 Eval → 6 Repo → 7-12 framework tour), so the live Lessons
+  3-5 are reachable from the guides instead of being shadowed by the old outlines.
+- **PDF build** (`tools/build_lesson_pdfs.py`): emits `LESSON7-12.pdf` from the `roadmap/` sources under
+  their curriculum numbers, while `LESSON3-5.pdf` are now built from the live lesson READMEs; the stale
+  outline-based PDFs under the old 3-6 numbering were dropped. The builder now **auto-discovers**
   lessons from disk (root `LESSON<n>.md`, `lessons/<NN>-slug/README.md`, `roadmap/LESSON<n>-slug.md`), so
   a new lesson gets a PDF with no edits.
-- **Home page** lists every lesson PDF through two dropdowns (Lessons 1–5, Roadmap 7–12) instead of a
+- **Home page** lists every lesson PDF through two dropdowns (Lessons 1-5, Roadmap 7-12) instead of a
   single Lesson-1 link.
 
 ### Added
 - **`roadmap/README.md`**: an index of the planned-lesson outlines that points back to where the live
   lessons live.
-- **Educator positioning** — a README "About the author" + "What you'll be able to do" section, a
+- **Educator positioning** - a README "About the author" + "What you'll be able to do" section, a
   "Who's teaching this" section on the site home, an "About the author" section on `docs/about.html`,
   and a new **`SYLLABUS.md`** (clusters, per-lesson learning objectives, prerequisites matrix, and time
   estimates).
-- **Printable PDFs for the live Lessons 3–5** (built from each lesson's `README.md`) — `docs/pdf/` now
-  covers Lessons 1–5 and 7–12.
+- **Printable PDFs for the live Lessons 3-5** (built from each lesson's `README.md`) - `docs/pdf/` now
+  covers Lessons 1-5 and 7-12.
 - **Auto-generated README "Lessons & downloads" table** via **`tools/sync-readme-downloads.py`**, listing
   every lesson's Markdown guide and PDF plus the guide PDFs; `--check` mode fails CI when it's stale.
 - **Cookieless usage analytics** (`docs/assets/analytics.js`): privacy-friendly GoatCounter that loads
   on the production site only, over HTTPS, scoped to the `/local-ai-lab/` path, with queued early events
   and lightweight click/slide tracking. Wired into every `docs/*.html` page.
-- **AI-for-developers cheat-sheet** — a printable `docs/pdf/CHEATSHEET.pdf` plus a nav link in the
+- **AI-for-developers cheat-sheet** - a printable `docs/pdf/CHEATSHEET.pdf` plus a nav link in the
   generated lesson pages; the About page now links the related NikOS and leak-lock projects.
 
 ### Fixed
@@ -58,7 +58,7 @@ All notable changes to this project are documented here. This project follows
 
 ### Added
 - **Documentation page** (`docs/documentation.html`): a single project-wide reference covering install,
-  run, test, experiment, and how everything works — with first-class **Windows** (PowerShell/cmd)
+  run, test, experiment, and how everything works - with first-class **Windows** (PowerShell/cmd)
   coverage using plain toolchain commands. Linked from the site nav (all pages) and the landing CTA.
 - **Automated releases** (`.github/workflows/release.yml`): merging a `release/X.Y.Z` branch to `main`
   (which bumps `CHANGELOG.md`) creates the annotated tag and a GitHub Release with the changelog notes.
@@ -70,39 +70,39 @@ All notable changes to this project are documented here. This project follows
 
 ## [0.7.0] - 2026-06-15
 
-**Lesson 5 — RAG evaluation & regression testing.** Score a pipeline against a golden set on
+**Lesson 5 - RAG evaluation & regression testing.** Score a pipeline against a golden set on
 retrieval recall@k, groundedness and answer correctness, gate on the numbers, and catch a regression a
 candidate tweak slips in. Offline, dependency-free, and byte-identical across Python, Node.js and C#,
 with an interactive scorecard playground.
 
-**Lesson 4 — RAG safety & prompt injection.** A poisoned document hijacks a naive RAG pipeline; a
+**Lesson 4 - RAG safety & prompt injection.** A poisoned document hijacks a naive RAG pipeline; a
 defended pipeline neutralises it. Offline, dependency-free, and byte-identical across Python, Node.js
 and C#, with an interactive defence playground.
 
 ### Added
-- **Lesson 5 — RAG evaluation & regression testing** (`lessons/05-rag-evaluation-regression-testing/`):
+- **Lesson 5 - RAG evaluation & regression testing** (`lessons/05-rag-evaluation-regression-testing/`):
   a golden set scored on recall@k + groundedness + correctness with a pass/fail gate, run under a
-  baseline and a regressing candidate config — in **Python, Node.js and C# / .NET** with byte-identical
+  baseline and a regressing candidate config - in **Python, Node.js and C# / .NET** with byte-identical
   output, an offline test, and a Flask scorecard playground with live top_k / threshold controls. `./run -l 5`.
-- **Lesson 4 — RAG safety & prompt injection** (`lessons/04-rag-safety-prompt-injection/`): one query
+- **Lesson 4 - RAG safety & prompt injection** (`lessons/04-rag-safety-prompt-injection/`): one query
   through an undefended vs a defended pipeline over a corpus with poisoned support tickets, defended by
-  quarantine + isolation + an output filter — in **Python, Node.js and C# / .NET** with byte-identical
+  quarantine + isolation + an output filter - in **Python, Node.js and C# / .NET** with byte-identical
   output, an offline test, and a Flask defence playground over a poisoned help-centre corpus. `./run -l 4`.
 
 ## [0.6.0]
 
 **Interactive local experiment GUIs for Lessons 2 and 3.** A shared scaffold gives each lesson a
-local web UI — like Lesson 1's — where you tune parameters and watch the results, and the numbers
+local web UI - like Lesson 1's - where you tune parameters and watch the results, and the numbers
 behind them, recompute live, with no code editing. The published GitHub Pages stay static.
 
 ### Added
 - **Shared GUI scaffold** (`tools/lesson_web.py` + `tools/templates/lesson-gui.html`): a self-contained,
   dark UI a lesson drives with a param spec, examples, and a `search(query, values)` returning rankings
   plus a "why" breakdown.
-- **Lesson 3 experiment GUI** (`lessons/03-…/python/web.py`): BM25 `k1`/`b`, RRF `k`, and a synonyms
+- **Lesson 3 experiment GUI** (`lessons/03-.../python/web.py`): BM25 `k1`/`b`, RRF `k`, and a synonyms
   toggle, with a per-document score breakdown (IDF, scores, ranks, RRF contribution).
 - **Lesson 2 MCP tool GUI** (`examples/mcp_web.py`): calls the same retriever `search_docs` wraps and
-  shows what an MCP host receives — the tool call, the cited `[source:page]` passages, and the
+  shows what an MCP host receives - the tool call, the cited `[source:page]` passages, and the
   `list_documents()` corpus; a `k` slider tunes how many passages are returned.
 
 ### Changed
@@ -118,14 +118,14 @@ behind them, recompute live, with no code editing. The published GitHub Pages st
 described by a single `lesson.json` and run, preview, and publish through one engine.
 
 ### Added
-- **Lesson 3 — Hybrid retrieval & reranking** (`lessons/03-hybrid-retrieval-reranking/`): an offline,
+- **Lesson 3 - Hybrid retrieval & reranking** (`lessons/03-hybrid-retrieval-reranking/`): an offline,
   dependency-free demo of BM25 + a semantic stand-in fused with RRF, in **Python, Node.js and C# / .NET**
   with byte-identical output, an optional Flask web UI, an offline test, and a 5-chapter fictive-story
   corpus to search.
 - **Lesson engine** (`tools/lesson.py`): `list`, `run` (per action + `--lang`), `show` (terminal
   walkthrough), `preview` (local step-slideshow server), and `build` (publishable `docs/` page).
-  Driven by a per-lesson `lesson.json` of typed elements — command / code / config / text / note /
-  media — that **reference real files** (code is never pasted into the config).
+  Driven by a per-lesson `lesson.json` of typed elements - command / code / config / text / note /
+  media - that **reference real files** (code is never pasted into the config).
 - **Step-by-step preview/publish that matches Lessons 1-2**: a shared template references the published
   `docs/assets/style.css` + `slider.js`; adds server-side **syntax highlighting**
   (`docs/assets/highlight.css`), **one or several notes per code snippet**, a **language selector** that
@@ -134,17 +134,17 @@ described by a single `lesson.json` and run, preview, and publish through one en
   `tools/renumber-lessons.sh`, and `lessons/_template/`.
 
 ### Changed
-- `./run` is registry-driven for lessons 3+ (`./run -l 3 [demo|web|test|show|preview|build] [--lang …]`);
+- `./run` is registry-driven for lessons 3+ (`./run -l 3 [demo|web|test|show|preview|build] [--lang ...]`);
   Lessons 1-2 keep their bespoke dispatch (unchanged).
 - The site top-nav is now a **Lessons dropdown** (all pages); switching a lesson's language restarts it
   at step 1 so paging never changes the chosen language.
 - Lesson page footers link to the **About** page instead of the LinkedIn / "Source on GitHub" links
   (Lessons 1 and 2, and the Lesson 3 template), matching where those links now live.
-- Lesson 3's step prose makes explicit that the code **and** the data already ship in the repo — it's a
+- Lesson 3's step prose makes explicit that the code **and** the data already ship in the repo - it's a
   read-along walkthrough, with nothing to copy or create and a single command (`./run -l 3`) to run.
 
 ### Fixed
-- Single-language renders (`build`/`preview`/`show --html --lang …`) now pin the rendered language in the
+- Single-language renders (`build`/`preview`/`show --html --lang ...`) now pin the rendered language in the
   page head and skip the saved-language restore (there is no selector to recover from), so a different
   `localStorage` choice can no longer hide every code block.
 - `pytest` is declared in `requirements.txt` and the `ensure_venv` check, so `./run -l N test` works on a
@@ -157,12 +157,12 @@ described by a single `lesson.json` and run, preview, and publish through one en
 - `--lang` is constrained to `python|node|csharp` at parse time across `run`/`show`/`preview`/`build`,
   so an unknown value fails fast instead of rendering empty/hidden content.
 - `tools/sync-curriculum.sh` fails with a clear message when no Python interpreter is found.
-- The homepage curriculum cards now reflect the **reordered (Option A) curriculum** — all 15 lessons in
+- The homepage curriculum cards now reflect the **reordered (Option A) curriculum** - all 15 lessons in
   their new positions (Lessons 1-3 Available; 4-15 Planned), so the cards match the nav dropdown and the
   generated `CURRICULUM.md`. The function-calling model note in Troubleshooting is renumbered to Lesson 9.
 - The preview server URL-decodes the request path before normalizing it, so percent-encoded traversal
   (e.g. `%2e%2e/`) can no longer slip past the `..` guard.
-- `show --html` (standalone file) now emits absolute `file://…/docs/` nav and brand links, so they stay
+- `show --html` (standalone file) now emits absolute `file://.../docs/` nav and brand links, so they stay
   usable when the page is written to an arbitrary location.
 - `tools/new-lesson.sh` opens `lesson.json` with a `with` block (no leaked file descriptor).
 - The BM25 arm in all three demos (Python / Node / C#) guards an **empty corpus** instead of dividing by
@@ -170,14 +170,14 @@ described by a single `lesson.json` and run, preview, and publish through one en
 - The Node demo uses an **ordinal** tie-break comparator instead of locale-dependent `localeCompare`, so
   its ranking stays byte-identical with Python and .NET across locales.
 - `read_ref()` keeps file reads **inside the lesson directory**, so a `lesson.json` can't reference and
-  embed files outside it (`../../…`).
+  embed files outside it (`../../...`).
 - `./run list` and the `python3 || python` lookups in `new-lesson.sh` / `sync-curriculum.sh` no longer
   abort under `set -euo pipefail` when the registry list or interpreter lookup fails.
 - The Lesson 3 `web.py` docstring shows the correct command (`./run -l 3 web`, not `./run -l 3`).
-- `read_ref()` parses the `lines` excerpt spec tolerantly — a single line (`"42"`), surrounding
-  whitespace, or an invalid spec returns a clear `[invalid lines spec: …]` placeholder instead of
+- `read_ref()` parses the `lines` excerpt spec tolerantly - a single line (`"42"`), surrounding
+  whitespace, or an invalid spec returns a clear `[invalid lines spec: ...]` placeholder instead of
   crashing the whole `show`/`preview`/`build` render.
-- Generated lesson pages carry a `GENERATED FILE — do not edit by hand` banner (from the template), so
+- Generated lesson pages carry a `GENERATED FILE - do not edit by hand` banner (from the template), so
   it's clear they come from `./run -l N build` and manual edits will be overwritten.
 - `tools/new-lesson.sh` and `tools/sync-curriculum.sh` validate that the resolved interpreter is actually
   Python 3 (some systems alias `python` to Python 2), emitting the intended error instead of a traceback.
@@ -185,9 +185,9 @@ described by a single `lesson.json` and run, preview, and publish through one en
   with spaces/punctuation can't split into extra classes or break the `[data-lang] .lang-*` selectors.
 - `./run list` prints an explicit fallback line when the lesson registry can't be loaded, instead of
   silently dropping Lessons 3+.
-- Added `tests/test_lesson_engine.py` — unit tests for `read_ref()` path confinement, tolerant `lines`
+- Added `tests/test_lesson_engine.py` - unit tests for `read_ref()` path confinement, tolerant `lines`
   excerpt parsing, and the CSS-safe language token.
-- **Site favicon** — the published site had none (tabs showed nothing). Added a brand-matching icon
+- **Site favicon** - the published site had none (tabs showed nothing). Added a brand-matching icon
   (`docs/assets/favicon.svg` + PNG/apple-touch + a multi-size `docs/favicon.ico`) and linked it from every
   page and the lesson template.
 - `registry()` fails fast when two lesson directories share the same number, instead of silently
@@ -196,28 +196,28 @@ described by a single `lesson.json` and run, preview, and publish through one en
   lesson as success.
 - Media elements (`image`/`video`/`media`) are confined to the lesson directory like `read_ref()`, so a
   stray `file: "../.."` can't embed files from outside it in standalone `show --html` output.
-- The "generated file — do not edit" banner is injected into built pages by the engine rather than living
+- The "generated file - do not edit" banner is injected into built pages by the engine rather than living
   in `tools/templates/lesson-preview.html`, so the template itself is no longer mislabeled as generated.
 - `tools/renumber-lessons.sh swap` uses a PID-scoped temp directory, so a leftover from an interrupted
   run can't collide and corrupt the swap.
 - `lessons/README.md` now correctly states that renumbering changes a lesson's published filename
-  (`lesson-<number>-<slug>.html`) and requires rebuilding the affected pages — the dir rename isn't enough.
+  (`lesson-<number>-<slug>.html`) and requires rebuilding the affected pages - the dir rename isn't enough.
 - `build` mirrors a lesson's `media/` subtree to `docs/lesson-media/<dir>/media/` (preserving the `media/`
   prefix), so media referenced as `media/foo.png` resolves on the published page; previously the prefix
   was dropped and published media 404'd even though `preview` worked.
 
 ## [0.4.0]
 
-**Lesson 2 (MCP) goes polyglot** — the MCP server now ships in Node.js and C# alongside Python.
+**Lesson 2 (MCP) goes polyglot** - the MCP server now ships in Node.js and C# alongside Python.
 
 ### Added
-- **Node.js MCP server** (`node/lesson-2/`) — `search_docs` and `list_documents` over stdio on the
+- **Node.js MCP server** (`node/lesson-2/`) - `search_docs` and `list_documents` over stdio on the
   official `@modelcontextprotocol/sdk` (`McpServer`), reusing the Node Lesson 1 engine. Includes an
   stdio-client demo (`src/demo.js`) and `run.sh` (`demo`/`serve`/`register`/`test`).
-- **C# / .NET MCP server** (`dotnet/lesson-2/`) — the same two tools on the official
+- **C# / .NET MCP server** (`dotnet/lesson-2/`) - the same two tools on the official
   `ModelContextProtocol` SDK (`[McpServerTool]`), reusing the C# Lesson 1 retriever. Includes an
   `McpClient` demo and `run.sh`.
-- **Language selector** on the Lesson 2 interactive slides (`docs/lesson-2-mcp.html`) — Python /
+- **Language selector** on the Lesson 2 interactive slides (`docs/lesson-2-mcp.html`) - Python /
   Node.js / C#, mirroring Lesson 1; every code step has all three implementations.
 
 ### Changed
@@ -230,13 +230,13 @@ described by a single `lesson.json` and run, preview, and publish through one en
 Cross-platform install docs, per-lesson PDFs, an easy lesson runner, and the polyglot foundation.
 
 ### Added
-- **`INSTALL.md`** — Linux / macOS / Windows dependency setup for Python, Node.js, and C#, with a
+- **`INSTALL.md`** - Linux / macOS / Windows dependency setup for Python, Node.js, and C#, with a
   per-lesson dependency table. Clarifies the app runs with Python directly (no Docker).
-- **PDFs** — `tools/build_lesson_pdfs.py` (pure-Python) generates `docs/pdf/INSTALL.pdf` and
+- **PDFs** - `tools/build_lesson_pdfs.py` (pure-Python) generates `docs/pdf/INSTALL.pdf` and
   `docs/pdf/LESSON1-8.pdf`; linked from each lesson, the README, and the course site.
-- **`./run` dispatcher** — `./run -l <N> [--lang python|node|csharp] [action]`; auto-creates the
+- **`./run` dispatcher** - `./run -l <N> [--lang python|node|csharp] [action]`; auto-creates the
   venv, auto-picks a free port, and announces the default AI (Claude Code).
-- **`examples/mcp_demo.py`** — stdio client used by `./run -l 2 demo`.
+- **`examples/mcp_demo.py`** - stdio client used by `./run -l 2 demo`.
 - **Install slides** added to the Lesson 1 and Lesson 2 interactive sliders.
 
 ### Changed
@@ -249,13 +249,13 @@ Cross-platform install docs, per-lesson PDFs, an easy lesson runner, and the pol
 **Lesson 2 (MCP) complete & working**, plus the full 8-lesson roadmap.
 
 ### Added
-- **MCP server** (`mcp_server.py`) — a FastMCP stdio server exposing the Lesson 1 retriever as
+- **MCP server** (`mcp_server.py`) - a FastMCP stdio server exposing the Lesson 1 retriever as
   `search_docs` and `list_documents` tools, callable from Claude Code.
-- **MCP integration test** (`tests/test_mcp.py`) — spawns the server over stdio, lists tools, and
+- **MCP integration test** (`tests/test_mcp.py`) - spawns the server over stdio, lists tools, and
   calls `search_docs`; skipped if the MCP SDK is absent.
-- **Full Lesson 2** — interactive step-slider (`docs/lesson-2-mcp.html`) and written guide
+- **Full Lesson 2** - interactive step-slider (`docs/lesson-2-mcp.html`) and written guide
   (`LESSON2.md`) with runnable code.
-- **Roadmap lessons 3–8** — written guides `LESSON3.md`–`LESSON8.md` (LangChain, LangGraph,
+- **Roadmap lessons 3-8** - written guides `LESSON3.md`-`LESSON8.md` (LangChain, LangGraph,
   Ollama + function calling, Microsoft Semantic Kernel in C#/.NET, AWS Bedrock Agents, Google ADK).
 
 ### Changed
@@ -263,20 +263,20 @@ Cross-platform install docs, per-lesson PDFs, an easy lesson runner, and the pol
 
 ## [0.1.0]
 
-First public release of **local-ai-lab** — Lesson 1 (RAG) complete, Lesson 2 (MCP) previewed.
+First public release of **local-ai-lab** - Lesson 1 (RAG) complete, Lesson 2 (MCP) previewed.
 
 ### Added
-- **Lesson 1 RAG app** — extract (PDF/DOCX/TXT/MD), overlap chunking, cached JSON index.
-- **Retrieval** — `Bm25Retriever` (default, zero setup) and `EmbeddingRetriever` (semantic) behind
+- **Lesson 1 RAG app** - extract (PDF/DOCX/TXT/MD), overlap chunking, cached JSON index.
+- **Retrieval** - `Bm25Retriever` (default, zero setup) and `EmbeddingRetriever` (semantic) behind
   one interface, with automatic BM25 fallback when no embed provider is reachable.
-- **Provider abstraction** — Claude Code CLI (default, no API key), Ollama, Gemini, OpenAI,
+- **Provider abstraction** - Claude Code CLI (default, no API key), Ollama, Gemini, OpenAI,
   swappable via `RAG_PROVIDER`.
-- **Anti-hallucination grounding prompt** — cites `[file:page]`, admits when an answer isn't in the
+- **Anti-hallucination grounding prompt** - cites `[file:page]`, admits when an answer isn't in the
   documents, and labels general knowledge.
-- **CLI** — `index`, `ask` (REPL + one-shot), `web`.
-- **Drag-and-drop web UI** — Flask app with upload + reindex + grounded answers and source chips.
-- **Course site** — GitHub Pages with interactive step-slider lessons (Lesson 1 full, Lesson 2 preview).
-- **Lesson guides** — full written lessons `LESSON1.md`–`LESSON4.md`, cross-linked to the live site.
-- **Docs** — README, ARCHITECTURE; ingestable `documents/rag_tutorial.md`.
-- **CI** — ci-helpers Python workflow; **script-helpers** submodule with `start`/`stop`/`status`/`update`.
-- **Tests** — offline smoke tests for extraction, chunking, and BM25 retrieval.
+- **CLI** - `index`, `ask` (REPL + one-shot), `web`.
+- **Drag-and-drop web UI** - Flask app with upload + reindex + grounded answers and source chips.
+- **Course site** - GitHub Pages with interactive step-slider lessons (Lesson 1 full, Lesson 2 preview).
+- **Lesson guides** - full written lessons `LESSON1.md`-`LESSON4.md`, cross-linked to the live site.
+- **Docs** - README, ARCHITECTURE; ingestable `documents/rag_tutorial.md`.
+- **CI** - ci-helpers Python workflow; **script-helpers** submodule with `start`/`stop`/`status`/`update`.
+- **Tests** - offline smoke tests for extraction, chunking, and BM25 retrieval.

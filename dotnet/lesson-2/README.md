@@ -5,7 +5,7 @@ exposes the Lesson 1 document search as **Model Context Protocol** tools
 (`search_docs`, `list_documents`) over **stdio**, so an MCP host like Claude
 Code can search your local `documents/` folder natively.
 
-It reuses the C# Lesson 1 engine module-for-module — `Config`, `Extract`,
+It reuses the C# Lesson 1 engine module-for-module - `Config`, `Extract`,
 `Chunk`, `Store`, and `Retriever` are compiled straight from
 [`dotnet/lesson-1`](../lesson-1) (no `Providers`/`Prompts`, so the server has no
 LLM dependency). MCP is a new doorway onto the same retriever.
@@ -37,12 +37,12 @@ cd dotnet/lesson-2 && dotnet run -c Release -- demo   # spawn server, list tools
 | `Program.cs` (`demo`) | an stdio **client** (`McpClient`) that spawns the server and calls its tools |
 
 Logs are routed to **stderr** (`LogToStandardErrorThreshold = Trace`) so they
-never corrupt the JSON-RPC stream on stdout — the one rule every stdio server
+never corrupt the JSON-RPC stream on stdout - the one rule every stdio server
 must follow.
 
 ## Test it (offline smoke test)
 
-No network, no API key, no LLM — the demo client spawns the server (`dotnet
+No network, no API key, no LLM - the demo client spawns the server (`dotnet
 LocalRagMcp.dll serve`), does the MCP handshake, lists the tools, and calls
 `search_docs` against the committed sample corpus:
 
@@ -69,7 +69,7 @@ alongside the Python and Node servers.
 - **Tools:** `search_docs` and `list_documents`, identical shape and citation
   format (`[filename:page]`) to [`mcp_server.py`](../../mcp_server.py).
 - **Engine:** reuses the C# Lesson 1 retriever, so the same parity notes apply
-  — **BM25 only** (no embeddings). See [`dotnet/lesson-1/README.md`](../lesson-1/README.md).
+  - **BM25 only** (no embeddings). See [`dotnet/lesson-1/README.md`](../lesson-1/README.md).
 - **Cache:** shares the .NET index under `<repoRoot>/.localrag/dotnet/`, so it
   never clobbers the Python index.
 

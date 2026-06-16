@@ -1,18 +1,18 @@
 # AGENTS.md
 
-Guidance for agents working in `local-ai-lab` — a hands-on course for building local AI. Lesson 1
+Guidance for agents working in `local-ai-lab` - a hands-on course for building local AI. Lesson 1
 (RAG) ships as a working Python app; the course site lives in `docs/`.
 
 ## Project Structure & Module Organization
-- `localrag/` — Lesson 1 application code.
-  - `__main__.py` — CLI (`index`, `ask`, `web`); `config.py` — env/.env config (no hard-coded paths).
+- `localrag/` - Lesson 1 application code.
+  - `__main__.py` - CLI (`index`, `ask`, `web`); `config.py` - env/.env config (no hard-coded paths).
   - `extract.py` · `chunk.py` · `store.py` · `retriever.py` · `prompts.py` · `engine.py`.
-  - `providers/` — pluggable LLMs: `claude_code`, `ollama`, `gemini`, `openai`.
-  - `web.py` + `templates/index.html` — Flask drag-and-drop UI.
-- `documents/` — the RAG corpus (drop files here). Committed samples: `sample_manual.md`, `rag_tutorial.md`.
-- `docs/` — GitHub Pages course site: `index.html`, `lesson-1-rag.html`, `lesson-2-mcp.html`, `assets/`.
-- `scripts/` — `script-helpers` submodule + `include.sh`; root `start`/`stop`/`status`/`update`.
-- `tests/` — offline smoke tests.
+  - `providers/` - pluggable LLMs: `claude_code`, `ollama`, `gemini`, `openai`.
+  - `web.py` + `templates/index.html` - Flask drag-and-drop UI.
+- `documents/` - the RAG corpus (drop files here). Committed samples: `sample_manual.md`, `rag_tutorial.md`.
+- `docs/` - GitHub Pages course site: `index.html`, `lesson-1-rag.html`, `lesson-2-mcp.html`, `assets/`.
+- `scripts/` - `script-helpers` submodule + `include.sh`; root `start`/`stop`/`status`/`update`.
+- `tests/` - offline smoke tests.
 
 ## Build, Test, and Development Commands
 ```bash
@@ -30,7 +30,7 @@ Lessons 3+ are config-driven (`lessons/NN-slug/lesson.json`); see
 
 ## Coding Style & Naming Conventions
 - Python, PEP 8, 4-space indent, type hints. `snake_case` functions, `PascalCase` classes.
-- Keep it **tiny and readable** — this is a teaching repo. Prefer small, composable functions.
+- Keep it **tiny and readable** - this is a teaching repo. Prefer small, composable functions.
 - Never hard-code paths; read them from `config.py` / environment.
 - Guard heavy/optional imports (`numpy`, provider SDKs) inside the functions that use them.
 - Course site is plain static HTML/CSS/JS (no build step); `docs/.nojekyll` disables Jekyll.

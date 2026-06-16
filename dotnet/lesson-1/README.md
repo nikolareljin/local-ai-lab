@@ -17,13 +17,13 @@ module (`Config`, `Extract`, `Chunk`, `Store`, `Retriever`, `Prompts`,
 ./run -l 1 --lang csharp index                 # build/refresh the index
 ```
 
-The default AI provider is the **Claude Code CLI** (`claude -p`) — no API key,
+The default AI provider is the **Claude Code CLI** (`claude -p`) - no API key,
 it reuses your existing Claude Code login. Override with
 `RAG_PROVIDER=ollama` (chat via the local Ollama `/api/chat`).
 
 ## Validate (offline smoke test)
 
-No network, no API key, no LLM — this restores/builds, then indexes the committed
+No network, no API key, no LLM - this restores/builds, then indexes the committed
 sample documents and exits `0`:
 
 ```bash
@@ -35,17 +35,17 @@ sample documents and exits `0`:
 ## Check the RAG behaviour (needs an AI provider)
 
 Download the **fictional** story *The Voyage of Caretta the Magnificent*
-([PDF](https://nikolareljin.github.io/local-ai-lab/pdf/The_Magic_Turtle_Astronaut.pdf)) — it's
-user-supplied, not committed — and drop it into `documents/` (or upload it in the web UI). Then ask
+([PDF](https://nikolareljin.github.io/local-ai-lab/pdf/The_Magic_Turtle_Astronaut.pdf)) - it's
+user-supplied, not committed - and drop it into `documents/` (or upload it in the web UI). Then ask
 a grounded question and one the story can't answer:
 
 ```bash
-# Grounded — must cite [The_Magic_Turtle_Astronaut.pdf:page]
+# Grounded - must cite [The_Magic_Turtle_Astronaut.pdf:page]
 ./run -l 1 --lang csharp ask "What was the name of Caretta's ship and where did it travel?"
 
-# Not in the document — stays honest, then labels general knowledge
+# Not in the document - stays honest, then labels general knowledge
 ./run -l 1 --lang csharp ask "Which dog went to space?"
-#   → "... not covered in your documents. (general knowledge — not from your documents)
+#   → "... not covered in your documents. (general knowledge - not from your documents)
 #      ... Laika ... Sputnik 2 in 1957 ..."
 ```
 
@@ -65,6 +65,6 @@ a grounded question and one the story can't answer:
 - **BM25 only.** The embeddings (semantic) retriever is not ported; selecting it
   prints a one-line notice and falls back to BM25.
 - **Providers:** `claude` (default) and `ollama` are ported. `gemini` and
-  `openai` throw a clear "not ported in C# yet — use the Python reference" error.
+  `openai` throw a clear "not ported in C# yet - use the Python reference" error.
 
 Part of the [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/) course.

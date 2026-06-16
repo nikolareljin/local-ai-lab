@@ -10,14 +10,14 @@ identity. We pledge to act and interact in ways that contribute to an open and h
 
 We expect everyone in this community to:
 
-- Be kind, patient, and respectful — especially toward newcomers learning the material.
+- Be kind, patient, and respectful - especially toward newcomers learning the material.
 - Welcome questions and assume good intent; offer and accept constructive feedback gracefully.
 - Focus on what is best for the community and the people learning from it.
 - Take responsibility for mistakes, apologize to those affected, and learn from the experience.
 
-Behavior that harms others — harassment, personal attacks, demeaning or discriminatory comments,
+Behavior that harms others - harassment, personal attacks, demeaning or discriminatory comments,
 publishing others' private information, or other conduct that would reasonably be considered
-inappropriate in a professional setting — is not tolerated.
+inappropriate in a professional setting - is not tolerated.
 
 ## Adoption
 

@@ -2,7 +2,7 @@
 
 **PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON12.pdf) · **Install (Linux · macOS · Windows):** [guide](../INSTALL.md) · [PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)
 
-> **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** — a hands-on course for building local AI.
+> **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** - a hands-on course for building local AI.
 >
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
@@ -18,15 +18,15 @@
 
 **Google's Agent Development Kit (ADK)** is an open-source framework for building, evaluating, and
 deploying agents, designed around **Gemini** but model-agnostic. In this final lesson you rebuild the
-document agent with ADK and run it locally — closing the loop on "the same agent, six different ways."
+document agent with ADK and run it locally - closing the loop on "the same agent, six different ways."
 
 ## What you'll learn
 
-- **ADK agents** — defining an `Agent` with instructions, a model, and tools
-- **Tools** — exposing a Python function (your `search_docs`) as an ADK tool
-- **Sessions & runners** — running the agent locally with `adk run` (CLI) or `adk web` (dev UI)
-- **Gemini integration** — using `gemini-2.5-flash`, plus how to point ADK at other models
-- **Evaluation** — ADK's built-in eval harness for checking agent behavior
+- **ADK agents** - defining an `Agent` with instructions, a model, and tools
+- **Tools** - exposing a Python function (your `search_docs`) as an ADK tool
+- **Sessions & runners** - running the agent locally with `adk run` (CLI) or `adk web` (dev UI)
+- **Gemini integration** - using `gemini-2.5-flash`, plus how to point ADK at other models
+- **Evaluation** - ADK's built-in eval harness for checking agent behavior
 
 ## The design we'll build
 
@@ -51,7 +51,7 @@ root_agent = Agent(
 ```
 
 > **The finale:** the `search_docs` function is, once again, Lesson 1's retriever. Across MCP,
-> Ollama, Semantic Kernel, Bedrock, and ADK, the *capability* never changed — only the framework
+> Ollama, Semantic Kernel, Bedrock, and ADK, the *capability* never changed - only the framework
 > wrapping it. That's the whole point of the course: master the primitives, and every framework is
 > just syntax.
 
@@ -71,8 +71,8 @@ provides the retriever the agent calls.
 
 ## Course complete
 
-You've built the same local-first document agent six ways — from a hand-rolled RAG pipeline up
-through MCP, local function calling, Semantic Kernel, Bedrock Agents, and ADK — and you understand
+You've built the same local-first document agent six ways - from a hand-rolled RAG pipeline up
+through MCP, local function calling, Semantic Kernel, Bedrock Agents, and ADK - and you understand
 every layer. Back to [the course home](https://nikolareljin.github.io/local-ai-lab/).
 
 ---

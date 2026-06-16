@@ -1,6 +1,6 @@
-# Installing dependencies — Linux · macOS · Windows
+# Installing dependencies - Linux · macOS · Windows
 
-> **This project runs with the language toolchains directly — there is no Docker.** You install a
+> **This project runs with the language toolchains directly - there is no Docker.** You install a
 > few tools once and run lessons with `./run -l <N>`. This guide covers **Linux, macOS, and
 > Windows**, and all three supported developer stacks: **Python, Node.js, and C#**.
 
@@ -9,7 +9,7 @@ PDFs of this guide and every lesson live in [`docs/pdf/`](./docs/pdf/) and are l
 
 ---
 
-## 0. How it runs (no Docker) — and the polyglot model
+## 0. How it runs (no Docker) - and the polyglot model
 
 The lessons are plain programs you run with your language's toolchain. Docker is **not** used.
 
@@ -24,7 +24,7 @@ every implemented lesson today. Foundational lessons are also being implemented 
 ```
 
 If a language isn't ported for a lesson yet, `./run` tells you and points to the Python reference.
-See each lesson's **“Dependencies & Installation”** section for its language availability.
+See each lesson's **"Dependencies & Installation"** section for its language availability.
 
 ---
 
@@ -42,11 +42,11 @@ git clone https://github.com/nikolareljin/local-ai-lab.git
 cd local-ai-lab
 ```
 
-### Python 3.10+ (reference stack — recommended for everyone)
+### Python 3.10+ (reference stack - recommended for everyone)
 - **Linux (Debian/Ubuntu):** `sudo apt install -y python3 python3-venv python3-pip`
 - **Linux (Fedora):** `sudo dnf install -y python3 python3-pip`
 - **macOS:** `brew install python`
-- **Windows:** `winget install -e --id Python.Python.3.12`  (or [python.org](https://www.python.org/downloads/) — tick *Add to PATH*)
+- **Windows:** `winget install -e --id Python.Python.3.12`  (or [python.org](https://www.python.org/downloads/) - tick *Add to PATH*)
 
 ### Node.js 18+ (only for `--lang node`)
 - **Linux:** [NodeSource](https://github.com/nodesource/distributions) or `sudo apt install -y nodejs npm`
@@ -75,19 +75,19 @@ python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
-**Windows — PowerShell**
+**Windows - PowerShell**
 ```powershell
 python -m venv venv
 venv\Scripts\Activate.ps1      # if blocked: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 pip install -r requirements.txt
 ```
-**Windows — cmd**
+**Windows - cmd**
 ```bat
 python -m venv venv
 venv\Scripts\activate.bat
 pip install -r requirements.txt
 ```
-`requirements.txt` covers Lessons 1–2: `pypdf`, `python-docx`, `rank-bm25`, `numpy`, `flask`,
+`requirements.txt` covers Lessons 1-2: `pypdf`, `python-docx`, `rank-bm25`, `numpy`, `flask`,
 `requests`, `python-dotenv`, `mcp`. (`./run -l 1` also does this automatically on first use.)
 
 ### Node.js (for ported lessons)
@@ -111,10 +111,10 @@ dotnet build -c Release
 
 ## 3. The default AI: Claude Code CLI (no API key)
 
-Every stack defaults to the **Claude Code CLI** — it uses your existing Claude Code login, so there
+Every stack defaults to the **Claude Code CLI** - it uses your existing Claude Code login, so there
 is **no API key to manage**.
 
-**All platforms (via npm — needs [Node.js](https://nodejs.org) 18+):**
+**All platforms (via npm - needs [Node.js](https://nodejs.org) 18+):**
 ```bash
 npm install -g @anthropic-ai/claude-code
 claude                 # first run signs you in
@@ -146,8 +146,8 @@ ollama pull llama3.1            # chat / function calling
 ollama pull nomic-embed-text   # embeddings (RAG_RETRIEVER=embeddings)
 ```
 
-**Gemini** — key from [aistudio.google.com](https://aistudio.google.com/app/apikey) → `.env`: `GEMINI_API_KEY=...`
-**OpenAI** — key from [platform.openai.com](https://platform.openai.com/api-keys) → `.env`: `OPENAI_API_KEY=...`
+**Gemini** - key from [aistudio.google.com](https://aistudio.google.com/app/apikey) → `.env`: `GEMINI_API_KEY=...`
+**OpenAI** - key from [platform.openai.com](https://platform.openai.com/api-keys) → `.env`: `OPENAI_API_KEY=...`
 
 ---
 
@@ -171,7 +171,7 @@ Legend: ✓ available · ◑ runnable port (BM25 retrieval; `claude`/`ollama` pr
 
 ## 6. Verify your setup (run the tests)
 
-Each language ships an offline smoke test for Lesson 1 — no network, no API key, no LLM. They build
+Each language ships an offline smoke test for Lesson 1 - no network, no API key, no LLM. They build
 the index over the committed sample documents and exit `0` on success. **Copy/paste and check:**
 
 ### One command per language (Linux · macOS · Windows-Git-Bash)
@@ -181,14 +181,14 @@ the index over the committed sample documents and exit `0` on success. **Copy/pa
 ./run -l 1 --lang csharp test    # C# / .NET            → "Indexed N file(s) into M chunk(s)."
 ./run -l 2 test                  # Lesson 2 (MCP) tests (Python)
 ```
-A non-zero exit means something is wrong; a printed `Indexed …` line plus exit `0` means the stack
+A non-zero exit means something is wrong; a printed `Indexed ...` line plus exit `0` means the stack
 (toolchain → extract → chunk → index) works end to end.
 
 ### What "success" looks like
 ```text
 [localrag] Indexed N file(s) into M chunk(s).
 ```
-A printed `Indexed …` line with exit `0` is a pass. The exact counts depend on what's in
+A printed `Indexed ...` line with exit `0` is a pass. The exact counts depend on what's in
 `documents/`: a fresh checkout ships **two** Markdown samples, and the counts grow once you add the
 Caretta PDF below. (Counts also vary slightly by language for PDFs, due to text layout.) Check the
 exit code explicitly if you like:
@@ -200,21 +200,21 @@ exit code explicitly if you like:
 The best proof that RAG reads *your* file is to feed it something no model has seen. **Download and
 read** the short **fictional** story *The Voyage of Caretta the Magnificent*
 ([The_Magic_Turtle_Astronaut.pdf](https://nikolareljin.github.io/local-ai-lab/pdf/The_Magic_Turtle_Astronaut.pdf))
-— a magic turtle astronaut. Read it first so you can judge the answers yourself; because it's
-invented, a plain LLM can't know it. Then add it to the corpus — **drop it into `documents/`, or
-upload it in the web UI** — and ask both a grounded question and one the story can't answer (works in
-any of the three languages — swap in `--lang node` / `--lang csharp`):
+- a magic turtle astronaut. Read it first so you can judge the answers yourself; because it's
+invented, a plain LLM can't know it. Then add it to the corpus - **drop it into `documents/`, or
+upload it in the web UI** - and ask both a grounded question and one the story can't answer (works in
+any of the three languages - swap in `--lang node` / `--lang csharp`):
 
 ```bash
-# 1) Grounded — the answer must cite [The_Magic_Turtle_Astronaut.pdf:page]
+# 1) Grounded - the answer must cite [The_Magic_Turtle_Astronaut.pdf:page]
 ./run -l 1 ask "What was the name of Caretta's ship and where did it travel?"
 #   → The ship was the Ocean's Memory [The_Magic_Turtle_Astronaut.pdf:3]; it travelled to
 #     Alpha Centauri ... Sources: The_Magic_Turtle_Astronaut.pdf:3, ...
 
-# 2) Not in the document — the anti-hallucination prompt stays honest, then labels general knowledge
+# 2) Not in the document - the anti-hallucination prompt stays honest, then labels general knowledge
 ./run -l 1 ask "Which dog went to space?"
 #   → No dog is mentioned in your documents ... This is not covered in your documents.
-#     (general knowledge — not from your documents) The most famous dog in space was Laika,
+#     (general knowledge - not from your documents) The most famous dog in space was Laika,
 #     a Soviet dog who flew aboard Sputnik 2 in 1957 ...
 ```
 If question 1 cites the PDF and question 2 says it's *not in your documents* before adding the
@@ -229,7 +229,7 @@ clearly-labeled Laika fact, RAG + grounding is working. (See LESSON1.md → **Tr
 
 ### Windows without Git Bash (PowerShell / cmd)
 `./run` is a Bash script, so on Windows use **Git Bash** or **WSL** to run the commands above. If you
-prefer native PowerShell/cmd, call each stack directly — these are the same validation steps:
+prefer native PowerShell/cmd, call each stack directly - these are the same validation steps:
 ```powershell
 # Python
 python -m localrag index               # → "Indexed N file(s) into M chunk(s)."
@@ -259,7 +259,7 @@ python3 -m http.server 8000 --directory docs        # → http://localhost:8000/
 # 2) Point the app's Troubleshooting links at your local copy (repo-root .env)
 echo 'DOCS_BASE_URL=http://localhost:8000/' >> .env
 
-# 3) Start the app — the "Troubleshooting →" link and Ollama error hints now open your local page
+# 3) Start the app - the "Troubleshooting →" link and Ollama error hints now open your local page
 ./run -l 1                 # or --lang node | --lang csharp
 ```
 

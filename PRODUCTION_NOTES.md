@@ -1,7 +1,7 @@
 # Production notes - what this demo deliberately keeps simple
 
 `local-ai-lab` is a **teaching project**. It favors small, readable code so you can see exactly how
-each piece works — a retriever, a chunker, a provider adapter, an evaluation gate — without a
+each piece works - a retriever, a chunker, a provider adapter, an evaluation gate - without a
 framework hiding the moving parts. That clarity comes with deliberate trade-offs: the code skips
 hardening that a real deployment would need, and a few "gaps" are themselves the lesson.
 
@@ -9,9 +9,9 @@ This page is the honest list of what you'd add for production, and why it's inte
 
 ## Security
 
-- **Prompt injection is *not* defended against by default — on purpose.** Retrieved document text is
+- **Prompt injection is *not* defended against by default - on purpose.** Retrieved document text is
   fed straight into the prompt, so a malicious document can try to hijack the answer. That failure
-  mode is exactly what **[Lesson 4 — RAG safety & prompt injection](./lessons/04-rag-safety-prompt-injection/)**
+  mode is exactly what **[Lesson 4 - RAG safety & prompt injection](./lessons/04-rag-safety-prompt-injection/)**
   teaches you to see and mitigate. In production you'd apply the defenses from that lesson
   (input/output framing, allow-lists, instruction/data separation, output validation).
 - **The web UI is single-user and unauthenticated.** `localrag web` defaults to binding `127.0.0.1`, but can be exposed with `--host`; it has no
@@ -43,7 +43,7 @@ This page is the honest list of what you'd add for production, and why it's inte
 
 ## Robustness & code quality
 
-- **Type coverage** is partial — the package carries type hints; the lesson and tooling scripts are
+- **Type coverage** is partial - the package carries type hints; the lesson and tooling scripts are
   intentionally untyped.
 - Network calls use fixed timeouts but **no retries/backoff**; add those for flaky providers.
 - A little formatting logic (the `[source:page]` citation block) is **duplicated across modules**; a
