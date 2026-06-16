@@ -70,6 +70,9 @@ EMOJI = {
     "🏠": "", "💻": "", "👤": "", "💡": "", "🎓": "", "📄": "", "📘": "",
     "🐙": "", "💼": "", "🧰": "", "🧩": "", "🔗": "", "▶": "▶",
     "✅": "[done] ", "🚧": "[planned] ", "⚠": "", "◔": "(planned)",
+    # ⭐ (U+2B50) is a BMP char, so the astral-plane filter below won't strip it; map it
+    # explicitly to text so "⭐ the repo" doesn't render as a missing-glyph box.
+    "⭐": "Star",
 }
 
 
