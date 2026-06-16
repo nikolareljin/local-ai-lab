@@ -40,15 +40,20 @@ def create_app(base_config: Config | None = None) -> Flask:
         switching back to BM25 when the server defaults to embeddings.
         """
         data = request.get_json(silent=True) or {}
-        overrides: dict[str, str] = {}
-        for key in ("provider", "retriever"):
+
+        def _pick(key: str) -> str | None:
             value = data.get(key) or request.args.get(key)
-            if value:
-                overrides[key] = str(value).lower()
-        if not overrides:
+            return str(value).lower() if value else None
+
+        provider = _pick("provider")
+        retriever = _pick("retriever")
+        if provider is None and retriever is None:
             return base_config
-        # Keys are constrained to the str fields provider/retriever.
-        return dataclasses.replace(base_config, **overrides)  # type: ignore[arg-type]
+        return dataclasses.replace(
+            base_config,
+            provider=provider or base_config.provider,
+            retriever=retriever or base_config.retriever,
+        )
 
     @app.get("/")
     def index():

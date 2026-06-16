@@ -23,7 +23,7 @@ def _config(tmp_path):
 
 def test_engine_builds_and_reuses_bm25_retriever(tmp_path):
     config = _config(tmp_path)
-    engine._cache.update(retriever=None, key=None)  # isolate from other tests
+    engine.refresh_index(config)  # public reset: build the index and clear the cache
 
     retriever = engine.get_retriever(config)
     assert retriever.search("how do I reset the device", k=3), "expected BM25 hits"

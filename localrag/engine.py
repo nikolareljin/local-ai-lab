@@ -8,17 +8,17 @@ switched. Thread-safe so the Flask dev server can handle concurrent requests.
 from __future__ import annotations
 
 import threading
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from .chunk import Chunk
 from .config import Config
 from .prompts import SYSTEM_PROMPT, build_user_prompt
 from .providers import get_provider
-from .retriever import build_retriever
+from .retriever import Retriever, build_retriever
 from .store import build_index, is_stale, load_chunks
 
 _lock = threading.Lock()
-_cache: Dict[str, object] = {"retriever": None, "key": None}
+_cache: Dict[str, Any] = {"retriever": None, "key": None}
 
 
 def refresh_index(config: Config) -> tuple[list[Chunk], int]:
@@ -30,7 +30,7 @@ def refresh_index(config: Config) -> tuple[list[Chunk], int]:
     return chunks, n_files
 
 
-def get_retriever(config: Config):
+def get_retriever(config: Config) -> Retriever:
     """Return a retriever for the current docs, rebuilding only when needed."""
     with _lock:
         if is_stale(config):
