@@ -40,11 +40,11 @@ question ┤
 ## Design choices
 
 - **No vector database, no framework.** The index is a JSON file; embeddings (when used) are an
-  `.npz` file. This keeps the code readable and the demo trivial to run — the teaching goal.
+  `.npz` file. This keeps the code readable and the demo trivial to run - the teaching goal.
 - **Provider-agnostic.** One `chat(system, user)` interface, four adapters, switched by
   `RAG_PROVIDER`. The default (`claude`) shells out to the Claude Code CLI, so there's no API key.
 - **Retrieval retrieves; the LLM decides.** The retriever returns top-k candidates by score (no
-  absolute cutoff — BM25 IDF can go negative on tiny corpora); the grounding prompt judges relevance.
+  absolute cutoff - BM25 IDF can go negative on tiny corpora); the grounding prompt judges relevance.
 - **Never dead-end.** Embeddings mode falls back to BM25 with a clear message if no embed provider
   is reachable.
 - **Auto-refresh.** Files are fingerprinted by `(path, mtime, size)`; dropping a new file into

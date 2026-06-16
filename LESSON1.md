@@ -2,14 +2,15 @@
 
 **PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON1.pdf) · **Install (Linux · macOS · Windows):** [guide](./INSTALL.md) · [PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)
 
-> **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** — a hands-on course for building local AI.
+> **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** - a hands-on course for building local AI.
 >
 > **Interactive version (slides):** https://nikolareljin.github.io/local-ai-lab/lesson-1-rag.html
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 > **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
+> **Time:** ~60-90 min · **Prerequisites:** Python basics (no prior AI) · full objectives in [SYLLABUS.md](./SYLLABUS.md)
 >
-> **Lessons:** **1 · RAG (you are here)** → [2 · MCP](./LESSON2.md) → [3 · Hybrid retrieval](./lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](./lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](./lessons/05-rag-evaluation-regression-testing/README.md) → 6 · Repo assistant → 7 · LangChain → … → 15 · Docs from changes
+> **Lessons:** **1 · RAG (you are here)** → [2 · MCP](./LESSON2.md) → [3 · Hybrid retrieval](./lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](./lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](./lessons/05-rag-evaluation-regression-testing/README.md) → 6 · Repo assistant → 7 · LangChain → ... → 15 · Docs from changes
 
 ---
 
@@ -17,7 +18,7 @@
 
 Retrieval-Augmented Generation (RAG) makes a language model answer questions about *your*
 documents instead of guessing from its training data. In this lesson you build a complete, working
-RAG app — drag in a PDF, ask a question, get an answer grounded in the document **with citations** —
+RAG app - drag in a PDF, ask a question, get an answer grounded in the document **with citations** -
 in a few hundred lines of readable Python, no heavyweight frameworks.
 
 By the end you will understand every stage of the pipeline:
@@ -27,12 +28,12 @@ documents/ ──▶ extract ──▶ chunk ──▶ index ──▶ retrieve 
 ```
 
 - **What** RAG is and **why** it beats a bare LLM for private data
-- **Extraction** — turning PDF/DOCX/TXT/MD into clean, citable text
-- **Chunking** — splitting text so retrieval is precise and context survives
-- **Indexing** — caching so you don't re-process unchanged files
-- **Retrieval** — two techniques side by side: **lexical BM25** and **semantic embeddings**
-- **Grounding** — the anti-hallucination prompt that cites sources and admits ignorance
-- **Providers** — one interface, four back ends (Claude Code, Ollama, Gemini, OpenAI)
+- **Extraction** - turning PDF/DOCX/TXT/MD into clean, citable text
+- **Chunking** - splitting text so retrieval is precise and context survives
+- **Indexing** - caching so you don't re-process unchanged files
+- **Retrieval** - two techniques side by side: **lexical BM25** and **semantic embeddings**
+- **Grounding** - the anti-hallucination prompt that cites sources and admits ignorance
+- **Providers** - one interface, four back ends (Claude Code, Ollama, Gemini, OpenAI)
 - A real **drag-and-drop web UI** over the same engine
 
 > **Why from scratch?** Most tutorials teach you to glue frameworks together. Here you write the
@@ -45,7 +46,7 @@ documents/ ──▶ extract ──▶ chunk ──▶ index ──▶ retrieve 
 ## Concept: why RAG?
 
 A language model only knows what it saw during training. Ask it about your company's internal
-manual and it will either refuse or — worse — **hallucinate** a confident, wrong answer. RAG fixes
+manual and it will either refuse or - worse - **hallucinate** a confident, wrong answer. RAG fixes
 this with a simple idea:
 
 1. **Retrieve** the passages from your documents that are most relevant to the question.
@@ -64,7 +65,7 @@ python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt          # pypdf python-docx rank-bm25 numpy requests python-dotenv flask
 ```
 
-The simplest AI to answer questions is the **Claude Code CLI** — if you can run `claude` in your
+The simplest AI to answer questions is the **Claude Code CLI** - if you can run `claude` in your
 terminal, you're ready, no API key. Ollama / Gemini / OpenAI are wired in at Step 6.
 
 ---
@@ -72,7 +73,7 @@ terminal, you're ready, no API key. Ollama / Gemini / OpenAI are wired in at Ste
 ## Step 1 · Extract text from documents
 
 RAG starts by turning files into plain text. Different formats need different libraries, so we
-dispatch on the file extension and normalize everything to a list of **pages** — each carrying its
+dispatch on the file extension and normalize everything to a list of **pages** - each carrying its
 text, a page number, and the source filename. We need those last two for citations.
 
 **`localrag/extract.py`**
@@ -121,7 +122,7 @@ def extract_pages(path: Path) -> List[Page]:
 ```
 
 **Why pages?** PDFs have real pages, so a citation like `manual.pdf:4` points the reader to the
-exact spot. Formats without pages (DOCX/TXT/MD) collapse to a single page — still citable by name.
+exact spot. Formats without pages (DOCX/TXT/MD) collapse to a single page - still citable by name.
 
 > **Teaching point.** Extraction is the unglamorous 80% of real RAG. Garbage text in → garbage
 > answers out. Scanned PDFs need OCR; tables and multi-column layouts need smarter parsers. We keep
@@ -176,9 +177,9 @@ def chunk_pages(pages, size=1000, overlap=200):
     return chunks
 ```
 
-> **Teaching point — chunk size is a dial.** Too large and retrieval is imprecise (you pull in
-> irrelevant text); too small and you lose context (the answer is split across chunks). 800–1200
-> chars with 10–20% overlap is a sane default. Tuning this per corpus is half the art of RAG.
+> **Teaching point - chunk size is a dial.** Too large and retrieval is imprecise (you pull in
+> irrelevant text); too small and you lose context (the answer is split across chunks). 800-1200
+> chars with 10-20% overlap is a sane default. Tuning this per corpus is half the art of RAG.
 
 ---
 
@@ -186,7 +187,7 @@ def chunk_pages(pages, size=1000, overlap=200):
 
 Now extract + chunk every file in `documents/` and cache the result so we don't redo the work on
 every question. We fingerprint each file by `(path, mtime, size)`; if nothing changed, we reuse the
-cache. **This is the "drop a file and ask again" loop** — new files are picked up automatically.
+cache. **This is the "drop a file and ask again" loop** - new files are picked up automatically.
 
 **`localrag/store.py`** (core)
 
@@ -211,7 +212,7 @@ def build_index(config):
     return chunks, len(files)
 ```
 
-The index is just a JSON file. No database, no vector store to run — perfect for a local demo and
+The index is just a JSON file. No database, no vector store to run - perfect for a local demo and
 trivial to inspect (`cat .localrag/index.json`).
 
 ---
@@ -220,7 +221,7 @@ trivial to inspect (`cat .localrag/index.json`).
 
 Given a question, which chunks are relevant? The simplest robust answer is **BM25**, a classic
 keyword-ranking algorithm (a smarter TF-IDF). It needs no model and no embedding service, so it
-works with *any* provider — including Claude Code, which can't produce embeddings.
+works with *any* provider - including Claude Code, which can't produce embeddings.
 
 **`localrag/retriever.py`** (BM25)
 
@@ -249,9 +250,9 @@ class Bm25Retriever:
 ```
 
 > **A real bug worth knowing.** BM25's IDF term goes *negative* when a word appears in every
-> chunk — which happens constantly on a tiny corpus. An early version of this code filtered results
+> chunk - which happens constantly on a tiny corpus. An early version of this code filtered results
 > with `score > 0` and returned **nothing**, because on a 2-chunk corpus every score was negative.
-> The fix: don't apply an absolute score cutoff — return the top-k by rank and let the grounding
+> The fix: don't apply an absolute score cutoff - return the top-k by rank and let the grounding
 > prompt judge relevance. **Retrieval retrieves; the LLM decides.** This kind of small, non-obvious
 > failure is exactly why building it yourself is worth it.
 
@@ -273,7 +274,7 @@ the user's own documents. Follow these rules exactly:
 the documents, cite the source like [filename:page].
 2. If the answer is not contained in the document context, say so plainly: \
 "This is not covered in your documents." You may then add general knowledge, but \
-you MUST prefix it with "(general knowledge — not from your documents)".
+you MUST prefix it with "(general knowledge - not from your documents)".
 3. Never invent document contents, quotes, or citations. Only cite sources that \
 appear in the context.
 4. Be concise. Prefer the documents' own wording.
@@ -292,8 +293,8 @@ def build_user_prompt(question, chunks):
 
 > **Teaching point.** RAG quality is *retrieval* quality + *prompt* quality. A perfect retriever
 > with a sloppy prompt still hallucinates; a strict prompt with bad retrieval answers "not in your
-> documents" to everything. You need both. The rules above — cite, admit ignorance, label general
-> knowledge — are the minimum viable anti-hallucination contract.
+> documents" to everything. You need both. The rules above - cite, admit ignorance, label general
+> knowledge - are the minimum viable anti-hallucination contract.
 
 ---
 
@@ -326,7 +327,7 @@ def get_provider(name, config):
     raise ValueError(f"Unknown provider '{name}'")
 ```
 
-The **default provider shells out to the Claude Code CLI** — no API key, it reuses your existing
+The **default provider shells out to the Claude Code CLI** - no API key, it reuses your existing
 login:
 
 **`localrag/providers/claude_code.py`**
@@ -355,7 +356,7 @@ Ollama, Gemini, and OpenAI are equally small REST clients (`POST /api/chat`, `ge
 `/chat/completions`). Each `chat()` takes the same `(system, user)` and returns a string. That
 uniformity is the whole point.
 
-> **Teaching point.** This is the pattern every "LLM framework" is built around — a provider
+> **Teaching point.** This is the pattern every "LLM framework" is built around - a provider
 > interface plus adapters. Once you've written it by hand, LangChain's `ChatModel` and friends stop
 > looking like magic. (You'll see exactly that in [Lesson 7 · LangChain](./roadmap/LESSON7-langchain.md).)
 
@@ -400,7 +401,7 @@ That's a **complete RAG system**. Everything below is upgrades.
 
 ## Step 8 · Upgrade: semantic retrieval with embeddings
 
-BM25 matches **words**. "How do I power-cycle it?" won't match a doc that says "restart" — no shared
+BM25 matches **words**. "How do I power-cycle it?" won't match a doc that says "restart" - no shared
 keywords. **Embeddings** fix this by matching **meaning**: we turn each chunk into a vector and rank
 by cosine similarity to the question's vector.
 
@@ -448,10 +449,10 @@ def build_retriever(chunks, config):
 RAG_RETRIEVER=embeddings RAG_EMBED_PROVIDER=ollama python -m localrag ask "power-cycle steps?"
 ```
 
-> **Teaching point — BM25 vs embeddings.** BM25 is free, instant, and great for exact terms,
+> **Teaching point - BM25 vs embeddings.** BM25 is free, instant, and great for exact terms,
 > names, and codes. Embeddings catch paraphrases and concepts but cost an embed call and a vector
 > store. Production systems often run **both** (hybrid retrieval) and merge the rankings. You now
-> have both — try the same question each way and watch the difference.
+> have both - try the same question each way and watch the difference.
 
 ---
 
@@ -502,10 +503,10 @@ python -m localrag ask "How long is the warranty?"
 
 python -m localrag ask "What is the capital of France?"
 # → This is not covered in your documents.
-#   (general knowledge — not from your documents) The capital of France is Paris.
+#   (general knowledge - not from your documents) The capital of France is Paris.
 ```
 
-That clean separation — cited facts vs. clearly-labeled general knowledge — is the payoff of the
+That clean separation - cited facts vs. clearly-labeled general knowledge - is the payoff of the
 grounding prompt. It's what makes RAG trustworthy.
 
 A tiny **offline test** locks in the retrieval core (no network, no LLM):
@@ -523,33 +524,32 @@ pytest -q      # 4 passed
 
 ---
 
-## Try it yourself — verify RAG on a brand-new document
+## Try it yourself - verify RAG on a brand-new document
 
 The surest way to prove a RAG system actually *reads your files* (instead of reciting training
 data) is to feed it something no model has ever seen. Download this short **fictional** story and
-watch the app answer questions about it — with citations.
+watch the app answer questions about it - with citations.
 
-**Download:** [The_Magic_Turtle_Astronaut.pdf](https://nikolareljin.github.io/local-ai-lab/pdf/The_Magic_Turtle_Astronaut.pdf)
-— it's also in the repo at `docs/pdf/The_Magic_Turtle_Astronaut.pdf`.
+**Download:** [The_Magic_Turtle_Astronaut.pdf](https://nikolareljin.github.io/local-ai-lab/pdf/The_Magic_Turtle_Astronaut.pdf) - it's also in the repo at `docs/pdf/The_Magic_Turtle_Astronaut.pdf`.
 
 It's a made-up legend, *"The Voyage of Caretta the Magnificent,"* so no language model could know
 its details unless it read the file.
 
 1. Start the app: `./run -l 1` (or `python -m localrag web`) and open the page.
-2. **Drag the PDF onto the dropzone** (or click to browse) — it indexes automatically.
-3. Ask away — and always check the `Sources:` line.
+2. **Drag the PDF onto the dropzone** (or click to browse) - it indexes automatically.
+3. Ask away - and always check the `Sources:` line.
 
-**Questions the story can answer** (grounded — the answer should cite the file):
+**Questions the story can answer** (grounded - the answer should cite the file):
 
-- What was the name of the magic turtle, and what species was she? → *Caretta; species Chelonia mythica* `[…:2]`
-- Who discovered the turtle's secret, and how? → *Dr. Yuki Tanaka — her shell glowed under UV light and she registered no age* `[…:2]`
-- What was the spaceship called, and how long did the journey to Alpha Centauri take? → *the Ocean's Memory; twelve years* `[…:3]`
-- What planet did Caretta discover, and which star does it orbit? → *Nuevo Edén, orbiting Alpha Centauri B* `[…:3]`
-- On what date was the habitable planet discovered? → *2 May 2126* `[…:3]`
-- How did the turtle save the mission when the cooling line was damaged? → *she sensed the wrongness through her shell and woke the engineer, Commander Adaeze Okafor, in time to seal the breach* `[…:3]`
-- Where did Caretta choose to live after returning to Earth? → *the tide pools of the Galápagos* `[…:4]`
+- What was the name of the magic turtle, and what species was she? → *Caretta; species Chelonia mythica* `[...:2]`
+- Who discovered the turtle's secret, and how? → *Dr. Yuki Tanaka - her shell glowed under UV light and she registered no age* `[...:2]`
+- What was the spaceship called, and how long did the journey to Alpha Centauri take? → *the Ocean's Memory; twelve years* `[...:3]`
+- What planet did Caretta discover, and which star does it orbit? → *Nuevo Edén, orbiting Alpha Centauri B* `[...:3]`
+- On what date was the habitable planet discovered? → *2 May 2126* `[...:3]`
+- How did the turtle save the mission when the cooling line was damaged? → *she sensed the wrongness through her shell and woke the engineer, Commander Adaeze Okafor, in time to seal the breach* `[...:3]`
+- Where did Caretta choose to live after returning to Earth? → *the tide pools of the Galápagos* `[...:4]`
 
-**Questions that are NOT in the story** — these should trigger the honest *"This is not covered in
+**Questions that are NOT in the story** - these should trigger the honest *"This is not covered in
 your documents"* response. **This is the important test**: the anti-hallucination prompt staying
 honest instead of inventing an answer.
 
@@ -557,40 +557,40 @@ honest instead of inventing an answer.
 - What did the turtle eat during the twelve-year voyage?
 - Who was the President of Earth when the mission launched?
 
-**The clearest single test — grounding *and* labeled general knowledge in one answer.** Ask:
+**The clearest single test - grounding *and* labeled general knowledge in one answer.** Ask:
 
 ```bash
 ./run -l 1 ask "Which dog went to space?"
 ```
 
-The story is about a *turtle*, Caretta — there is no dog in it. A well-behaved RAG system should
+The story is about a *turtle*, Caretta - there is no dog in it. A well-behaved RAG system should
 (1) say it's not in your documents, and (2) add the real-world answer **clearly labeled** as general
 knowledge, so you can tell the two apart:
 
 ```text
 No dog is mentioned in your documents. The documents describe a magic turtle named
-Caretta ... [The_Magic_Turtle_Astronaut.pdf:2] — not a dog.
+Caretta ... [The_Magic_Turtle_Astronaut.pdf:2] - not a dog.
 
 This is not covered in your documents.
 
-(general knowledge — not from your documents) The most famous dog in space was Laika,
+(general knowledge - not from your documents) The most famous dog in space was Laika,
 a Soviet dog who flew aboard Sputnik 2 in 1957, becoming the first animal to orbit Earth.
 
 Sources: The_Magic_Turtle_Astronaut.pdf:2, rag_tutorial.md:1
 ```
 
-That separation — *cited facts from your file* vs. *clearly-labeled general knowledge* — is exactly
+That separation - *cited facts from your file* vs. *clearly-labeled general knowledge* - is exactly
 what the anti-hallucination prompt buys you.
 
 > **One nice touch for a talk:** ask *"What is the nearest star system to the Sun?"* The story states
 > Alpha Centauri is ~4.25 light-years away, so the app answers **from the document, with a citation**,
-> even though it's also general knowledge — a clean way to show retrieval preferring *your* text.
+> even though it's also general knowledge - a clean way to show retrieval preferring *your* text.
 
 > **Why this works:** the story is fiction, so a bare LLM would either refuse or invent details.
-> Right names, ship, planet, and dates — each with a `[file:page]` citation — prove the answer came
+> Right names, ship, planet, and dates - each with a `[file:page]` citation - prove the answer came
 > from **your uploaded file**, not the model's memory. That's RAG doing its job.
 
-Prefer the terminal? Drop the PDF you downloaded and read above into `documents/`, then ask — in
+Prefer the terminal? Drop the PDF you downloaded and read above into `documents/`, then ask - in
 **any of the three languages** (same corpus, same grounded answer):
 
 ```bash
@@ -615,7 +615,7 @@ You built, from scratch:
 | Providers | one interface, four back ends, switched by env var |
 | Web UI | drag-and-drop, same engine underneath |
 
-No LangChain, no vector database, no cloud — and you understand every line.
+No LangChain, no vector database, no cloud - and you understand every line.
 
 ## Exercises
 
@@ -626,7 +626,7 @@ No LangChain, no vector database, no cloud — and you understand every line.
 
 ## Next lesson
 
-[**Lesson 2 · MCP servers →**](./LESSON2.md) ([interactive](https://nikolareljin.github.io/local-ai-lab/lesson-2-mcp.html)) —
+[**Lesson 2 · MCP servers →**](./LESSON2.md) ([interactive](https://nikolareljin.github.io/local-ai-lab/lesson-2-mcp.html)) -
 expose this document search as a Model Context Protocol tool so Claude Code can query your
 `documents/` folder natively, no copy-paste required.
 

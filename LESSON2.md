@@ -2,20 +2,21 @@
 
 **PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON2.pdf) · **Install (Linux · macOS · Windows):** [guide](./INSTALL.md) · [PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)
 
-> **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** — a hands-on course for building local AI.
+> **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** - a hands-on course for building local AI.
 >
 > **Interactive version (slides):** https://nikolareljin.github.io/local-ai-lab/lesson-2-mcp.html
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab · the working server is [`mcp_server.py`](./mcp_server.py)
+> **Time:** ~30-45 min · **Prerequisites:** Lesson 1 · full objectives in [SYLLABUS.md](./SYLLABUS.md)
 >
-> **Lessons:** [1 · RAG](./LESSON1.md) → **2 · MCP (you are here)** → [3 · Hybrid retrieval](./lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](./lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](./lessons/05-rag-evaluation-regression-testing/README.md) → 6 · Repo assistant → 7 · LangChain → … → 15 · Docs from changes
+> **Lessons:** [1 · RAG](./LESSON1.md) → **2 · MCP (you are here)** → [3 · Hybrid retrieval](./lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](./lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](./lessons/05-rag-evaluation-regression-testing/README.md) → 6 · Repo assistant → 7 · LangChain → ... → 15 · Docs from changes
 >
 > **Status: complete & working.** Runnable code: [`mcp_server.py`](./mcp_server.py), tested by
 > [`tests/test_mcp.py`](./tests/test_mcp.py). Runs 100% locally.
 >
 > **Polyglot:** this lesson ships in **Python** (reference, below), **Node.js**
 > ([`node/lesson-2`](./node/lesson-2)) and **C# / .NET 8**
-> ([`dotnet/lesson-2`](./dotnet/lesson-2)) — each on its official MCP SDK, each
+> ([`dotnet/lesson-2`](./dotnet/lesson-2)) - each on its official MCP SDK, each
 > reusing its own Lesson 1 retriever. Run the demo of any of them with `./run -l 2 --lang python|node|csharp demo` (bare `./run -l 2` opens the interactive tool GUI).
 
 ---
@@ -52,10 +53,10 @@ model's answer.
 
 Three ideas to hold onto:
 
-- **Tools** — functions the model can call (here: `search_docs`, `list_documents`).
-- **Transport** — we use **stdio**: the host launches your server as a subprocess and talks over
+- **Tools** - functions the model can call (here: `search_docs`, `list_documents`).
+- **Transport** - we use **stdio**: the host launches your server as a subprocess and talks over
   stdin/stdout. (HTTP/SSE transports also exist for remote servers.)
-- **The handshake** — `initialize` → `list tools` → `call tool`.
+- **The handshake** - `initialize` → `list tools` → `call tool`.
 
 **Why it matters:** RAG you can call from *any* MCP-aware client, with no bespoke UI. Your private
 documents become a first-class capability of the assistant itself.
@@ -64,7 +65,7 @@ documents become a first-class capability of the assistant itself.
 
 ## Prerequisites
 
-Finish [Lesson 1](./LESSON1.md) — the server is a thin wrapper over the retriever you built there.
+Finish [Lesson 1](./LESSON1.md) - the server is a thin wrapper over the retriever you built there.
 Then add the official Python SDK:
 
 ```bash
@@ -79,7 +80,7 @@ The SDK ships **FastMCP** (a high-level server API) and an **stdio client** we'l
 
 Create `mcp_server.py`. `FastMCP` gives you a server object; tools are just decorated functions.
 Their **docstring becomes the description** the model reads, and the **type hints become the input
-schema** — so write them for the model.
+schema** - so write them for the model.
 
 ```python
 from mcp.server.fastmcp import FastMCP
@@ -127,7 +128,7 @@ def search_docs(query: str, k: int = 5) -> str:
 ```
 
 > **The docstring is a prompt.** The model reads it to decide *when* to call the tool, so it
-> explicitly says "to ground answers… instead of relying on training data." Good tool descriptions
+> explicitly says "to ground answers... instead of relying on training data." Good tool descriptions
 > are as important as good code.
 
 ---
@@ -147,7 +148,7 @@ def list_documents() -> str:
 ```
 
 > **Tool design tip:** keep each tool small and single-purpose with a clear name. The model
-> composes them — it might call `list_documents`, then `search_docs` — just like you'd chain
+> composes them - it might call `list_documents`, then `search_docs` - just like you'd chain
 > functions.
 
 The complete file is [`mcp_server.py`](./mcp_server.py).
@@ -163,7 +164,7 @@ That's exactly how a host like Claude Code launches a local server.
 python mcp_server.py        # waits silently for an MCP client to connect
 ```
 
-> It looks like it's hanging — that's correct. The server is waiting for a client to speak the
+> It looks like it's hanging - that's correct. The server is waiting for a client to speak the
 > protocol over stdin. You won't talk to it by hand; the next step drives it with a client.
 
 ---
@@ -171,7 +172,7 @@ python mcp_server.py        # waits silently for an MCP client to connect
 ## Step 5 · Test it with an stdio client
 
 The SDK includes a client. This spawns the server, does the handshake, lists tools, and calls
-`search_docs` — a real integration test, **no LLM needed**.
+`search_docs` - a real integration test, **no LLM needed**.
 
 ```python
 # tests/test_mcp.py (essence)
@@ -196,7 +197,7 @@ pytest -q tests/test_mcp.py     # passes: tools listed, cited passage returned
 ```
 
 > **The handshake in code:** `initialize()` → `list_tools()` → `call_tool()`. That's the entire
-> MCP lifecycle. The test asserts the result contains `power button` and `sample_manual.md` —
+> MCP lifecycle. The test asserts the result contains `power button` and `sample_manual.md` -
 > grounded, cited, verified.
 
 ---
@@ -216,7 +217,7 @@ Claude Code from elsewhere. (Equivalent to editing your MCP config JSON by hand.
 
 ---
 
-## Step 7 · See it work — RAG, native to the assistant
+## Step 7 · See it work - RAG, native to the assistant
 
 Open Claude Code in the repo and just ask:
 
@@ -228,7 +229,7 @@ Claude: (calls search_docs "reset device")
         three times. [sample_manual.md:1]
 ```
 
-Your local, private documents are now a tool the assistant uses on its own initiative — the same
+Your local, private documents are now a tool the assistant uses on its own initiative - the same
 retriever, reachable from any MCP host.
 
 ---
@@ -237,13 +238,13 @@ retriever, reachable from any MCP host.
 
 | Piece | What it does |
 |-------|--------------|
-| `FastMCP("…")` | the server; handles all protocol plumbing |
+| `FastMCP("...")` | the server; handles all protocol plumbing |
 | `@mcp.tool()` | turns a function into a callable tool (docstring = description, hints = schema) |
 | `search_docs` / `list_documents` | your tools, reusing the Lesson 1 engine |
 | `mcp.run()` | serves over stdio for the host to launch |
 | `claude mcp add` | registers it so Claude Code can call it |
 
-> **The through-line:** `search_docs` is the same capability you'll rebuild in every later lesson —
+> **The through-line:** `search_docs` is the same capability you'll rebuild in every later lesson -
 > as an [Ollama function call](./roadmap/LESSON9-ollama.md), a [Semantic Kernel plugin](./roadmap/LESSON10-semantic-kernel.md), a
 > [Bedrock action group](./roadmap/LESSON11-bedrock.md), and a [Google ADK tool](./roadmap/LESSON12-google-adk.md). Master the primitive
 > once; the frameworks are just wrappers.
@@ -256,8 +257,8 @@ retriever, reachable from any MCP host.
 
 ## Other languages (polyglot)
 
-MCP is multi-language, and so is this lesson. The same two tools — `search_docs`
-and `list_documents`, same `[filename:page]` citation format — are implemented
+MCP is multi-language, and so is this lesson. The same two tools - `search_docs`
+and `list_documents`, same `[filename:page]` citation format - are implemented
 on each language's **official** MCP SDK, reusing that language's Lesson 1
 retriever. No LLM is needed to test any of them; the demo client drives the
 server over stdio and prints cited passages.
@@ -283,7 +284,7 @@ the [interactive slides](https://nikolareljin.github.io/local-ai-lab/lesson-2-mc
 
 ## Next lesson
 
-[**Lesson 3 · Hybrid Retrieval & Reranking →**](./lessons/03-hybrid-retrieval-reranking/README.md) — fuse
+[**Lesson 3 · Hybrid Retrieval & Reranking →**](./lessons/03-hybrid-retrieval-reranking/README.md) - fuse
 BM25 with a semantic arm using Reciprocal Rank Fusion, then rerank the merged list.
 
 ---

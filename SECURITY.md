@@ -6,7 +6,7 @@ prompt injection** (Lesson 4). Security reports are taken seriously.
 
 ## Reporting a vulnerability
 
-**Please report privately — do not open a public issue or PR for a security problem.**
+**Please report privately - do not open a public issue or PR for a security problem.**
 
 Email **nikola.reljin@gmail.com** with:
 
@@ -29,5 +29,5 @@ upstream), and findings that require a compromised local machine to exploit.
 
 ## Good to know
 
-Lessons run entirely on your machine and use placeholder corpora. Never commit real secrets — copy
+Lessons run entirely on your machine and use placeholder corpora. Never commit real secrets - copy
 the provided `.env.example` to a local `.env`, and keep API keys out of documents you index.

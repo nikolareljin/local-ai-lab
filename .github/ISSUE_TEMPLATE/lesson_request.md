@@ -16,7 +16,7 @@ assignees: []
 
 ## Learning objectives
 
-<!-- What should a reader be able to do after finishing? 2–4 concrete outcomes. -->
+<!-- What should a reader be able to do after finishing? 2-4 concrete outcomes. -->
 
 -
 -
@@ -27,7 +27,7 @@ assignees: []
 
 ## Languages
 
-- [ ] Python (reference — required)
+- [ ] Python (reference - required)
 - [ ] Node.js
 - [ ] C# / .NET
 

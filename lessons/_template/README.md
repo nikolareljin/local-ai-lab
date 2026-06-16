@@ -1,6 +1,6 @@
 # Lesson N · TITLE
 
-> **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** — a hands-on course for building local AI.
+> **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** - a hands-on course for building local AI.
 >
 > **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
 >
@@ -11,7 +11,7 @@
 
 ## What you'll learn
 
-- …
+- ...
 
 ## The demo
 
@@ -24,11 +24,11 @@ Describe the demo. Run it from the repo root:
 
 ## Concept
 
-> **Teaching point:** …
+> **Teaching point:** ...
 
 ## From demo to production
 
-- …
+- ...
 
 ---
 
