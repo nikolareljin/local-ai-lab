@@ -472,13 +472,13 @@ def _nav_html(base="./"):
             items.append((n, m.get("title", ""), f"lesson-{n}-{slug}.html"))
     href = lambda p: html.escape(base + p, quote=True)
     links = "".join(f'<a href="{href(h)}">{n} · {_esc(t)}</a>' for n, t, h in items)
-    return (f'<a href="{href("index.html")}">Home</a>'
-            '<details class="nav-dd"><summary>Lessons</summary>'
+    return ('<details class="nav-dd"><summary>Lessons</summary>'
             f'<div class="nav-dd-menu">{links}</div></details>'
             f'<a href="{href("documentation.html")}">Documentation</a>'
             f'<a href="{href("pdf/CHEATSHEET.pdf")}" target="_blank" rel="noopener">Cheat-sheet</a>'
             f'<a href="{href("troubleshooting.html")}">Troubleshooting</a>'
-            f'<a href="{href("about.html")}">About</a>')
+            f'<a href="{href("about.html")}">About</a>'
+            f'<a href="{href("pdf/INSTALL.pdf")}" target="_blank" rel="noopener">Install</a>')
 
 
 def render_html(number, ldir, lesson, lang=None, assets_href="/assets", media_base="", nav_base="./"):
