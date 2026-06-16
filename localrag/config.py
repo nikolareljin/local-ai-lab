@@ -21,9 +21,11 @@ def _root() -> Path:
 
 def _pos_int(value: str | None, default: int) -> int:
     """Parse a positive int, falling back to default on missing/non-numeric/<=0."""
+    if value is None:
+        return default
     try:
         n = int(value)
-    except (TypeError, ValueError):
+    except ValueError:
         return default
     return n if n > 0 else default
 
@@ -76,7 +78,10 @@ def load_config() -> Config:
         linkedin_url=os.getenv("LINKEDIN_URL", "https://www.linkedin.com/in/nikolareljin"),
         github_url=os.getenv("GITHUB_URL", "https://github.com/nikolareljin/local-ai-lab"),
         tutorial_url=os.getenv("TUTORIAL_URL", "https://nikolareljin.github.io/local-ai-lab/"),
-        docs_base_url=(os.getenv("DOCS_BASE_URL") or "https://nikolareljin.github.io/local-ai-lab/").rstrip("/") + "/",
+        docs_base_url=(
+            os.getenv("DOCS_BASE_URL") or "https://nikolareljin.github.io/local-ai-lab/"
+        ).rstrip("/")
+        + "/",
         claude_bin=os.getenv("CLAUDE_BIN", "claude"),
         ollama_url=os.getenv("OLLAMA_URL", "http://localhost:11434").rstrip("/"),
         ollama_model=os.getenv("OLLAMA_MODEL", "llama3.1:8b"),

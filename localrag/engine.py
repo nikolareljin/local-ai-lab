@@ -8,20 +8,20 @@ switched. Thread-safe so the Flask dev server can handle concurrent requests.
 from __future__ import annotations
 
 import threading
-from typing import Dict, List
+from typing import Dict, List, cast
 
 from .chunk import Chunk
 from .config import Config
 from .prompts import SYSTEM_PROMPT, build_user_prompt
 from .providers import get_provider
-from .retriever import build_retriever
-from .store import build_index, is_stale, load_chunks
+from .retriever import Retriever, build_retriever
+from .store import build_index, embed_signature, is_stale, load_chunks
 
 _lock = threading.Lock()
 _cache: Dict[str, object] = {"retriever": None, "key": None}
 
 
-def refresh_index(config: Config):
+def refresh_index(config: Config) -> tuple[list[Chunk], int]:
     """Force a rebuild of the on-disk index and invalidate the retriever cache."""
     with _lock:
         chunks, n_files = build_index(config)
@@ -30,17 +30,22 @@ def refresh_index(config: Config):
     return chunks, n_files
 
 
-def get_retriever(config: Config):
+def get_retriever(config: Config) -> Retriever:
     """Return a retriever for the current docs, rebuilding only when needed."""
     with _lock:
         if is_stale(config):
             build_index(config)
             _cache["retriever"] = None
-        if _cache["retriever"] is None or _cache["key"] != config.retriever:
+        # Key on everything that identifies this retriever — the retriever type, the
+        # embedding signature (provider + model), and the corpus (cache dir) — so a
+        # different config in the same process rebuilds instead of reusing the wrong one.
+        key = (config.retriever, embed_signature(config), str(config.cache_dir))
+        if _cache["retriever"] is None or _cache["key"] != key:
             chunks: List[Chunk] = load_chunks(config)
             _cache["retriever"] = build_retriever(chunks, config)
-            _cache["key"] = config.retriever
-        return _cache["retriever"]
+            _cache["key"] = key
+        # The cache holds heterogeneous values; narrow to the retriever at the return site.
+        return cast(Retriever, _cache["retriever"])
 
 
 def dedup_sources(hits: List[Chunk]) -> List[str]:

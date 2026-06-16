@@ -25,10 +25,10 @@ import shlex
 import shutil
 import socket
 import socketserver
-from urllib.parse import unquote
 import subprocess
 import sys
 from pathlib import Path
+from urllib.parse import unquote
 
 ROOT = Path(__file__).resolve().parent.parent
 LESSONS_DIR = ROOT / "lessons"

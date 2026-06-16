@@ -53,7 +53,9 @@ def test_read_ref_reads_a_file_inside_the_lesson():
 def test_read_ref_lines_range_and_single_line():
     full = lesson.read_ref(L3, {"file": "python/hybrid_demo.py"}).splitlines()
     assert lesson.read_ref(L3, {"file": "python/hybrid_demo.py", "lines": "1"}) == full[0]
-    assert lesson.read_ref(L3, {"file": "python/hybrid_demo.py", "lines": "1-3"}) == "\n".join(full[:3])
+    assert lesson.read_ref(
+        L3, {"file": "python/hybrid_demo.py", "lines": "1-3"}
+    ) == "\n".join(full[:3])
 
 
 def test_read_ref_invalid_lines_spec_is_a_placeholder_not_a_crash():

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 from .chunk import Chunk, chunk_pages
 from .config import Config
@@ -31,6 +31,20 @@ def _index_path(config: Config) -> Path:
 
 def _vectors_path(config: Config) -> Path:
     return config.cache_dir / "vectors.npz"
+
+
+def embed_signature(config: Config) -> str:
+    """Which embedding space the cached vectors belong to (provider + model).
+
+    Cached vectors are only valid for the provider/model that produced them, so
+    switching embedders must invalidate them rather than silently reuse them.
+    """
+    model = {
+        "ollama": config.ollama_embed_model,
+        "gemini": config.gemini_embed_model,
+        "openai": config.openai_embed_model,
+    }.get(config.embed_provider, "")
+    return f"{config.embed_provider}:{model}"
 
 
 def is_stale(config: Config) -> bool:
@@ -75,6 +89,9 @@ def load_vectors(config: Config):
     if not path.exists():
         return None
     with np.load(path) as npz:
+        # Ignore vectors built with a different embedder (or pre-signature caches).
+        if "signature" not in npz or str(npz["signature"]) != embed_signature(config):
+            return None
         return npz["vectors"]
 
 
@@ -82,4 +99,8 @@ def save_vectors(config: Config, vectors) -> None:
     import numpy as np
 
     config.cache_dir.mkdir(parents=True, exist_ok=True)
-    np.savez(_vectors_path(config), vectors=np.asarray(vectors, dtype="float32"))
+    np.savez(
+        _vectors_path(config),
+        vectors=np.asarray(vectors, dtype="float32"),
+        signature=np.array(embed_signature(config)),
+    )
