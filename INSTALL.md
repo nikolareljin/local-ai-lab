@@ -123,7 +123,7 @@ is **no API key to manage**.
   ```
 - **Windows (PowerShell)** (download, inspect, then run):
   ```powershell
-  irm https://claude.ai/install.ps1 -OutFile claude-install.ps1
+  iwr https://claude.ai/install.ps1 -OutFile claude-install.ps1
   notepad claude-install.ps1     # review before running
   .\claude-install.ps1           # if blocked: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
   ```
