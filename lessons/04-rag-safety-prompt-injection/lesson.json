@@ -32,14 +32,14 @@
       "body": "Retrieval is the attack surface: it is how a poisoned document gets *into* the prompt in the first place. We use a tiny keyword retriever (distinct-term overlap, minus stopwords) — deterministic, so the same query always pulls the same documents in every language. Notice it has **no idea** which hits are trustworthy; that judgement happens next.",
       "why": "Whatever retriever you use (BM25, embeddings, the hybrid from Lesson 3), assume it can and will surface attacker-controlled text. Defence is about what you do *after* retrieval." },
     { "type": "code", "file": "node/safe_rag_demo.mjs", "lang": "node", "lines": "65-77", "group": "retrieve" },
-    { "type": "code", "file": "dotnet/Program.cs", "lang": "csharp", "lines": "66-78", "group": "retrieve" },
+    { "type": "code", "file": "dotnet/Program.cs", "lang": "csharp", "lines": "71-83", "group": "retrieve" },
 
     { "type": "code", "file": "python/safe_rag_demo.py", "lang": "python", "lines": "124-162", "group": "assess",
       "kicker": "Step 4", "title": "Two pipelines, three defences",
       "body": "One function runs both pipelines; the booleans switch the defences on or off. **Quarantine** drops flagged documents before they reach the model. **Isolation** keeps them in context but treats retrieved text as *data* — so an injected instruction is never executed (and we never quote a flagged document as the answer). The **output filter** is the last line of defence: it blocks an answer that leaks a secret. With every defence off, the first flagged document's instruction wins and the model is hijacked.",
       "why": "These defences are layered on purpose: each catches what the others miss. Quarantine can over-block; isolation needs the model to honour the framing; the filter only catches *leaks*, not every manipulation. Defence in depth, not one silver bullet." },
     { "type": "code", "file": "node/safe_rag_demo.mjs", "lang": "node", "lines": "105-154", "group": "assess" },
-    { "type": "code", "file": "dotnet/Program.cs", "lang": "csharp", "lines": "109-133", "group": "assess" },
+    { "type": "code", "file": "dotnet/Program.cs", "lang": "csharp", "lines": "114-138", "group": "assess" },
 
     { "type": "command", "action": "demo", "lang": "python", "group": "run-demo",
       "kicker": "Run it", "title": "Run the demo",

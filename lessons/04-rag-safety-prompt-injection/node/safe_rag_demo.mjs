@@ -159,13 +159,18 @@ function fmt(names) {
 
 function main() {
   const docs = loadDocs();
+  console.log("Same query and documents every run - the only thing that changes is whether the");
+  console.log("three defences (quarantine, isolation, output filter) are ON.");
   for (const query of ["how long do refunds take to arrive", "i cannot log in to my account"]) {
     const undefended = assess(query, docs, { quarantine: false, isolate: false, outputFilter: false });
     const defended = assess(query, docs, { quarantine: true, isolate: true, outputFilter: true });
+    const hijacked = undefended.text !== defended.text;
     console.log(`\nQuery: "${query}"`);
-    console.log(`  Retrieved:  ${fmt(undefended.retrieved)}`);
-    console.log(`  Undefended: ${undefended.text}`);
-    console.log(`  Defended:   ${defended.text}`);
+    console.log(`  Retrieved: ${fmt(undefended.retrieved)}`);
+    console.log(`  WITHOUT hardening -> ${hijacked ? "HIJACKED" : "SAFE"}`);
+    console.log(`    ${undefended.text}`);
+    console.log("  WITH hardening    -> SAFE");
+    console.log(`    ${defended.text}`);
   }
 }
 
