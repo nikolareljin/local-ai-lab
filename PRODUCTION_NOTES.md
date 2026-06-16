@@ -14,7 +14,7 @@ This page is the honest list of what you'd add for production, and why it's inte
   mode is exactly what **[Lesson 4 — RAG safety & prompt injection](./lessons/04-rag-safety-prompt-injection/)**
   teaches you to see and mitigate. In production you'd apply the defenses from that lesson
   (input/output framing, allow-lists, instruction/data separation, output validation).
-- **The web UI is single-user and unauthenticated.** `localrag web` binds `127.0.0.1` and has no
+- **The web UI is single-user and unauthenticated.** `localrag web` defaults to binding `127.0.0.1`, but can be exposed with `--host`; it has no
   auth, CSRF protection, rate limiting, or per-user isolation. For anything multi-user or
   network-exposed you'd add authentication, request limits, and upload scanning.
 - **Secrets** are read from the environment / `.env`. Keep real keys out of indexed documents and out
