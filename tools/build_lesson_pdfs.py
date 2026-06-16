@@ -35,7 +35,7 @@ def _lesson_sources() -> list[tuple[str, str]]:
       - Lessons 1-2 : root ``LESSON<n>.md``                 (hand-authored)
       - Lessons 3+  : ``lessons/<NN>-slug/README.md``        (live, config-driven)
       - Roadmap     : ``roadmap/LESSON<n>-slug.md``          (planned outlines)
-    The number drives the PDF name (``LESSON<n>.pdf``) so in-page ``pdf/LESSONn.pdf`` links resolve.
+    The number drives the PDF name (``LESSON<n>.pdf``) so in-page ``pdf/LESSON<n>.pdf`` links resolve.
     """
     by_num: dict[int, tuple[str, str]] = {}
 

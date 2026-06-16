@@ -128,6 +128,11 @@ def main() -> int:
         print(f"ERROR: markers not found in {README.name}; add the BEGIN/END markers first.",
               file=sys.stderr)
         return 2
+    if text.index(END) < text.index(BEGIN):
+        print(f"ERROR: END marker precedes BEGIN marker in {README.name}; fix the marker order "
+              "before running (rewriting with them reversed would drop content).",
+              file=sys.stderr)
+        return 2
 
     block = _render(_discover())
     pre, _, rest = text.partition(BEGIN)
