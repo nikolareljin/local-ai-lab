@@ -164,7 +164,7 @@ function main() {
   for (const query of ["how long do refunds take to arrive", "i cannot log in to my account"]) {
     const undefended = assess(query, docs, { quarantine: false, isolate: false, outputFilter: false });
     const defended = assess(query, docs, { quarantine: true, isolate: true, outputFilter: true });
-    const hijacked = undefended.text !== defended.text;
+    const hijacked = undefended.followedInjection;
     console.log(`\nQuery: "${query}"`);
     console.log(`  Retrieved: ${fmt(undefended.retrieved)}`);
     console.log(`  WITHOUT hardening -> ${hijacked ? "HIJACKED" : "SAFE"}`);

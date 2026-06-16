@@ -172,7 +172,7 @@ def main():
     for query in ["how long do refunds take to arrive", "i cannot log in to my account"]:
         undefended = assess(query, docs, quarantine=False, isolate=False, output_filter=False)
         defended = assess(query, docs, quarantine=True, isolate=True, output_filter=True)
-        hijacked = undefended["text"] != defended["text"]
+        hijacked = undefended["followed_injection"]
         print(f'\nQuery: "{query}"')
         print(f"  Retrieved: {fmt(undefended['retrieved'])}")
         print(f"  WITHOUT hardening -> {'HIJACKED' if hijacked else 'SAFE'}")
