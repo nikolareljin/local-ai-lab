@@ -55,7 +55,7 @@ foreach (var query in new[] { "how long do refunds take to arrive", "i cannot lo
 {
     var undefended = Assess(query, docs, quarantine: false, isolate: false, outputFilter: false);
     var defended = Assess(query, docs, quarantine: true, isolate: true, outputFilter: true);
-    var hijacked = undefended.Text != defended.Text;
+    var hijacked = undefended.FollowedInjection;
     Console.WriteLine($"\nQuery: \"{query}\"");
     Console.WriteLine($"  Retrieved: {Fmt(undefended.Retrieved)}");
     Console.WriteLine($"  WITHOUT hardening -> {(hijacked ? "HIJACKED" : "SAFE")}");
@@ -134,7 +134,7 @@ Result Assess(string query, List<Doc> corpus, bool quarantine, bool isolate, boo
     if (outputFilter && ContainsExfil(text))
         text = OutputBlocked;
 
-    return new Result(text, retrieved.Select(d => d.Name).ToList());
+    return new Result(text, retrieved.Select(d => d.Name).ToList(), obeyed != null);
 }
 
 static string Fmt(List<string> names) => "[" + string.Join(", ", names.Select(n => $"'{n}'")) + "]";
@@ -161,4 +161,4 @@ record Doc(string Name, string Raw)
         Regex.Matches(Raw.ToLowerInvariant(), "[a-z0-9_]+").Select(m => m.Value).ToHashSet();
 }
 
-record Result(string Text, List<string> Retrieved);
+record Result(string Text, List<string> Retrieved, bool FollowedInjection);

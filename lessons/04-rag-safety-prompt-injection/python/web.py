@@ -143,11 +143,11 @@ def _blocks(query, undefended, defended, values):
 
 
 def _outcome(result):
-    """One-word outcome for an answer, so WITH vs WITHOUT reads at a glance."""
-    if result["followed_injection"]:
-        return "HIJACKED"
+    """Short outcome label for an answer, so WITH vs WITHOUT reads at a glance."""
     if result["blocked"]:
         return "SAFE (leak blocked)"
+    if result["followed_injection"]:
+        return "HIJACKED"
     return "SAFE"
 
 

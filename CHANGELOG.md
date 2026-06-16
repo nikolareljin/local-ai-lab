@@ -6,6 +6,12 @@ All notable changes to this project are documented here. This project follows
 
 ## [Unreleased]
 
+### Changed
+- **Lesson 4 shows the hardening more clearly** - the prompt-injection demo and the interactive
+  playground now label the two pipelines WITHOUT vs WITH hardening and tag each answer HIJACKED or
+  SAFE, so the effect of the defences is obvious at a glance (Python, Node, and C#, byte-identical;
+  toggle a defence off in the playground and the WITH arm flips to HIJACKED).
+
 ## [0.9.0] - 2026-06-16
 
 ### Added
