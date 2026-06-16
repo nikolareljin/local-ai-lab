@@ -143,7 +143,8 @@ winget install -e --id Microsoft.DotNet.SDK.8  # Windows</code></pre></div>
 dotnet run -c Release -- index   # validate; then: dotnet run -c Release -- web</code></pre></div>
         </div>
 
-        <div class="block"><div class="label">Default AI - Claude Code CLI (no API key)</div><pre class="cmd"><code>npm install -g @anthropic-ai/claude-code &amp;&amp; claude</code></pre></div>
+        <div class="block"><div class="label">Default AI - Claude Code CLI (no API key)</div><pre class="cmd"><code># install Claude Code (native, no Node.js needed) - steps in the INSTALL guide
+claude                 # first run signs you in</code></pre></div>
         <div class="why"><b>Full per-OS, per-language guide:</b>
           <a href="./pdf/INSTALL.pdf" target="_blank" rel="noopener">INSTALL (PDF)</a>.
           <span class="lang lang-node">The Node index is cached separately in <code>.localrag/node</code>, so it never clobbers the Python one.</span><span class="lang lang-csharp">The .NET index is cached separately in <code>.localrag/dotnet</code>, so it never clobbers the Python one.</span><span class="lang lang-python">Or just run <code>./run -l 1</code> - it creates the venv and installs everything for you.</span></div>

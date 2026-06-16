@@ -114,13 +114,29 @@ dotnet build -c Release
 Every stack defaults to the **Claude Code CLI** - it uses your existing Claude Code login, so there
 is **no API key to manage**.
 
-**All platforms (via npm - needs [Node.js](https://nodejs.org) 18+):**
+**Recommended - native install (self-contained, no Node.js):**
+- **Linux / macOS** (download, inspect, then run - same caution as any remote script):
+  ```bash
+  curl -fsSL https://claude.ai/install.sh -o claude-install.sh
+  less claude-install.sh        # review before running
+  bash claude-install.sh
+  ```
+- **Windows (PowerShell):**
+  ```powershell
+  irm https://claude.ai/install.ps1 | iex
+  ```
+
+**Alternative - via npm (if you already run [Node.js](https://nodejs.org) 18+):**
 ```bash
 npm install -g @anthropic-ai/claude-code
+```
+
+Then sign in once and verify (either install):
+```bash
 claude                 # first run signs you in
 claude --version
 ```
-> See the [Claude Code docs](https://docs.claude.com/en/docs/claude-code) for native installers. If
+> See the [Claude Code docs](https://docs.claude.com/en/docs/claude-code) for details. If
 > `claude` isn't installed, the app says so and you can pick another provider (below).
 
 ---

@@ -91,8 +91,17 @@ export OLLAMA_URL=http://localhost:11434</code></pre>
     <h2 id="claude">Claude Code (default, no API key)</h2>
     <p>Uses your existing Claude Code CLI login, so there's nothing to configure.</p>
     <h3>Error: "Claude Code CLI 'claude' not found on PATH"</h3>
-    <p>Install the CLI and sign in once:</p>
-    <pre><code>npm install -g @anthropic-ai/claude-code
+    <p>Install the CLI and sign in once. The native installer is self-contained (no Node.js); npm is an
+      alternative if you already run Node.js 18+:</p>
+    <pre><code># Recommended - native (Linux/macOS): download, inspect, then run
+curl -fsSL https://claude.ai/install.sh -o claude-install.sh
+less claude-install.sh        # review before running
+bash claude-install.sh
+# Windows (PowerShell):  irm https://claude.ai/install.ps1 | iex
+
+# Alternative - via npm (needs Node.js 18+):
+npm install -g @anthropic-ai/claude-code
+
 claude                 # first run signs you in
 claude --version</code></pre>
     <p>Custom install path? Point the app at it with <code>CLAUDE_BIN=/full/path/to/claude</code>.
