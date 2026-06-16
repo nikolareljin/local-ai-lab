@@ -44,6 +44,9 @@ code, pre, kbd { font-family: "SF Mono", ui-monospace, "Cascadia Code", Menlo, C
 .nav-dd-menu a { padding: 7px 10px; border-radius: 6px; color: var(--txt); white-space: nowrap; }
 .nav-dd-menu a:hover { background: var(--panel2); text-decoration: none; }
 
+/* Flag top-nav links that download a PDF (e.g. Install, Cheat-sheet) with a small download glyph. */
+.topbar nav > a[href$=".pdf"]::after { content: " \2193"; font-size: .82em; opacity: .7; }
+
 /* inline dropdowns inside page content (e.g. the home-page PDF menus) */
 .pdf-menus { margin: 4px 0 8px; }
 .nav-dd.inline { display: inline-block; vertical-align: middle; margin: 0 8px 4px 0; }
