@@ -12,6 +12,9 @@ All notable changes to this project are documented here. This project follows
   dynamically), and ruff/mypy/pytest config now lives in one place.
 - **OSS governance files** — `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md` (Contributor
   Covenant 2.1), GitHub issue templates (lesson request + bug report) and a pull-request template.
+- **`PRODUCTION_NOTES.md`** — an honest checklist of what the teaching demo keeps simple on purpose
+  (prompt-injection handling → Lesson 4, web-UI auth, comprehensive tests, batch embeddings, logging)
+  and what you'd harden for real-world use. Linked from the README and CONTRIBUTING.
 
 ## [0.8.0] - 2026-06-15
 
