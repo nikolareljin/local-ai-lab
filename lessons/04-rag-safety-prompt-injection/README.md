@@ -100,8 +100,10 @@ Query: "i cannot log in to my account"
 
 Same retriever, same query, same documents. **WITHOUT** the defences the model abandons the question
 and does what the poisoned document told it to (**HIJACKED**); **WITH** them it answers from the
-trustworthy document and nothing leaks (**SAFE**). The playground below lets you flip each defence and
-watch that line change.
+trustworthy document and nothing leaks (**SAFE**). The playground below lets you toggle the three
+defences and watch the WITH line change: turn quarantine *and* isolation off and the refund attack
+flips to **HIJACKED**; leave only the output filter on and the exfiltration case shows
+**SAFE (leak blocked)**.
 
 ### Experiment in the playground (needs Flask)
 
