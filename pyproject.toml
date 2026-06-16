@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "localrag"
+dynamic = ["version"]
+description = "A tiny, local Retrieval-Augmented Generation demo — the reference package for the local-ai-lab course."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Nik Reljin", email = "nikola.reljin@gmail.com" }]
+keywords = ["rag", "retrieval-augmented-generation", "local-ai", "llm", "embeddings", "bm25", "mcp"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Education",
+]
+
+# Runtime dependencies mirror requirements.txt *minus* pytest (which CI still consumes). pytest is a
+# dev dependency, declared under optional-dependencies below rather than as a runtime requirement.
+dependencies = [
+    "pypdf>=4.0",
+    "python-docx>=1.1",
+    "rank-bm25>=0.2.2",
+    "numpy>=1.24",
+    "requests>=2.31",
+    "python-dotenv>=1.0",
+    "flask>=3.0",
+    "mcp>=1.2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[project.urls]
+Homepage = "https://nikolareljin.github.io/local-ai-lab/"
+Documentation = "https://nikolareljin.github.io/local-ai-lab/documentation.html"
+Source = "https://github.com/nikolareljin/local-ai-lab"
+Changelog = "https://github.com/nikolareljin/local-ai-lab/blob/main/CHANGELOG.md"
+
+[project.scripts]
+localrag = "localrag.__main__:main"
+
+# Discover the package and its subpackages (localrag, localrag.providers) — but not
+# tools/, tests/, examples/, or the course content, which aren't under localrag/.
+[tool.setuptools.packages.find]
+include = ["localrag*"]
+
+# Ship non-Python package data the runtime needs (the Flask web UI template).
+[tool.setuptools.package-data]
+localrag = ["templates/*"]
+
+[tool.setuptools.dynamic]
+# Single source of truth for the version: localrag/__init__.py:__version__.
+version = { attr = "localrag.__version__" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+# Config homes pinned here so tooling has one place to live. Not yet enforced in CI
+# (wiring ruff/mypy into the pipeline is tracked under Priority 3).
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true

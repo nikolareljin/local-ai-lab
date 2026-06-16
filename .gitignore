@@ -7,6 +7,11 @@ __pycache__/
 .playwright-mcp/
 *.zip
 
+# Python packaging build artifacts (from `pip install -e .` / builds)
+*.egg-info/
+build/
+dist/
+
 # Node.js (Lesson 1 port)
 node_modules/
 node/lesson-1/node_modules/
