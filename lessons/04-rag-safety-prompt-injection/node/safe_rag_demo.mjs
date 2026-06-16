@@ -43,7 +43,7 @@ const EXFIL_PATTERN = /https?:\/\/exfil|api key|session token|fake-api-key/;
 const NO_ANSWER = "I could not find a trustworthy answer in the documents.";
 const OUTPUT_BLOCKED = "[blocked by output filter: the answer tried to leak a secret]";
 
-// Ordinal (code-unit) comparator — locale-independent, so the tie-break order
+// Ordinal (code-unit) comparator - locale-independent, so the tie-break order
 // matches Python and .NET (StringComparer.Ordinal).
 const cmpOrdinal = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 
@@ -159,13 +159,18 @@ function fmt(names) {
 
 function main() {
   const docs = loadDocs();
+  console.log("Same query and documents every run - the only thing that changes is whether the");
+  console.log("three defences (quarantine, isolation, output filter) are ON.");
   for (const query of ["how long do refunds take to arrive", "i cannot log in to my account"]) {
     const undefended = assess(query, docs, { quarantine: false, isolate: false, outputFilter: false });
     const defended = assess(query, docs, { quarantine: true, isolate: true, outputFilter: true });
+    const hijacked = undefended.followedInjection;
     console.log(`\nQuery: "${query}"`);
-    console.log(`  Retrieved:  ${fmt(undefended.retrieved)}`);
-    console.log(`  Undefended: ${undefended.text}`);
-    console.log(`  Defended:   ${defended.text}`);
+    console.log(`  Retrieved: ${fmt(undefended.retrieved)}`);
+    console.log(`  WITHOUT hardening -> ${hijacked ? "HIJACKED" : "SAFE"}`);
+    console.log(`    ${undefended.text}`);
+    console.log("  WITH hardening    -> SAFE");
+    console.log(`    ${defended.text}`);
   }
 }
 

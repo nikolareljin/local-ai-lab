@@ -7,7 +7,7 @@ contains poisoned support tickets:
 
   - Undefended: the retrieved text is pasted into the prompt as-is, so the model
     obeys the injected instruction and emits the attacker's scripted payload.
-  - Defended: three layers neutralise it — quarantine (drop docs that look like
+  - Defended: three layers neutralise it - quarantine (drop docs that look like
     instructions), isolate (treat retrieved text as data, never as commands), and
     an output filter (block answers that leak secrets / exfiltration URLs).
 
@@ -109,7 +109,7 @@ def legit_answer(docs, flagged):
     """A grounded answer from *trusted* text: the first body line (skipping the
     Markdown heading) of the top document that is not flagged as injected. Even
     when isolation keeps a poisoned doc in context, we never quote it as the
-    answer — its content is untrusted, not just its instructions."""
+    answer - its content is untrusted, not just its instructions."""
     for d in docs:
         if flagged.get(d["name"]):
             continue
@@ -167,13 +167,18 @@ def fmt(names):
 
 def main():
     docs = load_docs()
+    print("Same query and documents every run - the only thing that changes is whether the")
+    print("three defences (quarantine, isolation, output filter) are ON.")
     for query in ["how long do refunds take to arrive", "i cannot log in to my account"]:
         undefended = assess(query, docs, quarantine=False, isolate=False, output_filter=False)
         defended = assess(query, docs, quarantine=True, isolate=True, output_filter=True)
+        hijacked = undefended["followed_injection"]
         print(f'\nQuery: "{query}"')
-        print(f"  Retrieved:  {fmt(undefended['retrieved'])}")
-        print(f"  Undefended: {undefended['text']}")
-        print(f"  Defended:   {defended['text']}")
+        print(f"  Retrieved: {fmt(undefended['retrieved'])}")
+        print(f"  WITHOUT hardening -> {'HIJACKED' if hijacked else 'SAFE'}")
+        print(f"    {undefended['text']}")
+        print("  WITH hardening    -> SAFE")
+        print(f"    {defended['text']}")
 
 
 if __name__ == "__main__":

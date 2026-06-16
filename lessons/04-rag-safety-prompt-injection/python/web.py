@@ -1,7 +1,7 @@
 """Lesson 4 - interactive RAG-safety GUI (experiment locally).
 
-Type a question and toggle the three defences — quarantine, isolation, output
-filter — then watch the **undefended** answer (the model obeying a poisoned
+Type a question and toggle the three defences - quarantine, isolation, output
+filter - then watch the **undefended** answer (the model obeying a poisoned
 document) next to the **defended** one, with a breakdown of which document was
 poisoned, which rule caught it, and what each defence did. There is **nothing to
 edit**: the toggles feed the very same `assess` function the one-shot `demo` and
@@ -38,14 +38,14 @@ def load_story():
 
 DOCS = load_story()
 
-# The defences exposed in the GUI — all on by default, so the page opens on the
+# The defences exposed in the GUI - all on by default, so the page opens on the
 # safe behaviour the demo and test pin. Turn them off to watch the attack land.
 PARAMS = [
-    {"name": "quarantine", "label": "Quarantine — drop docs that look like instructions",
+    {"name": "quarantine", "label": "Quarantine - drop docs that look like instructions",
      "kind": "toggle", "default": True},
-    {"name": "isolate", "label": "Isolate — treat retrieved text as data, never commands",
+    {"name": "isolate", "label": "Isolate - treat retrieved text as data, never commands",
      "kind": "toggle", "default": True},
-    {"name": "output_filter", "label": "Output filter — block answers that leak secrets",
+    {"name": "output_filter", "label": "Output filter - block answers that leak secrets",
      "kind": "toggle", "default": True},
 ]
 
@@ -101,7 +101,7 @@ def _blocks(query, undefended, defended, values):
                        "title": "Injection patterns detected in the retrieved text", "items": hits})
     else:
         blocks.append({"kind": "note",
-                       "text": "No injection patterns in the retrieved documents — nothing to defend "
+                       "text": "No injection patterns in the retrieved documents - nothing to defend "
                                "against for this query, so both pipelines agree."})
 
     columns = ["document", "injection?", "status under your defences"]
@@ -124,27 +124,36 @@ def _blocks(query, undefended, defended, values):
                "page instead.")
     elif undefended["followed_injection"] and verdict == "leak blocked":
         msg = ("Undefended, the model leaked a secret the poisoned document told it to exfiltrate. "
-               "The output filter caught the leak — but note it is a backstop: turn quarantine and "
+               "The output filter caught the leak - but note it is a backstop: turn quarantine and "
                "isolation off and only the filtered leaks are stopped, not other manipulation.")
     elif undefended["followed_injection"] and verdict == "HIJACKED":
         msg = ("Both pipelines were hijacked: with every defence off, the injected instruction in a "
                "retrieved document runs. Enable a defence and watch the defended answer recover.")
     else:
         msg = ("No poisoned page was retrieved for this query, so the model answers normally from the "
-               "documents — the safe baseline.")
+               "documents - the safe baseline.")
     blocks.append({"kind": "note", "text": msg})
     blocks.append({"kind": "note",
                    "text": "Here isolation is modelled two ways: the model never executes instructions "
                            "found in a flagged document, and it never quotes a flagged document as the "
-                           "answer — so an 'ignore previous instructions' line is inert. In a real system "
-                           "you'd enforce this by delimiting retrieved text (e.g. <<DATA … DATA>>) and "
+                           "answer - so an 'ignore previous instructions' line is inert. In a real system "
+                           "you'd enforce this by delimiting retrieved text (e.g. <<DATA ... DATA>>) and "
                            "telling the model to treat anything inside as content to quote, never commands."})
     return blocks
 
 
+def _outcome(result):
+    """Short outcome label for an answer, so WITH vs WITHOUT reads at a glance."""
+    if result["blocked"]:
+        return "SAFE (leak blocked)"
+    if result["followed_injection"]:
+        return "HIJACKED"
+    return "SAFE"
+
+
 def search(query, values):
     if not query:
-        return {"arms": [], "blocks": [{"kind": "note", "text": "Type a query — or pick an example above."}]}
+        return {"arms": [], "blocks": [{"kind": "note", "text": "Type a query - or pick an example above."}]}
 
     undefended = assess(query, DOCS, quarantine=False, isolate=False, output_filter=False)
     defended = assess(query, DOCS,
@@ -152,15 +161,15 @@ def search(query, values):
                       isolate=values["isolate"],
                       output_filter=values["output_filter"])
     arms = [
-        {"label": "Undefended — model obeys the document", "ranking": [undefended["text"]]},
-        {"label": "Defended — answers from data only", "ranking": [defended["text"]], "highlight": True},
+        {"label": f"WITHOUT hardening  ->  {_outcome(undefended)}", "ranking": [undefended["text"]]},
+        {"label": f"WITH hardening  ->  {_outcome(defended)}", "ranking": [defended["text"]], "highlight": True},
     ]
     return {"arms": arms, "blocks": _blocks(query, undefended, defended, values)}
 
 
 def main():
     serve(
-        title="Lesson 4 · RAG safety — a help centre with poisoned pages",
+        title="Lesson 4 · RAG safety - a help centre with poisoned pages",
         subtitle="Retrieved documents are untrusted input. Toggle the defences and watch the "
                  "undefended answer (the model obeying a poisoned page) next to the defended one.",
         hint="Searching a bundled help-centre corpus with two poisoned pages. Try a refund or a "

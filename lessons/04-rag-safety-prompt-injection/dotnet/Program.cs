@@ -49,14 +49,19 @@ var docs = Directory.GetFiles(dataDir, "*.md")
     .Select(name => new Doc(name!, File.ReadAllText(Path.Combine(dataDir, name!))))
     .ToList();
 
+Console.WriteLine("Same query and documents every run - the only thing that changes is whether the");
+Console.WriteLine("three defences (quarantine, isolation, output filter) are ON.");
 foreach (var query in new[] { "how long do refunds take to arrive", "i cannot log in to my account" })
 {
     var undefended = Assess(query, docs, quarantine: false, isolate: false, outputFilter: false);
     var defended = Assess(query, docs, quarantine: true, isolate: true, outputFilter: true);
+    var hijacked = undefended.FollowedInjection;
     Console.WriteLine($"\nQuery: \"{query}\"");
-    Console.WriteLine($"  Retrieved:  {Fmt(undefended.Retrieved)}");
-    Console.WriteLine($"  Undefended: {undefended.Text}");
-    Console.WriteLine($"  Defended:   {defended.Text}");
+    Console.WriteLine($"  Retrieved: {Fmt(undefended.Retrieved)}");
+    Console.WriteLine($"  WITHOUT hardening -> {(hijacked ? "HIJACKED" : "SAFE")}");
+    Console.WriteLine($"    {undefended.Text}");
+    Console.WriteLine("  WITH hardening    -> SAFE");
+    Console.WriteLine($"    {defended.Text}");
 }
 
 List<string> Tokenize(string text) =>
@@ -129,7 +134,7 @@ Result Assess(string query, List<Doc> corpus, bool quarantine, bool isolate, boo
     if (outputFilter && ContainsExfil(text))
         text = OutputBlocked;
 
-    return new Result(text, retrieved.Select(d => d.Name).ToList());
+    return new Result(text, retrieved.Select(d => d.Name).ToList(), obeyed != null);
 }
 
 static string Fmt(List<string> names) => "[" + string.Join(", ", names.Select(n => $"'{n}'")) + "]";
@@ -156,4 +161,4 @@ record Doc(string Name, string Raw)
         Regex.Matches(Raw.ToLowerInvariant(), "[a-z0-9_]+").Select(m => m.Value).ToHashSet();
 }
 
-record Result(string Text, List<string> Retrieved);
+record Result(string Text, List<string> Retrieved, bool FollowedInjection);
