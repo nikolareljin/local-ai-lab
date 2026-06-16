@@ -29,7 +29,7 @@ ROOT = Path(__file__).resolve().parent.parent
 README = ROOT / "README.md"
 PDF_DIR = ROOT / "docs" / "pdf"
 # Base URL for the published PDFs. Override for a fork / renamed repo / other host, e.g.
-#   LESSON_PDF_BASE_URL=https://myfork.github.io/local-ai-lab/pdf python tools/sync-readme-downloads.py
+#   LESSON_PDF_BASE_URL=https://myfork.github.io/local-ai-lab/pdf python3 tools/sync-readme-downloads.py
 PDF_URL = os.environ.get(
     "LESSON_PDF_BASE_URL", "https://nikolareljin.github.io/local-ai-lab/pdf"
 ).rstrip("/")
