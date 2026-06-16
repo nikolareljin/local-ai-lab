@@ -74,8 +74,8 @@ guide**, and runs **100% locally**. **Lessons 1–5 are live and runnable**; the
 | 14 | **AI code review & issue detection** | Use AI to catch the serious issues in review — real bugs, security, risky changes | — | — | Planned |
 | 15 | **Documentation from sprint changes** | Generate release notes and docs straight from a sprint's commits and pull requests | — | — | Planned |
 
-**Browse all lessons live:** https://nikolareljin.github.io/local-ai-lab/ — or grab any lesson as a
-printable **PDF** from the [**Lessons & downloads**](#lessons--downloads) table just below.
+**Browse all lessons live:** https://nikolareljin.github.io/local-ai-lab/ — or grab any lesson with a
+written guide as a printable **PDF** from the [**Lessons & downloads**](#lessons--downloads) table just below.
 
 ---
 
