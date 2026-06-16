@@ -22,17 +22,18 @@ This page is the honest list of what you'd add for production, and why it's inte
 
 ## Testing
 
-- The demo keeps a **handful of offline smoke tests** (retrieval core, engine cache, one web route)
-  so the suite stays readable and fast. A production codebase would add **comprehensive unit tests
-  for every provider** (mocked HTTP/`subprocess`), **Flask endpoint tests** (`/api/ask`, `/upload`,
-  `/status`, `/peek`), **engine cache/concurrency tests**, and a **coverage gate** in CI. These are
+- The demo keeps a **handful of offline smoke tests** so the suite stays readable and fast. A
+  production codebase would add **comprehensive unit tests for every provider** (mocked
+  HTTP/`subprocess`), **Flask endpoint tests** (`/api/ask`, `/api/upload`, `/api/status`,
+  `/api/peek`), **engine cache/concurrency tests**, and a **coverage gate** in CI. These are
   intentionally left out to keep the example code uncluttered and easy to follow.
 
 ## Performance
 
 - **Embeddings are computed serially** for Ollama and Gemini (one HTTP request per chunk); the OpenAI
-  adapter already batches. For real corpora you'd switch Ollama to the batch `/api/embed` endpoint
-  and Gemini to `:batchEmbedContents`, plus add concurrency, caching, and retries with backoff.
+  adapter already batches. For real corpora you'd switch Ollama from the per-item `/api/embeddings`
+  call to the batch `/api/embed` endpoint and Gemini to `:batchEmbedContents`, plus add concurrency,
+  caching, and retries with backoff.
 
 ## Observability
 
@@ -42,7 +43,8 @@ This page is the honest list of what you'd add for production, and why it's inte
 
 ## Robustness & code quality
 
-- **Type coverage** is partial (the package is type-checked; the lesson/tooling scripts are not).
+- **Type coverage** is partial — the package carries type hints; the lesson and tooling scripts are
+  intentionally untyped.
 - Network calls use fixed timeouts but **no retries/backoff**; add those for flaky providers.
 - A little formatting logic (the `[source:page]` citation block) is **duplicated across modules**; a
   production codebase would extract one shared helper. Here it's kept inline so each file reads on its
