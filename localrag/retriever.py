@@ -146,7 +146,9 @@ class EmbeddingRetriever:
 
         from .providers import embed_texts
 
-        if not self.chunks:
+        # Match Bm25Retriever: empty corpus or non-positive k yields no hits
+        # (negative k would otherwise slice from the end and return most results).
+        if not self.chunks or k <= 0:
             return []
         q = np.asarray(
             embed_texts(self.config.embed_provider, self.config, [query]), dtype="float32"

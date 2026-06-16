@@ -33,7 +33,7 @@ def _vectors_path(config: Config) -> Path:
     return config.cache_dir / "vectors.npz"
 
 
-def _embed_signature(config: Config) -> str:
+def embed_signature(config: Config) -> str:
     """Which embedding space the cached vectors belong to (provider + model).
 
     Cached vectors are only valid for the provider/model that produced them, so
@@ -90,7 +90,7 @@ def load_vectors(config: Config):
         return None
     with np.load(path) as npz:
         # Ignore vectors built with a different embedder (or pre-signature caches).
-        if "signature" not in npz or str(npz["signature"]) != _embed_signature(config):
+        if "signature" not in npz or str(npz["signature"]) != embed_signature(config):
             return None
         return npz["vectors"]
 
@@ -102,5 +102,5 @@ def save_vectors(config: Config, vectors) -> None:
     np.savez(
         _vectors_path(config),
         vectors=np.asarray(vectors, dtype="float32"),
-        signature=np.array(_embed_signature(config)),
+        signature=np.array(embed_signature(config)),
     )

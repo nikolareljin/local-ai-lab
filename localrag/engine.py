@@ -15,7 +15,7 @@ from .config import Config
 from .prompts import SYSTEM_PROMPT, build_user_prompt
 from .providers import get_provider
 from .retriever import Retriever, build_retriever
-from .store import build_index, is_stale, load_chunks
+from .store import build_index, embed_signature, is_stale, load_chunks
 
 _lock = threading.Lock()
 _cache: Dict[str, object] = {"retriever": None, "key": None}
@@ -36,9 +36,10 @@ def get_retriever(config: Config) -> Retriever:
         if is_stale(config):
             build_index(config)
             _cache["retriever"] = None
-        # Key on both the retriever type and the embed provider, so switching either
-        # rebuilds instead of reusing a retriever built for the other.
-        key = (config.retriever, config.embed_provider)
+        # Key on everything that identifies this retriever — the retriever type, the
+        # embedding signature (provider + model), and the corpus (cache dir) — so a
+        # different config in the same process rebuilds instead of reusing the wrong one.
+        key = (config.retriever, embed_signature(config), str(config.cache_dir))
         if _cache["retriever"] is None or _cache["key"] != key:
             chunks: List[Chunk] = load_chunks(config)
             _cache["retriever"] = build_retriever(chunks, config)
