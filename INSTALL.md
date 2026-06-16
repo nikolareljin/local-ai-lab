@@ -125,7 +125,7 @@ is **no API key to manage**.
   ```powershell
   irm https://claude.ai/install.ps1 -OutFile claude-install.ps1
   notepad claude-install.ps1     # review before running
-  .\claude-install.ps1
+  .\claude-install.ps1           # if blocked: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
   ```
 
 **Alternative - via npm (if you already run [Node.js](https://nodejs.org) 18+):**

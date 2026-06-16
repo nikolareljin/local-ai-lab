@@ -98,7 +98,9 @@ curl -fsSL https://claude.ai/install.sh -o claude-install.sh
 less claude-install.sh        # review before running
 bash claude-install.sh
 # Windows (PowerShell): download, inspect, then run
-#   irm https://claude.ai/install.ps1 -OutFile claude-install.ps1; .\claude-install.ps1
+#   irm https://claude.ai/install.ps1 -OutFile claude-install.ps1
+#   notepad claude-install.ps1      # review, then run:
+#   .\claude-install.ps1            # if blocked: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 
 # Alternative - via npm (needs Node.js 18+):
 npm install -g @anthropic-ai/claude-code
