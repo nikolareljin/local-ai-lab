@@ -1,4 +1,4 @@
-/* local-ai-lab course site — shared styles */
+/* local-ai-lab course site - shared styles */
 :root {
   --bg: #0f1115; --panel: #1a1d24; --panel2: #11141a; --edge: #2a2f3a;
   --txt: #e6e8ee; --muted: #8b93a7; --accent: #5b9dff; --accent2: #3a6fd8;
@@ -138,6 +138,19 @@ th { background: var(--panel); }
 }
 .slide .why b { color: var(--txt); }
 .note { background: rgba(210,153,34,.08); border-left: 3px solid var(--warn); padding: 12px 16px; border-radius: 0 10px 10px 0; margin: 14px 0; }
+/* high-emphasis value callout */
+.impact { background: linear-gradient(180deg, rgba(91,157,255,.10), rgba(91,157,255,.03)); border: 1px solid var(--accent2); border-left: 4px solid var(--accent); border-radius: 12px; padding: 22px 26px; margin: 26px 0; }
+.impact .eyebrow { color: var(--accent); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; font-size: 13px; }
+.impact h2 { margin: 6px 0 12px; }
+.impact .lead { color: #d7dcea; }
+.impact .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 28px; }
+@media (max-width: 640px) { .impact .cols { grid-template-columns: 1fr; } }
+.impact .col-h { font-weight: 700; color: var(--txt); margin: 10px 0 2px; }
+.impact ul { list-style: none; padding: 0; margin: 6px 0; }
+.impact li { padding: 5px 0 5px 28px; position: relative; }
+.impact li.win::before { content: "\2713"; position: absolute; left: 3px; color: var(--ok); font-weight: 700; }
+.impact li.guard::before { content: "\1F6E1"; position: absolute; left: 0; }
+.impact mark { background: rgba(63,185,80,.20); color: var(--txt); padding: 0 4px; border-radius: 4px; }
 .slide p { margin: 12px 0; }
 
 /* command + code blocks */
