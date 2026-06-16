@@ -56,7 +56,9 @@ date before you commit).
 - **Commits:** [Conventional Commits](https://www.conventionalcommits.org/) — `feat:`, `fix:`,
   `docs:`, `chore:`, `refactor:`, with an optional scope like `feat(lessons):`.
 - **Python:** PEP 8, 4-space indent, `snake_case` functions, type hints on public functions.
-- Keep examples **small and readable** — the teaching value is in code a reader can follow.
+- Keep examples **small and readable** — the teaching value is in code a reader can follow. This is a
+  teaching demo, so prefer the simplest version that makes the point; see
+  [PRODUCTION_NOTES.md](./PRODUCTION_NOTES.md) for what's intentionally left out (and why).
 - Update `CHANGELOG.md` (under `## [Unreleased]`) when you change observable behavior.
 
 ## Pull request checklist

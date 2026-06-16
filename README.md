@@ -149,6 +149,8 @@ approach and related work on the **[About page](https://nikolareljin.github.io/l
 - **[Troubleshooting](https://nikolareljin.github.io/local-ai-lab/troubleshooting.html)** — provider /
   API-key setup and common errors.
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** — data flow and module map.
+- **[PRODUCTION_NOTES.md](./PRODUCTION_NOTES.md)** — using this for real? What the demo keeps simple on
+  purpose (security, testing, performance) and what you'd harden for production.
 
 ```bash
 ./run list                 # every lesson and its actions
