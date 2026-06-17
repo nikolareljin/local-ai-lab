@@ -155,7 +155,7 @@ def _why_blocks(q, bm, sem, lexical, semantic, rrf_k, synonyms):
     blocks.append({"kind": "note",
                    "text": "BM25 = Σ idf(term) · saturated term-frequency (shaped by k1 & b). "
                            "Semantic = overlap with the synonym-expanded query. RRF fuses by rank: "
-                           "1/(k+rank) from each arm, summed. A blank means that arm didn't rank the "
+                           "1/(k+rank) from each arm, summed. A dash (-) means that arm didn't rank the "
                            "document - which is exactly how a paraphrase scores 0 on BM25 yet the "
                            "hybrid still answers via the semantic arm."})
     return blocks
