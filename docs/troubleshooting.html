@@ -91,9 +91,22 @@ export OLLAMA_URL=http://localhost:11434</code></pre>
     <h2 id="claude">Claude Code (default, no API key)</h2>
     <p>Uses your existing Claude Code CLI login, so there's nothing to configure.</p>
     <h3>Error: "Claude Code CLI 'claude' not found on PATH"</h3>
-    <p>Install the CLI and sign in once:</p>
-    <pre><code>npm install -g @anthropic-ai/claude-code
-claude                 # first run signs you in
+    <p>Install the CLI and sign in once. The native installer is self-contained (no Node.js); npm is an
+      alternative if you already run Node.js 18+. Full per-OS steps are in the
+      <a href="./pdf/INSTALL.pdf" target="_blank" rel="noopener">Install guide</a>.</p>
+    <p><b>Linux / macOS</b> - download, inspect, then run:</p>
+    <pre><code>curl -fsSL https://claude.ai/install.sh -o claude-install.sh
+less claude-install.sh
+bash claude-install.sh</code></pre>
+    <p><b>Windows PowerShell</b> - download, inspect, then run:</p>
+    <pre><code>iwr https://claude.ai/install.ps1 -OutFile claude-install.ps1
+notepad claude-install.ps1
+.\claude-install.ps1
+# if blocked by execution policy: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</code></pre>
+    <p><b>Alternative</b> - via npm (needs Node.js 18+):</p>
+    <pre><code>npm install -g @anthropic-ai/claude-code</code></pre>
+    <p>Then sign in and verify (any install method):</p>
+    <pre><code>claude
 claude --version</code></pre>
     <p>Custom install path? Point the app at it with <code>CLAUDE_BIN=/full/path/to/claude</code>.
       No API key is needed - it reuses your Claude login. Claude Code can't produce embeddings, so
