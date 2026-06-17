@@ -119,6 +119,9 @@ is **no API key to manage**.
   ```bash
   curl -fsSL https://claude.ai/install.sh -o claude-install.sh
   less claude-install.sh        # review before running
+  ```
+  After reviewing, run:
+  ```bash
   bash claude-install.sh
   ```
 - **Windows (PowerShell)** (download, inspect, then run):
