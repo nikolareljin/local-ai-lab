@@ -1,7 +1,7 @@
 """Offline test for the Lesson 3 hybrid retrieval demo (Python).
 
 Encodes the lesson's claim: BM25 nails an exact term, but a keyword-free
-paraphrase slips past BM25 entirely while the semantic stand-in recovers it —
+paraphrase slips past BM25 entirely while the semantic stand-in recovers it -
 and the hybrid (RRF) keeps the right answer either way.
 
 Run:  python -m pytest test_hybrid.py
@@ -27,7 +27,7 @@ def test_exact_term_query_favours_bm25():
 def test_zero_score_docs_are_excluded():
     docs = load_docs()
     lexical, _, _ = hybrid("error E_4096", docs)
-    # Only the document that actually matches is ranked — no zero-score filler.
+    # Only the document that actually matches is ranked - no zero-score filler.
     assert lexical == ["error_codes.md"]
 
 

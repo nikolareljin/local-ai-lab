@@ -3,8 +3,8 @@
 Encodes the lesson's claims:
 - the baseline config clears the gate (every golden question passes),
 - the candidate config fails it,
-- the candidate regresses two *specific tracked numbers* — mean recall and mean
-  groundedness — below where the baseline sits,
+- the candidate regresses two *specific tracked numbers* - mean recall and mean
+  groundedness - below where the baseline sits,
 - groundedness flags an answer padded with an unsupported sentence,
 - recall@k drops for the question whose gold doc ranks 2nd when k shrinks 3 -> 1,
 - correctness counts the expected keywords, and the aggregate is the mean.
@@ -59,7 +59,7 @@ def test_candidate_regresses_recall_and_groundedness():
     # The two tracked numbers that moved.
     assert cand["mean_recall"] < base["mean_recall"]
     assert cand["mean_groundedness"] < thr["groundedness"] <= base["mean_groundedness"]
-    # Correctness did NOT move — a fluent answer can still hit the keywords while
+    # Correctness did NOT move - a fluent answer can still hit the keywords while
     # being ungrounded; that is exactly why groundedness earns its place.
     assert cand["mean_correctness"] == base["mean_correctness"] == 1.0
 

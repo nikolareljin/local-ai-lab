@@ -2,7 +2,7 @@
   "title": "RAG Evaluation & Regression Testing",
   "slug": "rag-evaluation-regression-testing",
   "status": "working",
-  "summary": "\"Seems good\" is not a metric. Score a RAG pipeline against a golden set on retrieval recall@k, groundedness and answer correctness, gate on the numbers, and catch a regression a candidate tweak slips in — offline, polyglot, identical results in Python, Node and .NET.",
+  "summary": "\"Seems good\" is not a metric. Score a RAG pipeline against a golden set on retrieval recall@k, groundedness and answer correctness, gate on the numbers, and catch a regression a candidate tweak slips in - offline, polyglot, identical results in Python, Node and .NET.",
   "cluster": "rag-depth",
   "priority": "high",
   "languages": ["python", "node", "csharp"],
@@ -11,33 +11,33 @@
   "elements": [
     { "type": "note", "kicker": "Overview", "title": "What you'll build",
       "file": "overview.txt",
-      "body": "Lessons 1 and 3 made retrieval *work* and made it *better*; Lesson 4 made it *safe*. This lesson makes \"better\" and \"safe\" **measurable**. The golden rule of RAG evaluation: **if you can't put a number on it, you can't tell when it breaks.**\n\nYou'll score a pipeline against a small **golden set** — questions paired with the document that *should* be retrieved and the keywords a correct answer must contain — on three axes: **retrieval recall@k**, **groundedness**, and **answer correctness**. A question **passes** only if all three clear their thresholds; the **gate** passes only if every question passes. Then you'll run a **candidate** tweak that looks harmless and watch the eval catch the regression it slips in. Everything is **offline and dependency-free**, implemented identically in **Python, Node.js and C#**. Pick a language with the selector above; press → to begin." },
+      "body": "Lessons 1 and 3 made retrieval *work* and made it *better*; Lesson 4 made it *safe*. This lesson makes \"better\" and \"safe\" **measurable**. The golden rule of RAG evaluation: **if you can't put a number on it, you can't tell when it breaks.**\n\nYou'll score a pipeline against a small **golden set** - questions paired with the document that *should* be retrieved and the keywords a correct answer must contain - on three axes: **retrieval recall@k**, **groundedness**, and **answer correctness**. A question **passes** only if all three clear their thresholds; the **gate** passes only if every question passes. Then you'll run a **candidate** tweak that looks harmless and watch the eval catch the regression it slips in. Everything is **offline and dependency-free**, implemented identically in **Python, Node.js and C#**. Pick a language with the selector above; press → to begin." },
 
     { "type": "command", "kicker": "Setup", "title": "What you need",
       "body": "You follow this lesson by **reading and running** - there's nothing to write. The eval engine, the golden set and the tiny corpus all live in the repo. It is **offline and dependency-free** (nothing to install for Python; for the other ports you only need **Node.js 18+** or the **.NET 8 SDK**). Run it from the repo root. For **Python**, bare `./run -l 5` opens the interactive scorecard playground; add `demo` for the one-shot print-and-exit comparison. The **Node and C#** ports are one-shot only (no GUI), and the `demo` word is optional - bare `--lang node` / `--lang csharp` runs the same comparison:",
       "shell": "./run -l 5                 # Python: interactive scorecard\n./run -l 5 demo            # Python: one-shot, print and exit\n./run -l 5 --lang node     # Node one-shot  (or: --lang csharp)" },
 
     { "type": "config", "file": "data/golden.json", "kicker": "Step 1", "title": "The golden set",
-      "body": "The golden set is the eval's source of truth: five questions, each tagged with the **gold document(s)** that should be retrieved and the **answer keywords** a correct answer must contain, plus the **thresholds** the gate enforces. All three language ports read this one file, so they score identically. A real eval set is bigger and grows every time a bug teaches you a new question — but the shape is exactly this.",
-      "why": "Curate the golden set like code: version it, review changes, and add a case for every regression you ever hit. The thresholds encode your quality bar — raise them as the system improves." },
+      "body": "The golden set is the eval's source of truth: five questions, each tagged with the **gold document(s)** that should be retrieved and the **answer keywords** a correct answer must contain, plus the **thresholds** the gate enforces. All three language ports read this one file, so they score identically. A real eval set is bigger and grows every time a bug teaches you a new question - but the shape is exactly this.",
+      "why": "Curate the golden set like code: version it, review changes, and add a case for every regression you ever hit. The thresholds encode your quality bar - raise them as the system improves." },
 
     { "type": "code", "file": "python/eval_rag.py", "lang": "python", "lines": "70-82", "group": "retrieve",
       "kicker": "Step 2", "title": "Retrieve the candidates",
       "body": "Evaluation starts where retrieval does. We reuse the same deterministic keyword retriever from Lesson 4 (distinct-term overlap, minus stopwords) so the same query always pulls the same documents in every language. The first metric will ask a simple question of this step's output: **was the gold document in the top-k?**",
-      "why": "Swap in any retriever you like — BM25, embeddings, the hybrid from Lesson 3. The eval measures *outcomes*, so it does not care how retrieval works, only whether the right documents come back." },
+      "why": "Swap in any retriever you like - BM25, embeddings, the hybrid from Lesson 3. The eval measures *outcomes*, so it does not care how retrieval works, only whether the right documents come back." },
     { "type": "code", "file": "node/eval_rag.mjs", "lang": "node", "lines": "62-72", "group": "retrieve" },
     { "type": "code", "file": "dotnet/Program.cs", "lang": "csharp", "lines": "61-72", "group": "retrieve" },
 
     { "type": "code", "file": "python/eval_rag.py", "lang": "python", "lines": "84-134", "group": "metrics",
       "kicker": "Step 3", "title": "Score the answer three ways",
-      "body": "An offline, deterministic answerer takes the fact from the top retrieved document (optionally **padding** it with one unsupported sentence — a stand-in for a model that adds a claim no document backs). Then three metrics turn the result into numbers: **recall@k** (did the gold document come back?), **groundedness** (what fraction of the answer's terms appear in the retrieved context?), and **correctness** (what fraction of the expected keywords are present?). Each is a fraction in 0…1.",
+      "body": "An offline, deterministic answerer takes the fact from the top retrieved document (optionally **padding** it with one unsupported sentence - a stand-in for a model that adds a claim no document backs). Then three metrics turn the result into numbers: **recall@k** (did the gold document come back?), **groundedness** (what fraction of the answer's terms appear in the retrieved context?), and **correctness** (what fraction of the expected keywords are present?). Each is a fraction between 0 and 1.",
       "why": "These three catch different failures, which is why you need all of them. Recall misses the document; groundedness catches a fluent answer that invents facts; correctness catches a grounded answer that is simply wrong. Any one alone is fooled by the others' blind spots." },
     { "type": "code", "file": "node/eval_rag.mjs", "lang": "node", "lines": "75-118", "group": "metrics" },
     { "type": "code", "file": "dotnet/Program.cs", "lang": "csharp", "lines": "75-117", "group": "metrics" },
 
     { "type": "code", "file": "python/eval_rag.py", "lang": "python", "lines": "137-167", "group": "regression",
       "kicker": "Step 4", "title": "The gate, and the two configs",
-      "body": "`evaluate` runs every golden question under a **config** and aggregates the scores into means plus a single **gate** verdict: green only if every question passes. Two configs tell the story — a **baseline** (top_k=3, no padding) that clears the gate, and a **candidate** (top_k=1, padding on) that looks like a reasonable tweak but quietly drops two of the numbers.",
+      "body": "`evaluate` runs every golden question under a **config** and aggregates the scores into means plus a single **gate** verdict: green only if every question passes. Two configs tell the story - a **baseline** (top_k=3, no padding) that clears the gate, and a **candidate** (top_k=1, padding on) that looks like a reasonable tweak but quietly drops two of the numbers.",
       "why": "The gate is what you wire into CI: a pull request that drops a tracked number below its threshold fails the build, so a regression is a red check, not a customer complaint three weeks later." },
     { "type": "code", "file": "node/eval_rag.mjs", "lang": "node", "lines": "120-147", "group": "regression" },
     { "type": "code", "file": "dotnet/Program.cs", "lang": "csharp", "lines": "120-143", "group": "regression" },
@@ -45,7 +45,7 @@
 
     { "type": "command", "action": "demo", "lang": "python", "group": "run-demo",
       "kicker": "Run it", "title": "Run the eval",
-      "body": "Now run it — this scores the golden set under both configs and prints the scorecards side by side, then a regression summary, and exits — identical output in all three languages. (Bare `./run -l 5` opens the interactive scorecard instead; `demo` is the one-shot print-and-exit.)",
+      "body": "Now run it - this scores the golden set under both configs and prints the scorecards side by side, then a regression summary, and exits - identical output in all three languages. (Bare `./run -l 5` opens the interactive scorecard instead; `demo` is the one-shot print-and-exit.)",
       "display": "./run -l 5 demo", "shell": "python python/eval_rag.py" },
     { "type": "command", "action": "demo", "lang": "node", "group": "run-demo",
       "display": "./run -l 5 --lang node demo", "shell": "node node/eval_rag.mjs" },
@@ -54,29 +54,29 @@
 
     { "type": "note", "kicker": "Run it", "title": "Read the output",
       "file": "expected-output.txt",
-      "body": "The **baseline** scorecard is all green — every question clears recall, groundedness and correctness, so the gate passes. The **candidate** looks like a harmless tweak (fewer documents retrieved, a chattier answer) but the numbers tell the truth: **mean recall** drops because one question's gold document fell out of the smaller top-k, and **mean groundedness** falls below its threshold everywhere because the padded sentence is unsupported. **Correctness never moved** — the answer still contains the right keywords, which is exactly how this regression would sail through a manual eyeball check. The gate flips PASS → FAIL." },
+      "body": "The **baseline** scorecard is all green - every question clears recall, groundedness and correctness, so the gate passes. The **candidate** looks like a harmless tweak (fewer documents retrieved, a chattier answer) but the numbers tell the truth: **mean recall** drops because one question's gold document fell out of the smaller top-k, and **mean groundedness** falls below its threshold everywhere because the padded sentence is unsupported. **Correctness never moved** - the answer still contains the right keywords, which is exactly how this regression would sail through a manual eyeball check. The gate flips PASS → FAIL." },
 
     { "type": "text", "kicker": "Try it", "title": "A question whose gold document ranks first", "text": "how long do refunds take to arrive",
-      "body": "Want to experiment? You don't edit any code — the next step opens an interactive scorecard where you type and toggle. Start with a question whose gold document is the top hit, so it survives even a tiny top-k:" },
+      "body": "Want to experiment? You don't edit any code - the next step opens an interactive scorecard where you type and toggle. Start with a question whose gold document is the top hit, so it survives even a tiny top-k:" },
     { "type": "text", "kicker": "Try it", "title": "A question whose gold document ranks second", "text": "how do i reset my password",
-      "body": "This one's gold document sits behind a near-duplicate distractor, so shrinking top_k to 1 drops it from the results — recall falls to 0 even though the answer still reads fine. (Prefer the terminal? `./run -l 5 demo` runs both configs and exits.)" },
+      "body": "This one's gold document sits behind a near-duplicate distractor, so shrinking top_k to 1 drops it from the results - recall falls to 0 even though the answer still reads fine. (Prefer the terminal? `./run -l 5 demo` runs both configs and exits.)" },
 
     { "type": "command", "action": "test", "lang": "python", "kicker": "Try it", "title": "Confirm it with the test",
       "body": "An offline test pins the lesson's claims: the baseline clears the gate; the candidate fails it; the candidate regresses **mean recall** and **mean groundedness** below where the baseline sits while **correctness holds steady**; groundedness flags the unsupported sentence; and recall drops for the rank-2 question when top_k shrinks. No network, no model.",
       "display": "./run -l 5 test", "shell": "python -m pytest -q python/test_eval_rag.py", "venv": true },
 
-    { "type": "command", "action": "web", "lang": "python", "kicker": "Experiment", "title": "Tinker in the scorecard — no code editing",
-      "body": "This is the payoff: `./run -l 5` (the default) opens an interactive scorecard over the golden set. Leave the box empty to see the **whole set scored as one card** — the three means and the gate. Pick a question to **drill into its three numbers**, the keywords it hit or missed, and what each retrieved document contributed. Then move the sliders — **top_k**, the **groundedness** and **correctness** gates — or flip on **unsupported padding**, and watch a number cross its threshold and the gate flip. Nothing to edit: the controls feed the very same `evaluate` the demo and test use.",
+    { "type": "command", "action": "web", "lang": "python", "kicker": "Experiment", "title": "Tinker in the scorecard - no code editing",
+      "body": "This is the payoff: `./run -l 5` (the default) opens an interactive scorecard over the golden set. Leave the box empty to see the **whole set scored as one card** - the three means and the gate. Pick a question to **drill into its three numbers**, the keywords it hit or missed, and what each retrieved document contributed. Then move the sliders - **top_k**, the **groundedness** and **correctness** gates - or flip on **unsupported padding**, and watch a number cross its threshold and the gate flip. Nothing to edit: the controls feed the very same `evaluate` the demo and test use.",
       "display": "./run -l 5", "shell": "python python/web.py", "venv": true },
-    { "type": "text", "kicker": "Experiment", "title": "Try — shrink top_k to 1", "text": "how do i reset my password",
-      "body": "Drag the top_k slider down to 1 and watch this question's recall fall to 0: its gold document was the second hit, and a smaller top-k no longer reaches it. The answer still looks reasonable — that's the point." },
-    { "type": "text", "kicker": "Experiment", "title": "Try — turn on unsupported padding", "text": "how long is the warranty",
-      "body": "Leave the box empty for the full scorecard, then flip on **unsupported padding**. Groundedness drops below its gate for every question even though correctness stays at 1.00 — a fluent, on-topic answer that still smuggles in a claim no document supports." },
+    { "type": "text", "kicker": "Experiment", "title": "Try - shrink top_k to 1", "text": "how do i reset my password",
+      "body": "Drag the top_k slider down to 1 and watch this question's recall fall to 0: its gold document was the second hit, and a smaller top-k no longer reaches it. The answer still looks reasonable - that's the point." },
+    { "type": "text", "kicker": "Experiment", "title": "Try - turn on unsupported padding", "text": "how long is the warranty",
+      "body": "Leave the box empty for the full scorecard, then flip on **unsupported padding**. Groundedness drops below its gate for every question even though correctness stays at 1.00 - a fluent, on-topic answer that still smuggles in a claim no document supports." },
 
     { "type": "note", "kicker": "Going further", "title": "From demo to production",
-      "body": "This is a teaching demo; the answerer is a deterministic extractive stand-in so the lesson is reproducible. For real systems:\n\n**Keep the golden set, swap the pipeline** — point `evaluate` at your real retriever and model and the metrics still apply. **Grow the set** — add a question for every bug, so the eval only ever gets stricter. **Strengthen the metrics** — pair keyword correctness with an LLM-as-judge or embedding similarity, score groundedness against cited spans, and track latency and cost alongside quality. **Gate in CI** — fail the build when a tracked number drops below threshold, and store the scorecard so you can see trends over time. Fold Lesson 4's untrusted-document handling into the same set so a safety regression also shows up as a number." },
+      "body": "This is a teaching demo; the answerer is a deterministic extractive stand-in so the lesson is reproducible. For real systems:\n\n**Keep the golden set, swap the pipeline** - point `evaluate` at your real retriever and model and the metrics still apply. **Grow the set** - add a question for every bug, so the eval only ever gets stricter. **Strengthen the metrics** - pair keyword correctness with an LLM-as-judge or embedding similarity, score groundedness against cited spans, and track latency and cost alongside quality. **Gate in CI** - fail the build when a tracked number drops below threshold, and store the scorecard so you can see trends over time. Fold Lesson 4's untrusted-document handling into the same set so a safety regression also shows up as a number." },
 
     { "type": "note", "kicker": "Recap", "title": "What you learned",
-      "body": "\"Seems good\" is not a metric. A **golden set** plus three scores — **recall@k**, **groundedness** and **correctness** — and a **gate** turn quality into a number you can track. A candidate that looks fine can still regress a metric, and the eval catches it where an eyeball check would not: correctness held steady while recall and groundedness quietly dropped. Same algorithm in **Python, Node.js and C#**, byte-identical output, plus a scorecard playground where you watched the gate flip.\n\nNext: **Lesson 6 · Repo-aware AI assistant** — ground an assistant in your own codebase." }
+      "body": "\"Seems good\" is not a metric. A **golden set** plus three scores - **recall@k**, **groundedness** and **correctness** - and a **gate** turn quality into a number you can track. A candidate that looks fine can still regress a metric, and the eval catches it where an eyeball check would not: correctness held steady while recall and groundedness quietly dropped. Same algorithm in **Python, Node.js and C#**, byte-identical output, plus a scorecard playground where you watched the gate flip.\n\nNext: **Lesson 6 · Repo-aware AI assistant** - ground an assistant in your own codebase." }
   ]
 }

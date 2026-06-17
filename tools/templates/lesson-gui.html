@@ -78,7 +78,7 @@
     <section class="panel">
       <h2>Ask</h2>
       <div class="row">
-        <input id="q" type="text" placeholder="type a query…" aria-label="Search query" autofocus />
+        <input id="q" type="text" placeholder="type a query..." aria-label="Search query" autofocus />
         <button id="go">Search ▶</button>
       </div>
       <div id="examples" class="examples"></div>
@@ -87,7 +87,7 @@
 
     <section class="panel">
       <h2 style="display:flex;justify-content:space-between;align-items:center">
-        <span>Tune the knobs — no code editing</span>
+        <span>Tune the knobs - no code editing</span>
         <button id="reset" class="reset" title="Restore the lesson defaults">Reset defaults</button>
       </h2>
       <div id="params" class="params"></div>
@@ -99,12 +99,12 @@
     </section>
 
     <section class="panel">
-      <h2>Why these results — the numbers behind the ranking</h2>
+      <h2>Why these results - the numbers behind the ranking</h2>
       <div id="breakdown"></div>
     </section>
   </main>
 
-  <footer>Part of <strong>local-ai-lab</strong> — runs entirely on your machine. Tune a knob and the rankings recompute live.</footer>
+  <footer>Part of <strong>local-ai-lab</strong> - runs entirely on your machine. Tune a knob and the rankings recompute live.</footer>
 
   <script>
     const $ = (id) => document.getElementById(id);
@@ -121,7 +121,7 @@
       } catch (e) {
         // Fail visibly instead of leaving a blank page on an unhandled rejection.
         renderBlocks([{ kind: "note", text: "Could not load the experiment config: "
-          + (e && e.message ? e.message : e) + " — is the local server still running?" }]);
+          + (e && e.message ? e.message : e) + " - is the local server still running?" }]);
         return;
       }
       $("title").textContent = cfg.title || "experiment";
@@ -222,7 +222,7 @@
         });
         if (!r.ok) throw new Error("server responded " + r.status);
         const d = await r.json();
-        if (seq !== reqSeq) return;  // a newer request landed first — drop this stale result
+        if (seq !== reqSeq) return;  // a newer request landed first - drop this stale result
         renderArms(d.arms || []);
         renderBlocks(d.blocks || []);
       } catch (e) {

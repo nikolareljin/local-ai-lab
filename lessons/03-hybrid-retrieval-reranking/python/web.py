@@ -1,10 +1,10 @@
 """Lesson 3 - interactive hybrid-search GUI (experiment locally).
 
-Type a query and tune the knobs — BM25 `k1`/`b`, the RRF `k`, and the semantic
-arm's synonyms — then watch the three rankings *and the numbers behind them*
+Type a query and tune the knobs - BM25 `k1`/`b`, the RRF `k`, and the semantic
+arm's synonyms - then watch the three rankings *and the numbers behind them*
 change live. There is **nothing to edit**: the sliders feed the very same
 `bm25_scores` / `semantic_scores` / `rank` / `rrf` functions the one-shot `demo`
-and the test use — called directly here (rather than through `hybrid()`) only so
+and the test use - called directly here (rather than through `hybrid()`) only so
 the GUI can also surface the intermediate scores for the "why" breakdown.
 
 Run:  ./run -l 3        (or:  ./run -l 3 web)
@@ -39,7 +39,7 @@ STORY_DIR = Path(__file__).resolve().parent.parent / "story"
 
 # The GUI searches the *story* corpus, so it carries its own synonym map (the demo's
 # data/ corpus keeps hybrid_demo.SYNONYMS). Keys are words a reader might type that do
-# NOT appear literally in the story; each expands to words that DO — so toggling
+# NOT appear literally in the story; each expands to words that DO - so toggling
 # synonyms visibly changes the rankings, e.g. "overheated" recovers the fusion-drive
 # chapter only with synonyms on, exactly the divergence fusion exists for.
 STORY_SYNONYMS = {
@@ -64,16 +64,16 @@ def load_story():
 
 DOCS = load_story()
 
-# The knobs exposed in the GUI — defaults are the lesson's own constants, so the UI
+# The knobs exposed in the GUI - defaults are the lesson's own constants, so the UI
 # opens on exactly the behaviour the demo and test pin.
 PARAMS = [
-    {"name": "k1", "label": "BM25 · k1 — term-frequency saturation", "kind": "range",
+    {"name": "k1", "label": "BM25 · k1 - term-frequency saturation", "kind": "range",
      "min": 0.2, "max": 3.0, "step": 0.1, "default": K1},
-    {"name": "b", "label": "BM25 · b — length normalisation", "kind": "range",
+    {"name": "b", "label": "BM25 · b - length normalisation", "kind": "range",
      "min": 0.0, "max": 1.0, "step": 0.05, "default": B},
-    {"name": "rrf_k", "label": "RRF · k — rank-fusion damping", "kind": "range",
+    {"name": "rrf_k", "label": "RRF · k - rank-fusion damping", "kind": "range",
      "min": 1, "max": 120, "step": 1, "default": RRF_K},
-    {"name": "synonyms", "label": "Semantic arm — expand synonyms", "kind": "toggle",
+    {"name": "synonyms", "label": "Semantic arm - expand synonyms", "kind": "toggle",
      "default": True},
 ]
 
@@ -84,14 +84,14 @@ PARAMS = [
 # corpus, where "broken gadget" shows the same divergence.)
 EXAMPLES = [
     {"label": "Exact name (BM25 nails it)", "query": "Nuevo Edén"},
-    {"label": "Keyword-free — synonyms recover it", "query": "overheated"},
-    {"label": "Paraphrase — turn synonyms off to compare", "query": "how did they keep the turtle alive in space"},
+    {"label": "Keyword-free - synonyms recover it", "query": "overheated"},
+    {"label": "Paraphrase - turn synonyms off to compare", "query": "how did they keep the turtle alive in space"},
     {"label": "A star by name", "query": "Alpha Centauri"},
 ]
 
 
 def _idf(query_tokens, docs):
-    """Per-query-term IDF — the same rare-term weighting `bm25_scores` uses inside,
+    """Per-query-term IDF - the same rare-term weighting `bm25_scores` uses inside,
     surfaced here so the GUI can show *why* one term outweighs another."""
     n = len(docs)
     df = {}
@@ -114,7 +114,7 @@ def _why_blocks(q, bm, sem, lexical, semantic, rrf_k, synonyms):
         for t in q
     ]
     blocks = [{"kind": "tokens",
-               "title": "Query terms — BM25 weights each by IDF (rarer = stronger)",
+               "title": "Query terms - BM25 weights each by IDF (rarer = stronger)",
                "items": qtokens}]
 
     if synonyms:
@@ -126,7 +126,7 @@ def _why_blocks(q, bm, sem, lexical, semantic, rrf_k, synonyms):
                        "items": syns})
     else:
         blocks.append({"kind": "note",
-                       "text": "Synonyms are OFF — the semantic arm now matches literal words only, "
+                       "text": "Synonyms are OFF - the semantic arm now matches literal words only, "
                                "so it collapses toward BM25 and paraphrases stop being recovered."})
 
     columns = ["document", "BM25", "semantic", "BM25 rank", "sem rank", "RRF lex", "RRF sem", "fused RRF"]
@@ -142,21 +142,21 @@ def _why_blocks(q, bm, sem, lexical, semantic, rrf_k, synonyms):
             {"v": name, "cls": "text"},
             num_or_miss(bm[i] > 0, "%.3f" % bm[i]),
             num_or_miss(sem[i] > 0, "%.3f" % sem[i]),
-            num_or_miss(lr is not None, ("#%d" % (lr + 1)) if lr is not None else "—"),
-            num_or_miss(sr is not None, ("#%d" % (sr + 1)) if sr is not None else "—"),
-            num_or_miss(lex_rrf, ("%.4f" % lex_rrf) if lex_rrf else "—"),
-            num_or_miss(sem_rrf, ("%.4f" % sem_rrf) if sem_rrf else "—"),
-            num_or_miss(fused, ("%.4f" % fused) if fused else "—"),
+            num_or_miss(lr is not None, ("#%d" % (lr + 1)) if lr is not None else "-"),
+            num_or_miss(sr is not None, ("#%d" % (sr + 1)) if sr is not None else "-"),
+            num_or_miss(lex_rrf, ("%.4f" % lex_rrf) if lex_rrf else "-"),
+            num_or_miss(sem_rrf, ("%.4f" % sem_rrf) if sem_rrf else "-"),
+            num_or_miss(fused, ("%.4f" % fused) if fused else "-"),
         ]))
-    rows.sort(key=lambda r: -r[0])  # best fused first — the order the hybrid returns
+    rows.sort(key=lambda r: -r[0])  # best fused first - the order the hybrid returns
     blocks.append({"kind": "table",
                    "title": "Why each document ranks where it does",
                    "columns": columns, "rows": [cells for _, cells in rows]})
     blocks.append({"kind": "note",
                    "text": "BM25 = Σ idf(term) · saturated term-frequency (shaped by k1 & b). "
                            "Semantic = overlap with the synonym-expanded query. RRF fuses by rank: "
-                           "1/(k+rank) from each arm, summed. A blank means that arm didn't rank the "
-                           "document — which is exactly how a paraphrase scores 0 on BM25 yet the "
+                           "1/(k+rank) from each arm, summed. A dash (-) means that arm didn't rank the "
+                           "document - which is exactly how a paraphrase scores 0 on BM25 yet the "
                            "hybrid still answers via the semantic arm."})
     return blocks
 
@@ -165,7 +165,7 @@ def search(query, values):
     k1, b, rrf_k = values["k1"], values["b"], values["rrf_k"]
     synonyms = STORY_SYNONYMS if values["synonyms"] else {}
     if not query:
-        return {"arms": [], "blocks": [{"kind": "note", "text": "Type a query — or pick an example above."}]}
+        return {"arms": [], "blocks": [{"kind": "note", "text": "Type a query - or pick an example above."}]}
 
     q = tokenize(query)
     bm = bm25_scores(q, DOCS, k1, b)
@@ -183,9 +183,9 @@ def search(query, values):
 
 def main():
     serve(
-        title="Lesson 3 · Hybrid search — The Voyage of Caretta the Magnificent",
+        title="Lesson 3 · Hybrid search - The Voyage of Caretta the Magnificent",
         subtitle="BM25 wins exact terms; the semantic stand-in wins paraphrases; RRF fuses both. "
-                 "Tune the knobs and watch the rankings — and the numbers behind them — change live.",
+                 "Tune the knobs and watch the rankings - and the numbers behind them - change live.",
         hint="Searching the bundled 5-chapter story. Try an exact name, then a paraphrase of it.",
         params=PARAMS,
         examples=EXAMPLES,

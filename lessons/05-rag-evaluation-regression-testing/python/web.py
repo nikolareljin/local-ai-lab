@@ -1,11 +1,11 @@
 """Lesson 5 - interactive RAG-evaluation GUI (experiment locally).
 
-Leave the box empty to see the **whole golden set** scored as one card — mean
+Leave the box empty to see the **whole golden set** scored as one card - mean
 recall, groundedness and correctness, and whether the **gate** passes. Pick a
 golden question to drill into its three numbers, the expected keywords it did or
 did not hit, and what each retrieved document contributed. Then move the sliders
 (top_k, the groundedness and correctness gates) or flip on **unsupported
-padding** and watch a number cross its threshold — the same `evaluate` the
+padding** and watch a number cross its threshold - the same `evaluate` the
 one-shot `demo` and the test use.
 
 Run:  ./run -l 5        (or:  ./run -l 5 web)
@@ -42,11 +42,11 @@ GOLDEN = load_golden()
 # Defaults match the BASELINE config the demo and test pin, so the page opens on
 # the all-green scorecard. Move them to watch a number cross its gate.
 PARAMS = [
-    {"name": "top_k", "label": "Retriever top_k — documents fed to the answerer",
+    {"name": "top_k", "label": "Retriever top_k - documents fed to the answerer",
      "kind": "range", "min": 1, "max": 5, "step": 1, "default": 3},
-    {"name": "groundedness_threshold", "label": "Groundedness gate — answer terms found in context",
+    {"name": "groundedness_threshold", "label": "Groundedness gate - answer terms found in context",
      "kind": "range", "min": 0.0, "max": 1.0, "step": 0.05, "default": 0.75},
-    {"name": "correctness_threshold", "label": "Correctness gate — expected keywords present",
+    {"name": "correctness_threshold", "label": "Correctness gate - expected keywords present",
      "kind": "range", "min": 0.0, "max": 1.0, "step": 0.05, "default": 0.5},
     {"name": "pad_unsupported", "label": "Pad the answer with an unsupported sentence (a candidate regression)",
      "kind": "toggle", "default": False},
@@ -87,7 +87,7 @@ def _scorecard(values):
     agg = result["aggregate"]
     gt, ct = values["groundedness_threshold"], values["correctness_threshold"]
 
-    ranking = ["%s — %s" % (r["id"], _verdict(r["passed"])) for r in result["rows"]]
+    ranking = ["%s - %s" % (r["id"], _verdict(r["passed"])) for r in result["rows"]]
     arms = [{"label": "Golden-set scorecard", "ranking": ranking, "highlight": True}]
 
     stats = {"kind": "stats", "items": [
@@ -113,7 +113,7 @@ def _scorecard(values):
     note = {"kind": "note", "text":
             "The gate passes only when every question passes. Drop top_k to 1 and the question whose "
             "gold document ranks second loses its recall; turn on unsupported padding and groundedness "
-            "falls below its gate everywhere — each is a tracked number you would catch in CI."}
+            "falls below its gate everywhere - each is a tracked number you would catch in CI."}
     return {"arms": arms, "blocks": [stats, table, note]}
 
 
@@ -170,17 +170,17 @@ def _drilldown(query, values):
 
     if not gold:
         msg = ("This query is not in the golden set, so there is no labelled gold document to score "
-               "recall or correctness against — only groundedness, which needs no labels.")
+               "recall or correctness against - only groundedness, which needs no labels.")
     elif passed:
         msg = ("All three numbers clear their gates, so this question passes. Shrink top_k or turn on "
                "padding to watch a number drop below its line.")
     elif rec < 1.0:
-        msg = ("The gold document was not in the top-%d results, so recall is 0 — the answer is drawn "
+        msg = ("The gold document was not in the top-%d results, so recall is 0 - the answer is drawn "
                "from a higher-ranked distractor. Raise top_k to bring the gold document back."
                % cfg["top_k"])
     else:
         msg = ("The answer carries terms that appear in no retrieved document, so groundedness falls "
-               "below its gate — a fluent answer that still smuggles in an unsupported claim.")
+               "below its gate - a fluent answer that still smuggles in an unsupported claim.")
     blocks.append({"kind": "note", "text": msg})
     return {"arms": arms, "blocks": blocks}
 
@@ -194,7 +194,7 @@ def search(query, values):
 
 def main():
     serve(
-        title="Lesson 5 · RAG evaluation — turn “seems good” into a tracked number",
+        title="Lesson 5 · RAG evaluation - turn 'seems good' into a tracked number",
         subtitle="Score a golden set on recall@k, groundedness and correctness. Move the sliders or "
                  "pad the answer with an unsupported sentence and watch the gate flip.",
         hint="Leave the box empty for the whole-golden-set scorecard, or pick a question to drill in. "
