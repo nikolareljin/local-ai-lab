@@ -3,10 +3,10 @@
 // "Seems good" is not a metric. This demo turns the quality of a RAG pipeline
 // into numbers you can track: a small golden set of questions (each with the
 // document that should be retrieved and the keywords a correct answer must
-// contain) scored on three axes — retrieval recall@k, groundedness, and answer
+// contain) scored on three axes - retrieval recall@k, groundedness, and answer
 // correctness. A question PASSES only if all three clear their thresholds; the
 // gate passes only if every question passes. We run two configs over the same
-// golden set: a BASELINE that clears the gate, and a CANDIDATE — a
+// golden set: a BASELINE that clears the gate, and a CANDIDATE - a
 // reasonable-looking tweak (smaller top_k, an answer padded with an unsupported
 // sentence) that silently regresses two of the numbers. The eval catches it.
 //
@@ -121,7 +121,7 @@ EvalResult Evaluate(GoldenSet g, List<Doc> corpus, Config config)
 {
     var thr = g.Thresholds;
     if (g.Questions.Count == 0)
-        throw new InvalidOperationException("golden set has no questions — add at least one to data/golden.json");
+        throw new InvalidOperationException("golden set has no questions - add at least one to data/golden.json");
     var rows = g.Questions.Select(q =>
     {
         var retrieved = Retrieve(q.Text, corpus, config.TopK);

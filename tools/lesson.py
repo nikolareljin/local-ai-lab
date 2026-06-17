@@ -4,8 +4,8 @@
 One small program that reads a lesson's `lesson.json` and serves the two
 operations the course needs:
 
-  A) run   — execute the command element(s) for a chosen action + language.
-  B) show  — walk through every element (note, command, code, config, text,
+  A) run   - execute the command element(s) for a chosen action + language.
+  B) show  - walk through every element (note, command, code, config, text,
              media) in order, optionally filtered to one language.
 
 Lessons live in `lessons/NN-slug/`; the NN prefix IS the lesson number, so
@@ -128,7 +128,7 @@ def resolve_action(lesson, action, lang, explicit):
 def cmd_run(args):
     ldir, lesson = load(args.number)
     if lesson.get("status") != "working":
-        warn(f"Lesson {args.number} status is '{lesson.get('status')}' — not runnable yet.")
+        warn(f"Lesson {args.number} status is '{lesson.get('status')}' - not runnable yet.")
         return 1  # non-zero so scripts/CI don't read a skipped lesson as success
     action = args.action or lesson.get("defaultAction", "demo")
     lang = args.lang or lesson.get("defaultLanguage", "python")
@@ -231,7 +231,7 @@ def cmd_show(args):
                 print(indent("• " + r))
             print(read_ref(ldir, el))
         elif etype == "text":
-            print(f"\n✎ copy/paste{(' — ' + title) if title else ''}{tag}:")
+            print(f"\n✎ copy/paste{(' - ' + title) if title else ''}{tag}:")
             print(indent(read_ref(ldir, el)))
         elif etype in ("media", "image", "video"):
             kind = el.get("kind", etype)
@@ -239,7 +239,7 @@ def cmd_show(args):
             extra = el.get("alt") or el.get("note") or ""
             # Inline terminal image rendering is environment-specific; print a
             # labeled reference (the same element embeds natively on the site).
-            print(f"\n[{kind}] {ref}" + (f" — {extra}" if extra else ""))
+            print(f"\n[{kind}] {ref}" + (f" - {extra}" if extra else ""))
         else:
             print(f"\n[unknown element type: {etype}]")
     print()
@@ -365,7 +365,7 @@ def _kicker(el):
 
 
 def _artifact(ldir, el, asset_base):
-    """The type-specific block for an element — command, code, config, text, media,
+    """The type-specific block for an element - command, code, config, text, media,
     or a note's referenced file. (Note prose is handled separately as `body`.)"""
     t = el.get("type")
     if t == "command":
@@ -384,7 +384,7 @@ def _artifact(ldir, el, asset_base):
         ref = el.get("file") or el.get("url", "")
         if ref and not ref.startswith("http"):
             # Confine local media to the lesson dir (same rule as read_ref), so a
-            # stray file:"../.." can't embed files outside it — e.g. the file://
+            # stray file:"../.." can't embed files outside it - e.g. the file://
             # URLs that `show --html` builds.
             ldirr = Path(ldir).resolve()
             try:
@@ -459,8 +459,8 @@ def _langsel_html(langs, compact=False):
 
 def _nav_html(base="./"):
     """The shared topbar nav: Home, a Lessons dropdown (built from the registry),
-    Documentation, Troubleshooting, About. `base` prefixes every link — "./" for the
-    relative preview/published pages, or an absolute `file://…/docs/` URI for a
+    Documentation, Troubleshooting, About. `base` prefixes every link - "./" for the
+    relative preview/published pages, or an absolute `file://.../docs/` URI for a
     standalone `show --html` file written to an arbitrary location."""
     items = [(1, "RAG from scratch", "lesson-1-rag.html"), (2, "MCP servers", "lesson-2-mcp.html")]
     reg = registry()
@@ -530,9 +530,9 @@ def render_html(number, ldir, lesson, lang=None, assets_href="/assets", media_ba
            .replace("{{LANGSEL}}", _langsel_html(langs))
            .replace("{{LANGSEL_COMPACT}}", _langsel_html(langs, compact=True))
            .replace("{{SLIDES}}", slides))
-    # Inject the "generated" banner into the OUTPUT only — keeping it out of the
+    # Inject the "generated" banner into the OUTPUT only - keeping it out of the
     # template itself, which contributors are meant to edit.
-    banner = ("<!-- GENERATED FILE — do not edit by hand. Built by tools/lesson.py "
+    banner = ("<!-- GENERATED FILE - do not edit by hand. Built by tools/lesson.py "
               "(`./run -l N build`) from lessons/NN-slug/lesson.json; edit the lesson.json "
               "or tools/templates/lesson-preview.html instead. -->")
     return out.replace("<!doctype html>", "<!doctype html>\n" + banner, 1)
@@ -581,7 +581,7 @@ def cmd_preview(args):
             local = Path(ldir) / clean
             if local.exists():           # media / data from the lesson dir
                 return str(local)
-            docs = ROOT / "docs" / clean  # nav links (index.html, lesson-1-rag.html, …) preview like the site
+            docs = ROOT / "docs" / clean  # nav links (index.html, lesson-1-rag.html, ...) preview like the site
             return str(docs if docs.exists() else local)
 
         def log_message(self, *a):

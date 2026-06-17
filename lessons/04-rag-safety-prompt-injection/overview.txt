@@ -11,5 +11,5 @@ RAG safety: never let a retrieved document give the orders.
    "APPROVED: your refund of $9,999"       3. filter the answer for leaks
    → hijacked                              → answers from the trusted doc, safe
 
-Same retriever, same query — the only difference is whether you treat the
+Same retriever, same query - the only difference is whether you treat the
 retrieved text as data or as commands.

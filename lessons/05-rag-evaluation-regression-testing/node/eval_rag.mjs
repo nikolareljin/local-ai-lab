@@ -3,10 +3,10 @@
 // "Seems good" is not a metric. This demo turns the quality of a RAG pipeline
 // into numbers you can track: a small golden set of questions (each with the
 // document that should be retrieved and the keywords a correct answer must
-// contain) scored on three axes — retrieval recall@k, groundedness, and answer
+// contain) scored on three axes - retrieval recall@k, groundedness, and answer
 // correctness. A question PASSES only if all three clear their thresholds; the
 // gate passes only if every question passes. We run two configs over the same
-// golden set: a BASELINE that clears the gate, and a CANDIDATE — a
+// golden set: a BASELINE that clears the gate, and a CANDIDATE - a
 // reasonable-looking tweak (smaller top_k, an answer padded with an unsupported
 // sentence) that silently regresses two of the numbers. The eval catches it.
 //
@@ -32,7 +32,7 @@ const STOPWORDS = new Set([
 // its content terms appear anywhere in the corpus, so groundedness drops.
 const UNSUPPORTED = "A complimentary gift card will be mailed separately.";
 
-// Ordinal (code-unit) comparator — locale-independent, so the tie-break order
+// Ordinal (code-unit) comparator - locale-independent, so the tie-break order
 // matches Python and .NET (StringComparer.Ordinal).
 const cmpOrdinal = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 
@@ -120,7 +120,7 @@ function correctness(answerText, keywords) {
 function evaluate(golden, docs, config) {
   const thr = golden.thresholds;
   if (golden.questions.length === 0) {
-    throw new Error("golden set has no questions — add at least one to data/golden.json");
+    throw new Error("golden set has no questions - add at least one to data/golden.json");
   }
   const rows = golden.questions.map((q) => {
     const retrieved = retrieve(q.question, docs, config.top_k);

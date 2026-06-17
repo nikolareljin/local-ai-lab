@@ -3,7 +3,7 @@
 Encodes the lesson's claims:
 - the undefended pipeline obeys a poisoned document (instruction override and
   data exfiltration),
-- each defence neutralises it on its own — quarantine drops the poisoned doc,
+- each defence neutralises it on its own - quarantine drops the poisoned doc,
   isolation ignores instructions in retrieved text, the output filter blocks a leak,
 - the output filter is a *backstop* for leaks, not a catch-all for manipulation,
 - with all defences on, both queries get the grounded answer and nothing leaks.
@@ -73,7 +73,7 @@ def test_output_filter_blocks_exfiltration():
 
 
 def test_output_filter_is_a_backstop_not_a_catch_all():
-    # The refund scam carries no secret, so an output filter alone does NOT stop it —
+    # The refund scam carries no secret, so an output filter alone does NOT stop it -
     # this is why the upstream defences (quarantine / isolation) are needed.
     r = assess(Q_REFUND, _docs(), quarantine=False, isolate=False, output_filter=True)
     assert r["blocked"] is False
