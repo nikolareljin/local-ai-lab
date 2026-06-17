@@ -194,7 +194,7 @@ def search(query, values):
 
 def main():
     serve(
-        title="Lesson 5 · RAG evaluation - turn "seems good" into a tracked number",
+        title="Lesson 5 · RAG evaluation - turn 'seems good' into a tracked number",
         subtitle="Score a golden set on recall@k, groundedness and correctness. Move the sliders or "
                  "pad the answer with an unsupported sentence and watch the gate flip.",
         hint="Leave the box empty for the whole-golden-set scorecard, or pick a question to drill in. "
