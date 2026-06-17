@@ -30,7 +30,7 @@
 
     { "type": "code", "file": "python/eval_rag.py", "lang": "python", "lines": "84-134", "group": "metrics",
       "kicker": "Step 3", "title": "Score the answer three ways",
-      "body": "An offline, deterministic answerer takes the fact from the top retrieved document (optionally **padding** it with one unsupported sentence - a stand-in for a model that adds a claim no document backs). Then three metrics turn the result into numbers: **recall@k** (did the gold document come back?), **groundedness** (what fraction of the answer's terms appear in the retrieved context?), and **correctness** (what fraction of the expected keywords are present?). Each is a fraction in 0...1.",
+      "body": "An offline, deterministic answerer takes the fact from the top retrieved document (optionally **padding** it with one unsupported sentence - a stand-in for a model that adds a claim no document backs). Then three metrics turn the result into numbers: **recall@k** (did the gold document come back?), **groundedness** (what fraction of the answer's terms appear in the retrieved context?), and **correctness** (what fraction of the expected keywords are present?). Each is a fraction between 0 and 1.",
       "why": "These three catch different failures, which is why you need all of them. Recall misses the document; groundedness catches a fluent answer that invents facts; correctness catches a grounded answer that is simply wrong. Any one alone is fooled by the others' blind spots." },
     { "type": "code", "file": "node/eval_rag.mjs", "lang": "node", "lines": "75-118", "group": "metrics" },
     { "type": "code", "file": "dotnet/Program.cs", "lang": "csharp", "lines": "75-117", "group": "metrics" },
