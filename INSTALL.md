@@ -128,6 +128,9 @@ is **no API key to manage**.
   ```powershell
   iwr https://claude.ai/install.ps1 -OutFile claude-install.ps1
   notepad claude-install.ps1     # review before running
+  ```
+  After reviewing, run:
+  ```powershell
   .\claude-install.ps1           # if blocked: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
   ```
 
