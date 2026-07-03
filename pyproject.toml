@@ -88,6 +88,12 @@ files = ["localrag"]
 # numpy's bundled type stubs (2.5+) use PEP 695 `type` statements (Python 3.12+),
 # which mypy rejects while we target 3.10. numpy is a third-party dependency we do
 # not type-check, so skip following into it and treat its names as Any.
+#
+# Both keys are required and are NOT contradictory: `follow_imports = "skip"` alone
+# does not apply to stub (.pyi) files — mypy follows stubs regardless. The PEP 695
+# syntax lives in numpy's .pyi stubs, so `follow_imports_for_stubs = true` is what
+# actually extends the skip to those stubs and prevents the parse failure.
+# See: https://mypy.readthedocs.io/en/stable/config_file.html#confval-follow_imports_for_stubs
 [[tool.mypy.overrides]]
 module = ["numpy", "numpy.*"]
 follow_imports = "skip"

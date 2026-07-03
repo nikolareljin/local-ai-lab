@@ -108,6 +108,7 @@ void WalkDir(string root, string current, List<string> acc)
     {
         var name = Path.GetFileName(sub);
         if (ignoreDirs.Contains(name) || name.StartsWith('.')) continue;
+        if ((File.GetAttributes(sub) & FileAttributes.ReparsePoint) != 0) continue;  // skip symlinks/junctions: avoids cycles / escaping the repo root
         WalkDir(root, sub, acc);
     }
     foreach (var f in Directory.GetFiles(current))

@@ -12,7 +12,7 @@
 //
 // Run:  node repo_assistant.mjs
 
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 
@@ -74,12 +74,13 @@ function splitLines(raw) {
 // --- Index: split every repo file into line-numbered passages ----------------
 function walk(dir) {
   const out = [];
-  for (const name of readdirSync(dir)) {
-    const full = join(dir, name);
-    if (statSync(full).isDirectory()) {
-      if (IGNORE_DIRS.has(name) || name.startsWith(".")) continue;  // don't descend noise
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (entry.isSymbolicLink()) continue;  // don't follow symlinks: avoids cycles / escaping the repo root
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (IGNORE_DIRS.has(entry.name) || entry.name.startsWith(".")) continue;  // don't descend noise
       out.push(...walk(full));
-    } else out.push(full);
+    } else if (entry.isFile()) out.push(full);
   }
   return out;
 }
