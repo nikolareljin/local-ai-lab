@@ -66,8 +66,9 @@ function terms(text) {
 // Match Python str.splitlines(): split on line breaks and drop the empty tail a
 // trailing newline would otherwise produce.
 function splitLines(raw) {
-  const parts = raw.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
-  if (parts.length && parts[parts.length - 1] === "" && /\n$/.test(raw)) parts.pop();
+  const norm = raw.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const parts = norm.split("\n");
+  if (parts.length && parts[parts.length - 1] === "" && /\n$/.test(norm)) parts.pop();
   return parts;
 }
 
