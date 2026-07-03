@@ -116,7 +116,10 @@ def build_index(repo_dir=REPO_DIR):
     for dirpath, dirnames, filenames in os.walk(repo_dir):
         dirnames[:] = [d for d in dirnames if d not in IGNORE_DIRS and not d.startswith(".")]
         for name in filenames:
-            rel = (Path(dirpath) / name).relative_to(repo_dir).as_posix()
+            full = Path(dirpath) / name
+            if full.is_symlink():
+                continue  # don't index symlinked files: avoids reading outside the repo root
+            rel = full.relative_to(repo_dir).as_posix()
             if is_indexable(rel):
                 rels.append(rel)
     rels.sort()

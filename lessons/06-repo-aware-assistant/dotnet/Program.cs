@@ -112,7 +112,10 @@ void WalkDir(string root, string current, List<string> acc)
         WalkDir(root, sub, acc);
     }
     foreach (var f in Directory.GetFiles(current))
+    {
+        if ((File.GetAttributes(f) & FileAttributes.ReparsePoint) != 0) continue;  // skip symlinked files: avoids reading outside the repo root
         acc.Add(Path.GetRelativePath(root, f).Replace('\\', '/'));
+    }
 }
 
 List<Chunk> ChunkFile(string rel, string raw, Func<string, HashSet<string>> terms)
