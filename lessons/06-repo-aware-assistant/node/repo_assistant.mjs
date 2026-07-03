@@ -199,7 +199,14 @@ function main() {
   const envRepo = process.env.REPO_PATH;
   const repoDir = envRepo ? resolve(envRepo) : REPO_DIR;
   const label = envRepo ? repoDir : "data/repo";
-  const { files, chunks } = buildIndex(repoDir);
+
+  let files, chunks;
+  try {
+    ({ files, chunks } = buildIndex(repoDir));
+  } catch (err) {
+    console.error(`error: cannot index repository at ${repoDir}: ${err.message}`);
+    process.exit(1);
+  }
 
   const argv = process.argv.slice(2);
   let questions;

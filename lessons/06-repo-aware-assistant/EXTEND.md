@@ -43,12 +43,15 @@ directory (or `REPO_PATH`) and asks one question. It depends only on the Python
 port and the standard library, so you can copy three files anywhere and run:
 
 ```bash
-cp lessons/06-repo-aware-assistant/extend/repo-ask   ~/bin/repo-ask
-cp lessons/06-repo-aware-assistant/python/repo_assistant.py  ~/bin/../python/   # keep ../python/repo_assistant.py next to it
+# Recreate the layout the wrapper expects: bin/ next to python/ and data/.
+mkdir -p ~/repo-ask/bin ~/repo-ask/python ~/repo-ask/data
+cp lessons/06-repo-aware-assistant/extend/repo-ask           ~/repo-ask/bin/repo-ask
+cp lessons/06-repo-aware-assistant/python/repo_assistant.py  ~/repo-ask/python/repo_assistant.py
+cp lessons/06-repo-aware-assistant/data/questions.json       ~/repo-ask/data/questions.json
 # then, inside ANY repo:
 cd ~/work/my-service
-repo-ask "where is the HTTP server started?"
-repo-ask plan "where should I add request logging?"
+~/repo-ask/bin/repo-ask "where is the HTTP server started?"
+~/repo-ask/bin/repo-ask plan "where should I add request logging?"
 ```
 
 To make it truly self-contained, keep the layout `bin/repo-ask` +

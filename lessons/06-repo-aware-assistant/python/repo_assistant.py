@@ -232,6 +232,9 @@ def main(argv=None):
     env_repo = os.environ.get("REPO_PATH")
     repo_dir = Path(env_repo).expanduser().resolve() if env_repo else REPO_DIR
     label = str(repo_dir) if env_repo else "data/repo"
+    if env_repo and not repo_dir.is_dir():
+        sys.stderr.write("error: REPO_PATH is not a directory: %s\n" % repo_dir)
+        raise SystemExit(1)
     files, chunks = build_index(repo_dir)
 
     if argv and argv[0] in ("ask", "plan"):

@@ -12,6 +12,7 @@
 //
 // Run:  dotnet run
 
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
@@ -48,7 +49,22 @@ var cfg = JsonSerializer.Deserialize<Config>(
     File.ReadAllText(Path.Combine(lessonDir, "data", "questions.json")),
     new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
 
-var (files, chunks) = BuildIndex(repoDir);
+// Read repo files with a non-throwing UTF-8 decoder (replacement fallback), matching
+// Python's errors="replace" and Node's default, so invalid bytes never crash indexing.
+var utf8Lenient = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: false);
+
+List<string> files;
+List<Chunk> chunks;
+try
+{
+    (files, chunks) = BuildIndex(repoDir);
+}
+catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+{
+    Console.Error.WriteLine($"error: cannot index repository at {repoDir}: {ex.Message}");
+    Environment.Exit(1);
+    return;
+}
 
 List<Question> questions;
 if (args.Length > 0 && (args[0] == "ask" || args[0] == "plan"))
@@ -98,7 +114,7 @@ List<string> SplitLines(string raw)
     var files = acc.Where(IsIndexable).OrderBy(p => p, StringComparer.Ordinal).ToList();
     var chunks = new List<Chunk>();
     foreach (var rel in files)
-        chunks.AddRange(ChunkFile(rel, File.ReadAllText(Path.Combine(dir, rel)), Terms));
+        chunks.AddRange(ChunkFile(rel, File.ReadAllText(Path.Combine(dir, rel), utf8Lenient), Terms));
     return (files, chunks);
 }
 
