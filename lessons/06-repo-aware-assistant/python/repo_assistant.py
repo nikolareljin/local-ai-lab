@@ -108,11 +108,18 @@ def _make_chunk(rel_path, lines, first, last):
 
 def build_index(repo_dir=REPO_DIR):
     """Walk the repo (files sorted by path) and index every indexable passage.
-    Returns (sorted file list, passage list) - the passages carry the citations."""
+    Returns (sorted file list, passage list) - the passages carry the citations.
+    Ignored directories are pruned during the walk, so a real repo's `.git/` and
+    `node_modules/` are never descended into (not just filtered afterwards)."""
     repo_dir = Path(repo_dir)
-    rels = sorted(p.relative_to(repo_dir).as_posix()
-                  for p in repo_dir.rglob("*") if p.is_file())
-    rels = [r for r in rels if is_indexable(r)]
+    rels = []
+    for dirpath, dirnames, filenames in os.walk(repo_dir):
+        dirnames[:] = [d for d in dirnames if d not in IGNORE_DIRS and not d.startswith(".")]
+        for name in filenames:
+            rel = (Path(dirpath) / name).relative_to(repo_dir).as_posix()
+            if is_indexable(rel):
+                rels.append(rel)
+    rels.sort()
     chunks = []
     for rel in rels:
         raw = (repo_dir / rel).read_text(encoding="utf-8", errors="replace")

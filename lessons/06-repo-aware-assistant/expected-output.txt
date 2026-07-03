@@ -1,4 +1,4 @@
-Repo-aware assistant  -  indexed 6 files, 23 passages under data/repo
+Repo-aware assistant  -  indexed 6 files, 26 passages under data/repo
 
 Q1  where is chunking implemented
     GROUNDED  -  answered only from indexed repository lines

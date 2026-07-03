@@ -93,15 +93,25 @@ List<string> SplitLines(string raw)
 // --- Index: split every repo file into line-numbered passages ----------------
 (List<string>, List<Chunk>) BuildIndex(string dir)
 {
-    var files = Directory.GetFiles(dir, "*", SearchOption.AllDirectories)
-        .Select(f => Path.GetRelativePath(dir, f).Replace('\\', '/'))
-        .Where(IsIndexable)
-        .OrderBy(p => p, StringComparer.Ordinal)
-        .ToList();
+    var acc = new List<string>();
+    WalkDir(dir, dir, acc);   // prunes ignored/dot dirs during the walk
+    var files = acc.Where(IsIndexable).OrderBy(p => p, StringComparer.Ordinal).ToList();
     var chunks = new List<Chunk>();
     foreach (var rel in files)
         chunks.AddRange(ChunkFile(rel, File.ReadAllText(Path.Combine(dir, rel)), Terms));
     return (files, chunks);
+}
+
+void WalkDir(string root, string current, List<string> acc)
+{
+    foreach (var sub in Directory.GetDirectories(current))
+    {
+        var name = Path.GetFileName(sub);
+        if (ignoreDirs.Contains(name) || name.StartsWith('.')) continue;
+        WalkDir(root, sub, acc);
+    }
+    foreach (var f in Directory.GetFiles(current))
+        acc.Add(Path.GetRelativePath(root, f).Replace('\\', '/'));
 }
 
 List<Chunk> ChunkFile(string rel, string raw, Func<string, HashSet<string>> terms)

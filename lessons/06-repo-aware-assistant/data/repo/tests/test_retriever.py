@@ -1,6 +1,19 @@
 """Tests that cover the retriever: ranking order and tie-breaking."""
 
+from collections import namedtuple
+
 from retriever import rank, score
+
+Passage = namedtuple("Passage", ["index", "terms"])
+
+
+def make_passages():
+    """Three toy passages: the first and last match "note", the middle does not."""
+    return [
+        Passage(0, {"note", "search"}),
+        Passage(1, {"reset", "password"}),
+        Passage(2, {"note", "index"}),
+    ]
 
 
 def test_score_counts_overlap():

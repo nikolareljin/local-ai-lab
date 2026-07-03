@@ -183,10 +183,10 @@ List&lt;<span class="hl-kw">string</span>&gt; SplitLines(<span class="hl-kw">str
 
 <span class="hl-kw">def</span> build_index(repo_dir=REPO_DIR):
     <span class="hl-str">"""Walk the repo (files sorted by path) and index every indexable passage.
-    Returns (sorted file list, passage list) - the passages carry the citations."""</span>
-    repo_dir = Path(repo_dir)
-    rels = sorted(p.relative_to(repo_dir).as_posix()
-                  <span class="hl-kw">for</span> p <span class="hl-kw">in</span> repo_dir.rglob(<span class="hl-str">"*"</span>) <span class="hl-kw">if</span> p.is_file())</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/repo_assistant.mjs</div><pre><code class='lang-js'>  <span class="hl-kw">let</span> start = <span class="hl-kw">null</span>;
+    Returns (sorted file list, passage list) - the passages carry the citations.
+    Ignored directories are pruned during the walk, so a real repo's `.git/` and
+    `node_modules/` are never descended into (not just filtered afterwards)."""</span>
+    repo_dir = Path(repo_dir)</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/repo_assistant.mjs</div><pre><code class='lang-js'>  <span class="hl-kw">let</span> start = <span class="hl-kw">null</span>;
   <span class="hl-kw">for</span> (<span class="hl-kw">let</span> i = <span class="hl-num">0</span>; i &lt; lines.length; i++) {
     <span class="hl-kw">const</span> blank = lines[i].trim() === <span class="hl-str">""</span>;
     <span class="hl-kw">if</span> (!blank &amp;&amp; start === <span class="hl-kw">null</span>) start = i;
@@ -202,14 +202,21 @@ List&lt;<span class="hl-kw">string</span>&gt; SplitLines(<span class="hl-kw">str
 <span class="hl-com">// --- Index: split every repo file into line-numbered passages ----------------</span>
 (List&lt;<span class="hl-kw">string</span>&gt;, List&lt;Chunk&gt;) BuildIndex(<span class="hl-kw">string</span> dir)
 {
-    <span class="hl-kw">var</span> files = Directory.GetFiles(dir, <span class="hl-str">"*"</span>, SearchOption.AllDirectories)
-        .Select(f =&gt; Path.GetRelativePath(dir, f).Replace('\\', '/'))
-        .Where(IsIndexable)
-        .OrderBy(p =&gt; p, StringComparer.Ordinal)
-        .ToList();
+    <span class="hl-kw">var</span> acc = <span class="hl-kw">new</span> List&lt;<span class="hl-kw">string</span>&gt;();
+    WalkDir(dir, dir, acc);   <span class="hl-com">// prunes ignored/dot dirs during the walk</span>
+    <span class="hl-kw">var</span> files = acc.Where(IsIndexable).OrderBy(p =&gt; p, StringComparer.Ordinal).ToList();
     <span class="hl-kw">var</span> chunks = <span class="hl-kw">new</span> List&lt;Chunk&gt;();
-    <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> rel <span class="hl-kw">in</span> files)</code></pre></div></div><div class='why'>Swap in BM25, embeddings, or the hybrid from Lesson 3 and nothing downstream changes: the answer and plan steps only care that passages come back with citations attached, not how they were ranked.</div></section>
-<section class='slide'><div class='step-no'>Step 4</div><h2>Answer only from the repo - or abstain</h2><p>The answer is the top passage's line, returned <strong>with its citation and the sources behind it</strong> - never free-form text the model made up. The one branch that matters: if the best passage doesn't clear <code>min_score</code>, the assistant returns <strong>not found</strong>. No citation, no invented answer. That refusal is the feature.</p><div class='lang lang-python'><div class='block'><div class='label'>python/repo_assistant.py</div><pre><code class='lang-python'>    chunks = []
+    <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> rel <span class="hl-kw">in</span> files)
+        chunks.AddRange(ChunkFile(rel, File.ReadAllText(Path.Combine(dir, rel)), Terms));
+    <span class="hl-kw">return</span> (files, chunks);</code></pre></div></div><div class='why'>Swap in BM25, embeddings, or the hybrid from Lesson 3 and nothing downstream changes: the answer and plan steps only care that passages come back with citations attached, not how they were ranked.</div></section>
+<section class='slide'><div class='step-no'>Step 4</div><h2>Answer only from the repo - or abstain</h2><p>The answer is the top passage's line, returned <strong>with its citation and the sources behind it</strong> - never free-form text the model made up. The one branch that matters: if the best passage doesn't clear <code>min_score</code>, the assistant returns <strong>not found</strong>. No citation, no invented answer. That refusal is the feature.</p><div class='lang lang-python'><div class='block'><div class='label'>python/repo_assistant.py</div><pre><code class='lang-python'>    <span class="hl-kw">for</span> dirpath, dirnames, filenames <span class="hl-kw">in</span> os.walk(repo_dir):
+        dirnames[:] = [d <span class="hl-kw">for</span> d <span class="hl-kw">in</span> dirnames <span class="hl-kw">if</span> d <span class="hl-kw">not</span> <span class="hl-kw">in</span> IGNORE_DIRS <span class="hl-kw">and</span> <span class="hl-kw">not</span> d.startswith(<span class="hl-str">"."</span>)]
+        <span class="hl-kw">for</span> name <span class="hl-kw">in</span> filenames:
+            rel = (Path(dirpath) / name).relative_to(repo_dir).as_posix()
+            <span class="hl-kw">if</span> is_indexable(rel):
+                rels.append(rel)
+    rels.sort()
+    chunks = []
     <span class="hl-kw">for</span> rel <span class="hl-kw">in</span> rels:
         raw = (repo_dir / rel).read_text(encoding=<span class="hl-str">"utf-8"</span>, errors=<span class="hl-str">"replace"</span>)
         chunks.extend(chunk_file(rel, raw))
@@ -217,38 +224,37 @@ List&lt;<span class="hl-kw">string</span>&gt; SplitLines(<span class="hl-kw">str
 
 
 <span class="hl-kw">def</span> cite(chunk):
-    <span class="hl-kw">return</span> <span class="hl-str">"%s:%d-%d"</span> % (chunk[<span class="hl-str">"path"</span>], chunk[<span class="hl-str">"start"</span>], chunk[<span class="hl-str">"end"</span>])
-
-
-<span class="hl-com"># --- Retrieve: keyword overlap, deterministic order --------------------------</span>
-<span class="hl-kw">def</span> retrieve(query, chunks, top_k):
-    <span class="hl-str">"""Top-k passages by how many distinct query terms they contain.
-    Deterministic: score desc, then path asc, then start line asc."""</span>
-    q = terms(query)
-    scored = []</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/repo_assistant.mjs</div><pre><code class='lang-js'>  <span class="hl-kw">const</span> chunks = [];
+    <span class="hl-kw">return</span> <span class="hl-str">"%s:%d-%d"</span> % (chunk[<span class="hl-str">"path"</span>], chunk[<span class="hl-str">"start"</span>], chunk[<span class="hl-str">"end"</span>])</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/repo_assistant.mjs</div><pre><code class='lang-js'>  <span class="hl-kw">const</span> chunks = [];
   <span class="hl-kw">for</span> (<span class="hl-kw">const</span> relPath <span class="hl-kw">of</span> files) {
     chunks.push(...chunkFile(relPath, readFileSync(join(repoDir, relPath), <span class="hl-str">"utf8"</span>)));
   }
   <span class="hl-kw">return</span> { files, chunks };
 }
 
-<span class="hl-kw">const</span> cite = (c) =&gt; <span class="hl-str">`${c.path}:${c.start}-${c.end}`</span>;</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>    <span class="hl-kw">return</span> (files, chunks);
+<span class="hl-kw">const</span> cite = (c) =&gt; <span class="hl-str">`${c.path}:${c.start}-${c.end}`</span>;</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>
+<span class="hl-kw">void</span> WalkDir(<span class="hl-kw">string</span> root, <span class="hl-kw">string</span> current, List&lt;<span class="hl-kw">string</span>&gt; acc)
+{
+    <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> sub <span class="hl-kw">in</span> Directory.GetDirectories(current))
+    {
+        <span class="hl-kw">var</span> name = Path.GetFileName(sub);
+        <span class="hl-kw">if</span> (ignoreDirs.Contains(name) || name.StartsWith('.')) continue;
+        WalkDir(root, sub, acc);
+    }
+    <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> f <span class="hl-kw">in</span> Directory.GetFiles(current))
+        acc.Add(Path.GetRelativePath(root, f).Replace('\\', '/'));
 }
 
 List&lt;Chunk&gt; ChunkFile(<span class="hl-kw">string</span> rel, <span class="hl-kw">string</span> raw, Func&lt;<span class="hl-kw">string</span>, HashSet&lt;<span class="hl-kw">string</span>&gt;&gt; terms)
 {
-    <span class="hl-kw">var</span> chunks = <span class="hl-kw">new</span> List&lt;Chunk&gt;();
-    <span class="hl-kw">var</span> lines = SplitLines(raw);
-    <span class="hl-kw">int</span>? start = <span class="hl-kw">null</span>;
-    <span class="hl-kw">for</span> (<span class="hl-kw">var</span> i = <span class="hl-num">0</span>; i &lt; lines.Count; i++)
-    {
-        <span class="hl-kw">var</span> blank = lines[i].Trim().Length == <span class="hl-num">0</span>;
-        <span class="hl-kw">if</span> (!blank &amp;&amp; start is <span class="hl-kw">null</span>) start = i;
-        <span class="hl-kw">else</span> <span class="hl-kw">if</span> (blank &amp;&amp; start is not <span class="hl-kw">null</span>) { chunks.Add(MakeChunk(rel, lines, start.Value, i - <span class="hl-num">1</span>, terms)); start = <span class="hl-kw">null</span>; }
-    }
-    <span class="hl-kw">if</span> (start is not <span class="hl-kw">null</span>) chunks.Add(MakeChunk(rel, lines, start.Value, lines.Count - <span class="hl-num">1</span>, terms));
-    <span class="hl-kw">return</span> chunks;</code></pre></div></div><div class='why'>The failure mode of a code assistant isn't a wrong line number - it's a confident answer about code that doesn't exist. Gating on a score and abstaining below it is what stops that, and it's why the off-repo question returns nothing.</div></section>
-<section class='slide'><div class='step-no'>Step 5</div><h2>Plan before you edit - and edit nothing</h2><p>A change request doesn't get an answer, it gets a <strong>plan</strong>: the relevant files (cited), the current behaviour (cited), a minimal change, and which tests and docs to touch. Crucially, producing the plan <strong>changes no files</strong> - it's advisory. The demo's plan is deterministic, derived from retrieval, so you can see the shape; a real assistant fills the same slots with a model.</p><div class='lang lang-python'><div class='block'><div class='label'>python/repo_assistant.py</div><pre><code class='lang-python'>        s = len(q &amp; c[<span class="hl-str">"tokens"</span>])
+    <span class="hl-kw">var</span> chunks = <span class="hl-kw">new</span> List&lt;Chunk&gt;();</code></pre></div></div><div class='why'>The failure mode of a code assistant isn't a wrong line number - it's a confident answer about code that doesn't exist. Gating on a score and abstaining below it is what stops that, and it's why the off-repo question returns nothing.</div></section>
+<section class='slide'><div class='step-no'>Step 5</div><h2>Plan before you edit - and edit nothing</h2><p>A change request doesn't get an answer, it gets a <strong>plan</strong>: the relevant files (cited), the current behaviour (cited), a minimal change, and which tests and docs to touch. Crucially, producing the plan <strong>changes no files</strong> - it's advisory. The demo's plan is deterministic, derived from retrieval, so you can see the shape; a real assistant fills the same slots with a model.</p><div class='lang lang-python'><div class='block'><div class='label'>python/repo_assistant.py</div><pre><code class='lang-python'><span class="hl-com"># --- Retrieve: keyword overlap, deterministic order --------------------------</span>
+<span class="hl-kw">def</span> retrieve(query, chunks, top_k):
+    <span class="hl-str">"""Top-k passages by how many distinct query terms they contain.
+    Deterministic: score desc, then path asc, then start line asc."""</span>
+    q = terms(query)
+    scored = []
+    <span class="hl-kw">for</span> c <span class="hl-kw">in</span> chunks:
+        s = len(q &amp; c[<span class="hl-str">"tokens"</span>])
         <span class="hl-kw">if</span> s &gt; <span class="hl-num">0</span>:
             scored.append((s, c))
     scored.sort(key=<span class="hl-kw">lambda</span> sc: (-sc[<span class="hl-num">0</span>], sc[<span class="hl-num">1</span>][<span class="hl-str">"path"</span>], sc[<span class="hl-num">1</span>][<span class="hl-str">"start"</span>]))
@@ -264,13 +270,7 @@ List&lt;Chunk&gt; ChunkFile(<span class="hl-kw">string</span> rel, <span class="
         best = hits[<span class="hl-num">0</span>][<span class="hl-num">0</span>] <span class="hl-kw">if</span> hits <span class="hl-kw">else</span> <span class="hl-num">0</span>
         <span class="hl-kw">return</span> {<span class="hl-str">"kind"</span>: <span class="hl-str">"not_found"</span>, <span class="hl-str">"best"</span>: best}
     top_score, top = hits[<span class="hl-num">0</span>]
-    <span class="hl-kw">return</span> {
-        <span class="hl-str">"kind"</span>: <span class="hl-str">"grounded"</span>,
-        <span class="hl-str">"score"</span>: top_score,
-        <span class="hl-str">"citation"</span>: cite(top),
-        <span class="hl-str">"line"</span>: top[<span class="hl-str">"first_line"</span>],
-        <span class="hl-str">"sources"</span>: [cite(c) <span class="hl-kw">for</span> _, c <span class="hl-kw">in</span> hits],
-    }</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/repo_assistant.mjs</div><pre><code class='lang-js'>  <span class="hl-kw">let</span> n = <span class="hl-num">0</span>;
+    <span class="hl-kw">return</span> {</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/repo_assistant.mjs</div><pre><code class='lang-js'>  <span class="hl-kw">let</span> n = <span class="hl-num">0</span>;
   <span class="hl-kw">for</span> (<span class="hl-kw">const</span> t <span class="hl-kw">of</span> a) <span class="hl-kw">if</span> (b.has(t)) n++;
   <span class="hl-kw">return</span> n;
 }
@@ -288,26 +288,26 @@ List&lt;Chunk&gt; ChunkFile(<span class="hl-kw">string</span> rel, <span class="
 }
 
 <span class="hl-com">// --- Answer: only from retrieved passages, always cited, else "not found" ----</span>
-<span class="hl-kw">function</span> answer(query, chunks, topK, minScore) {</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>
+<span class="hl-kw">function</span> answer(query, chunks, topK, minScore) {</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>    <span class="hl-kw">int</span>? start = <span class="hl-kw">null</span>;
+    <span class="hl-kw">for</span> (<span class="hl-kw">var</span> i = <span class="hl-num">0</span>; i &lt; lines.Count; i++)
+    {
+        <span class="hl-kw">var</span> blank = lines[i].Trim().Length == <span class="hl-num">0</span>;
+        <span class="hl-kw">if</span> (!blank &amp;&amp; start is <span class="hl-kw">null</span>) start = i;
+        <span class="hl-kw">else</span> <span class="hl-kw">if</span> (blank &amp;&amp; start is not <span class="hl-kw">null</span>) { chunks.Add(MakeChunk(rel, lines, start.Value, i - <span class="hl-num">1</span>, terms)); start = <span class="hl-kw">null</span>; }
+    }
+    <span class="hl-kw">if</span> (start is not <span class="hl-kw">null</span>) chunks.Add(MakeChunk(rel, lines, start.Value, lines.Count - <span class="hl-num">1</span>, terms));
+    <span class="hl-kw">return</span> chunks;
+}
+
 <span class="hl-kw">static</span> Chunk MakeChunk(<span class="hl-kw">string</span> rel, List&lt;<span class="hl-kw">string</span>&gt; lines, <span class="hl-kw">int</span> first, <span class="hl-kw">int</span> last, Func&lt;<span class="hl-kw">string</span>, HashSet&lt;<span class="hl-kw">string</span>&gt;&gt; terms)
 {
     <span class="hl-kw">var</span> body = lines.GetRange(first, last - first + <span class="hl-num">1</span>);
     <span class="hl-kw">return</span> <span class="hl-kw">new</span> Chunk(rel, first + <span class="hl-num">1</span>, last + <span class="hl-num">1</span>, body[<span class="hl-num">0</span>].Trim(), terms(<span class="hl-kw">string</span>.Join(<span class="hl-str">"\n"</span>, body)));
 }
 
-<span class="hl-kw">string</span> Cite(Chunk c) =&gt; <span class="hl-str">$"{c.Path}:{c.Start}-{c.End}"</span>;
-
-<span class="hl-com">// --- Retrieve: keyword overlap, deterministic order --------------------------</span>
-List&lt;(<span class="hl-kw">int</span> Score, Chunk Chunk)&gt; Retrieve(<span class="hl-kw">string</span> query, List&lt;Chunk&gt; chunks, <span class="hl-kw">int</span> topK)
-{
-    <span class="hl-kw">var</span> q = Terms(query);
-    <span class="hl-kw">return</span> chunks
-        .Select(c =&gt; (Score: q.Count(c.Tokens.Contains), Chunk: c))
-        .Where(x =&gt; x.Score &gt; <span class="hl-num">0</span>)
-        .OrderByDescending(x =&gt; x.Score)
-        .ThenBy(x =&gt; x.Chunk.Path, StringComparer.Ordinal)</code></pre></div></div><div class='why'>"Plan first, approve, then edit" is the safety rail for an assistant with write access. Separating <em>propose</em> from <em>apply</em> means a human reads the diff-to-be before anything touches disk - the plan is grounded in citations exactly so that review is quick.</div></section>
+<span class="hl-kw">string</span> Cite(Chunk c) =&gt; <span class="hl-str">$"{c.Path}:{c.Start}-{c.End}"</span>;</code></pre></div></div><div class='why'>"Plan first, approve, then edit" is the safety rail for an assistant with write access. Separating <em>propose</em> from <em>apply</em> means a human reads the diff-to-be before anything touches disk - the plan is grounded in citations exactly so that review is quick.</div></section>
 <section class='slide'><div class='step-no'>Run it</div><h2>Run the assistant</h2><p>Now run it - this indexes the sample repo and answers all four questions: two grounded and cited, one plan, and one refused - identical output in all three languages. (Bare <code>./run -l 6</code> opens the interactive playground instead; <code>demo</code> is the one-shot print-and-exit.)</p><div class='lang lang-python'><div class='block'><div class='label'>demo · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">6</span> demo</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>demo · node</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">6</span> --lang node demo</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>demo · csharp</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">6</span> --lang csharp demo</code></pre></div></div></section>
-<section class='slide'><div class='step-no'>Run it</div><h2>Read the output</h2><p>Q1 and Q2 are <strong>grounded</strong>: the answer is a real repository line, tagged with its citation and the sources it came from - Q1 points at <code>src/chunker.py</code>, Q2 at the test that actually covers the retriever. Q3 is a <strong>plan</strong>: five cited steps, and not a single file changed. Q4 asks about Kubernetes - nothing in this repo scores the minimum, so the assistant says <strong>NOT FOUND</strong> rather than confabulating. That refusal, not the answers, is the point of the lesson.</p><pre><code>Repo-aware assistant  -  indexed 6 files, 23 passages under data/repo
+<section class='slide'><div class='step-no'>Run it</div><h2>Read the output</h2><p>Q1 and Q2 are <strong>grounded</strong>: the answer is a real repository line, tagged with its citation and the sources it came from - Q1 points at <code>src/chunker.py</code>, Q2 at the test that actually covers the retriever. Q3 is a <strong>plan</strong>: five cited steps, and not a single file changed. Q4 asks about Kubernetes - nothing in this repo scores the minimum, so the assistant says <strong>NOT FOUND</strong> rather than confabulating. That refusal, not the answers, is the point of the lesson.</p><pre><code>Repo-aware assistant  -  indexed 6 files, 26 passages under data/repo
 
 Q1  where is chunking implemented
     GROUNDED  -  answered only from indexed repository lines

@@ -4,6 +4,8 @@ All notable changes to this project are documented here. This project follows
 [Conventional Commits](https://www.conventionalcommits.org/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
 ## [0.10.0] - 2026-07-02
 
 ### Added
