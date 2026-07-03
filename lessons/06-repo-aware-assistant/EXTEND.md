@@ -12,7 +12,7 @@ Three ways to do that, smallest first.
 
 Every port honours the **`REPO_PATH`** environment variable. Unset, it indexes
 `data/repo`; set, it indexes your repository instead (skipping `.git`,
-`node_modules`, build output, and non-text files):
+`node_modules`, hidden/dot directories, build output, and non-text files):
 
 ```bash
 # from the repo root of local-ai-lab

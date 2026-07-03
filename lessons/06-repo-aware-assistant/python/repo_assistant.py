@@ -69,7 +69,7 @@ def terms(text):
 
 # --- Index: split every repo file into line-numbered passages ----------------
 def is_indexable(rel_path):
-    """Skip vendored/build dirs and non-text files - noise for a code assistant."""
+    """Skip vendored/build dirs, hidden/dot dirs, and non-text files - noise for a code assistant."""
     parts = rel_path.split("/")
     if any(p in IGNORE_DIRS or p.startswith(".") for p in parts[:-1]):
         return False

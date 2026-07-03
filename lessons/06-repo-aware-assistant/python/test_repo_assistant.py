@@ -12,6 +12,7 @@ Encodes the lesson's claims:
 Run:  python -m pytest test_repo_assistant.py
 """
 
+import hashlib
 import sys
 from pathlib import Path
 
@@ -65,15 +66,31 @@ def test_off_repo_question_is_refused_not_guessed():
     assert result["best"] < 2
 
 
+def _corpus_snapshot(corpus):
+    """(size, mtime_ns, sha256) per corpus file - any create/delete/modify shows up."""
+    state = {}
+    for p in sorted(corpus.rglob("*")):
+        if p.is_file() and "__pycache__" not in p.parts:
+            st = p.stat()
+            state[p.relative_to(corpus).as_posix()] = (
+                st.st_size, st.st_mtime_ns, hashlib.sha256(p.read_bytes()).hexdigest())
+    return state
+
+
 def test_plan_before_edit_is_grounded_and_changes_no_files():
     files, chunks = _index()
+    corpus = Path(__file__).resolve().parents[1] / "data" / "repo"
+
+    before = _corpus_snapshot(corpus)
     result = plan("where should i add a new embedding provider", files, chunks, top_k=3)
+    after = _corpus_snapshot(corpus)
+
     assert result["kind"] == "plan"
     assert result["behaviour"]["citation"].startswith("src/providers.py:")
     assert result["relevant"] and result["tests"] == "tests/test_retriever.py"
     assert result["docs"] == "README.md"
-    # a plan is advisory: the corpus files are untouched by producing it
-    assert (Path(__file__).resolve().parents[1] / "data" / "repo" / "src" / "providers.py").exists()
+    # a plan is advisory: producing it must not create, delete, or modify any corpus file
+    assert after == before
 
 
 def test_retrieval_is_deterministic_ordered():

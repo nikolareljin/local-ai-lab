@@ -197,7 +197,7 @@ The demo indexes a bundled sample so the output stays reproducible - but the sam
 `plan`:
 
 ```bash
-# ask your own repo (skips .git, node_modules, build output, and non-text files)
+# ask your own repo (skips .git, node_modules, hidden/dot dirs, build output, and non-text files)
 REPO_PATH=/path/to/your/repo python lessons/06-repo-aware-assistant/python/repo_assistant.py ask "where is auth handled?"
 REPO_PATH=/path/to/your/repo python lessons/06-repo-aware-assistant/python/repo_assistant.py plan "where should I add a cache?"
 

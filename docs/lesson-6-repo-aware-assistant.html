@@ -96,7 +96,7 @@ Point `NOTES_DB` at the index file. Pick a backend with `EMBED_PROVIDER`.</code>
 
 <span class="hl-com"># --- Index: split every repo file into line-numbered passages ----------------</span>
 <span class="hl-kw">def</span> is_indexable(rel_path):
-    <span class="hl-str">"""Skip vendored/build dirs and non-text files - noise for a code assistant."""</span>
+    <span class="hl-str">"""Skip vendored/build dirs, hidden/dot dirs, and non-text files - noise for a code assistant."""</span>
     parts = rel_path.split(<span class="hl-str">"/"</span>)
     <span class="hl-kw">if</span> any(p <span class="hl-kw">in</span> IGNORE_DIRS <span class="hl-kw">or</span> p.startswith(<span class="hl-str">"."</span>) <span class="hl-kw">for</span> p <span class="hl-kw">in</span> parts[:-<span class="hl-num">1</span>]):
         <span class="hl-kw">return</span> <span class="hl-kw">False</span>
@@ -131,19 +131,36 @@ Point `NOTES_DB` at the index file. Pick a backend with `EMBED_PROVIDER`.</code>
 <span class="hl-com">// --- Index: split every repo file into line-numbered passages ----------------</span>
 <span class="hl-kw">function</span> walk(dir) {
   <span class="hl-kw">const</span> out = [];
-  <span class="hl-kw">for</span> (<span class="hl-kw">const</span> name <span class="hl-kw">of</span> readdirSync(dir)) {
-    <span class="hl-kw">const</span> full = join(dir, name);
-    <span class="hl-kw">if</span> (statSync(full).isDirectory()) {
-      <span class="hl-kw">if</span> (IGNORE_DIRS.has(name) || name.startsWith(<span class="hl-str">"."</span>)) continue;  <span class="hl-com">// don't descend noise</span>
+  <span class="hl-kw">for</span> (<span class="hl-kw">const</span> entry <span class="hl-kw">of</span> readdirSync(dir, { withFileTypes: <span class="hl-kw">true</span> })) {
+    <span class="hl-kw">if</span> (entry.isSymbolicLink()) continue;  <span class="hl-com">// don't follow symlinks: avoids cycles / escaping the repo root</span>
+    <span class="hl-kw">const</span> full = join(dir, entry.name);
+    <span class="hl-kw">if</span> (entry.isDirectory()) {
+      <span class="hl-kw">if</span> (IGNORE_DIRS.has(entry.name) || entry.name.startsWith(<span class="hl-str">"."</span>)) continue;  <span class="hl-com">// don't descend noise</span>
       out.push(...walk(full));
-    } <span class="hl-kw">else</span> out.push(full);
+    } <span class="hl-kw">else</span> <span class="hl-kw">if</span> (entry.isFile()) out.push(full);
   }
   <span class="hl-kw">return</span> out;
 }
 
 <span class="hl-kw">function</span> relTo(base, full) {
   <span class="hl-kw">return</span> full.slice(base.length + <span class="hl-num">1</span>).split(/[/\\]/).join(<span class="hl-str">"/"</span>);
-}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>{
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>
+List&lt;<span class="hl-kw">string</span>&gt; files;
+List&lt;Chunk&gt; chunks;
+<span class="hl-kw">try</span>
+{
+    (files, chunks) = BuildIndex(repoDir);
+}
+<span class="hl-kw">catch</span> (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+{
+    Console.Error.WriteLine(<span class="hl-str">$"error: cannot index repository at {repoDir}: {ex.Message}"</span>);
+    Environment.Exit(<span class="hl-num">1</span>);
+    <span class="hl-kw">return</span>;
+}
+
+List&lt;Question&gt; questions;
+<span class="hl-kw">if</span> (args.Length &gt; <span class="hl-num">0</span> &amp;&amp; (args[<span class="hl-num">0</span>] == <span class="hl-str">"ask"</span> || args[<span class="hl-num">0</span>] == <span class="hl-str">"plan"</span>))
+{
     <span class="hl-kw">var</span> question = <span class="hl-kw">string</span>.Join(<span class="hl-str">" "</span>, args.Skip(<span class="hl-num">1</span>)).Trim();
     <span class="hl-kw">if</span> (question.Length == <span class="hl-num">0</span>) { Console.WriteLine(<span class="hl-str">"usage: repo-assistant-demo [ask|plan] \"your question\""</span>); <span class="hl-kw">return</span>; }
     questions = <span class="hl-kw">new</span> List&lt;Question&gt; { <span class="hl-kw">new</span>(args[<span class="hl-num">0</span>], args[<span class="hl-num">0</span>] == <span class="hl-str">"plan"</span> ? <span class="hl-str">"plan"</span> : <span class="hl-str">"locate"</span>, question) };
@@ -158,22 +175,6 @@ Console.WriteLine(<span class="hl-str">$"Repo-aware assistant  -  indexed {files
     PrintResponse(i + <span class="hl-num">1</span>, questions[i], Respond(questions[i], files, chunks, cfg.TopK, cfg.MinScore), cfg.MinScore);
 
 <span class="hl-kw">bool</span> IsIndexable(<span class="hl-kw">string</span> rel)
-{
-    <span class="hl-kw">var</span> parts = rel.Split('/');
-    <span class="hl-kw">for</span> (<span class="hl-kw">var</span> i = <span class="hl-num">0</span>; i &lt; parts.Length - <span class="hl-num">1</span>; i++)
-        <span class="hl-kw">if</span> (ignoreDirs.Contains(parts[i]) || parts[i].StartsWith('.')) <span class="hl-kw">return</span> <span class="hl-kw">false</span>;
-    <span class="hl-kw">return</span> textExt.Contains(Path.GetExtension(parts[^<span class="hl-num">1</span>]).ToLowerInvariant());
-}
-
-List&lt;<span class="hl-kw">string</span>&gt; Tokenize(<span class="hl-kw">string</span> text) =&gt;
-    Regex.Matches(text.ToLowerInvariant(), <span class="hl-str">"[a-z0-9_]+"</span>).Select(m =&gt; m.Value).ToList();
-
-HashSet&lt;<span class="hl-kw">string</span>&gt; Terms(<span class="hl-kw">string</span> text) =&gt;
-    Tokenize(text).Where(t =&gt; !stopwords.Contains(t)).ToHashSet();
-
-<span class="hl-com">// Match Python str.splitlines(): split on line breaks, dropping the empty tail a</span>
-<span class="hl-com">// trailing newline would otherwise produce.</span>
-List&lt;<span class="hl-kw">string</span>&gt; SplitLines(<span class="hl-kw">string</span> raw)
 {</code></pre></div></div><div class='why'>Citations aren't bolted on after the fact - they're a property of the index. If a passage can't say where it lives, an answer built from it can't be trusted, so line ranges are captured at index time, not guessed later.</div></section>
 <section class='slide'><div class='step-no'>Step 3</div><h2>Retrieve the candidate passages</h2><p>The same deterministic keyword retriever from earlier lessons - distinct query terms, minus stopwords - scores each passage by overlap and returns the top-k. The ordering is fully determined (score desc, then path, then start line), so the same question always cites the same lines in every language.</p><div class='lang lang-python'><div class='block'><div class='label'>python/repo_assistant.py</div><pre><code class='lang-python'>        <span class="hl-str">"end"</span>: last + <span class="hl-num">1</span>,
         <span class="hl-str">"first_line"</span>: body[<span class="hl-num">0</span>].strip(),
@@ -186,7 +187,8 @@ List&lt;<span class="hl-kw">string</span>&gt; SplitLines(<span class="hl-kw">str
     Returns (sorted file list, passage list) - the passages carry the citations.
     Ignored directories are pruned during the walk, so a real repo's `.git/` and
     `node_modules/` are never descended into (not just filtered afterwards)."""</span>
-    repo_dir = Path(repo_dir)</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/repo_assistant.mjs</div><pre><code class='lang-js'>  <span class="hl-kw">let</span> start = <span class="hl-kw">null</span>;
+    repo_dir = Path(repo_dir)</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/repo_assistant.mjs</div><pre><code class='lang-js'>  <span class="hl-kw">const</span> lines = splitLines(raw);
+  <span class="hl-kw">let</span> start = <span class="hl-kw">null</span>;
   <span class="hl-kw">for</span> (<span class="hl-kw">let</span> i = <span class="hl-num">0</span>; i &lt; lines.length; i++) {
     <span class="hl-kw">const</span> blank = lines[i].trim() === <span class="hl-str">""</span>;
     <span class="hl-kw">if</span> (!blank &amp;&amp; start === <span class="hl-kw">null</span>) start = i;
@@ -194,9 +196,44 @@ List&lt;<span class="hl-kw">string</span>&gt; SplitLines(<span class="hl-kw">str
   }
   <span class="hl-kw">if</span> (start !== <span class="hl-kw">null</span>) chunks.push(makeChunk(relPath, lines, start, lines.length - <span class="hl-num">1</span>));
   <span class="hl-kw">return</span> chunks;
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>    <span class="hl-kw">return</span> textExt.Contains(Path.GetExtension(parts[^<span class="hl-num">1</span>]).ToLowerInvariant());
 }
 
-<span class="hl-kw">function</span> buildIndex(repoDir) {</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>    <span class="hl-kw">return</span> parts;
+List&lt;<span class="hl-kw">string</span>&gt; Tokenize(<span class="hl-kw">string</span> text) =&gt;
+    Regex.Matches(text.ToLowerInvariant(), <span class="hl-str">"[a-z0-9_]+"</span>).Select(m =&gt; m.Value).ToList();
+
+HashSet&lt;<span class="hl-kw">string</span>&gt; Terms(<span class="hl-kw">string</span> text) =&gt;
+    Tokenize(text).Where(t =&gt; !stopwords.Contains(t)).ToHashSet();
+
+<span class="hl-com">// Match Python str.splitlines(): split on line breaks, dropping the empty tail a</span>
+<span class="hl-com">// trailing newline would otherwise produce.</span>
+List&lt;<span class="hl-kw">string</span>&gt; SplitLines(<span class="hl-kw">string</span> raw)
+{</code></pre></div></div><div class='why'>Swap in BM25, embeddings, or the hybrid from Lesson 3 and nothing downstream changes: the answer and plan steps only care that passages come back with citations attached, not how they were ranked.</div></section>
+<section class='slide'><div class='step-no'>Step 4</div><h2>Answer only from the repo - or abstain</h2><p>The answer is the top passage's line, returned <strong>with its citation and the sources behind it</strong> - never free-form text the model made up. The one branch that matters: if the best passage doesn't clear <code>min_score</code>, the assistant returns <strong>not found</strong>. No citation, no invented answer. That refusal is the feature.</p><div class='lang lang-python'><div class='block'><div class='label'>python/repo_assistant.py</div><pre><code class='lang-python'>    <span class="hl-kw">for</span> dirpath, dirnames, filenames <span class="hl-kw">in</span> os.walk(repo_dir):
+        dirnames[:] = [d <span class="hl-kw">for</span> d <span class="hl-kw">in</span> dirnames <span class="hl-kw">if</span> d <span class="hl-kw">not</span> <span class="hl-kw">in</span> IGNORE_DIRS <span class="hl-kw">and</span> <span class="hl-kw">not</span> d.startswith(<span class="hl-str">"."</span>)]
+        <span class="hl-kw">for</span> name <span class="hl-kw">in</span> filenames:
+            full = Path(dirpath) / name
+            <span class="hl-kw">if</span> full.is_symlink():
+                <span class="hl-kw">continue</span>  <span class="hl-com"># don't index symlinked files: avoids reading outside the repo root</span>
+            rel = full.relative_to(repo_dir).as_posix()
+            <span class="hl-kw">if</span> is_indexable(rel):
+                rels.append(rel)
+    rels.sort()
+    chunks = []
+    <span class="hl-kw">for</span> rel <span class="hl-kw">in</span> rels:
+        raw = (repo_dir / rel).read_text(encoding=<span class="hl-str">"utf-8"</span>, errors=<span class="hl-str">"replace"</span>)
+        chunks.extend(chunk_file(rel, raw))
+    <span class="hl-kw">return</span> rels, chunks</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/repo_assistant.mjs</div><pre><code class='lang-js'>  <span class="hl-kw">const</span> files = walk(repoDir).map((f) =&gt; relTo(repoDir, f)).filter(isIndexable).sort(cmpOrdinal);
+  <span class="hl-kw">const</span> chunks = [];
+  <span class="hl-kw">for</span> (<span class="hl-kw">const</span> relPath <span class="hl-kw">of</span> files) {
+    chunks.push(...chunkFile(relPath, readFileSync(join(repoDir, relPath), <span class="hl-str">"utf8"</span>)));
+  }
+  <span class="hl-kw">return</span> { files, chunks };
+}
+
+<span class="hl-kw">const</span> cite = (c) =&gt; <span class="hl-str">`${c.path}:${c.start}-${c.end}`</span>;</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>    <span class="hl-kw">var</span> parts = norm.Split('\n').ToList();
+    <span class="hl-kw">if</span> (parts.Count &gt; <span class="hl-num">0</span> &amp;&amp; parts[^<span class="hl-num">1</span>].Length == <span class="hl-num">0</span> &amp;&amp; norm.EndsWith('\n')) parts.RemoveAt(parts.Count - <span class="hl-num">1</span>);
+    <span class="hl-kw">return</span> parts;
 }
 
 <span class="hl-com">// --- Index: split every repo file into line-numbered passages ----------------</span>
@@ -207,47 +244,13 @@ List&lt;<span class="hl-kw">string</span>&gt; SplitLines(<span class="hl-kw">str
     <span class="hl-kw">var</span> files = acc.Where(IsIndexable).OrderBy(p =&gt; p, StringComparer.Ordinal).ToList();
     <span class="hl-kw">var</span> chunks = <span class="hl-kw">new</span> List&lt;Chunk&gt;();
     <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> rel <span class="hl-kw">in</span> files)
-        chunks.AddRange(ChunkFile(rel, File.ReadAllText(Path.Combine(dir, rel)), Terms));
-    <span class="hl-kw">return</span> (files, chunks);</code></pre></div></div><div class='why'>Swap in BM25, embeddings, or the hybrid from Lesson 3 and nothing downstream changes: the answer and plan steps only care that passages come back with citations attached, not how they were ranked.</div></section>
-<section class='slide'><div class='step-no'>Step 4</div><h2>Answer only from the repo - or abstain</h2><p>The answer is the top passage's line, returned <strong>with its citation and the sources behind it</strong> - never free-form text the model made up. The one branch that matters: if the best passage doesn't clear <code>min_score</code>, the assistant returns <strong>not found</strong>. No citation, no invented answer. That refusal is the feature.</p><div class='lang lang-python'><div class='block'><div class='label'>python/repo_assistant.py</div><pre><code class='lang-python'>    <span class="hl-kw">for</span> dirpath, dirnames, filenames <span class="hl-kw">in</span> os.walk(repo_dir):
-        dirnames[:] = [d <span class="hl-kw">for</span> d <span class="hl-kw">in</span> dirnames <span class="hl-kw">if</span> d <span class="hl-kw">not</span> <span class="hl-kw">in</span> IGNORE_DIRS <span class="hl-kw">and</span> <span class="hl-kw">not</span> d.startswith(<span class="hl-str">"."</span>)]
-        <span class="hl-kw">for</span> name <span class="hl-kw">in</span> filenames:
-            rel = (Path(dirpath) / name).relative_to(repo_dir).as_posix()
-            <span class="hl-kw">if</span> is_indexable(rel):
-                rels.append(rel)
-    rels.sort()
-    chunks = []
-    <span class="hl-kw">for</span> rel <span class="hl-kw">in</span> rels:
-        raw = (repo_dir / rel).read_text(encoding=<span class="hl-str">"utf-8"</span>, errors=<span class="hl-str">"replace"</span>)
-        chunks.extend(chunk_file(rel, raw))
-    <span class="hl-kw">return</span> rels, chunks
+        chunks.AddRange(ChunkFile(rel, File.ReadAllText(Path.Combine(dir, rel), utf8Lenient), Terms));
+    <span class="hl-kw">return</span> (files, chunks);
+}</code></pre></div></div><div class='why'>The failure mode of a code assistant isn't a wrong line number - it's a confident answer about code that doesn't exist. Gating on a score and abstaining below it is what stops that, and it's why the off-repo question returns nothing.</div></section>
+<section class='slide'><div class='step-no'>Step 5</div><h2>Plan before you edit - and edit nothing</h2><p>A change request doesn't get an answer, it gets a <strong>plan</strong>: the relevant files (cited), the current behaviour (cited), a minimal change, and which tests and docs to touch. Crucially, producing the plan <strong>changes no files</strong> - it's advisory. The demo's plan is deterministic, derived from retrieval, so you can see the shape; a real assistant fills the same slots with a model.</p><div class='lang lang-python'><div class='block'><div class='label'>python/repo_assistant.py</div><pre><code class='lang-python'>    <span class="hl-kw">return</span> <span class="hl-str">"%s:%d-%d"</span> % (chunk[<span class="hl-str">"path"</span>], chunk[<span class="hl-str">"start"</span>], chunk[<span class="hl-str">"end"</span>])
 
 
-<span class="hl-kw">def</span> cite(chunk):
-    <span class="hl-kw">return</span> <span class="hl-str">"%s:%d-%d"</span> % (chunk[<span class="hl-str">"path"</span>], chunk[<span class="hl-str">"start"</span>], chunk[<span class="hl-str">"end"</span>])</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/repo_assistant.mjs</div><pre><code class='lang-js'>  <span class="hl-kw">const</span> chunks = [];
-  <span class="hl-kw">for</span> (<span class="hl-kw">const</span> relPath <span class="hl-kw">of</span> files) {
-    chunks.push(...chunkFile(relPath, readFileSync(join(repoDir, relPath), <span class="hl-str">"utf8"</span>)));
-  }
-  <span class="hl-kw">return</span> { files, chunks };
-}
-
-<span class="hl-kw">const</span> cite = (c) =&gt; <span class="hl-str">`${c.path}:${c.start}-${c.end}`</span>;</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>
-<span class="hl-kw">void</span> WalkDir(<span class="hl-kw">string</span> root, <span class="hl-kw">string</span> current, List&lt;<span class="hl-kw">string</span>&gt; acc)
-{
-    <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> sub <span class="hl-kw">in</span> Directory.GetDirectories(current))
-    {
-        <span class="hl-kw">var</span> name = Path.GetFileName(sub);
-        <span class="hl-kw">if</span> (ignoreDirs.Contains(name) || name.StartsWith('.')) continue;
-        WalkDir(root, sub, acc);
-    }
-    <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> f <span class="hl-kw">in</span> Directory.GetFiles(current))
-        acc.Add(Path.GetRelativePath(root, f).Replace('\\', '/'));
-}
-
-List&lt;Chunk&gt; ChunkFile(<span class="hl-kw">string</span> rel, <span class="hl-kw">string</span> raw, Func&lt;<span class="hl-kw">string</span>, HashSet&lt;<span class="hl-kw">string</span>&gt;&gt; terms)
-{
-    <span class="hl-kw">var</span> chunks = <span class="hl-kw">new</span> List&lt;Chunk&gt;();</code></pre></div></div><div class='why'>The failure mode of a code assistant isn't a wrong line number - it's a confident answer about code that doesn't exist. Gating on a score and abstaining below it is what stops that, and it's why the off-repo question returns nothing.</div></section>
-<section class='slide'><div class='step-no'>Step 5</div><h2>Plan before you edit - and edit nothing</h2><p>A change request doesn't get an answer, it gets a <strong>plan</strong>: the relevant files (cited), the current behaviour (cited), a minimal change, and which tests and docs to touch. Crucially, producing the plan <strong>changes no files</strong> - it's advisory. The demo's plan is deterministic, derived from retrieval, so you can see the shape; a real assistant fills the same slots with a model.</p><div class='lang lang-python'><div class='block'><div class='label'>python/repo_assistant.py</div><pre><code class='lang-python'><span class="hl-com"># --- Retrieve: keyword overlap, deterministic order --------------------------</span>
+<span class="hl-com"># --- Retrieve: keyword overlap, deterministic order --------------------------</span>
 <span class="hl-kw">def</span> retrieve(query, chunks, top_k):
     <span class="hl-str">"""Top-k passages by how many distinct query terms they contain.
     Deterministic: score desc, then path asc, then start line asc."""</span>
@@ -267,10 +270,8 @@ List&lt;Chunk&gt; ChunkFile(<span class="hl-kw">string</span> rel, <span class="
     reporter and the web GUI both render."""</span>
     hits = retrieve(query, chunks, top_k)
     <span class="hl-kw">if</span> <span class="hl-kw">not</span> hits <span class="hl-kw">or</span> hits[<span class="hl-num">0</span>][<span class="hl-num">0</span>] &lt; min_score:
-        best = hits[<span class="hl-num">0</span>][<span class="hl-num">0</span>] <span class="hl-kw">if</span> hits <span class="hl-kw">else</span> <span class="hl-num">0</span>
-        <span class="hl-kw">return</span> {<span class="hl-str">"kind"</span>: <span class="hl-str">"not_found"</span>, <span class="hl-str">"best"</span>: best}
-    top_score, top = hits[<span class="hl-num">0</span>]
-    <span class="hl-kw">return</span> {</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/repo_assistant.mjs</div><pre><code class='lang-js'>  <span class="hl-kw">let</span> n = <span class="hl-num">0</span>;
+        best = hits[<span class="hl-num">0</span>][<span class="hl-num">0</span>] <span class="hl-kw">if</span> hits <span class="hl-kw">else</span> <span class="hl-num">0</span></code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/repo_assistant.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> intersectCount(a, b) {
+  <span class="hl-kw">let</span> n = <span class="hl-num">0</span>;
   <span class="hl-kw">for</span> (<span class="hl-kw">const</span> t <span class="hl-kw">of</span> a) <span class="hl-kw">if</span> (b.has(t)) n++;
   <span class="hl-kw">return</span> n;
 }
@@ -287,27 +288,26 @@ List&lt;Chunk&gt; ChunkFile(<span class="hl-kw">string</span> rel, <span class="
   <span class="hl-kw">return</span> scored.slice(<span class="hl-num">0</span>, topK);
 }
 
-<span class="hl-com">// --- Answer: only from retrieved passages, always cited, else "not found" ----</span>
-<span class="hl-kw">function</span> answer(query, chunks, topK, minScore) {</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>    <span class="hl-kw">int</span>? start = <span class="hl-kw">null</span>;
-    <span class="hl-kw">for</span> (<span class="hl-kw">var</span> i = <span class="hl-num">0</span>; i &lt; lines.Count; i++)
-    {
-        <span class="hl-kw">var</span> blank = lines[i].Trim().Length == <span class="hl-num">0</span>;
-        <span class="hl-kw">if</span> (!blank &amp;&amp; start is <span class="hl-kw">null</span>) start = i;
-        <span class="hl-kw">else</span> <span class="hl-kw">if</span> (blank &amp;&amp; start is not <span class="hl-kw">null</span>) { chunks.Add(MakeChunk(rel, lines, start.Value, i - <span class="hl-num">1</span>, terms)); start = <span class="hl-kw">null</span>; }
-    }
-    <span class="hl-kw">if</span> (start is not <span class="hl-kw">null</span>) chunks.Add(MakeChunk(rel, lines, start.Value, lines.Count - <span class="hl-num">1</span>, terms));
-    <span class="hl-kw">return</span> chunks;
-}
-
-<span class="hl-kw">static</span> Chunk MakeChunk(<span class="hl-kw">string</span> rel, List&lt;<span class="hl-kw">string</span>&gt; lines, <span class="hl-kw">int</span> first, <span class="hl-kw">int</span> last, Func&lt;<span class="hl-kw">string</span>, HashSet&lt;<span class="hl-kw">string</span>&gt;&gt; terms)
+<span class="hl-com">// --- Answer: only from retrieved passages, always cited, else "not found" ----</span></code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'><span class="hl-kw">void</span> WalkDir(<span class="hl-kw">string</span> root, <span class="hl-kw">string</span> current, List&lt;<span class="hl-kw">string</span>&gt; acc)
 {
-    <span class="hl-kw">var</span> body = lines.GetRange(first, last - first + <span class="hl-num">1</span>);
-    <span class="hl-kw">return</span> <span class="hl-kw">new</span> Chunk(rel, first + <span class="hl-num">1</span>, last + <span class="hl-num">1</span>, body[<span class="hl-num">0</span>].Trim(), terms(<span class="hl-kw">string</span>.Join(<span class="hl-str">"\n"</span>, body)));
+    <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> sub <span class="hl-kw">in</span> Directory.GetDirectories(current))
+    {
+        <span class="hl-kw">var</span> name = Path.GetFileName(sub);
+        <span class="hl-kw">if</span> (ignoreDirs.Contains(name) || name.StartsWith('.')) continue;
+        <span class="hl-kw">if</span> ((File.GetAttributes(sub) &amp; FileAttributes.ReparsePoint) != <span class="hl-num">0</span>) continue;  <span class="hl-com">// skip symlinks/junctions: avoids cycles / escaping the repo root</span>
+        WalkDir(root, sub, acc);
+    }
+    <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> f <span class="hl-kw">in</span> Directory.GetFiles(current))
+    {
+        <span class="hl-kw">if</span> ((File.GetAttributes(f) &amp; FileAttributes.ReparsePoint) != <span class="hl-num">0</span>) continue;  <span class="hl-com">// skip symlinked files: avoids reading outside the repo root</span>
+        acc.Add(Path.GetRelativePath(root, f).Replace('\\', '/'));
+    }
 }
 
-<span class="hl-kw">string</span> Cite(Chunk c) =&gt; <span class="hl-str">$"{c.Path}:{c.Start}-{c.End}"</span>;</code></pre></div></div><div class='why'>"Plan first, approve, then edit" is the safety rail for an assistant with write access. Separating <em>propose</em> from <em>apply</em> means a human reads the diff-to-be before anything touches disk - the plan is grounded in citations exactly so that review is quick.</div></section>
+List&lt;Chunk&gt; ChunkFile(<span class="hl-kw">string</span> rel, <span class="hl-kw">string</span> raw, Func&lt;<span class="hl-kw">string</span>, HashSet&lt;<span class="hl-kw">string</span>&gt;&gt; terms)
+{</code></pre></div></div><div class='why'>"Plan first, approve, then edit" is the safety rail for an assistant with write access. Separating <em>propose</em> from <em>apply</em> means a human reads the diff-to-be before anything touches disk - the plan is grounded in citations exactly so that review is quick.</div></section>
 <section class='slide'><div class='step-no'>Run it</div><h2>Run the assistant</h2><p>Now run it - this indexes the sample repo and answers all four questions: two grounded and cited, one plan, and one refused - identical output in all three languages. (Bare <code>./run -l 6</code> opens the interactive playground instead; <code>demo</code> is the one-shot print-and-exit.)</p><div class='lang lang-python'><div class='block'><div class='label'>demo · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">6</span> demo</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>demo · node</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">6</span> --lang node demo</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>demo · csharp</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">6</span> --lang csharp demo</code></pre></div></div></section>
-<section class='slide'><div class='step-no'>Run it</div><h2>Read the output</h2><p>Q1 and Q2 are <strong>grounded</strong>: the answer is a real repository line, tagged with its citation and the sources it came from - Q1 points at <code>src/chunker.py</code>, Q2 at the test that actually covers the retriever. Q3 is a <strong>plan</strong>: five cited steps, and not a single file changed. Q4 asks about Kubernetes - nothing in this repo scores the minimum, so the assistant says <strong>NOT FOUND</strong> rather than confabulating. That refusal, not the answers, is the point of the lesson.</p><pre><code>Repo-aware assistant  -  indexed 6 files, 26 passages under data/repo
+<section class='slide'><div class='step-no'>Run it</div><h2>Read the output</h2><p>Q1 and Q2 are <strong>grounded</strong>: the answer is a real repository line, tagged with its citation and the sources it came from - Q1 points at <code>src/chunker.py</code>, Q2 at the test that actually covers the retriever. Q3 is a <strong>plan</strong>: five cited steps, and not a single file changed. Q4 asks about Kubernetes - nothing in this repo scores the minimum, so the assistant says <strong>NOT FOUND</strong> rather than confabulating. That refusal, not the answers, is the point of the lesson.</p><pre><code>Repo-aware assistant  -  indexed 6 files, 25 passages under data/repo
 
 Q1  where is chunking implemented
     GROUNDED  -  answered only from indexed repository lines
@@ -338,7 +338,7 @@ Q4  how do i configure kubernetes autoscaling
 <section class='slide'><div class='step-no'>Experiment</div><h2>Ask the repo - no code editing</h2><p>This is the payoff: <code>./run -l 6</code> (the default) opens an interactive assistant over the sample repo. Type a question and read the <strong>cited answer</strong> plus the retrieved passages behind it, or flip on <strong>plan mode</strong> for a plan-before-edit. Move <strong>top_k</strong> and <strong>min_score</strong> and watch a grounded answer turn into <strong>not found</strong> - the controls feed the very same index and retriever the demo and test use.</p><div class='block'><div class='label'>web · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">6</span></code></pre></div></section>
 <section class='slide'><div class='step-no'>Experiment</div><h2>Try - raise min_score</h2><p>Push <code>min_score</code> up to 3 or 4 and watch a real, correct answer flip to <strong>not found</strong>: the gate got stricter than the evidence. Tuning that bar is the whole game - too low and the assistant guesses, too high and it refuses to help.</p><div class='block'><pre><code>where is chunking implemented</code></pre></div></section>
 <section class='slide'><div class='step-no'>Experiment</div><h2>Try - plan mode</h2><p>Turn on <strong>plan mode</strong> and ask where to add a provider. Instead of an answer you get five cited steps - relevant files, current behaviour, minimal change, tests, docs - and the assistant edits nothing. Approve first, then edit.</p><div class='block'><pre><code>where should i add a new embedding provider</code></pre></div></section>
-<section class='slide'><div class='step-no'>Make it yours</div><h2>Point it at your own repository</h2><p>The demo indexes a bundled sample so the output is reproducible - but the same code runs against <strong>any</strong> repo. Every port honours a <code>REPO_PATH</code> environment variable, and two subcommands answer one free question: <code>ask "..."</code> for a cited answer and <code>plan "..."</code> for a plan-before-edit. So <code>REPO_PATH=/path/to/your/repo python python/repo_assistant.py ask "where is auth handled?"</code> indexes your project (skipping <code>.git</code>, <code>node_modules</code> and build output) and answers from it - or abstains. A ready wrapper lives at <code>extend/repo-ask</code>, and three ways to take this further - a standalone CLI, a repo-search <strong>MCP tool</strong> you register as a Claude Code skill (built on Lesson 2), and the port as a drop-in library - are written up in <strong>EXTEND.md</strong> next to this lesson.</p><div class='why'>A lesson you can only run on the bundled corpus is a toy. The value shows up the moment it answers about <em>your</em> code with citations you can click - so the same index/retrieve/answer/abstain contract is exactly what you carry into a real tool.</div></section>
+<section class='slide'><div class='step-no'>Make it yours</div><h2>Point it at your own repository</h2><p>The demo indexes a bundled sample so the output is reproducible - but the same code runs against <strong>any</strong> repo. Every port honours a <code>REPO_PATH</code> environment variable, and two subcommands answer one free question: <code>ask "..."</code> for a cited answer and <code>plan "..."</code> for a plan-before-edit. So <code>REPO_PATH=/path/to/your/repo python python/repo_assistant.py ask "where is auth handled?"</code> indexes your project (skipping <code>.git</code>, <code>node_modules</code>, hidden/dot directories and build output) and answers from it - or abstains. A ready wrapper lives at <code>extend/repo-ask</code>, and three ways to take this further - a standalone CLI, a repo-search <strong>MCP tool</strong> you register as a Claude Code skill (built on Lesson 2), and the port as a drop-in library - are written up in <strong>EXTEND.md</strong> next to this lesson.</p><div class='why'>A lesson you can only run on the bundled corpus is a toy. The value shows up the moment it answers about <em>your</em> code with citations you can click - so the same index/retrieve/answer/abstain contract is exactly what you carry into a real tool.</div></section>
 <section class='slide'><div class='step-no'>Going further</div><h2>From demo to production</h2><p>This is a teaching demo; retrieval is deterministic keyword overlap and the answer/plan are extractive so the lesson is reproducible. For real systems:</p><p><strong>Keep the citation contract, swap the pipeline</strong> - index your real repo, use BM25/embeddings/hybrid retrieval and a model for the answer and plan; the <code>path:start-end</code> grounding and the abstain gate are unchanged. <strong>Index more signal</strong> - symbols, imports, git blame and PR history, not just lines. <strong>Make the model cite</strong> - require every claim to name a <code>path:line</code> from the retrieved set, and reject answers that cite nothing (the same <em>not-found</em> rule, enforced on the model). <strong>Keep plan and apply separate</strong> - a plan proposes; applying is a second, human-approved step (wire it to the Lesson 2 MCP server so a host can call repo-search as a tool). <strong>Evaluate it</strong> - fold these questions into Lesson 5's golden set so a drop in citation accuracy, or a lost <em>not-found</em>, shows up as a failed check.</p></section>
 <section class='slide'><div class='step-no'>Recap</div><h2>What you learned</h2><p>A repo-aware assistant is retrieval plus two habits: <strong>cite every answer</strong> and <strong>refuse when the answer isn't in the repo.</strong> You indexed a codebase into passages that carry their own <code>path:line</code> citations, answered questions only from those lines, watched an off-repo question get <strong>not found</strong> instead of a confident guess, and turned a change request into a <strong>plan-before-edit</strong> that touched no files. Same algorithm in <strong>Python, Node.js and C#</strong>, byte-identical output, plus a playground where you moved the gate and watched a grounded answer become an honest refusal.</p><p>Next: <strong>Lesson 7 · LangChain</strong> - rebuild the RAG pipeline with a framework.</p></section>
     </div><!-- /deck -->
