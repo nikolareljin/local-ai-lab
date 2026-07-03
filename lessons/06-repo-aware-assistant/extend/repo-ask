@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# repo-ask - ask the Lesson 6 repo-aware assistant about ANY repository.
+#
+# This is the "separate app" wrapper: it points the lesson's Python port at a
+# real repo (via REPO_PATH) and asks one question. Copy this file plus
+# ../python/repo_assistant.py and ../data/questions.json anywhere and it keeps
+# working - the port is pure standard library, no install needed.
+#
+# Usage (run from inside the repo you want to ask about):
+#   ./repo-ask "where is authentication handled?"
+#   ./repo-ask plan "where should I add a rate limiter?"
+#   REPO_PATH=/path/to/repo ./repo-ask ask "which tests cover retrieval?"
+set -euo pipefail
+
+here="$(cd "$(dirname "$0")" && pwd)"
+port="$here/../python/repo_assistant.py"
+
+mode="ask"
+case "${1:-}" in
+  ask|plan) mode="$1"; shift ;;
+esac
+[[ $# -ge 1 ]] || { echo 'usage: repo-ask [ask|plan] "your question"' >&2; exit 1; }
+
+# Index the current directory unless the caller pointed REPO_PATH somewhere else.
+export REPO_PATH="${REPO_PATH:-$PWD}"
+exec python3 "$port" "$mode" "$@"

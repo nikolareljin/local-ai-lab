@@ -1,0 +1,10 @@
+{
+  "top_k": 3,
+  "min_score": 2,
+  "questions": [
+    { "id": "chunking",        "kind": "locate", "question": "where is chunking implemented" },
+    { "id": "retriever-tests", "kind": "locate", "question": "which tests cover the retriever" },
+    { "id": "add-provider",    "kind": "plan",   "question": "where should i add a new embedding provider" },
+    { "id": "off-repo",        "kind": "locate", "question": "how do i configure kubernetes autoscaling" }
+  ]
+}
