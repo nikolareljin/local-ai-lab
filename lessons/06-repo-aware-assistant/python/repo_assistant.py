@@ -235,7 +235,11 @@ def main(argv=None):
     if env_repo and not repo_dir.is_dir():
         sys.stderr.write("error: REPO_PATH is not a directory: %s\n" % repo_dir)
         raise SystemExit(1)
-    files, chunks = build_index(repo_dir)
+    try:
+        files, chunks = build_index(repo_dir)
+    except OSError as err:
+        sys.stderr.write("error: cannot index repository at %s: %s\n" % (repo_dir, err))
+        raise SystemExit(1) from err
 
     if argv and argv[0] in ("ask", "plan"):
         question = " ".join(argv[1:]).strip()

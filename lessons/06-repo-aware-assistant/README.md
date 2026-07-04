@@ -74,7 +74,7 @@ standard library). Pick any language; all three give the **same** output:
 Output:
 
 ```
-Repo-aware assistant  -  indexed 6 files, 26 passages under data/repo
+Repo-aware assistant  -  indexed 6 files, 25 passages under data/repo
 
 Q1  where is chunking implemented
     GROUNDED  -  answered only from indexed repository lines
