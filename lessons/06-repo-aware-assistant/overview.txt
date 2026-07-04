@@ -1,0 +1,20 @@
+Repo-aware assistant: answer about ONE codebase, and only from what's in it.
+
+  the repo ─▶ INDEX ─▶ passages with citations ─▶ RETRIEVE ─▶ ANSWER / PLAN
+  (README, src,       (path + line range          (keyword       │
+   tests, scripts)     for every passage)          overlap)       │
+                                                                   ▼
+        ┌──────────────────────────────┬───────────────────────────────────┐
+        ▼                              ▼                                    ▼
+   locate question              off-repo question                  change request
+   "where is chunking?"         "kubernetes autoscaling?"          "where to add a provider?"
+        │                              │                                    │
+        ▼                              ▼                                    ▼
+   GROUNDED answer              NOT FOUND                          PLAN-before-edit
+   src/chunker.py:1-1           best score < min → abstain         relevant files · behaviour
+   + cited sources              no citation, no guess              · change · tests · docs
+                                                                   (changes NO files)
+
+Three rules the assistant never breaks: answer only from indexed lines, always
+cite path:line, and refuse ("not found") rather than invent. Same algorithm in
+Python, Node.js and C# - byte-identical output.

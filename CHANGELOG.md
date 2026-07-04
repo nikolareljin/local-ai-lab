@@ -6,12 +6,28 @@ All notable changes to this project are documented here. This project follows
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-07-02
+
+### Added
+- **Lesson 6 · Repo-aware AI assistant** - a new working, polyglot lesson (Python, Node.js, and C#,
+  byte-identical output). It indexes a small sample repo into line-numbered passages that each carry
+  their own `path:start-end` citation, answers questions **only** from retrieved lines (always cited,
+  or **not found** when nothing clears a score gate), and turns a change request into a
+  **plan-before-edit** that changes no files. Ships with an interactive playground, an offline test,
+  and a `data/repo` corpus + `data/questions.json`.
+- **Run the assistant on your own repository** - every port honours a `REPO_PATH` environment variable
+  and `ask` / `plan` subcommands (skipping `.git`, `node_modules` and build output). A ready
+  `extend/repo-ask` wrapper and an `EXTEND.md` guide show three ways to take it further: a standalone
+  CLI, a repo-search **MCP tool** you can register as a Claude Code skill (built on Lesson 2), and the
+  port as a drop-in library.
+
 ### Changed
 - **Lesson 4 shows the hardening more clearly** - the prompt-injection demo and the interactive
   playground now label the two pipelines WITHOUT vs WITH hardening and tag each answer HIJACKED or
   SAFE, so the effect of the defences is obvious at a glance (Python, Node, and C#, byte-identical;
   toggle the defences in the playground and the WITH arm changes between SAFE, SAFE (leak blocked),
   and HIJACKED as the attack gets through or gets stopped).
+- **Dependencies** - bump `multer` 2.1.1 → 2.2.0 in `node/lesson-1` (Dependabot).
 
 ## [0.9.0] - 2026-06-16
 

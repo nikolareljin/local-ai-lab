@@ -88,9 +88,13 @@ and answer correctness, with a pass/fail gate that catches a regression a candid
 spot regressions an eyeball check would miss.
 **Assumes:** Lesson 1 (Lessons 3-4 helpful).
 
-#### Lesson 6 - Repo-aware AI assistant · 🚧 planned · RAG depth
-**Build (planned):** ground an assistant in your own codebase so it answers with repo-specific context.
-**Assumes:** Lesson 1.
+#### Lesson 6 - Repo-aware AI assistant · ✅ live · Python · Node · .NET · ≈ 30-45 min
+**Build:** an assistant that indexes a repo into passages carrying their own citations, answers only
+from those lines (cited, or "not found" below a score gate), and turns a change request into a
+plan-before-edit that touches no files - plus a `REPO_PATH`/`ask` mode to run it on your own repo.
+**You'll be able to:** ground answers in a codebase with `path:line` citations; make an assistant
+abstain instead of guess; produce a plan-before-edit; and extend it to your repos as a CLI or MCP tool.
+**Assumes:** Lesson 1 (Lessons 3-5 helpful).
 
 ### Cluster 3 · Framework tour
 

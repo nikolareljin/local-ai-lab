@@ -1,0 +1,25 @@
+Repo-aware assistant  -  indexed 6 files, 25 passages under data/repo
+
+Q1  where is chunking implemented
+    GROUNDED  -  answered only from indexed repository lines
+    src/chunker.py:1-1
+      """Chunking is implemented here: turn a note into passages."""
+    sources: src/chunker.py:1-1
+
+Q2  which tests cover the retriever
+    GROUNDED  -  answered only from indexed repository lines
+    tests/test_retriever.py:1-1
+      """Tests that cover the retriever: ranking order and tie-breaking."""
+    sources: tests/test_retriever.py:1-1 . README.md:8-12 . src/chunker.py:4-9
+
+Q3  where should i add a new embedding provider   [plan-before-edit]
+    PLAN  -  no files changed, approve before editing
+    1. relevant files    src/providers.py:1-1 . src/providers.py:8-10 . src/providers.py:13-15
+    2. current behaviour  src/providers.py:1-1  ->  """Embedding providers. Add a new embedding provider by registering it here."""
+    3. minimal change     add the new code alongside src/providers.py, matching the pattern already there
+    4. update tests       tests/test_retriever.py
+    5. update docs        README.md
+
+Q4  how do i configure kubernetes autoscaling
+    NOT FOUND  -  best match scored 1 (< min 2), so the assistant abstains
+      no citation, no invented answer
