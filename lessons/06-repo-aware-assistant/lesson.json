@@ -5,92 +5,246 @@
   "summary": "Ground an assistant in one codebase: index README, source, tests and scripts into passages that carry their own citations, answer questions only from those lines (always cited, and \"not found\" when the answer isn't in the repo), and turn a change request into a plan-before-edit that touches no files - offline, polyglot, byte-identical in Python, Node and .NET.",
   "cluster": "rag-depth",
   "priority": "high",
-  "languages": ["python", "node", "csharp"],
+  "languages": [
+    "python",
+    "node",
+    "csharp"
+  ],
   "defaultLanguage": "python",
   "defaultAction": "web",
   "elements": [
-    { "type": "note", "kicker": "Overview", "title": "What you'll build",
+    {
+      "type": "note",
+      "kicker": "Overview",
+      "title": "What you'll build",
       "file": "overview.txt",
-      "body": "Lessons 1-5 built retrieval, made it better, safe and measurable. This lesson points all of that at **one repository** and adds the two habits a code assistant needs to be trustworthy: **cite every answer** and **refuse when the answer isn't in the repo.**\n\nYou'll **index** a small sample repo (README, source, tests, scripts) into line-numbered **passages** - each remembering its `path:start-end`, which becomes its citation. You'll **answer** a question *only* from the retrieved passages, always cited; ask something the repo doesn't cover and the assistant says **not found** instead of guessing. Finally you'll turn a change request into a **plan-before-edit** - relevant files, current behaviour (cited), a minimal change, and the tests and docs to touch - that changes **no files**. Everything is **offline and deterministic**, identical in **Python, Node.js and C#**. Pick a language above and press → to begin." },
-
-    { "type": "command", "kicker": "Setup", "title": "What you need",
+      "body": "Lessons 1-5 built retrieval, made it better, safe and measurable. This lesson points all of that at **one repository** and adds the two habits a code assistant needs to be trustworthy: **cite every answer** and **refuse when the answer isn't in the repo.**\n\nYou'll **index** a small sample repo (README, source, tests, scripts) into line-numbered **passages** - each remembering its `path:start-end`, which becomes its citation. You'll **answer** a question *only* from the retrieved passages, always cited; ask something the repo doesn't cover and the assistant says **not found** instead of guessing. Finally you'll turn a change request into a **plan-before-edit** - relevant files, current behaviour (cited), a minimal change, and the tests and docs to touch - that changes **no files**. Everything is **offline and deterministic**, identical in **Python, Node.js and C#**. Pick a language above and press → to begin."
+    },
+    {
+      "type": "command",
+      "kicker": "Setup",
+      "title": "What you need",
       "body": "You follow this lesson by **reading and running** - there's nothing to write. The sample repo, the questions and the assistant all live in the repo. It is **offline and dependency-free** (nothing to install for Python; for the other ports you only need **Node.js 18+** or the **.NET 8 SDK**). Run it from the repo root. Bare `./run -l 6` opens the interactive playground; add `demo` for the one-shot print-and-exit. The Node and C# ports are one-shot only:",
-      "shell": "./run -l 6                 # Python: interactive assistant playground\n./run -l 6 demo            # Python: one-shot, print and exit\n./run -l 6 --lang node     # Node one-shot  (or: --lang csharp)" },
-
-    { "type": "config", "file": "data/questions.json", "kicker": "Step 1", "title": "The questions (and the gate)",
+      "shell": "./run -l 6                 # Python: interactive assistant playground\n./run -l 6 demo            # Python: one-shot, print and exit\n./run -l 6 --lang node     # Node one-shot  (or: --lang csharp)"
+    },
+    {
+      "type": "config",
+      "file": "data/questions.json",
+      "kicker": "Step 1",
+      "title": "The questions (and the gate)",
       "body": "Four questions drive the demo: two **locate** questions the repo can answer, one **plan** request, and one **off-repo** question the repo cannot answer. `top_k` is how many passages retrieval considers; `min_score` is the bar an answer must clear - below it, the assistant abstains. All three language ports read this one file, so they behave identically.",
-      "why": "The gate (`min_score`) is what turns \"always says something\" into \"says something only when it can back it up.\" An assistant that can't say *I don't know* will confidently mislead you about your own codebase." },
-
-    { "type": "config", "file": "data/repo/README.md", "kicker": "Step 1b", "title": "The sample repo",
+      "why": "The gate (`min_score`) is what turns \"always says something\" into \"says something only when it can back it up.\" An assistant that can't say *I don't know* will confidently mislead you about your own codebase."
+    },
+    {
+      "type": "config",
+      "file": "data/repo/README.md",
+      "kicker": "Step 1b",
+      "title": "The sample repo",
       "body": "The corpus is a tiny `notes-api` project under `data/repo/` - a README, three source files, a test, and a script. It's deliberately small so you can see exactly which lines a citation points at. Point the same indexer at a real repository and nothing about the contract changes.",
-      "why": "A repo-aware assistant is only as honest as its citations. Keeping the corpus small here makes every `path:start-end` verifiable by eye - the same check you'd automate against a real repo." },
-
-    { "type": "code", "file": "python/repo_assistant.py", "lang": "python", "lines": "58-96", "group": "index",
-      "kicker": "Step 2", "title": "Index into passages that carry citations",
+      "why": "A repo-aware assistant is only as honest as its citations. Keeping the corpus small here makes every `path:start-end` verifiable by eye - the same check you'd automate against a real repo."
+    },
+    {
+      "type": "code",
+      "file": "python/repo_assistant.py",
+      "lang": "python",
+      "lines": "58-96",
+      "group": "index",
+      "kicker": "Step 2",
+      "title": "Index into passages that carry citations",
       "body": "Indexing walks every file (sorted, so the order is stable) and splits it into **passages** separated by blank lines. Each passage remembers its `path` and 1-based `start`/`end` line - that pair *is* the citation `cite()` renders as `path:start-end`. This is the whole trick behind grounded answers: retrieval returns passages, and every passage already knows exactly where it came from.",
-      "why": "Citations aren't bolted on after the fact - they're a property of the index. If a passage can't say where it lives, an answer built from it can't be trusted, so line ranges are captured at index time, not guessed later." },
-    { "type": "code", "file": "node/repo_assistant.mjs", "lang": "node", "lines": "64-90", "group": "index" },
-    { "type": "code", "file": "dotnet/Program.cs", "lang": "csharp", "lines": "55-86", "group": "index" },
-
-    { "type": "code", "file": "python/repo_assistant.py", "lang": "python", "lines": "103-114", "group": "retrieve",
-      "kicker": "Step 3", "title": "Retrieve the candidate passages",
+      "why": "Citations aren't bolted on after the fact - they're a property of the index. If a passage can't say where it lives, an answer built from it can't be trusted, so line ranges are captured at index time, not guessed later."
+    },
+    {
+      "type": "code",
+      "file": "node/repo_assistant.mjs",
+      "lang": "node",
+      "lines": "64-91",
+      "group": "index"
+    },
+    {
+      "type": "code",
+      "file": "dotnet/Program.cs",
+      "lang": "csharp",
+      "lines": "55-86",
+      "group": "index"
+    },
+    {
+      "type": "code",
+      "file": "python/repo_assistant.py",
+      "lang": "python",
+      "lines": "103-114",
+      "group": "retrieve",
+      "kicker": "Step 3",
+      "title": "Retrieve the candidate passages",
       "body": "The same deterministic keyword retriever from earlier lessons - distinct query terms, minus stopwords - scores each passage by overlap and returns the top-k. The ordering is fully determined (score desc, then path, then start line), so the same question always cites the same lines in every language.",
-      "why": "Swap in BM25, embeddings, or the hybrid from Lesson 3 and nothing downstream changes: the answer and plan steps only care that passages come back with citations attached, not how they were ranked." },
-    { "type": "code", "file": "node/repo_assistant.mjs", "lang": "node", "lines": "100-110", "group": "retrieve" },
-    { "type": "code", "file": "dotnet/Program.cs", "lang": "csharp", "lines": "90-102", "group": "retrieve" },
-
-    { "type": "code", "file": "python/repo_assistant.py", "lang": "python", "lines": "116-132", "group": "answer",
-      "kicker": "Step 4", "title": "Answer only from the repo - or abstain",
+      "why": "Swap in BM25, embeddings, or the hybrid from Lesson 3 and nothing downstream changes: the answer and plan steps only care that passages come back with citations attached, not how they were ranked."
+    },
+    {
+      "type": "code",
+      "file": "node/repo_assistant.mjs",
+      "lang": "node",
+      "lines": "100-110",
+      "group": "retrieve"
+    },
+    {
+      "type": "code",
+      "file": "dotnet/Program.cs",
+      "lang": "csharp",
+      "lines": "90-102",
+      "group": "retrieve"
+    },
+    {
+      "type": "code",
+      "file": "python/repo_assistant.py",
+      "lang": "python",
+      "lines": "116-132",
+      "group": "answer",
+      "kicker": "Step 4",
+      "title": "Answer only from the repo - or abstain",
       "body": "The answer is the top passage's line, returned **with its citation and the sources behind it** - never free-form text the model made up. The one branch that matters: if the best passage doesn't clear `min_score`, the assistant returns **not found**. No citation, no invented answer. That refusal is the feature.",
-      "why": "The failure mode of a code assistant isn't a wrong line number - it's a confident answer about code that doesn't exist. Gating on a score and abstaining below it is what stops that, and it's why the off-repo question returns nothing." },
-    { "type": "code", "file": "node/repo_assistant.mjs", "lang": "node", "lines": "112-120", "group": "answer" },
-    { "type": "code", "file": "dotnet/Program.cs", "lang": "csharp", "lines": "104-119", "group": "answer" },
-
-    { "type": "code", "file": "python/repo_assistant.py", "lang": "python", "lines": "134-157", "group": "plan",
-      "kicker": "Step 5", "title": "Plan before you edit - and edit nothing",
+      "why": "The failure mode of a code assistant isn't a wrong line number - it's a confident answer about code that doesn't exist. Gating on a score and abstaining below it is what stops that, and it's why the off-repo question returns nothing."
+    },
+    {
+      "type": "code",
+      "file": "node/repo_assistant.mjs",
+      "lang": "node",
+      "lines": "112-120",
+      "group": "answer"
+    },
+    {
+      "type": "code",
+      "file": "dotnet/Program.cs",
+      "lang": "csharp",
+      "lines": "104-119",
+      "group": "answer"
+    },
+    {
+      "type": "code",
+      "file": "python/repo_assistant.py",
+      "lang": "python",
+      "lines": "134-157",
+      "group": "plan",
+      "kicker": "Step 5",
+      "title": "Plan before you edit - and edit nothing",
       "body": "A change request doesn't get an answer, it gets a **plan**: the relevant files (cited), the current behaviour (cited), a minimal change, and which tests and docs to touch. Crucially, producing the plan **changes no files** - it's advisory. The demo's plan is deterministic, derived from retrieval, so you can see the shape; a real assistant fills the same slots with a model.",
-      "why": "\"Plan first, approve, then edit\" is the safety rail for an assistant with write access. Separating *propose* from *apply* means a human reads the diff-to-be before anything touches disk - the plan is grounded in citations exactly so that review is quick." },
-    { "type": "code", "file": "node/repo_assistant.mjs", "lang": "node", "lines": "122-140", "group": "plan" },
-    { "type": "code", "file": "dotnet/Program.cs", "lang": "csharp", "lines": "121-138", "group": "plan" },
-
-    { "type": "command", "action": "demo", "lang": "python", "group": "run-demo",
-      "kicker": "Run it", "title": "Run the assistant",
+      "why": "\"Plan first, approve, then edit\" is the safety rail for an assistant with write access. Separating *propose* from *apply* means a human reads the diff-to-be before anything touches disk - the plan is grounded in citations exactly so that review is quick."
+    },
+    {
+      "type": "code",
+      "file": "node/repo_assistant.mjs",
+      "lang": "node",
+      "lines": "122-140",
+      "group": "plan"
+    },
+    {
+      "type": "code",
+      "file": "dotnet/Program.cs",
+      "lang": "csharp",
+      "lines": "121-138",
+      "group": "plan"
+    },
+    {
+      "type": "command",
+      "action": "demo",
+      "lang": "python",
+      "group": "run-demo",
+      "kicker": "Run it",
+      "title": "Run the assistant",
       "body": "Now run it - this indexes the sample repo and answers all four questions: two grounded and cited, one plan, and one refused - identical output in all three languages. (Bare `./run -l 6` opens the interactive playground instead; `demo` is the one-shot print-and-exit.)",
-      "display": "./run -l 6 demo", "shell": "python python/repo_assistant.py" },
-    { "type": "command", "action": "demo", "lang": "node", "group": "run-demo",
-      "display": "./run -l 6 --lang node demo", "shell": "node node/repo_assistant.mjs" },
-    { "type": "command", "action": "demo", "lang": "csharp", "group": "run-demo",
-      "display": "./run -l 6 --lang csharp demo", "shell": "dotnet run --project dotnet -c Release --nologo" },
-
-    { "type": "note", "kicker": "Run it", "title": "Read the output",
+      "display": "./run -l 6 demo",
+      "shell": "python python/repo_assistant.py"
+    },
+    {
+      "type": "command",
+      "action": "demo",
+      "lang": "node",
+      "group": "run-demo",
+      "display": "./run -l 6 --lang node demo",
+      "shell": "node node/repo_assistant.mjs"
+    },
+    {
+      "type": "command",
+      "action": "demo",
+      "lang": "csharp",
+      "group": "run-demo",
+      "display": "./run -l 6 --lang csharp demo",
+      "shell": "dotnet run --project dotnet -c Release --nologo"
+    },
+    {
+      "type": "note",
+      "kicker": "Run it",
+      "title": "Read the output",
       "file": "expected-output.txt",
-      "body": "Q1 and Q2 are **grounded**: the answer is a real repository line, tagged with its citation and the sources it came from - Q1 points at `src/chunker.py`, Q2 at the test that actually covers the retriever. Q3 is a **plan**: five cited steps, and not a single file changed. Q4 asks about Kubernetes - nothing in this repo scores the minimum, so the assistant says **NOT FOUND** rather than confabulating. That refusal, not the answers, is the point of the lesson." },
-
-    { "type": "text", "kicker": "Try it", "title": "A question the repo can answer", "text": "which tests cover the retriever",
-      "body": "Want to experiment? You don't edit any code - the playground lets you type and toggle. Start with a question whose answer is really in the repo and watch the citation land on the right file:" },
-    { "type": "text", "kicker": "Try it", "title": "A question the repo cannot answer", "text": "how do i configure kubernetes autoscaling",
-      "body": "Now ask something the repo knows nothing about. The assistant abstains instead of guessing - drop `min_score` in the playground to force a weak answer and see exactly why the gate earns its place. (Prefer the terminal? `./run -l 6 demo` runs all four and exits.)" },
-
-    { "type": "command", "action": "test", "lang": "python", "kicker": "Try it", "title": "Confirm it with the test",
+      "body": "Q1 and Q2 are **grounded**: the answer is a real repository line, tagged with its citation and the sources it came from - Q1 points at `src/chunker.py`, Q2 at the test that actually covers the retriever. Q3 is a **plan**: five cited steps, and not a single file changed. Q4 asks about Kubernetes - nothing in this repo scores the minimum, so the assistant says **NOT FOUND** rather than confabulating. That refusal, not the answers, is the point of the lesson."
+    },
+    {
+      "type": "text",
+      "kicker": "Try it",
+      "title": "A question the repo can answer",
+      "text": "which tests cover the retriever",
+      "body": "Want to experiment? You don't edit any code - the playground lets you type and toggle. Start with a question whose answer is really in the repo and watch the citation land on the right file:"
+    },
+    {
+      "type": "text",
+      "kicker": "Try it",
+      "title": "A question the repo cannot answer",
+      "text": "how do i configure kubernetes autoscaling",
+      "body": "Now ask something the repo knows nothing about. The assistant abstains instead of guessing - drop `min_score` in the playground to force a weak answer and see exactly why the gate earns its place. (Prefer the terminal? `./run -l 6 demo` runs all four and exits.)"
+    },
+    {
+      "type": "command",
+      "action": "test",
+      "lang": "python",
+      "kicker": "Try it",
+      "title": "Confirm it with the test",
       "body": "An offline test pins the lesson's claims: every passage carries a citable line range; a locate answer is grounded and points at the right file; an off-repo question is refused, not guessed; a change request yields a plan-before-edit that leaves the corpus untouched; and retrieval is deterministically ordered. No network, no model.",
-      "display": "./run -l 6 test", "shell": "python -m pytest -q python/test_repo_assistant.py", "venv": true },
-
-    { "type": "command", "action": "web", "lang": "python", "kicker": "Experiment", "title": "Ask the repo - no code editing",
+      "display": "./run -l 6 test",
+      "shell": "python -m pytest -q python/test_repo_assistant.py",
+      "venv": true
+    },
+    {
+      "type": "command",
+      "action": "web",
+      "lang": "python",
+      "kicker": "Experiment",
+      "title": "Ask the repo - no code editing",
       "body": "This is the payoff: `./run -l 6` (the default) opens an interactive assistant over the sample repo. Type a question and read the **cited answer** plus the retrieved passages behind it, or flip on **plan mode** for a plan-before-edit. Move **top_k** and **min_score** and watch a grounded answer turn into **not found** - the controls feed the very same index and retriever the demo and test use.",
-      "display": "./run -l 6", "shell": "python python/web.py", "venv": true },
-    { "type": "text", "kicker": "Experiment", "title": "Try - raise min_score", "text": "where is chunking implemented",
-      "body": "Push `min_score` up to 3 or 4 and watch a real, correct answer flip to **not found**: the gate got stricter than the evidence. Tuning that bar is the whole game - too low and the assistant guesses, too high and it refuses to help." },
-    { "type": "text", "kicker": "Experiment", "title": "Try - plan mode", "text": "where should i add a new embedding provider",
-      "body": "Turn on **plan mode** and ask where to add a provider. Instead of an answer you get five cited steps - relevant files, current behaviour, minimal change, tests, docs - and the assistant edits nothing. Approve first, then edit." },
-
-    { "type": "note", "kicker": "Make it yours", "title": "Point it at your own repository",
+      "display": "./run -l 6",
+      "shell": "python python/web.py",
+      "venv": true
+    },
+    {
+      "type": "text",
+      "kicker": "Experiment",
+      "title": "Try - raise min_score",
+      "text": "where is chunking implemented",
+      "body": "Push `min_score` up to 3 or 4 and watch a real, correct answer flip to **not found**: the gate got stricter than the evidence. Tuning that bar is the whole game - too low and the assistant guesses, too high and it refuses to help."
+    },
+    {
+      "type": "text",
+      "kicker": "Experiment",
+      "title": "Try - plan mode",
+      "text": "where should i add a new embedding provider",
+      "body": "Turn on **plan mode** and ask where to add a provider. Instead of an answer you get five cited steps - relevant files, current behaviour, minimal change, tests, docs - and the assistant edits nothing. Approve first, then edit."
+    },
+    {
+      "type": "note",
+      "kicker": "Make it yours",
+      "title": "Point it at your own repository",
       "body": "The demo indexes a bundled sample so the output is reproducible - but the same code runs against **any** repo. Every port honours a `REPO_PATH` environment variable, and two subcommands answer one free question: `ask \"...\"` for a cited answer and `plan \"...\"` for a plan-before-edit. So `REPO_PATH=/path/to/your/repo python python/repo_assistant.py ask \"where is auth handled?\"` indexes your project (skipping `.git`, `node_modules`, hidden/dot directories and build output) and answers from it - or abstains. A ready wrapper lives at `extend/repo-ask`, and three ways to take this further - a standalone CLI, a repo-search **MCP tool** you register as a Claude Code skill (built on Lesson 2), and the port as a drop-in library - are written up in **EXTEND.md** next to this lesson.",
-      "why": "A lesson you can only run on the bundled corpus is a toy. The value shows up the moment it answers about *your* code with citations you can click - so the same index/retrieve/answer/abstain contract is exactly what you carry into a real tool." },
-
-    { "type": "note", "kicker": "Going further", "title": "From demo to production",
-      "body": "This is a teaching demo; retrieval is deterministic keyword overlap and the answer/plan are extractive so the lesson is reproducible. For real systems:\n\n**Keep the citation contract, swap the pipeline** - index your real repo, use BM25/embeddings/hybrid retrieval and a model for the answer and plan; the `path:start-end` grounding and the abstain gate are unchanged. **Index more signal** - symbols, imports, git blame and PR history, not just lines. **Make the model cite** - require every claim to name a `path:line` from the retrieved set, and reject answers that cite nothing (the same *not-found* rule, enforced on the model). **Keep plan and apply separate** - a plan proposes; applying is a second, human-approved step (wire it to the Lesson 2 MCP server so a host can call repo-search as a tool). **Evaluate it** - fold these questions into Lesson 5's golden set so a drop in citation accuracy, or a lost *not-found*, shows up as a failed check." },
-
-    { "type": "note", "kicker": "Recap", "title": "What you learned",
-      "body": "A repo-aware assistant is retrieval plus two habits: **cite every answer** and **refuse when the answer isn't in the repo.** You indexed a codebase into passages that carry their own `path:line` citations, answered questions only from those lines, watched an off-repo question get **not found** instead of a confident guess, and turned a change request into a **plan-before-edit** that touched no files. Same algorithm in **Python, Node.js and C#**, byte-identical output, plus a playground where you moved the gate and watched a grounded answer become an honest refusal.\n\nNext: **Lesson 7 · LangChain** - rebuild the RAG pipeline with a framework." }
+      "why": "A lesson you can only run on the bundled corpus is a toy. The value shows up the moment it answers about *your* code with citations you can click - so the same index/retrieve/answer/abstain contract is exactly what you carry into a real tool."
+    },
+    {
+      "type": "note",
+      "kicker": "Going further",
+      "title": "From demo to production",
+      "body": "This is a teaching demo; retrieval is deterministic keyword overlap and the answer/plan are extractive so the lesson is reproducible. For real systems:\n\n**Keep the citation contract, swap the pipeline** - index your real repo, use BM25/embeddings/hybrid retrieval and a model for the answer and plan; the `path:start-end` grounding and the abstain gate are unchanged. **Index more signal** - symbols, imports, git blame and PR history, not just lines. **Make the model cite** - require every claim to name a `path:line` from the retrieved set, and reject answers that cite nothing (the same *not-found* rule, enforced on the model). **Keep plan and apply separate** - a plan proposes; applying is a second, human-approved step (wire it to the Lesson 2 MCP server so a host can call repo-search as a tool). **Evaluate it** - fold these questions into Lesson 5's golden set so a drop in citation accuracy, or a lost *not-found*, shows up as a failed check."
+    },
+    {
+      "type": "note",
+      "kicker": "Recap",
+      "title": "What you learned",
+      "body": "A repo-aware assistant is retrieval plus two habits: **cite every answer** and **refuse when the answer isn't in the repo.** You indexed a codebase into passages that carry their own `path:line` citations, answered questions only from those lines, watched an off-repo question get **not found** instead of a confident guess, and turned a change request into a **plan-before-edit** that touched no files. Same algorithm in **Python, Node.js and C#**, byte-identical output, plus a playground where you moved the gate and watched a grounded answer become an honest refusal.\n\nNext: **Lesson 7 · LangChain** - rebuild the RAG pipeline with a framework."
+    }
   ]
 }

@@ -163,7 +163,7 @@ approach and related work on the **[About page](https://nikolareljin.github.io/l
 
 ```bash
 ./run list                 # every lesson and its actions
-./run -l <N> demo          # one-shot, print-and-exit run (lessons 3-7; --lang node|csharp for the ports)
+./run -l <N> demo          # one-shot, print-and-exit run (lessons 3-7; --lang node|csharp where ported)
 ./run -l <N> test          # the lesson's offline test (no network, no model)
 ./run -h                   # full help
 ```

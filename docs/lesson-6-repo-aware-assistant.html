@@ -144,7 +144,8 @@ Point `NOTES_DB` at the index file. Pick a backend with `EMBED_PROVIDER`.</code>
 }
 
 <span class="hl-kw">function</span> relTo(base, full) {
-  <span class="hl-kw">return</span> full.slice(base.length + <span class="hl-num">1</span>).split(/[/\\]/).join(<span class="hl-str">"/"</span>);</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>
+  <span class="hl-kw">return</span> full.slice(base.length + <span class="hl-num">1</span>).split(/[/\\]/).join(<span class="hl-str">"/"</span>);
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>
 List&lt;<span class="hl-kw">string</span>&gt; files;
 List&lt;Chunk&gt; chunks;
 <span class="hl-kw">try</span>
