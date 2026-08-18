@@ -406,3 +406,46 @@ def test_playground_does_not_mutate_shared_state_across_threads():
 
     over = {i: (k, n) for i, (k, n) in results.items() if n > k}
     assert not over, f"requests returned more results than their own k: {over}"
+
+
+def test_unknown_arm_is_rejected_not_silently_ignored(capsys):
+    """`--arm emebd` must not quietly run BM25 and look like it worked."""
+    assert langchain_rag.main(["ask", "--arm", "emebd", "a question"]) == 2
+    assert "Unknown arm" in capsys.readouterr().out
+
+    assert langchain_rag.main(["ask", "a question", "--arm"]) == 2
+    assert "--arm needs a value" in capsys.readouterr().out
+
+
+def test_arm_cache_is_built_once_under_concurrency():
+    """Two threads missing the same key must not both pay for the index build."""
+    import threading
+
+    lc_module()
+    import rank_bm25
+    import web
+
+    web._ARM_CACHE.clear()
+    builds = {"n": 0}
+    real = rank_bm25.BM25Okapi
+
+    def counting(*args, **kwargs):
+        builds["n"] += 1
+        return real(*args, **kwargs)
+
+    values = {"chunk_size": 900, "chunk_overlap": 100, "top_k": 3}
+    rank_bm25.BM25Okapi = counting
+    try:
+        threads = [threading.Thread(target=web.search, args=("logging buffer", values))
+                   for _ in range(8)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+    finally:
+        rank_bm25.BM25Okapi = real
+        web._ARM_CACHE.clear()
+
+    assert builds["n"] == 2, (
+        f"8 simultaneous cold requests built {builds['n']} indexes; expected one per arm"
+    )

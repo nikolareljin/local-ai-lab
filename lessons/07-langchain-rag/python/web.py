@@ -15,6 +15,7 @@ Launch it with:  ./run -l 7
 
 import json
 import sys
+import threading
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -58,12 +59,23 @@ EXAMPLES = [{"label": q, "query": q} for q in SETTINGS["questions"]]
 # deliberately NOT part of it - it only decides how many of the ranked results
 # come back, so moving that slider re-ranks without re-indexing.
 _ARM_CACHE: dict = {}
+# Without this, two concurrent requests can both miss the same key and both pay
+# for the load, split and index - the exact spike the cache exists to prevent,
+# and most likely when the GUI fires several /api/search calls as you type.
+_ARM_LOCK = threading.Lock()
 
 
 def _arms_for(size, overlap, lc):
     """Chunks and built retrievers for these settings, computed once per setting."""
     key = (size, overlap, lc is not None)
-    if key not in _ARM_CACHE:
+    cached = _ARM_CACHE.get(key)
+    if cached is not None:
+        return cached
+    with _ARM_LOCK:
+        # Re-check inside the lock: another thread may have built it while we waited.
+        cached = _ARM_CACHE.get(key)
+        if cached is not None:
+            return cached
         hand_chunks = handrolled.split(handrolled.load(), size, overlap)
         entry = {
             "hand_chunks": hand_chunks,
@@ -76,7 +88,7 @@ def _arms_for(size, overlap, lc):
             entry["lc_chunks"] = lc_chunks
             entry["lc_retriever"] = lc.bm25_retriever(lc_chunks, MAX_TOP_K)
         _ARM_CACHE[key] = entry
-    return _ARM_CACHE[key]
+        return entry
 
 
 def _import_langchain():

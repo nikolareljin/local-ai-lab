@@ -45,6 +45,9 @@ INSTALL_HINT = "pip install -r lessons/07-langchain-rag/requirements.txt"
 # Not in requirements.txt on purpose - see the note at the bottom of that file.
 OLLAMA_HINT = "pip install langchain-ollama"
 
+# Retrieval arms `ask --arm` accepts. bm25 is offline; embed needs Ollama running.
+ARMS = {"bm25", "embed"}
+
 # Which LangChain component stands in for which Lesson 1 file.
 COMPONENTS = [
     ("load", "localrag/extract.py", "Document(...)"),
@@ -359,8 +362,16 @@ def main(argv=None) -> int:
     arm = "bm25"
     if "--arm" in argv:
         i = argv.index("--arm")
-        arm = argv[i + 1] if i + 1 < len(argv) else "bm25"
+        if i + 1 >= len(argv):
+            print(f"--arm needs a value. Choose one of: {', '.join(sorted(ARMS))}.")
+            return 2
+        arm = argv[i + 1]
         del argv[i:i + 2]
+        if arm not in ARMS:
+            # Silently falling back to bm25 would make `--arm emebd` look like it
+            # worked, and quietly answer the wrong question about the wrong arm.
+            print(f"Unknown arm {arm!r}. Choose one of: {', '.join(sorted(ARMS))}.")
+            return 2
 
     if argv and argv[0] == "--measure":
         return cmd_measure()
