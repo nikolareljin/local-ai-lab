@@ -16,7 +16,11 @@ langchain-core>=1.0
 langchain-text-splitters>=1.0
 
 # NOT installed by `./run -l 7`, and deliberately not listed above: the scorecard
-# has to match exactly what the lesson installs. `ask --native` and
-# `ask --arm embed` are the only things that need it, they import it lazily, and
-# they tell you this command if it is missing. It costs 2 further packages:
+# has to match exactly what the lesson installs. Only the `--native` paths need it
+# (`ask --native` and `ask --native --arm embed`); they import it lazily and print
+# this command if it is missing. It costs 2 further packages:
 #   pip install langchain-ollama
+#
+# `ask --arm embed` on its own does NOT need it - that path embeds through
+# LocalRagEmbeddings, the adapter in python/lc_provider.py, so it needs Ollama
+# running but no extra package.

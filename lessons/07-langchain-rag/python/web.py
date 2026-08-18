@@ -28,6 +28,10 @@ from lesson_web import serve  # noqa: E402
 LESSON_DIR = Path(__file__).resolve().parent.parent
 SETTINGS = json.loads((LESSON_DIR / "data" / "questions.json").read_text(encoding="utf-8"))
 
+# The largest top_k the slider offers. Retrievers are cached at this width and the
+# results sliced per request, so a request never mutates shared state.
+MAX_TOP_K = 6
+
 # Defaults match data/questions.json, so the page opens on exactly the result the
 # demo prints and the test pins.
 PARAMS = [
@@ -36,7 +40,7 @@ PARAMS = [
     {"name": "chunk_overlap", "label": "Chunk overlap", "kind": "range",
      "min": 0, "max": 400, "step": 20, "default": SETTINGS["chunk_overlap"]},
     {"name": "top_k", "label": "Top k", "kind": "range",
-     "min": 1, "max": 6, "step": 1, "default": SETTINGS["top_k"]},
+     "min": 1, "max": MAX_TOP_K, "step": 1, "default": SETTINGS["top_k"]},
     {"name": "show_prompt", "label": "Show the rendered prompt", "kind": "toggle",
      "default": False},
 ]
@@ -70,7 +74,7 @@ def _arms_for(size, overlap, lc):
         if lc is not None:
             lc_chunks = lc.split(lc.load(), size, overlap)
             entry["lc_chunks"] = lc_chunks
-            entry["lc_retriever"] = lc.bm25_retriever(lc_chunks, 1)
+            entry["lc_retriever"] = lc.bm25_retriever(lc_chunks, MAX_TOP_K)
         _ARM_CACHE[key] = entry
     return _ARM_CACHE[key]
 
@@ -115,10 +119,10 @@ def search(query, values):
         }
 
     lc_chunks = arms["lc_chunks"]
-    # k is a plain field on the retriever, so the top-k slider changes how many
-    # results come back without touching the index behind them.
-    arms["lc_retriever"].k = k
-    lc_hits = arms["lc_retriever"].invoke(query)
+    # The cached retriever is shared, and Flask may serve requests on several
+    # threads, so slice its widest result rather than mutating its `k`. Ranking is
+    # score-descending, so the first k of a top-MAX_TOP_K list is the top k.
+    lc_hits = arms["lc_retriever"].invoke(query)[:k]
     lc_sources = lc.sources(lc_hits)
 
     agree = hand_sources == lc_sources

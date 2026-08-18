@@ -357,3 +357,52 @@ def test_playground_does_not_reindex_on_every_query():
     assert steady == 2, f"expected one index per arm, got {steady} builds for 6 queries"
     assert after_top_k == 2, "moving top_k must re-rank, not re-index"
     assert builds["n"] == 4, "changing chunk_size must rebuild, and only then"
+
+
+def test_playground_slicing_matches_building_per_k():
+    """The cached retriever is built at max width and sliced, so prove that is the
+    same answer as building one per k - otherwise the page would quietly disagree
+    with the demo."""
+    lc = lc_module()
+    import web
+
+    web._ARM_CACHE.clear()
+    question = SETTINGS["questions"][2]
+    chunks = lc.split(lc.load(), SETTINGS["chunk_size"], SETTINGS["chunk_overlap"])
+    values = {"chunk_size": SETTINGS["chunk_size"], "chunk_overlap": SETTINGS["chunk_overlap"]}
+    try:
+        for k in range(1, web.MAX_TOP_K + 1):
+            sliced = web.search(question, {**values, "top_k": k})["arms"][1]["ranking"]
+            built = lc.sources(lc.bm25_retriever(chunks, k).invoke(question))
+            assert sliced == built, f"k={k}: {sliced} != {built}"
+    finally:
+        web._ARM_CACHE.clear()
+
+
+def test_playground_does_not_mutate_shared_state_across_threads():
+    """Flask may serve concurrently; a request must never widen another's results."""
+    import threading
+
+    lc_module()
+    import web
+
+    web._ARM_CACHE.clear()
+    values = {"chunk_size": SETTINGS["chunk_size"], "chunk_overlap": SETTINGS["chunk_overlap"]}
+    web.search(SETTINGS["questions"][0], {**values, "top_k": 1})  # warm the cache
+
+    results = {}
+
+    def run(i):
+        k = (i % web.MAX_TOP_K) + 1
+        got = web.search(SETTINGS["questions"][2], {**values, "top_k": k})
+        results[i] = (k, len(got["arms"][1]["ranking"]))
+
+    threads = [threading.Thread(target=run, args=(i,)) for i in range(8)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    web._ARM_CACHE.clear()
+
+    over = {i: (k, n) for i, (k, n) in results.items() if n > k}
+    assert not over, f"requests returned more results than their own k: {over}"

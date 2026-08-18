@@ -153,8 +153,10 @@ The comparison is offline. To run the whole chain through a model:
 ./run -l 7 ask --arm embed "..."                         # real vectors, local, via Ollama
 ```
 
-The last two need `pip install langchain-ollama`, which the lesson deliberately does **not** install
-for you - see *Concept 5*. Run them without it and you get that one-line command, not a traceback.
+`--native` needs `pip install langchain-ollama`, which the lesson deliberately does **not** install
+for you - see *Concept 5*. Run it without that and you get the one-line command, not a traceback.
+`--arm embed` on its own does not: it embeds through `LocalRagEmbeddings`, the adapter you wrote, so
+it needs Ollama *running* but no extra package.
 
 ### Experiment in the playground (needs Flask)
 
