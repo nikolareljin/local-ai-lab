@@ -44,6 +44,33 @@ PARAMS = [
 EXAMPLES = [{"label": q, "query": q} for q in SETTINGS["questions"]]
 
 
+# The shared GUI calls /api/search on every keystroke and slider move, so loading
+# and splitting the corpus inside search() would re-index on each one - sluggish,
+# and a contradiction of the "build the index once" contract the rest of the
+# lesson pins with tests. Cache per (chunk_size, chunk_overlap): the knobs are the
+# only thing that changes what the index contains.
+_ARM_CACHE: dict = {}
+
+
+def _arms_for(size, overlap, k, lc):
+    """Chunks and built retrievers for these settings, computed once per setting."""
+    key = (size, overlap, k, lc is not None)
+    if key not in _ARM_CACHE:
+        hand_chunks = handrolled.split(handrolled.load(), size, overlap)
+        entry = {
+            "hand_chunks": hand_chunks,
+            "hand_retriever": handrolled.build_retriever(hand_chunks),
+            "lc_chunks": None,
+            "lc_retriever": None,
+        }
+        if lc is not None:
+            lc_chunks = lc.split(lc.load(), size, overlap)
+            entry["lc_chunks"] = lc_chunks
+            entry["lc_retriever"] = lc.bm25_retriever(lc_chunks, k)
+        _ARM_CACHE[key] = entry
+    return _ARM_CACHE[key]
+
+
 def _import_langchain():
     """Same narrow guard as the demo: only a missing LangChain package means
     "not installed". A real import-time failure in `lc_pipeline` propagates
@@ -68,11 +95,12 @@ def search(query, values):
     if overlap >= size:
         overlap = max(0, size // 4)
 
-    hand_chunks = handrolled.split(handrolled.load(), size, overlap)
-    hand_hits = handrolled.retrieve(handrolled.build_retriever(hand_chunks), query, k)
+    lc = _import_langchain()
+    arms = _arms_for(size, overlap, k, lc)
+    hand_chunks = arms["hand_chunks"]
+    hand_hits = handrolled.retrieve(arms["hand_retriever"], query, k)
     hand_sources = handrolled.sources(hand_hits)
 
-    lc = _import_langchain()
     if lc is None:
         return {
             "arms": [{"label": "hand-rolled (Lesson 1)", "ranking": hand_sources}],
@@ -82,8 +110,8 @@ def search(query, values):
                                 "lessons/07-langchain-rag/requirements.txt"}],
         }
 
-    lc_chunks = lc.split(lc.load(), size, overlap)
-    lc_hits = lc.bm25_retriever(lc_chunks, k).invoke(query)
+    lc_chunks = arms["lc_chunks"]
+    lc_hits = arms["lc_retriever"].invoke(query)
     lc_sources = lc.sources(lc_hits)
 
     agree = hand_sources == lc_sources

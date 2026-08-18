@@ -33,7 +33,14 @@ def hand_chunks():
 
 
 def lc_module():
-    pytest.importorskip("langchain_core")
+    """Import the LangChain arm, or skip - including on a *partial* install.
+
+    Checking only langchain_core would let a half-installed environment (core
+    present, text-splitters missing) fail the suite instead of skipping it, which
+    is exactly what this file's docstring promises will not happen.
+    """
+    for package in ("langchain_core", "langchain_text_splitters"):
+        pytest.importorskip(package)
     import lc_pipeline
     return lc_pipeline
 
@@ -314,3 +321,35 @@ def test_both_arms_build_their_index_once_per_run():
         f"hand-rolled arm built the index {builds['n']} times for "
         f"{len(SETTINGS['questions'])} questions"
     )
+
+
+def test_playground_does_not_reindex_on_every_query():
+    """The shared GUI calls search() per keystroke; re-indexing there would be
+    both sluggish and a contradiction of the contract the tests above pin."""
+    lc_module()
+    import rank_bm25
+    import web
+
+    web._ARM_CACHE.clear()
+    builds = {"n": 0}
+    real = rank_bm25.BM25Okapi
+
+    def counting(*args, **kwargs):
+        builds["n"] += 1
+        return real(*args, **kwargs)
+
+    values = {"chunk_size": SETTINGS["chunk_size"],
+              "chunk_overlap": SETTINGS["chunk_overlap"],
+              "top_k": SETTINGS["top_k"]}
+    rank_bm25.BM25Okapi = counting
+    try:
+        for question in SETTINGS["questions"] * 2:
+            web.search(question, values)
+        steady = builds["n"]
+        web.search(SETTINGS["questions"][0], {**values, "chunk_size": 1200})
+    finally:
+        rank_bm25.BM25Okapi = real
+        web._ARM_CACHE.clear()
+
+    assert steady == 2, f"expected one index per arm, got {steady} builds for 6 queries"
+    assert builds["n"] == 4, "changing a knob must rebuild, and only then"

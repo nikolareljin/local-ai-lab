@@ -133,12 +133,25 @@ class BM25Okapi {
   }
 }
 
+// One index per corpus, built on first use and reused for every later query -
+// the same contract as Lesson 1's Bm25Retriever.__init__ and as the Python arms.
+// Keyed on the array itself, so the two corpora here never share an index.
+const bm25Indexes = new WeakMap();
+
+function indexFor(items, textOf) {
+  let bm25 = bm25Indexes.get(items);
+  if (!bm25) {
+    bm25 = new BM25Okapi(items.map((it) => tokenize(textOf(it))));
+    bm25Indexes.set(items, bm25);
+  }
+  return bm25;
+}
+
 // localrag/retriever.py:Bm25Retriever.search - top-k, dropping the tail that
 // scores at or below zero once there is a real signal.
 function bm25Search(items, textOf, query, k) {
   if (!items.length || k <= 0) return [];
-  const bm25 = new BM25Okapi(items.map((it) => tokenize(textOf(it))));
-  const scores = bm25.getScores(tokenize(query));
+  const scores = indexFor(items, textOf).getScores(tokenize(query));
   const ranked = items
     .map((_, i) => i)
     .sort((a, b) => scores[b] - scores[a])
