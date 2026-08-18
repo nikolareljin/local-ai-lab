@@ -1,0 +1,44 @@
+Rebuild RAG with LangChain  -  7 documents, same corpus, same system prompt
+chunked at size=700 overlap=120, retrieving top 3
+
+  hand-rolled   15 chunks   (chunk.py: collapse whitespace, break on sentences)
+  langchain     15 chunks   (RecursiveCharacterTextSplitter: keep text, split on separators)
+
+Q1  What is the factory reset procedure?
+    hand-rolled   sources: manual.md:1 . warranty.md:1
+    langchain     sources: manual.md:1 . warranty.md:1
+    GROUNDING AGREES  -  same sources, same order
+
+Q2  Why does the status ring stay amber?
+    hand-rolled   sources: faq.md:1 . manual.md:1 . warranty.md:1
+    langchain     sources: faq.md:1 . manual.md:1 . warranty.md:1
+    GROUNDING AGREES  -  same sources, same order
+
+Q3  Which endpoint exports the logging buffer?
+    hand-rolled   sources: api.md:1 . manual.md:1
+    langchain     sources: api.md:1 . manual.md:1 . installation.md:1
+    GROUNDING DIFFERS  -  langchain also cites installation.md:1
+
+    2/3 questions grounded identically. Different chunk boundaries, mostly the same evidence.
+
+Component by component
+  step      hand-rolled (Lesson 1)               LangChain (Lesson 7)
+  -------------------------------------------------------------------------------
+  load      localrag/extract.py              45L  Document(...)
+  split     localrag/chunk.py                46L  RecursiveCharacterTextSplitter
+  index     localrag/store.py                66L  InMemoryVectorStore
+  retrieve  localrag/retriever.py           119L  BaseRetriever subclass (yours)
+  prompt    localrag/prompts.py              19L  ChatPromptTemplate
+  provider  localrag/providers/__init__.py   37L  SimpleChatModel subclass (yours)
+  chain     localrag/engine.py               47L  LCEL  ( | )
+  -------------------------------------------------------------------------------
+
+What it cost
+                            hand-rolled      LangChain
+  code you maintain           379 lines      127 lines
+  direct dependencies                 8             10
+  transitive packages                 8             31
+  install size                    ~9 MB         ~13 MB
+
+  379 lines you can read against 127 lines you still write.
+  The rest moved into 31 packages you did not read. That is the trade.

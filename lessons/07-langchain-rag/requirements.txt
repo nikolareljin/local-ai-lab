@@ -1,0 +1,14 @@
+# Lesson 7 only. The course itself stays on the 8 dependencies in the repo-root
+# requirements.txt - this file is the dependency the lesson is arguing about.
+#
+#   ./run -l 7            installs these into the course venv
+#   ./run -l 7 test       does NOT need them; the test runs offline either way
+#
+# langchain-community is deliberately absent: it is sunset upstream, and the
+# twenty-line BaseRetriever in python/lc_provider.py replaces the one thing we
+# needed from it. That drops the install from 47 packages to 31.
+langchain-core>=1.0
+langchain-text-splitters>=1.0
+
+# Optional - only for `ask --arm embed` and `ask --native`, which need Ollama.
+langchain-ollama>=1.0
