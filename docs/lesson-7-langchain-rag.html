@@ -55,7 +55,7 @@
 Two things the framework could NOT replace: your provider and your retriever. You
 subclass its base classes and hand it your own - which is why writing the
 primitives first was worth it. Nothing above is mysterious; you wrote its twin.</code></pre></section>
-<section class='slide'><div class='step-no'>Setup</div><h2>What you need</h2><p>This is the <strong>one lesson in the course that installs something</strong>, and that is deliberate: the dependency is the subject. <code>./run -l 7</code> puts <code>langchain-core</code> and <code>langchain-text-splitters</code> into the course venv on first use. If you skip the install, the demo still runs the hand-rolled side, marks the LangChain column <em>not installed</em>, and tells you the command - and <code>./run -l 7 test</code> passes either way. Run everything from the repo root:</p><div class='block'><div class='label'>run</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">7</span>                 <span class="hl-com"># Python: the playground (default)</span>
+<section class='slide'><div class='step-no'>Setup</div><h2>What you need</h2><p>This is the <strong>one lesson in the course that installs something</strong>, and that is deliberate: the dependency is the subject. <code>./run -l 7</code> puts <code>langchain-core</code> and <code>langchain-text-splitters</code> into the course venv on first use. If you skip the install, the demo still runs the hand-rolled side, marks the LangChain column <em>not installed</em>, and tells you the command - and <code>./run -l 7 test</code> passes either way. The Node port additionally needs <strong>Node 20+</strong>, not the course's usual 18+, because <code>@langchain/core</code> declares <code>node &gt;= 20</code> - taking the dependency also took its floor. Run everything from the repo root:</p><div class='block'><div class='label'>run</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">7</span>                 <span class="hl-com"># Python: the playground (default)</span>
 ./run -l <span class="hl-num">7</span> demo            <span class="hl-com"># Python: the comparison + scorecard, print and exit</span>
 ./run -l <span class="hl-num">7</span> --lang node demo  <span class="hl-com"># Node.js: same pipeline, different dependency bill</span></code></pre></div></section>
 <section class='slide'><div class='step-no'>Step 1</div><h2>The corpus and the questions</h2><p>Three questions, each aimed at a different document in [<code>data/corpus/</code>](./data/corpus): the factory reset lives in the manual, the amber status ring in the FAQ, the buffer export in the API reference. <code>chunk_size</code> and <code>chunk_overlap</code> are the settings <strong>both</strong> pipelines are handed, and <code>top_k</code> is how many chunks reach the prompt. One file drives the demo, the test, the playground, and the Node port.</p><div class='block'><div class='label'>data/questions.json</div><pre><code class='lang-json'>{
@@ -68,37 +68,37 @@ primitives first was worth it. Nothing above is mysterious; you wrote its twin.<
     <span class="hl-str">"Which endpoint exports the logging buffer?"</span>
   ]
 }</code></pre></div><div class='why'>Both pipelines read their settings from the same place for the same reason they share a system prompt: if the framework got a different chunk size or a better brief, the comparison would be theatre rather than a measurement.</div></section>
-<section class='slide'><div class='step-no'>Step 2</div><h2>The hand-rolled side - imported, not rewritten</h2><p>Every step here calls the module you wrote in <strong>Lesson 1</strong>. <code>load</code> is <code>extract.py</code>, <code>split</code> is <code>chunk.py</code>, <code>retrieve</code> is <code>retriever.py</code>, <code>render_prompt</code> is <code>prompts.py</code>, <code>answer</code> is <code>providers/</code>. Nothing is reimplemented for the comparison.</p><div class='lang lang-python'><div class='block'><div class='label'>python/handrolled_pipeline.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> load(corpus_dir: Path = CORPUS_DIR) -&gt; List[Page]:
-    <span class="hl-str">"""extract.py - every supported file under the corpus, in sorted order."""</span>
+<section class='slide'><div class='step-no'>Step 2</div><h2>The hand-rolled side - imported, not rewritten</h2><p>Every step here calls the module you wrote in <strong>Lesson 1</strong>. <code>load</code> is <code>extract.py</code>, <code>split</code> is <code>chunk.py</code>, <code>retrieve</code> is <code>retriever.py</code>, <code>render_prompt</code> is <code>prompts.py</code>, <code>answer</code> is <code>providers/</code>. Nothing is reimplemented for the comparison.</p><div class='lang lang-python'><div class='block'><div class='label'>python/handrolled_pipeline.py</div><pre><code class='lang-python'>    touch the index under your real `.localrag/`.
+    <span class="hl-str">"""
+    config = load_config()
+    config.docs_dir = CORPUS_DIR
+    config.cache_dir = Path(_SCRATCH.name)
+    if provider:
+        config.provider = provider
+    return config
+
+
+def load(corpus_dir: Path = CORPUS_DIR) -&gt; List[Page]:
+    """</span>extract.py - every supported file under the corpus, <span class="hl-kw">in</span> sorted order.<span class="hl-str">"""
     pages: List[Page] = []
-    <span class="hl-kw">for</span> path <span class="hl-kw">in</span> discover_files(corpus_dir):
+    for path in discover_files(corpus_dir):
         pages.extend(extract_pages(path))
-    <span class="hl-kw">return</span> pages
+    return pages
 
 
-<span class="hl-kw">def</span> split(pages: List[Page], size: int, overlap: int) -&gt; List[Chunk]:
-    <span class="hl-str">"""chunk.py - overlapping chunks that each remember source and page."""</span>
-    <span class="hl-kw">return</span> chunk_pages(pages, size=size, overlap=overlap)
+def split(pages: List[Page], size: int, overlap: int) -&gt; List[Chunk]:
+    """</span>chunk.py - overlapping chunks that each remember source <span class="hl-kw">and</span> page.<span class="hl-str">"""
+    return chunk_pages(pages, size=size, overlap=overlap)
 
 
-<span class="hl-kw">def</span> retrieve(chunks: List[Chunk], question: str, k: int) -&gt; List[Chunk]:
-    <span class="hl-str">"""retriever.py - BM25 over the chunk texts."""</span>
-    <span class="hl-kw">return</span> Bm25Retriever(chunks).search(question, k)
+def retrieve(chunks: List[Chunk], question: str, k: int) -&gt; List[Chunk]:
+    """</span>retriever.py - BM25 over the chunk texts.<span class="hl-str">"""
+    return Bm25Retriever(chunks).search(question, k)
 
 
-<span class="hl-kw">def</span> sources(hits: List[Chunk]) -&gt; List[str]:
-    <span class="hl-str">"""engine.py - the `source:page` citations behind an answer."""</span>
-    <span class="hl-kw">return</span> dedup_sources(hits)
-
-
-<span class="hl-kw">def</span> render_prompt(question: str, hits: List[Chunk]) -&gt; tuple[str, str]:
-    <span class="hl-str">"""prompts.py - the exact system and user strings the model will see."""</span>
-    <span class="hl-kw">return</span> SYSTEM_PROMPT, build_user_prompt(question, hits)
-
-
-<span class="hl-kw">def</span> answer(config: Config, question: str, hits: List[Chunk]) -&gt; str:
-    <span class="hl-str">"""providers/ - call the configured provider with the grounded prompt."""</span>
-    system, user = render_prompt(question, hits)</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/langchain_rag.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> splitText(text, size, overlap) {
+def sources(hits: List[Chunk]) -&gt; List[str]:
+    """</span>engine.py - the `source:page` citations behind an answer.<span class="hl-str">""</span>"
+    <span class="hl-kw">return</span> dedup_sources(hits)</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/langchain_rag.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> splitText(text, size, overlap) {
   <span class="hl-kw">const</span> normalized = text.split(/\s+/).filter(Boolean).join(<span class="hl-str">" "</span>);
   <span class="hl-kw">if</span> (normalized.length &lt;= size) <span class="hl-kw">return</span> normalized ? [normalized] : [];
 

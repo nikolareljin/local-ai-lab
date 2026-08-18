@@ -55,7 +55,7 @@ cd local-ai-lab
 - **macOS:** `brew install python`
 - **Windows:** `winget install -e --id Python.Python.3.12`  (or [python.org](https://www.python.org/downloads/) - tick *Add to PATH*)
 
-### Node.js 18+ (only for `--lang node`)
+### Node.js 18+ (only for `--lang node`; Lesson 7 needs 20+)
 - **Linux:** [NodeSource](https://github.com/nodesource/distributions) or `sudo apt install -y nodejs npm`
 - **macOS:** `brew install node` · **Windows:** `winget install -e --id OpenJS.NodeJS.LTS`
 

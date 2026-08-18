@@ -40,6 +40,8 @@ framework-tour outlines (8-12) already exist under [`roadmap/`](./roadmap/).
 
 - **Python 3.10+** (required for every lesson and for `./run`).
 - **Node.js 18+** and/or **.NET 8 SDK** - only if you want to follow the Node / C# ports.
+  Lesson 7's Node port needs **Node 20+**: `@langchain/core` declares that floor, so taking the
+  dependency raises the runtime requirement too.
 - A text editor and a terminal. The default AI provider is **Claude Code** (no API key); Ollama,
   Gemini, and OpenAI are optional alternatives - see [INSTALL.md](./INSTALL.md).
 
