@@ -16,6 +16,7 @@ Launch it with:  ./run -l 7
 import json
 import sys
 import threading
+from collections import OrderedDict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -58,23 +59,42 @@ EXAMPLES = [{"label": q, "query": q} for q in SETTINGS["questions"]]
 # chunk_overlap, and whether the LangChain arm is available at all. top_k is
 # deliberately NOT part of it - it only decides how many of the ranked results
 # come back, so moving that slider re-ranks without re-indexing.
-_ARM_CACHE: dict = {}
-# Without this, two concurrent requests can both miss the same key and both pay
-# for the load, split and index - the exact spike the cache exists to prevent,
+# Bounded, because the sliders can produce hundreds of (size, overlap) pairs and
+# each entry holds a full chunk list plus a BM25 index. A handful is plenty: you
+# move a slider, compare, move it back.
+_ARM_CACHE: "OrderedDict[tuple, dict]" = OrderedDict()
+_ARM_CACHE_MAX = 8
+# Without this lock, two concurrent requests can both miss the same key and both
+# pay for the load, split and index - the exact spike the cache exists to prevent,
 # and most likely when the GUI fires several /api/search calls as you type.
 _ARM_LOCK = threading.Lock()
+
+
+def _clamp(name, value, fallback):
+    """Hold a client-supplied param inside the range the UI actually offers.
+
+    /api/search takes arbitrary JSON, not just whatever the sliders sent, so an
+    unclamped chunk_size would let a caller demand a very expensive split and mint
+    a fresh cache entry for it. Clamping keeps the work bounded and the key space
+    finite at the same time.
+    """
+    spec = next((p for p in PARAMS if p["name"] == name), None)
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        return fallback
+    if spec and spec.get("kind") == "range":
+        return max(int(spec["min"]), min(int(spec["max"]), number))
+    return number
 
 
 def _arms_for(size, overlap, lc):
     """Chunks and built retrievers for these settings, computed once per setting."""
     key = (size, overlap, lc is not None)
-    cached = _ARM_CACHE.get(key)
-    if cached is not None:
-        return cached
     with _ARM_LOCK:
-        # Re-check inside the lock: another thread may have built it while we waited.
         cached = _ARM_CACHE.get(key)
         if cached is not None:
+            _ARM_CACHE.move_to_end(key)
             return cached
         hand_chunks = handrolled.split(handrolled.load(), size, overlap)
         entry = {
@@ -88,6 +108,8 @@ def _arms_for(size, overlap, lc):
             entry["lc_chunks"] = lc_chunks
             entry["lc_retriever"] = lc.bm25_retriever(lc_chunks, MAX_TOP_K)
         _ARM_CACHE[key] = entry
+        while len(_ARM_CACHE) > _ARM_CACHE_MAX:
+            _ARM_CACHE.popitem(last=False)  # drop the least recently used
         return entry
 
 
@@ -109,9 +131,9 @@ def search(query, values):
         note = "Ask something the manual covers, then move the chunk size."
         return {"arms": [], "blocks": [{"kind": "note", "text": note}]}
 
-    size = int(values.get("chunk_size", SETTINGS["chunk_size"]))
-    overlap = int(values.get("chunk_overlap", SETTINGS["chunk_overlap"]))
-    k = int(values.get("top_k", SETTINGS["top_k"]))
+    size = _clamp("chunk_size", values.get("chunk_size"), SETTINGS["chunk_size"])
+    overlap = _clamp("chunk_overlap", values.get("chunk_overlap"), SETTINGS["chunk_overlap"])
+    k = _clamp("top_k", values.get("top_k"), SETTINGS["top_k"])
     if overlap >= size:
         overlap = max(0, size // 4)
 

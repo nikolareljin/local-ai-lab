@@ -475,3 +475,36 @@ def test_native_guard_only_swallows_a_missing_langchain_ollama(monkeypatch):
         ModuleNotFoundError("No module named 'something_else'", name="something_else")))
     with pytest.raises(ModuleNotFoundError):
         langchain_rag.cmd_ask("a question", native=True, arm="bm25")
+
+
+def test_playground_clamps_client_supplied_params():
+    """/api/search takes arbitrary JSON, not only what the sliders sent."""
+    lc_module()
+    import web
+
+    web._ARM_CACHE.clear()
+    try:
+        web.search("logging buffer", {"chunk_size": 10**9, "chunk_overlap": -500,
+                                      "top_k": 10**6})
+        keys = list(web._ARM_CACHE.keys())
+        assert keys == [(2000, 0, True)], f"params were not clamped: {keys}"
+
+        # Junk must fall back to the lesson's defaults rather than raising.
+        web.search("logging buffer", {"chunk_size": "not-a-number", "top_k": None})
+    finally:
+        web._ARM_CACHE.clear()
+
+
+def test_playground_cache_is_bounded():
+    """A long session moving sliders must not retain every corpus it ever built."""
+    lc_module()
+    import web
+
+    web._ARM_CACHE.clear()
+    try:
+        for size in range(200, 2001, 100):
+            web.search("x", {"chunk_size": size, "chunk_overlap": 0, "top_k": 3})
+        assert len(web._ARM_CACHE) <= web._ARM_CACHE_MAX, (
+            f"cache grew to {len(web._ARM_CACHE)} entries")
+    finally:
+        web._ARM_CACHE.clear()
