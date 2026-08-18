@@ -234,7 +234,11 @@ def cmd_demo() -> int:
 
 
 def _langchain_closure() -> set:
-    """Every installed distribution reachable from the lesson's two requirements."""
+    """Every installed distribution reachable from the lesson's two requirements.
+
+    Seeded with both pins - langchain-core and langchain-text-splitters - not just
+    the first, so the number lines up with what requirements.txt actually asks for.
+    """
     from importlib.metadata import distribution, requires
 
     seen, queue = set(), ["langchain-core", "langchain-text-splitters"]
@@ -286,7 +290,7 @@ def cmd_measure() -> int:
 
     if lc:
         closure = _langchain_closure()
-        print(f"  reachable from langchain-core: {len(closure)}")
+        print(f"  reachable from the 2 pins:     {len(closure)}")
         print(f"  the demo's printed figure:     {DEPS['langchain']['packages']} "
               f"(a clean `pip download` resolve, so the two differ by whatever")
         print("                                 else this environment has in it)")

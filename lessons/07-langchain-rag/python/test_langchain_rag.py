@@ -409,7 +409,12 @@ def test_playground_does_not_mutate_shared_state_across_threads():
 
 
 def test_unknown_arm_is_rejected_not_silently_ignored(capsys):
-    """`--arm emebd` must not quietly run BM25 and look like it worked."""
+    """A typo must not quietly run BM25 and look like it worked.
+
+    `emebd` below is a deliberate misspelling of the real arm, `embed`. That is the
+    whole point: the old code took any value and fell back to bm25, so a slip of the
+    fingers produced plausible output for a question you did not ask.
+    """
     assert langchain_rag.main(["ask", "--arm", "emebd", "a question"]) == 2
     assert "Unknown arm" in capsys.readouterr().out
 
