@@ -21,11 +21,13 @@ All notable changes to this project are documented here. This project follows
   LCEL chain drive the course's default Claude Code provider, which LangChain has no adapter for, plus
   Ollama, Gemini and OpenAI; `LocalRagEmbeddings` does the same for embeddings. A third,
   `LocalRagBM25Retriever` (a `BaseRetriever` over `rank_bm25`), replaces the `BM25Retriever` from the
-  now-sunset `langchain-community` and drops the lesson's install from 47 packages to 31.
+  now-sunset `langchain-community`, keeping the install at 67 packages instead of 80.
 - **A local Ollama arm** - `ask --arm embed` retrieves with real vectors through `InMemoryVectorStore`,
   and `ask --native` runs the same chain through framework-native `ChatOllama` and `OllamaEmbeddings`,
   so the lesson can put a sixty-line adapter you own next to a package you install and let you judge
-  the trade.
+  the trade. `langchain-ollama` is an opt-in install rather than a lesson requirement, so the printed
+  dependency scorecard matches exactly what `./run -l 7` puts in the venv; the paths that need it exit
+  with the install command rather than a traceback.
 
 ### Changed
 - Lesson 7 graduates out of `roadmap/` into `lessons/07-langchain-rag/`; inbound links across the
