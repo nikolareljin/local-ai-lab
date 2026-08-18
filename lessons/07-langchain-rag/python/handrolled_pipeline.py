@@ -86,9 +86,20 @@ def split(pages: List[Page], size: int, overlap: int) -> List[Chunk]:
     return chunk_pages(pages, size=size, overlap=overlap)
 
 
-def retrieve(chunks: List[Chunk], question: str, k: int) -> List[Chunk]:
-    """retriever.py - BM25 over the chunk texts."""
-    return Bm25Retriever(chunks).search(question, k)
+def build_retriever(chunks: List[Chunk]) -> Bm25Retriever:
+    """retriever.py - build the BM25 index once, then answer many queries from it.
+
+    Lesson 1 builds BM25 in `Bm25Retriever.__init__` and reuses it, and the LangChain
+    arm does the same, so this arm must too. Rebuilding per query would tokenize the
+    whole corpus on every question and make the comparison a measurement of who
+    rebuilds their index more often.
+    """
+    return Bm25Retriever(chunks)
+
+
+def retrieve(retriever: Bm25Retriever, question: str, k: int) -> List[Chunk]:
+    """retriever.py - top-k chunks for one question, from an already-built index."""
+    return retriever.search(question, k)
 
 
 def sources(hits: List[Chunk]) -> List[str]:

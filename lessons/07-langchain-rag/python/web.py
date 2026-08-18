@@ -69,7 +69,7 @@ def search(query, values):
         overlap = max(0, size // 4)
 
     hand_chunks = handrolled.split(handrolled.load(), size, overlap)
-    hand_hits = handrolled.retrieve(hand_chunks, query, k)
+    hand_hits = handrolled.retrieve(handrolled.build_retriever(hand_chunks), query, k)
     hand_sources = handrolled.sources(hand_hits)
 
     lc = _import_langchain()

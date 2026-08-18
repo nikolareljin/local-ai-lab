@@ -44,8 +44,9 @@ def test_handrolled_side_grounds_every_question():
     """Lesson 1's pipeline answers from the corpus, with a citation, for every question."""
     chunks = hand_chunks()
     assert chunks, "the corpus produced no chunks"
+    retriever = handrolled.build_retriever(chunks)
     for question in SETTINGS["questions"]:
-        hits = handrolled.retrieve(chunks, question, SETTINGS["top_k"])
+        hits = handrolled.retrieve(retriever, question, SETTINGS["top_k"])
         assert hits, f"no chunks retrieved for {question!r}"
         cites = handrolled.sources(hits)
         assert cites and all(":" in c for c in cites), f"missing citations for {question!r}"
@@ -87,7 +88,8 @@ def test_both_pipelines_share_one_system_prompt():
     """The fairness guarantee: LangChain is handed Lesson 1's prompt, not a nicer one."""
     lc = lc_module()
     chunks = hand_chunks()
-    hits = handrolled.retrieve(chunks, SETTINGS["questions"][0], SETTINGS["top_k"])
+    hits = handrolled.retrieve(handrolled.build_retriever(chunks),
+                               SETTINGS["questions"][0], SETTINGS["top_k"])
     hand_system, hand_user = handrolled.render_prompt(SETTINGS["questions"][0], hits)
 
     lc_chunks = lc.split(lc.load(), SETTINGS["chunk_size"], SETTINGS["chunk_overlap"])
@@ -113,8 +115,10 @@ def test_both_pipelines_lead_with_the_same_source():
     lc_chunks = lc.split(lc.load(), SETTINGS["chunk_size"], SETTINGS["chunk_overlap"])
     retriever = lc.bm25_retriever(lc_chunks, SETTINGS["top_k"])
     chunks = hand_chunks()
+    hand_retriever = handrolled.build_retriever(chunks)
     for question in SETTINGS["questions"]:
-        hand = handrolled.sources(handrolled.retrieve(chunks, question, SETTINGS["top_k"]))
+        hand = handrolled.sources(
+            handrolled.retrieve(hand_retriever, question, SETTINGS["top_k"]))
         got = lc.sources(retriever.invoke(question))
         assert hand[0] == got[0], f"top source diverged for {question!r}"
 
@@ -280,3 +284,33 @@ def test_retriever_handles_an_empty_corpus():
     import lc_provider
 
     assert lc_provider.LocalRagBM25Retriever(documents=[], k=3).invoke("anything") == []
+
+
+def test_both_arms_build_their_index_once_per_run():
+    """Neither arm may rebuild BM25 per query, or the comparison measures the wrong thing.
+
+    The LangChain arm was fixed first; without the same fix on the hand-rolled arm
+    the bias simply flips direction. This pins both.
+    """
+    import rank_bm25
+
+    builds = {"n": 0}
+    real = rank_bm25.BM25Okapi
+
+    def counting(*args, **kwargs):
+        builds["n"] += 1
+        return real(*args, **kwargs)
+
+    chunks = hand_chunks()
+    rank_bm25.BM25Okapi = counting
+    try:
+        retriever = handrolled.build_retriever(chunks)
+        for question in SETTINGS["questions"]:
+            handrolled.retrieve(retriever, question, SETTINGS["top_k"])
+    finally:
+        rank_bm25.BM25Okapi = real
+
+    assert builds["n"] == 1, (
+        f"hand-rolled arm built the index {builds['n']} times for "
+        f"{len(SETTINGS['questions'])} questions"
+    )

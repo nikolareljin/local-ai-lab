@@ -148,10 +148,13 @@ def print_questions(settings, lc) -> None:
               f"keep text, split on separators)")
     print()
 
+    # Both arms build their index once and answer every question from it, which is
+    # what makes the timing side of this comparison honest as well as the grounding.
+    hand_retriever = handrolled.build_retriever(hand_chunks)
     retriever = lc.bm25_retriever(lc_chunks, k) if lc else None
     agreements = 0
     for i, question in enumerate(settings["questions"], start=1):
-        hand_sources = handrolled.sources(handrolled.retrieve(hand_chunks, question, k))
+        hand_sources = handrolled.sources(handrolled.retrieve(hand_retriever, question, k))
         print(f"Q{i}  {question}")
         print(f"    hand-rolled   sources: {' . '.join(hand_sources)}")
         if not lc:
