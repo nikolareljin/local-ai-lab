@@ -449,3 +449,29 @@ def test_arm_cache_is_built_once_under_concurrency():
     assert builds["n"] == 2, (
         f"8 simultaneous cold requests built {builds['n']} indexes; expected one per arm"
     )
+
+
+def test_native_guard_only_swallows_a_missing_langchain_ollama(monkeypatch):
+    """A broken langchain_ollama must not be reported as an uninstalled one."""
+    lc_module()
+    import builtins
+
+    real_import = builtins.__import__
+
+    def fail_with(exc):
+        def fake(name, *args, **kwargs):
+            if name == "langchain_ollama":
+                raise exc
+            return real_import(name, *args, **kwargs)
+        return fake
+
+    monkeypatch.delitem(sys.modules, "langchain_ollama", raising=False)
+    monkeypatch.setattr(builtins, "__import__", fail_with(
+        ModuleNotFoundError("No module named 'langchain_ollama'", name="langchain_ollama")))
+    assert langchain_rag.cmd_ask("a question", native=True, arm="bm25") == 1
+
+    monkeypatch.delitem(sys.modules, "langchain_ollama", raising=False)
+    monkeypatch.setattr(builtins, "__import__", fail_with(
+        ModuleNotFoundError("No module named 'something_else'", name="something_else")))
+    with pytest.raises(ModuleNotFoundError):
+        langchain_rag.cmd_ask("a question", native=True, arm="bm25")

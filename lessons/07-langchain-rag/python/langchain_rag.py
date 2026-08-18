@@ -338,7 +338,12 @@ def cmd_ask(question: str, native: bool, arm: str) -> int:
     if native:
         try:
             from langchain_ollama import ChatOllama
-        except ModuleNotFoundError:
+        except ModuleNotFoundError as exc:
+            # Same narrow rule as import_langchain(): only a missing langchain_ollama
+            # means "not installed". Anything else failing to import is a real fault
+            # and must not be disguised as an absent optional package.
+            if (exc.name or "").split(".")[0] != "langchain_ollama":
+                raise
             print("`--native` needs the optional framework-native package:")
             print(f"  {OLLAMA_HINT}")
             return 1
