@@ -244,4 +244,10 @@ async function main() {
   console.log("  Same framework, same components, a different bill. Measure the one you ship.");
 }
 
-main();
+// Surface failures instead of leaving an unhandled rejection: without this a bad
+// data/questions.json or a missing corpus file could end the process with a stack
+// trace and a zero exit status, which `./run` would read as success.
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

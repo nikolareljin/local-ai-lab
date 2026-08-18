@@ -148,8 +148,7 @@ def search(query, values):
             "arms": [{"label": "hand-rolled (Lesson 1)", "ranking": hand_sources}],
             "blocks": [{"kind": "note",
                         "text": "LangChain is not installed, so only the hand-rolled arm ran. "
-                                "Install it with: pip install -r "
-                                "lessons/07-langchain-rag/requirements.txt"}],
+                                f"Install it with: {langchain_rag.INSTALL_HINT}"}],
         }
 
     lc_chunks = arms["lc_chunks"]
