@@ -47,14 +47,18 @@ EXAMPLES = [{"label": q, "query": q} for q in SETTINGS["questions"]]
 # The shared GUI calls /api/search on every keystroke and slider move, so loading
 # and splitting the corpus inside search() would re-index on each one - sluggish,
 # and a contradiction of the "build the index once" contract the rest of the
-# lesson pins with tests. Cache per (chunk_size, chunk_overlap): the knobs are the
-# only thing that changes what the index contains.
+# lesson pins with tests.
+#
+# The cache key is exactly what changes the *contents* of an index: chunk_size,
+# chunk_overlap, and whether the LangChain arm is available at all. top_k is
+# deliberately NOT part of it - it only decides how many of the ranked results
+# come back, so moving that slider re-ranks without re-indexing.
 _ARM_CACHE: dict = {}
 
 
-def _arms_for(size, overlap, k, lc):
+def _arms_for(size, overlap, lc):
     """Chunks and built retrievers for these settings, computed once per setting."""
-    key = (size, overlap, k, lc is not None)
+    key = (size, overlap, lc is not None)
     if key not in _ARM_CACHE:
         hand_chunks = handrolled.split(handrolled.load(), size, overlap)
         entry = {
@@ -66,7 +70,7 @@ def _arms_for(size, overlap, k, lc):
         if lc is not None:
             lc_chunks = lc.split(lc.load(), size, overlap)
             entry["lc_chunks"] = lc_chunks
-            entry["lc_retriever"] = lc.bm25_retriever(lc_chunks, k)
+            entry["lc_retriever"] = lc.bm25_retriever(lc_chunks, 1)
         _ARM_CACHE[key] = entry
     return _ARM_CACHE[key]
 
@@ -96,7 +100,7 @@ def search(query, values):
         overlap = max(0, size // 4)
 
     lc = _import_langchain()
-    arms = _arms_for(size, overlap, k, lc)
+    arms = _arms_for(size, overlap, lc)
     hand_chunks = arms["hand_chunks"]
     hand_hits = handrolled.retrieve(arms["hand_retriever"], query, k)
     hand_sources = handrolled.sources(hand_hits)
@@ -111,6 +115,9 @@ def search(query, values):
         }
 
     lc_chunks = arms["lc_chunks"]
+    # k is a plain field on the retriever, so the top-k slider changes how many
+    # results come back without touching the index behind them.
+    arms["lc_retriever"].k = k
     lc_hits = arms["lc_retriever"].invoke(query)
     lc_sources = lc.sources(lc_hits)
 

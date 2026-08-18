@@ -346,10 +346,14 @@ def test_playground_does_not_reindex_on_every_query():
         for question in SETTINGS["questions"] * 2:
             web.search(question, values)
         steady = builds["n"]
+        # top_k changes how many results come back, not what is in the index.
+        web.search(SETTINGS["questions"][0], {**values, "top_k": 6})
+        after_top_k = builds["n"]
         web.search(SETTINGS["questions"][0], {**values, "chunk_size": 1200})
     finally:
         rank_bm25.BM25Okapi = real
         web._ARM_CACHE.clear()
 
     assert steady == 2, f"expected one index per arm, got {steady} builds for 6 queries"
-    assert builds["n"] == 4, "changing a knob must rebuild, and only then"
+    assert after_top_k == 2, "moving top_k must re-rank, not re-index"
+    assert builds["n"] == 4, "changing chunk_size must rebuild, and only then"
