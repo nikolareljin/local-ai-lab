@@ -32,8 +32,8 @@ LangChain and see exactly which of your files each component replaces - and pric
 ```
   the same corpus ─▶ LOAD ─▶ SPLIT ─▶ RETRIEVE ─▶ PROMPT ─▶ ANSWER ─▶ cited answer
                        │       │         │          │         │
-     hand-rolled  extract.py  chunk.py  retriever  prompts   providers   379 lines · 8 packages
-     LangChain    Document    Recursive InMemory   ChatPrompt SimpleChat  127 lines · 31 packages
+     hand-rolled  extract.py  chunk.py  retriever  prompts   providers   379 lines · 49 packages
+     LangChain    Document    Recursive InMemory   ChatPrompt SimpleChat  139 lines · 67 packages
                               Splitter  VectorStore Template   Model
 ```
 
@@ -124,10 +124,14 @@ Component by component
 
 What it cost
                             hand-rolled      LangChain
-  code you maintain           379 lines      127 lines
-  direct dependencies                 8             10
-  transitive packages                 8             31
-  install size                    ~9 MB         ~13 MB
+  code you maintain           379 lines      139 lines
+  requirements lines                  8             10
+  packages installed                 49             67
+  install size                   ~34 MB         ~43 MB
+
+  Two requirements lines cost 18 packages and ~9 MB.
+  Taking BM25 from the sunset langchain-community, rather than writing the
+  twenty-line retriever, would have made it 80 packages and ~52 MB.
 ```
 
 Those line counts are read off disk at run time, not typed into this README, so they cannot drift
@@ -142,6 +146,9 @@ The comparison is offline. To run the whole chain through a model:
 ./run -l 7 ask --native "What is the factory reset..."   # framework-native ChatOllama
 ./run -l 7 ask --arm embed "..."                         # real vectors, local, via Ollama
 ```
+
+The last two need `pip install langchain-ollama`, which the lesson deliberately does **not** install
+for you - see *Concept 5*. Run them without it and you get that one-line command, not a traceback.
 
 ### Experiment in the playground (needs Flask)
 
@@ -202,8 +209,8 @@ class LocalRagBM25Retriever(BaseRetriever):
 
 LangChain does ship a `BM25Retriever` - in `langchain-community`, which is now **sunset upstream**
 and prints a deprecation warning on import. Twenty lines against `BaseRetriever` removes the
-dependency, the warning, and the migration you would otherwise be doing next year. It also drops this
-lesson's install from 47 packages to 31.
+dependency, the warning, and the migration you would otherwise be doing next year. It also keeps the
+install at 67 packages instead of 80.
 
 > **This is the version-churn cost, arriving on schedule.** Not a hypothetical from a blog post: a
 > package this lesson was drafted against went end-of-life during the writing of it.
@@ -258,11 +265,14 @@ in the decision.
 ## Concept 5 · Your adapter, or the ecosystem's?
 
 `langchain-ollama` ships `ChatOllama` and `OllamaEmbeddings` off the shelf, so the same pipeline can
-run two ways:
+run two ways. It is **not** in this lesson's `requirements.txt`, on purpose - the scorecard has to
+match exactly what `./run -l 7` installs, and this is opt-in:
 
 ```bash
+pip install langchain-ollama            # 2 further packages, only for the second line
+
 ./run -l 7 ask "..."             # LocalRagChatModel - 61 lines you wrote and understand
-./run -l 7 ask --native "..."    # ChatOllama        - one import, one more package
+./run -l 7 ask --native "..."    # ChatOllama        - one import, two more packages
 ```
 
 Identical behaviour. The trade is narrow and worth naming: the adapter you wrote works with **every**
@@ -281,7 +291,7 @@ one choosing.
 | **Ecosystem** | loaders, stores, and integrations already written | you write what you need |
 | **Streaming, batching, async** | free, once a stage is a `Runnable` | you implement it |
 | **Tracing and callbacks** | built in | you add logging |
-| **Dependency surface** | 31 packages you did not read | 8, all of them boring |
+| **Dependency surface** | +18 packages for two requirements lines | 49, and no framework among them |
 | **Cold start** | slower to import | near instant |
 | **Debugging** | traces run through framework dispatch | the stack is your code |
 | **Version churn** | `langchain-community` sunset mid-writing | `rank_bm25` has not moved |
@@ -309,8 +319,8 @@ The scorecard half deliberately is **not** identical:
 
 | Runtime | Packages | Install size |
 |---------|----------|--------------|
-| Python (`langchain-core` + `langchain-text-splitters`) | 31 | ~13 MB |
-| Node (`@langchain/core` + `@langchain/textsplitters`) | 12 | ~48 MB |
+| Python (`langchain-core` + `langchain-text-splitters`) | +18, to 67 | +~9 MB, to ~43 MB |
+| Node (`@langchain/core` + `@langchain/textsplitters`) | +12, from none at all | +~48 MB |
 
 Same framework, same components, a different bill. Faking parity there would have hidden the one
 number this lesson exists to show you.

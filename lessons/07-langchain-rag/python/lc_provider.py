@@ -33,6 +33,26 @@ from langchain_core.retrievers import BaseRetriever
 from localrag.providers import embed_texts, get_provider
 
 
+def _truncate_at_stop(text: str, stop: Optional[List[str]]) -> str:
+    """Enforce LangChain's `stop` contract on providers that have no stop parameter.
+
+    A caller can pass stop sequences to any chat model and expect output to end at
+    the first one. None of Lesson 1's providers take a stop argument, so honour it
+    here by cutting the response - silently ignoring `stop` would hand the caller
+    text they explicitly asked not to receive.
+    """
+    if not stop:
+        return text
+    cut = len(text)
+    for sequence in stop:
+        if not sequence:
+            continue
+        found = text.find(sequence)
+        if found != -1:
+            cut = min(cut, found)
+    return text[:cut]
+
+
 class LocalRagChatModel(SimpleChatModel):
     """Drive any localrag provider (claude / ollama / gemini / openai) from an LCEL chain.
 
@@ -57,7 +77,8 @@ class LocalRagChatModel(SimpleChatModel):
     ) -> str:
         system = "\n".join(str(m.content) for m in messages if isinstance(m, SystemMessage))
         user = "\n".join(str(m.content) for m in messages if isinstance(m, HumanMessage))
-        return get_provider(self.provider_name, self.config).chat(system, user)
+        text = get_provider(self.provider_name, self.config).chat(system, user)
+        return _truncate_at_stop(text, stop)
 
 
 class LocalRagEmbeddings(Embeddings):

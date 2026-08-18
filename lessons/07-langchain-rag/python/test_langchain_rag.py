@@ -150,3 +150,91 @@ def test_demo_output_matches_the_committed_transcript(capsys):
     expected = (LESSON_DIR / "expected-output.txt").read_text(encoding="utf-8")
     assert langchain_rag.cmd_demo() == 0
     assert capsys.readouterr().out == expected
+
+
+def test_import_guard_does_not_hide_real_import_errors(monkeypatch):
+    """A missing LangChain package means "not installed"; anything else is a bug.
+
+    Swallowing every ImportError would send a reader off to reinstall a package
+    they already have, when the real fault is in the lesson's own code.
+    """
+    import builtins
+
+    real_import = builtins.__import__
+
+    def fail_with(exc):
+        def fake(name, *args, **kwargs):
+            if name == "lc_pipeline":
+                raise exc
+            return real_import(name, *args, **kwargs)
+        return fake
+
+    monkeypatch.delitem(sys.modules, "lc_pipeline", raising=False)
+    monkeypatch.setattr(builtins, "__import__", fail_with(
+        ModuleNotFoundError("No module named 'langchain_core'", name="langchain_core")))
+    assert langchain_rag.import_langchain() is None
+
+    monkeypatch.delitem(sys.modules, "lc_pipeline", raising=False)
+    monkeypatch.setattr(builtins, "__import__", fail_with(
+        ModuleNotFoundError("No module named 'typo_in_our_own_code'",
+                            name="typo_in_our_own_code")))
+    with pytest.raises(ModuleNotFoundError):
+        langchain_rag.import_langchain()
+
+
+def test_scorecard_numbers_are_internally_consistent():
+    """The two columns must be measured the same way, or the comparison is noise."""
+    hand = langchain_rag.DEPS["handrolled"]
+    lang = langchain_rag.DEPS["langchain"]
+    assert set(hand) == set(lang), "both columns must report the same fields"
+    assert lang["direct"] > hand["direct"]
+    assert lang["packages"] > hand["packages"], "adding a framework cannot shrink the closure"
+    assert lang["size_mb"] >= hand["size_mb"]
+    # The avoided sunset package has to be worse than what we shipped, or the
+    # lesson's argument for writing our own retriever does not hold.
+    assert langchain_rag.DEPS_WITH_COMMUNITY["packages"] > lang["packages"]
+
+
+def test_optional_ollama_is_not_in_requirements():
+    """`--native` is opt-in, so the scorecard matches exactly what ./run -l 7 installs."""
+    text = (LESSON_DIR / "requirements.txt").read_text(encoding="utf-8")
+    installed = [ln.strip() for ln in text.splitlines()
+                 if ln.strip() and not ln.strip().startswith("#")]
+    assert any(ln.startswith("langchain-core") for ln in installed)
+    assert not any(ln.startswith("langchain-ollama") for ln in installed)
+    assert langchain_rag.OLLAMA_HINT in text
+
+
+def test_chat_model_honours_stop_sequences():
+    """LangChain callers may pass `stop`; ignoring it returns text they refused."""
+    lc_module()
+    import lc_provider
+    from langchain_core.messages import HumanMessage, SystemMessage
+
+    class FakeProvider:
+        def chat(self, system, user):
+            return "keep this END drop this"
+
+    original = lc_provider.get_provider
+    lc_provider.get_provider = lambda name, config: FakeProvider()
+    try:
+        model = lc_provider.LocalRagChatModel(config=None, provider_name="claude")
+        stopped = model.invoke([SystemMessage(content="s"), HumanMessage(content="u")],
+                               stop=["END"])
+        plain = model.invoke([SystemMessage(content="s"), HumanMessage(content="u")])
+    finally:
+        lc_provider.get_provider = original
+
+    assert stopped.content == "keep this "
+    assert plain.content == "keep this END drop this"
+
+
+def test_truncate_at_stop_edge_cases():
+    lc_module()
+    from lc_provider import _truncate_at_stop
+
+    assert _truncate_at_stop("abc", None) == "abc"
+    assert _truncate_at_stop("abc", []) == "abc"
+    assert _truncate_at_stop("abc", ["zzz"]) == "abc"
+    assert _truncate_at_stop("a<X>b<Y>c", ["<Y>", "<X>"]) == "a", "must cut at the earliest"
+    assert _truncate_at_stop("abc", [""]) == "abc", "an empty stop must not blank the answer"

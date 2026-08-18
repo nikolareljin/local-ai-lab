@@ -27,8 +27,9 @@ PRODUCTION (see the lesson README, "From demo to production"):
 import ast
 import io
 import json
+import re
+import subprocess
 import sys
-import time
 import tokenize
 from pathlib import Path
 
@@ -41,6 +42,8 @@ ROOT = handrolled.ROOT
 CONFIG_FILE = LESSON_DIR / "data" / "questions.json"
 
 INSTALL_HINT = "pip install -r lessons/07-langchain-rag/requirements.txt"
+# Not in requirements.txt on purpose - see the note at the bottom of that file.
+OLLAMA_HINT = "pip install langchain-ollama"
 
 # Which LangChain component stands in for which Lesson 1 file.
 COMPONENTS = [
@@ -56,12 +59,21 @@ COMPONENTS = [
 # The lesson's own LangChain code - the part you still write.
 LC_FILES = ["python/lc_pipeline.py", "python/lc_provider.py"]
 
-# Measured with `pip download`; re-derive the installed counts with --measure.
-# Reproduce:  pip download --no-deps -d /tmp/x langchain-core langchain-text-splitters
+# Dependency numbers, measured the same way on both sides so the columns compare.
+# "requirements" counts the lines you write; "packages" is the FULL resolved
+# closure pip actually installs, which is the number that matters and the one
+# people habitually under-estimate. Reproduce either column with:
+#
+#   pip download -d /tmp/base -r requirements.txt
+#   pip download -d /tmp/lc   -r requirements.txt langchain-core langchain-text-splitters
+#
+# `--measure` re-derives them against the environment you are actually running.
 DEPS = {
-    "handrolled": {"direct": 8, "transitive": 8, "size_mb": 9},
-    "langchain": {"direct": 10, "transitive": 31, "size_mb": 13},
+    "handrolled": {"direct": 8, "packages": 49, "size_mb": 34},
+    "langchain": {"direct": 10, "packages": 67, "size_mb": 43},
 }
+# What the sunset package would have cost, had we used its BM25Retriever.
+DEPS_WITH_COMMUNITY = {"packages": 80, "size_mb": 52}
 
 
 def code_lines(path: Path) -> int:
@@ -98,13 +110,26 @@ def load_settings() -> dict:
         return json.load(fh)
 
 
+# Only these count as "LangChain is not installed". Anything else that fails to
+# import is a real bug and must not be disguised as a missing dependency.
+LANGCHAIN_PACKAGES = {"langchain_core", "langchain_text_splitters", "langchain_ollama"}
+
+
 def import_langchain():
-    """Return the LangChain pipeline module, or None when it is not installed."""
+    """Return the LangChain pipeline module, or None when LangChain is not installed.
+
+    Deliberately narrow: a `ModuleNotFoundError` is swallowed only when the module
+    that is actually missing is a LangChain package. A typo or a genuine import-time
+    failure inside `lc_pipeline` propagates, instead of being reported to the reader
+    as "not installed" and sending them to reinstall a package they already have.
+    """
     try:
         import lc_pipeline
         return lc_pipeline
-    except ImportError:
-        return None
+    except ModuleNotFoundError as exc:
+        if (exc.name or "").split(".")[0] in LANGCHAIN_PACKAGES:
+            return None
+        raise
 
 
 def print_questions(settings, lc) -> None:
@@ -176,18 +201,22 @@ def print_components(lc) -> None:
     lc_total = total_lines([f"lessons/07-langchain-rag/{p}" for p in LC_FILES])
     print()
     print("What it cost")
+    hand, lang = DEPS["handrolled"], DEPS["langchain"]
     print(f"  {'':22} {'hand-rolled':>14} {'LangChain':>14}")
     print(f"  {'code you maintain':22} {str(hand_total) + ' lines':>14} "
           f"{str(lc_total) + ' lines':>14}")
-    print(f"  {'direct dependencies':22} {DEPS['handrolled']['direct']:>14} "
-          f"{DEPS['langchain']['direct']:>14}")
-    print(f"  {'transitive packages':22} {DEPS['handrolled']['transitive']:>14} "
-          f"{DEPS['langchain']['transitive']:>14}")
-    print(f"  {'install size':22} {'~' + str(DEPS['handrolled']['size_mb']) + ' MB':>14} "
-          f"{'~' + str(DEPS['langchain']['size_mb']) + ' MB':>14}")
+    print(f"  {'requirements lines':22} {hand['direct']:>14} {lang['direct']:>14}")
+    print(f"  {'packages installed':22} {hand['packages']:>14} {lang['packages']:>14}")
+    print(f"  {'install size':22} {'~' + str(hand['size_mb']) + ' MB':>14} "
+          f"{'~' + str(lang['size_mb']) + ' MB':>14}")
     print()
-    print(f"  {hand_total} lines you can read against {lc_total} lines you still write.")
-    print("  The rest moved into 31 packages you did not read. That is the trade.")
+    added = lang["packages"] - hand["packages"]
+    print(f"  Two requirements lines cost {added} packages and "
+          f"~{lang['size_mb'] - hand['size_mb']} MB.")
+    print("  Taking BM25 from the sunset langchain-community, rather than writing the")
+    print(f"  twenty-line retriever, would have made it "
+          f"{DEPS_WITH_COMMUNITY['packages']} packages and "
+          f"~{DEPS_WITH_COMMUNITY['size_mb']} MB.")
 
 
 def cmd_demo() -> int:
@@ -198,24 +227,77 @@ def cmd_demo() -> int:
     return 0
 
 
+def _langchain_closure() -> set:
+    """Every installed distribution reachable from the lesson's two requirements."""
+    from importlib.metadata import distribution, requires
+
+    seen, queue = set(), ["langchain-core", "langchain-text-splitters"]
+    while queue:
+        name = queue.pop().lower().replace("_", "-")
+        if name in seen:
+            continue
+        try:
+            distribution(name)
+        except Exception:
+            continue
+        seen.add(name)
+        for raw in requires(name) or []:
+            # "foo (>=1.0) ; extra == 'bar'" -> skip optional extras, keep the name.
+            if "extra ==" in raw:
+                continue
+            dep = re.split(r"[\s\[<>=!;(]", raw.strip(), 1)[0]
+            if dep:
+                queue.append(dep)
+    return seen
+
+
+def _cold_import_seconds(module: str) -> str:
+    """Time importing `module` in a fresh interpreter, so the number is a real cold start."""
+    code = (f"import time,sys; sys.path.insert(0, {str(ROOT)!r}); "
+            f"t=time.perf_counter(); __import__({module!r}); "
+            f"print(f'{{time.perf_counter()-t:.3f}}s')")
+    try:
+        out = subprocess.run([sys.executable, "-c", code], capture_output=True,
+                             text=True, timeout=120)
+    except (OSError, subprocess.SubprocessError):
+        return "could not measure"
+    return out.stdout.strip() if out.returncode == 0 else "import failed"
+
+
 def cmd_measure() -> int:
-    """Re-derive the dependency and start-up numbers on THIS machine."""
+    """Re-derive the dependency and start-up numbers against THIS environment.
+
+    The table the demo prints is measured with `pip download`, which resolves a
+    clean install. This re-derives the LangChain half from what is actually
+    importable here, so you can check the claim rather than trust it.
+    """
     from importlib.metadata import distributions
+
     lc = import_langchain()
+    installed = len(list(distributions()))
     print("Measured here, now")
-    print(f"  installed distributions: {len(list(distributions()))}")
-    start = time.perf_counter()
-    __import__("localrag.engine")
-    print(f"  import localrag.engine:  {time.perf_counter() - start:.3f}s")
+    print(f"  installed distributions:      {installed}")
+
     if lc:
-        start = time.perf_counter()
-        __import__("langchain_core.runnables")
-        print(f"  import langchain_core:   {time.perf_counter() - start:.3f}s")
+        closure = _langchain_closure()
+        print(f"  reachable from langchain-core: {len(closure)}")
+        print(f"  the demo's printed figure:     {DEPS['langchain']['packages']} "
+              f"(a clean `pip download` resolve, so the two differ by whatever")
+        print("                                 else this environment has in it)")
     else:
-        print("  langchain_core:          not installed")
+        print("  langchain:                    not installed")
+
+    # Timed in a fresh interpreter: by now this process has already imported both,
+    # so timing them here would report ~0s and mean nothing.
+    print(f"  cold import localrag.engine:  {_cold_import_seconds('localrag.engine')}")
+    if lc:
+        print(f"  cold import langchain_core:   "
+              f"{_cold_import_seconds('langchain_core.runnables')}")
     print()
-    print("Reproduce the package counts with:")
-    print("  pip download --no-deps -d /tmp/x langchain-core langchain-text-splitters")
+    print("Reproduce the demo's table from a clean resolve with:")
+    print("  pip download -d /tmp/base -r requirements.txt")
+    print("  pip download -d /tmp/lc   -r requirements.txt langchain-core "
+          "langchain-text-splitters")
     return 0
 
 
@@ -230,8 +312,15 @@ def cmd_ask(question: str, native: bool, arm: str) -> int:
 
     if arm == "embed":
         model = config.ollama_embed_model
-        retriever = (lc.native_ollama_retriever(chunks, settings["top_k"], model) if native
-                     else lc.embedding_retriever(chunks, settings["top_k"], config))
+        try:
+            retriever = (lc.native_ollama_retriever(chunks, settings["top_k"], model) if native
+                         else lc.embedding_retriever(chunks, settings["top_k"], config))
+        except ModuleNotFoundError as exc:
+            if (exc.name or "").split(".")[0] != "langchain_ollama":
+                raise
+            print("`--arm embed --native` needs the optional framework-native package:")
+            print(f"  {OLLAMA_HINT}")
+            return 1
     else:
         retriever = lc.bm25_retriever(chunks, settings["top_k"])
 
@@ -241,7 +330,12 @@ def cmd_ask(question: str, native: bool, arm: str) -> int:
     print()
 
     if native:
-        from langchain_ollama import ChatOllama
+        try:
+            from langchain_ollama import ChatOllama
+        except ModuleNotFoundError:
+            print("`--native` needs the optional framework-native package:")
+            print(f"  {OLLAMA_HINT}")
+            return 1
         llm = ChatOllama(model=config.ollama_model)
         label = f"ChatOllama({config.ollama_model}) - framework-native"
     else:

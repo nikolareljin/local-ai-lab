@@ -14,8 +14,8 @@ Rebuild RAG with LangChain, then count what the framework cost.
    engine.py     47L                                             LCEL  ( | )
         │                                                                     │
         ▼                                                                     ▼
-   379 lines you can read                                        127 lines you still write
-   8 packages                                                    31 packages you did not read
+   379 lines you can read                                        139 lines you still write
+   49 packages installed                                         67 packages installed
 
 Two things the framework could NOT replace: your provider and your retriever. You
 subclass its base classes and hand it your own - which is why writing the

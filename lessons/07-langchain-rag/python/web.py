@@ -22,6 +22,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import handrolled_pipeline as handrolled  # noqa: E402
+import langchain_rag  # noqa: E402
 from lesson_web import serve  # noqa: E402
 
 LESSON_DIR = Path(__file__).resolve().parent.parent
@@ -44,11 +45,16 @@ EXAMPLES = [{"label": q, "query": q} for q in SETTINGS["questions"]]
 
 
 def _import_langchain():
+    """Same narrow guard as the demo: only a missing LangChain package means
+    "not installed". A real import-time failure in `lc_pipeline` propagates
+    rather than being misreported to the reader as a missing dependency."""
     try:
         import lc_pipeline
         return lc_pipeline
-    except ImportError:
-        return None
+    except ModuleNotFoundError as exc:
+        if (exc.name or "").split(".")[0] in langchain_rag.LANGCHAIN_PACKAGES:
+            return None
+        raise
 
 
 def search(query, values):

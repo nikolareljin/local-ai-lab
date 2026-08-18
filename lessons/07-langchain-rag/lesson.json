@@ -89,7 +89,7 @@
       "group": "retriever",
       "kicker": "Step 5",
       "title": "The second escape hatch - your own retriever",
-      "body": "LangChain ships a `BM25Retriever`, in `langchain-community` - a package that is now **sunset upstream** and warns on import. Twenty lines against `BaseRetriever` removes the dependency, the warning, and next year's migration, and drops this lesson's install from 47 packages to 31.",
+      "body": "LangChain ships a `BM25Retriever`, in `langchain-community` - a package that is now **sunset upstream** and warns on import. Twenty lines against `BaseRetriever` removes the dependency, the warning, and next year's migration, and keeps the install at 67 packages instead of 80.",
       "why": "The version-churn cost is usually argued in the abstract. Here it is dated: the package this lesson was drafted against went end-of-life during the writing of it. Twenty lines of your own code did not."
     },
     {
@@ -150,7 +150,7 @@
       "kicker": "Run it",
       "title": "Read the output",
       "file": "expected-output.txt",
-      "body": "Q1 and Q2 **agree**: both pipelines cite the same sources in the same order. Q3 **differs** - LangChain's splitter cut the corpus elsewhere, so retrieval pulled in `installation.md` too. Neither is wrong, and the 2/3 line is the honest result; engineering all three into agreement would have taught you nothing.\n\nThen the bill. Five of seven components became an import. The two that did not - the retriever and the provider - are the two you subclassed. **379 lines you can read against 127 lines you still write, plus 31 packages you did not read.** The line counts are measured off disk at run time, so they can never drift from the code."
+      "body": "Q1 and Q2 **agree**: both pipelines cite the same sources in the same order. Q3 **differs** - LangChain's splitter cut the corpus elsewhere, so retrieval pulled in `installation.md` too. Neither is wrong, and the 2/3 line is the honest result; engineering all three into agreement would have taught you nothing.\n\nThen the bill. Five of seven components became an import. The two that did not - the retriever and the provider - are the two you subclassed. **379 lines you can read against 139 lines you still write, and 18 extra packages for two requirements lines.** The line counts are measured off disk at run time, so they can never drift from the code."
     },
     {
       "type": "text",
@@ -232,7 +232,7 @@
       "type": "note",
       "kicker": "Recap",
       "title": "What you learned",
-      "body": "You rebuilt the Lesson 1 pipeline on LangChain and priced the swap. Five components became imports; two - the provider and the retriever - you had to write yourself against `SimpleChatModel` and `BaseRetriever`, which is the honest shape of every framework. You saw two of three questions ground identically and one diverge because the splitters cut differently, and you watched that divergence appear and vanish as you moved a slider.\n\nThe numbers: **379 lines you maintain against 127 you still write, and 8 packages against 31.** A framework does not remove work; it moves it out of your files and into your dependency tree, where only one of the two shows up in a diff. You are now equipped to make that trade deliberately rather than by default - including the part where a package this lesson was drafted against was sunset while it was being written.\n\nNext: **Lesson 8 · LangGraph** - turn this linear chain into a stateful agent graph with retries, tool routing, and memory."
+      "body": "You rebuilt the Lesson 1 pipeline on LangChain and priced the swap. Five components became imports; two - the provider and the retriever - you had to write yourself against `SimpleChatModel` and `BaseRetriever`, which is the honest shape of every framework. You saw two of three questions ground identically and one diverge because the splitters cut differently, and you watched that divergence appear and vanish as you moved a slider.\n\nThe numbers: **379 lines you maintain against 139 you still write, and two requirements lines that cost 18 packages.** A framework does not remove work; it moves it out of your files and into your dependency tree, where only one of the two shows up in a diff. You are now equipped to make that trade deliberately rather than by default - including the part where a package this lesson was drafted against was sunset while it was being written.\n\nNext: **Lesson 8 · LangGraph** - turn this linear chain into a stateful agent graph with retries, tool routing, and memory."
     }
   ]
 }

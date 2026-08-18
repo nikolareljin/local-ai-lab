@@ -7,8 +7,8 @@
 //
 // The hand-rolled half is a direct port of Lesson 1's Python (extract -> chunk ->
 // BM25 -> cite), so the retrieval half of the output matches the Python run byte
-// for byte. The scorecard half does not, and must not: 31 packages / 13 MB on
-// PyPI against 12 packages / 48 MB on npm is the honest result.
+// for byte. The scorecard half does not, and must not: 18 added packages / 9 MB on
+// PyPI against 12 added packages / 48 MB on npm is the honest result.
 //
 // Run:  node langchain_rag.mjs        (from lessons/07-langchain-rag/node)
 
@@ -223,10 +223,11 @@ async function main() {
 
   console.log("What it cost, on npm");
   console.log("  @langchain/core + @langchain/textsplitters");
-  console.log("  installed packages   12");
+  console.log("  installed packages   12   (from a baseline of none at all)");
   console.log("  install size         ~48 MB");
   console.log("");
-  console.log("  The Python run reports 31 packages and ~13 MB for the same pipeline.");
+  console.log("  The Python run adds 18 packages and ~9 MB for the same pipeline,");
+  console.log("  on top of a course baseline that is already 49 packages.");
   console.log("  Same framework, same components, a different bill. Measure the one you ship.");
 }
 
