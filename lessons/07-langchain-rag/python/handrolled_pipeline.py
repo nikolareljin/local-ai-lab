@@ -22,7 +22,9 @@ import tempfile
 from pathlib import Path
 from typing import List
 
-# The course package lives four levels up (lessons/07-langchain-rag/python/ -> repo root).
+# Walk out to the repo root so `localrag` is importable:
+#   this file -> python -> 07-langchain-rag -> lessons -> repo root
+# parents is 0-indexed, so the repo root is parents[3].
 ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))

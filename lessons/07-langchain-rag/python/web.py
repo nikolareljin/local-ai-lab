@@ -19,6 +19,7 @@ import threading
 from collections import OrderedDict
 from pathlib import Path
 
+# this file -> python -> 07-langchain-rag -> lessons -> repo root (parents is 0-indexed)
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
