@@ -43,8 +43,8 @@ By the end you'll understand:
   do not produce the same chunks
 - **Vector stores and retrievers** - `InMemoryVectorStore` and a `BaseRetriever` subclass against
   your `store.py` and `retriever.py`
-- **The escape hatches** - `SimpleChatModel` and `Embeddings`, the base classes you extend when the
-  catalogue does not cover your provider
+- **The escape hatches** - `SimpleChatModel`, `Embeddings` and `BaseRetriever`, the three base classes
+  you extend when the catalogue does not cover your system
 - **LCEL** - `engine.answer_question()` rewritten as a chain composed with `|`
 - **The bill** - lines of code you maintain against packages you did not read
 
@@ -208,10 +208,16 @@ Retrieval is more interesting, because this lesson **writes its own retriever**:
 class LocalRagBM25Retriever(BaseRetriever):
     documents: List[Document]
     k: int = 3
+    _bm25: Any = PrivateAttr(default=None)
+
+    def model_post_init(self, context, /) -> None:
+        # Index once, at construction - the same contract as Lesson 1's
+        # Bm25Retriever.__init__. Rebuilding per query would make this a slower
+        # retriever than the one it is being compared against.
+        self._bm25 = BM25Okapi([_tokenize(d.page_content) for d in self.documents])
 
     def _get_relevant_documents(self, query, *, run_manager) -> List[Document]:
-        bm25 = BM25Okapi([_tokenize(d.page_content) for d in self.documents])
-        scores = bm25.get_scores(_tokenize(query))
+        scores = self._bm25.get_scores(_tokenize(query))
         ...
 ```
 
