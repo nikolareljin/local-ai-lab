@@ -53,11 +53,21 @@ COMPONENT_FILES = {
 }
 
 
+# One scratch cache for the whole process, cleaned up automatically when it exits.
+# `mkdtemp` would leave a lesson7-* directory behind on every run, and this lesson
+# gets run repeatedly while you experiment.
+_SCRATCH = tempfile.TemporaryDirectory(prefix="lesson7-")
+
+
 def lesson_config(provider: str | None = None) -> Config:
-    """A Lesson 1 Config pointed at this lesson's corpus and a scratch cache."""
+    """A Lesson 1 Config pointed at this lesson's corpus and a scratch cache.
+
+    The cache directory is deliberately a throwaway: running the lesson must never
+    touch the index under your real `.localrag/`.
+    """
     config = load_config()
     config.docs_dir = CORPUS_DIR
-    config.cache_dir = Path(tempfile.mkdtemp(prefix="lesson7-"))
+    config.cache_dir = Path(_SCRATCH.name)
     if provider:
         config.provider = provider
     return config

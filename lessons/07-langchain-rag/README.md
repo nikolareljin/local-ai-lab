@@ -74,11 +74,17 @@ From the repo root. The first run installs this lesson's dependencies into the c
 
 ```bash
 ./run -l 7 demo                 # Python - the comparison, then the scorecard
-./run -l 7 --lang node demo     # Node.js - same pipeline, different bill
+./run -l 7 --lang node demo     # Node.js - same pipeline, different bill (needs Node 20+)
 ./run -l 7 test                 # the offline test (works with or without LangChain)
 ./run -l 7 show                 # walk through this lesson's steps
 ./run -l 7                      # the playground (default)
 ```
+
+> **The Node port needs Node 20+, not the course's usual 18+.** `@langchain/core` and
+> `@langchain/textsplitters` both declare `node >= 20`. That is worth noticing rather than working
+> around: taking the dependency also took its floor, and moved the runtime requirement of a lesson
+> whose Python half runs happily on 3.10. `node/package.json` declares the same engine so `npm
+> install` says so up front instead of failing somewhere further in.
 
 Output:
 
@@ -317,10 +323,10 @@ their output is **byte-identical** - the Node port carries a line-for-line port 
 
 The scorecard half deliberately is **not** identical:
 
-| Runtime | Packages | Install size |
-|---------|----------|--------------|
-| Python (`langchain-core` + `langchain-text-splitters`) | +18, to 67 | +~9 MB, to ~43 MB |
-| Node (`@langchain/core` + `@langchain/textsplitters`) | +12, from none at all | +~48 MB |
+| Runtime | Packages | Install size | Minimum runtime |
+|---------|----------|--------------|-----------------|
+| Python (`langchain-core` + `langchain-text-splitters`) | +18, to 67 | +~9 MB, to ~43 MB | 3.10, unchanged |
+| Node (`@langchain/core` + `@langchain/textsplitters`) | +12, from none at all | +~48 MB | 18 → **20** |
 
 Same framework, same components, a different bill. Faking parity there would have hidden the one
 number this lesson exists to show you.

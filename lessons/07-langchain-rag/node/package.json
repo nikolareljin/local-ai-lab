@@ -7,6 +7,9 @@
   "scripts": {
     "start": "node langchain_rag.mjs"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "@langchain/core": "^1.2.0",
     "@langchain/textsplitters": "^1.0.0"
