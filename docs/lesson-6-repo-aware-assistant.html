@@ -18,7 +18,7 @@
 <body>
   <div class="topbar"><div class="inner">
     <span class="brand"><a href="./index.html" style="color:inherit">local-ai<span class="dot">·</span>lab</a></span>
-    <nav><details class="nav-dd"><summary>Lessons</summary><div class="nav-dd-menu"><a href="./lesson-1-rag.html">1 · RAG from scratch</a><a href="./lesson-2-mcp.html">2 · MCP servers</a><a href="./lesson-3-hybrid-retrieval-reranking.html">3 · Hybrid Retrieval &amp; Reranking</a><a href="./lesson-4-rag-safety-prompt-injection.html">4 · RAG Safety &amp; Prompt Injection</a><a href="./lesson-5-rag-evaluation-regression-testing.html">5 · RAG Evaluation &amp; Regression Testing</a><a href="./lesson-6-repo-aware-assistant.html">6 · Repo-aware AI Assistant</a></div></details><a href="./documentation.html">Documentation</a><a href="./pdf/CHEATSHEET.pdf" target="_blank" rel="noopener">Cheat-sheet</a><a href="./troubleshooting.html">Troubleshooting</a><a href="./about.html">About</a><a href="./pdf/INSTALL.pdf" target="_blank" rel="noopener">Install</a></nav>
+    <nav><details class="nav-dd"><summary>Lessons</summary><div class="nav-dd-menu"><a href="./lesson-1-rag.html">1 · RAG from scratch</a><a href="./lesson-2-mcp.html">2 · MCP servers</a><a href="./lesson-3-hybrid-retrieval-reranking.html">3 · Hybrid Retrieval &amp; Reranking</a><a href="./lesson-4-rag-safety-prompt-injection.html">4 · RAG Safety &amp; Prompt Injection</a><a href="./lesson-5-rag-evaluation-regression-testing.html">5 · RAG Evaluation &amp; Regression Testing</a><a href="./lesson-6-repo-aware-assistant.html">6 · Repo-aware AI Assistant</a><a href="./lesson-7-langchain-rag.html">7 · Rebuild RAG with LangChain</a></div></details><a href="./documentation.html">Documentation</a><a href="./pdf/CHEATSHEET.pdf" target="_blank" rel="noopener">Cheat-sheet</a><a href="./troubleshooting.html">Troubleshooting</a><a href="./about.html">About</a><a href="./pdf/INSTALL.pdf" target="_blank" rel="noopener">Install</a></nav>
   </div></div>
 
   <div class="wrap">
@@ -123,8 +123,9 @@ Point `NOTES_DB` at the index file. Pick a backend with `EMBED_PROVIDER`.</code>
 <span class="hl-com">// Match Python str.splitlines(): split on line breaks and drop the empty tail a</span>
 <span class="hl-com">// trailing newline would otherwise produce.</span>
 <span class="hl-kw">function</span> splitLines(raw) {
-  <span class="hl-kw">const</span> parts = raw.replace(/\r\n/g, <span class="hl-str">"\n"</span>).replace(/\r/g, <span class="hl-str">"\n"</span>).split(<span class="hl-str">"\n"</span>);
-  <span class="hl-kw">if</span> (parts.length &amp;&amp; parts[parts.length - <span class="hl-num">1</span>] === <span class="hl-str">""</span> &amp;&amp; /\n$/.test(raw)) parts.pop();
+  <span class="hl-kw">const</span> norm = raw.replace(/\r\n/g, <span class="hl-str">"\n"</span>).replace(/\r/g, <span class="hl-str">"\n"</span>);
+  <span class="hl-kw">const</span> parts = norm.split(<span class="hl-str">"\n"</span>);
+  <span class="hl-kw">if</span> (parts.length &amp;&amp; parts[parts.length - <span class="hl-num">1</span>] === <span class="hl-str">""</span> &amp;&amp; /\n$/.test(norm)) parts.pop();
   <span class="hl-kw">return</span> parts;
 }
 
@@ -143,8 +144,7 @@ Point `NOTES_DB` at the index file. Pick a backend with `EMBED_PROVIDER`.</code>
 }
 
 <span class="hl-kw">function</span> relTo(base, full) {
-  <span class="hl-kw">return</span> full.slice(base.length + <span class="hl-num">1</span>).split(/[/\\]/).join(<span class="hl-str">"/"</span>);
-}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>
+  <span class="hl-kw">return</span> full.slice(base.length + <span class="hl-num">1</span>).split(/[/\\]/).join(<span class="hl-str">"/"</span>);</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>
 List&lt;<span class="hl-kw">string</span>&gt; files;
 List&lt;Chunk&gt; chunks;
 <span class="hl-kw">try</span>
@@ -187,7 +187,8 @@ Console.WriteLine(<span class="hl-str">$"Repo-aware assistant  -  indexed {files
     Returns (sorted file list, passage list) - the passages carry the citations.
     Ignored directories are pruned during the walk, so a real repo's `.git/` and
     `node_modules/` are never descended into (not just filtered afterwards)."""</span>
-    repo_dir = Path(repo_dir)</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/repo_assistant.mjs</div><pre><code class='lang-js'>  <span class="hl-kw">const</span> lines = splitLines(raw);
+    repo_dir = Path(repo_dir)</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/repo_assistant.mjs</div><pre><code class='lang-js'>  <span class="hl-kw">const</span> chunks = [];
+  <span class="hl-kw">const</span> lines = splitLines(raw);
   <span class="hl-kw">let</span> start = <span class="hl-kw">null</span>;
   <span class="hl-kw">for</span> (<span class="hl-kw">let</span> i = <span class="hl-num">0</span>; i &lt; lines.length; i++) {
     <span class="hl-kw">const</span> blank = lines[i].trim() === <span class="hl-str">""</span>;
@@ -223,15 +224,14 @@ List&lt;<span class="hl-kw">string</span>&gt; SplitLines(<span class="hl-kw">str
     <span class="hl-kw">for</span> rel <span class="hl-kw">in</span> rels:
         raw = (repo_dir / rel).read_text(encoding=<span class="hl-str">"utf-8"</span>, errors=<span class="hl-str">"replace"</span>)
         chunks.extend(chunk_file(rel, raw))
-    <span class="hl-kw">return</span> rels, chunks</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/repo_assistant.mjs</div><pre><code class='lang-js'>  <span class="hl-kw">const</span> files = walk(repoDir).map((f) =&gt; relTo(repoDir, f)).filter(isIndexable).sort(cmpOrdinal);
+    <span class="hl-kw">return</span> rels, chunks</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/repo_assistant.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> buildIndex(repoDir) {
+  <span class="hl-kw">const</span> files = walk(repoDir).map((f) =&gt; relTo(repoDir, f)).filter(isIndexable).sort(cmpOrdinal);
   <span class="hl-kw">const</span> chunks = [];
   <span class="hl-kw">for</span> (<span class="hl-kw">const</span> relPath <span class="hl-kw">of</span> files) {
     chunks.push(...chunkFile(relPath, readFileSync(join(repoDir, relPath), <span class="hl-str">"utf8"</span>)));
   }
   <span class="hl-kw">return</span> { files, chunks };
-}
-
-<span class="hl-kw">const</span> cite = (c) =&gt; <span class="hl-str">`${c.path}:${c.start}-${c.end}`</span>;</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>    <span class="hl-kw">var</span> parts = norm.Split('\n').ToList();
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>    <span class="hl-kw">var</span> parts = norm.Split('\n').ToList();
     <span class="hl-kw">if</span> (parts.Count &gt; <span class="hl-num">0</span> &amp;&amp; parts[^<span class="hl-num">1</span>].Length == <span class="hl-num">0</span> &amp;&amp; norm.EndsWith('\n')) parts.RemoveAt(parts.Count - <span class="hl-num">1</span>);
     <span class="hl-kw">return</span> parts;
 }
@@ -270,7 +270,8 @@ List&lt;<span class="hl-kw">string</span>&gt; SplitLines(<span class="hl-kw">str
     reporter and the web GUI both render."""</span>
     hits = retrieve(query, chunks, top_k)
     <span class="hl-kw">if</span> <span class="hl-kw">not</span> hits <span class="hl-kw">or</span> hits[<span class="hl-num">0</span>][<span class="hl-num">0</span>] &lt; min_score:
-        best = hits[<span class="hl-num">0</span>][<span class="hl-num">0</span>] <span class="hl-kw">if</span> hits <span class="hl-kw">else</span> <span class="hl-num">0</span></code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/repo_assistant.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> intersectCount(a, b) {
+        best = hits[<span class="hl-num">0</span>][<span class="hl-num">0</span>] <span class="hl-kw">if</span> hits <span class="hl-kw">else</span> <span class="hl-num">0</span></code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/repo_assistant.mjs</div><pre><code class='lang-js'>
+<span class="hl-kw">function</span> intersectCount(a, b) {
   <span class="hl-kw">let</span> n = <span class="hl-num">0</span>;
   <span class="hl-kw">for</span> (<span class="hl-kw">const</span> t <span class="hl-kw">of</span> a) <span class="hl-kw">if</span> (b.has(t)) n++;
   <span class="hl-kw">return</span> n;
@@ -286,9 +287,7 @@ List&lt;<span class="hl-kw">string</span>&gt; SplitLines(<span class="hl-kw">str
   }
   scored.sort((x, y) =&gt; y.s - x.s || cmpOrdinal(x.c.path, y.c.path) || x.c.start - y.c.start);
   <span class="hl-kw">return</span> scored.slice(<span class="hl-num">0</span>, topK);
-}
-
-<span class="hl-com">// --- Answer: only from retrieved passages, always cited, else "not found" ----</span></code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'><span class="hl-kw">void</span> WalkDir(<span class="hl-kw">string</span> root, <span class="hl-kw">string</span> current, List&lt;<span class="hl-kw">string</span>&gt; acc)
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'><span class="hl-kw">void</span> WalkDir(<span class="hl-kw">string</span> root, <span class="hl-kw">string</span> current, List&lt;<span class="hl-kw">string</span>&gt; acc)
 {
     <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> sub <span class="hl-kw">in</span> Directory.GetDirectories(current))
     {

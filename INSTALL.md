@@ -26,6 +26,13 @@ every implemented lesson today. Foundational lessons are also being implemented 
 If a language isn't ported for a lesson yet, `./run` tells you and points to the Python reference.
 See each lesson's **"Dependencies & Installation"** section for its language availability.
 
+> **Lesson 7 is the one lesson that installs a third-party package.** Lessons 1-6 need only the base
+> requirements below; Lesson 7 rebuilds the pipeline on **LangChain**, so `./run -l 7` adds
+> `langchain-core` and `langchain-text-splitters` (plus `@langchain/core` for the Node port) into the
+> course virtualenv on first use. That dependency is the subject of the lesson, not an accident. Skip
+> the install and the demo still runs the hand-rolled side and tells you the command; `./run -l 7 test`
+> passes either way. There is no C# port - LangChain has no official .NET SDK.
+
 ---
 
 ## 1. Base prerequisites (every lesson)

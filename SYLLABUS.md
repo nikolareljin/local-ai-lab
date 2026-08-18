@@ -5,8 +5,9 @@ each piece by hand once - a retriever, a chunker, a provider adapter, an evaluat
 framework that wraps those pieces stops looking like magic. You can read it, judge it, and decide when
 it's worth the dependency.
 
-The live lessons run **100% locally** (no Docker) and ship in **Python, Node.js, and
-C# / .NET** with byte-identical output, so you can follow in the language you work in. A few
+The live lessons run **100% locally** (no Docker). Lessons 1-6 ship in **Python, Node.js, and
+C# / .NET** with byte-identical output; Lesson 7 is Python and Node, because LangChain has no
+official .NET SDK. A few
 roadmap framework tours (Lessons 11-12, AWS Bedrock and Google ADK) reach out to cloud services.
 
 - **Course site:** https://nikolareljin.github.io/local-ai-lab/
@@ -32,8 +33,8 @@ Lessons are grouped into four clusters that build on each other:
 | **3 · Framework tour** | 7-12 | hand-rolled → the same app rebuilt on the major frameworks, compared honestly |
 | **4 · Applied dev workflows** | 13-15 | building AI → using AI in your everyday engineering loop |
 
-**Lessons 1-5 are live and runnable today.** Lessons 6-15 are on the roadmap; the framework-tour
-outlines (7-12) already exist under [`roadmap/`](./roadmap/).
+**Lessons 1-7 are live and runnable today.** Lessons 8-15 are on the roadmap; the remaining
+framework-tour outlines (8-12) already exist under [`roadmap/`](./roadmap/).
 
 ## Course prerequisites
 
@@ -99,10 +100,17 @@ abstain instead of guess; produce a plan-before-edit; and extend it to your repo
 ### Cluster 3 · Framework tour
 
 > Each rebuilds the *same* document agent on a major framework and compares the trade-offs against your
-> from-scratch version. Outlines exist under [`roadmap/`](./roadmap/); full lessons are on the roadmap.
+> from-scratch version. **Lesson 7 is live**; outlines for 8-12 exist under [`roadmap/`](./roadmap/).
 
-#### Lesson 7 - LangChain · 🚧 planned · Python · [outline](./roadmap/LESSON7-langchain.md)
-Rebuild the RAG pipeline with LangChain and see exactly which hand-rolled piece each component replaces.
+#### Lesson 7 - Rebuild RAG with LangChain · ✅ live · Python · Node · ≈ 45-60 min
+**Build:** the Lesson 1 pipeline rebuilt on LangChain over the same corpus with the same system
+prompt, a side-by-side comparison of what each side grounds on, and a scorecard mapping every
+component onto the hand-rolled file it replaced - plus the two adapters LangChain cannot supply: a
+`SimpleChatModel` for the course's Claude Code provider and a `BaseRetriever` for BM25.
+**You'll be able to:** read LangChain and name the primitive behind each component; compose an LCEL
+chain; extend a framework through its base classes when the catalogue does not fit; and price a
+dependency in packages, install size, and cold start instead of adopting it on reputation.
+**Assumes:** Lesson 1 (Lesson 3 helpful). The one lesson that installs a third-party package.
 
 #### Lesson 8 - LangGraph · 🚧 planned · Python · [outline](./roadmap/LESSON8-langgraph.md)
 Turn the linear pipeline into a stateful agent graph with retries, tool routing, and memory.
@@ -144,7 +152,7 @@ Read down the **Requires** column to see what to finish first.
 | 4 · RAG safety | 1 | 3 |
 | 5 · RAG evaluation | 1 | 3, 4 |
 | 6 · Repo-aware assistant | 1 | 3 |
-| 7 · LangChain | 1 | - |
+| 7 · LangChain | 1 | 3 |
 | 8 · LangGraph | 1 | 2, 7 |
 | 9 · Ollama + function calling | 1 | 2 |
 | 10 · Semantic Kernel | 1 | 9 |
@@ -158,9 +166,10 @@ in one form or another, by every lesson after it.
 ## Suggested pace
 
 - **Weekend intro:** Lessons 1-2 (the foundation - you finish with a cited RAG app exposed as a tool).
-- **One focused week:** Lessons 1-5 (the full live curriculum - better, safe, and measurable RAG).
-- **Self-paced after that:** pick framework-tour lessons (7-12) as they ship, in any order after
-  Lesson 1.
+- **One focused week:** Lessons 1-7 (the full live curriculum - RAG that is better, safe, measurable,
+  repo-aware, and then rebuilt on a framework so you can judge the trade).
+- **Self-paced after that:** pick the remaining framework-tour lessons (8-12) as they ship, in any
+  order after Lesson 1.
 
 Every live lesson is runnable offline and has an `./run -l <N> test` you can use to confirm your
 environment before you start.

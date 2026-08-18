@@ -358,7 +358,7 @@ uniformity is the whole point.
 
 > **Teaching point.** This is the pattern every "LLM framework" is built around - a provider
 > interface plus adapters. Once you've written it by hand, LangChain's `ChatModel` and friends stop
-> looking like magic. (You'll see exactly that in [Lesson 7 · LangChain](./roadmap/LESSON7-langchain.md).)
+> looking like magic. (You'll see exactly that in [Lesson 7 · LangChain](./lessons/07-langchain-rag/README.md).)
 
 ---
 
