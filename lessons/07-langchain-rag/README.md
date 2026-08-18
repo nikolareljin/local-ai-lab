@@ -33,7 +33,7 @@ LangChain and see exactly which of your files each component replaces - and pric
   the same corpus ─▶ LOAD ─▶ SPLIT ─▶ RETRIEVE ─▶ PROMPT ─▶ ANSWER ─▶ cited answer
                        │       │         │          │         │
      hand-rolled  extract.py  chunk.py  retriever  prompts   providers   379 lines · 49 packages
-     LangChain    Document    Recursive InMemory   ChatPrompt SimpleChat  139 lines · 67 packages
+     LangChain    Document    Recursive InMemory   ChatPrompt SimpleChat  147 lines · 67 packages
                               Splitter  VectorStore Template   Model
 ```
 
@@ -124,7 +124,7 @@ Component by component
 
 What it cost
                             hand-rolled      LangChain
-  code you maintain           379 lines      139 lines
+  code you maintain           379 lines      147 lines
   requirements lines                  8             10
   packages installed                 49             67
   install size                   ~34 MB         ~43 MB

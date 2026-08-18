@@ -238,3 +238,45 @@ def test_truncate_at_stop_edge_cases():
     assert _truncate_at_stop("abc", ["zzz"]) == "abc"
     assert _truncate_at_stop("a<X>b<Y>c", ["<Y>", "<X>"]) == "a", "must cut at the earliest"
     assert _truncate_at_stop("abc", [""]) == "abc", "an empty stop must not blank the answer"
+
+
+def test_bm25_index_is_built_once_not_per_query():
+    """Lesson 1 builds BM25 in __init__ and reuses it; this retriever must match.
+
+    Rebuilding per query would be O(corpus) on every keystroke in the playground,
+    and would make the LangChain arm slower than the arm it is compared against -
+    quietly biasing the lesson's own scorecard.
+    """
+    lc = lc_module()
+    import lc_provider
+    from rank_bm25 import BM25Okapi
+
+    chunks = lc.split(lc.load(), SETTINGS["chunk_size"], SETTINGS["chunk_overlap"])
+    builds = {"n": 0}
+    real = lc_provider.BM25Okapi if hasattr(lc_provider, "BM25Okapi") else BM25Okapi
+
+    import rank_bm25
+
+    def counting(*args, **kwargs):
+        builds["n"] += 1
+        return real(*args, **kwargs)
+
+    original = rank_bm25.BM25Okapi
+    rank_bm25.BM25Okapi = counting
+    try:
+        retriever = lc_provider.LocalRagBM25Retriever(documents=chunks, k=SETTINGS["top_k"])
+        after_construction = builds["n"]
+        for question in SETTINGS["questions"]:
+            retriever.invoke(question)
+    finally:
+        rank_bm25.BM25Okapi = original
+
+    assert after_construction == 1, "the index should be built exactly once, at construction"
+    assert builds["n"] == 1, f"index rebuilt {builds['n'] - 1} extra times across queries"
+
+
+def test_retriever_handles_an_empty_corpus():
+    lc_module()
+    import lc_provider
+
+    assert lc_provider.LocalRagBM25Retriever(documents=[], k=3).invoke("anything") == []

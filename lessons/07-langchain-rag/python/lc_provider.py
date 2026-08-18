@@ -29,6 +29,7 @@ from langchain_core.embeddings import Embeddings
 from langchain_core.language_models.chat_models import SimpleChatModel
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langchain_core.retrievers import BaseRetriever
+from pydantic import PrivateAttr
 
 from localrag.providers import embed_texts, get_provider
 
@@ -115,16 +116,32 @@ class LocalRagBM25Retriever(BaseRetriever):
 
     documents: List[Document]
     k: int = 3
+    _bm25: Any = PrivateAttr(default=None)
+
+    def model_post_init(self, context: Any, /) -> None:
+        """Build the index once, at construction - the same contract as Lesson 1.
+
+        `Bm25Retriever.__init__` in `localrag/retriever.py` tokenizes the corpus and
+        builds BM25Okapi once, then answers many queries against it. Rebuilding per
+        query would be O(corpus) on every keystroke in the playground, and would also
+        make this a slower retriever than the one it is being compared against - which
+        would quietly bias the whole lesson.
+        """
+        super().model_post_init(context)
+        from rank_bm25 import BM25Okapi
+
+        self._bm25 = (
+            BM25Okapi([_tokenize(d.page_content) for d in self.documents])
+            if self.documents
+            else None
+        )
 
     def _get_relevant_documents(
         self, query: str, *, run_manager: CallbackManagerForRetrieverRun
     ) -> List[Document]:
-        from rank_bm25 import BM25Okapi
-
-        if not self.documents or self.k <= 0:
+        if self._bm25 is None or self.k <= 0:
             return []
-        bm25 = BM25Okapi([_tokenize(d.page_content) for d in self.documents])
-        scores = bm25.get_scores(_tokenize(query))
+        scores = self._bm25.get_scores(_tokenize(query))
         ranked = sorted(range(len(self.documents)), key=lambda i: scores[i], reverse=True)[: self.k]
         if scores[ranked[0]] <= 0:
             return [self.documents[i] for i in ranked]

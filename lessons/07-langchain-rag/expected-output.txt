@@ -35,7 +35,7 @@ Component by component
 
 What it cost
                             hand-rolled      LangChain
-  code you maintain           379 lines      139 lines
+  code you maintain           379 lines      147 lines
   requirements lines                  8             10
   packages installed                 49             67
   install size                   ~34 MB         ~43 MB
