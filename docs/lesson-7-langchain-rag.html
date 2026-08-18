@@ -91,14 +91,14 @@ def split(pages: List[Page], size: int, overlap: int) -&gt; List[Chunk]:
     return chunk_pages(pages, size=size, overlap=overlap)
 
 
-def retrieve(chunks: List[Chunk], question: str, k: int) -&gt; List[Chunk]:
-    """</span>retriever.py - BM25 over the chunk texts.<span class="hl-str">"""
-    return Bm25Retriever(chunks).search(question, k)
+def build_retriever(chunks: List[Chunk]) -&gt; Bm25Retriever:
+    """</span>retriever.py - build the BM25 index once, then answer many queries <span class="hl-kw">from</span> it.
 
-
-def sources(hits: List[Chunk]) -&gt; List[str]:
-    """</span>engine.py - the `source:page` citations behind an answer.<span class="hl-str">""</span>"
-    <span class="hl-kw">return</span> dedup_sources(hits)</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/langchain_rag.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> splitText(text, size, overlap) {
+    Lesson <span class="hl-num">1</span> builds BM25 <span class="hl-kw">in</span> `Bm25Retriever.__init__` <span class="hl-kw">and</span> reuses it, <span class="hl-kw">and</span> the LangChain
+    arm does the same, so this arm must too. Rebuilding per query would tokenize the
+    whole corpus on every question <span class="hl-kw">and</span> make the comparison a measurement of who
+    rebuilds their index more often.
+    <span class="hl-str">""</span>"</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/langchain_rag.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> splitText(text, size, overlap) {
   <span class="hl-kw">const</span> normalized = text.split(/\s+/).filter(Boolean).join(<span class="hl-str">" "</span>);
   <span class="hl-kw">if</span> (normalized.length &lt;= size) <span class="hl-kw">return</span> normalized ? [normalized] : [];
 
