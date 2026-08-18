@@ -160,23 +160,23 @@ def build_retriever(chunks: List[Chunk]) -&gt; Bm25Retriever:
     whitespace, then breaks on sentence punctuation. Same job, different boundaries -
     which is exactly what the playground lets you watch."""</span>
     splitter = RecursiveCharacterTextSplitter(chunk_size=size, chunk_overlap=overlap)
-    <span class="hl-kw">return</span> splitter.split_documents(docs)</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/langchain_rag.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> lcLoad() {
-  <span class="hl-kw">return</span> readdirSync(CORPUS_DIR)
-    .filter((name) =&gt; name.endsWith(<span class="hl-str">".md"</span>))
-    .sort()
-    .map(
-      (name) =&gt;
-        <span class="hl-kw">new</span> Document({
-          pageContent: readFileSync(path.join(CORPUS_DIR, name), <span class="hl-str">"utf8"</span>).trim(),
-          metadata: { source: name, page: <span class="hl-num">1</span> },
-        }),
-    );
+    <span class="hl-kw">return</span> splitter.split_documents(docs)</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/langchain_rag.mjs</div><pre><code class='lang-js'>
+<span class="hl-com">// localrag/engine.py:dedup_sources</span>
+<span class="hl-kw">function</span> citations(pairs) {
+  <span class="hl-kw">const</span> seen = [];
+  <span class="hl-kw">for</span> (<span class="hl-kw">const</span> [source, page] <span class="hl-kw">of</span> pairs) {
+    <span class="hl-kw">const</span> tag = <span class="hl-str">`${source}:${page}`</span>;
+    <span class="hl-kw">if</span> (!seen.includes(tag)) seen.push(tag);
+  }
+  <span class="hl-kw">return</span> seen;
 }
 
-<span class="hl-kw">async</span> <span class="hl-kw">function</span> lcSplit(docs, size, overlap) {
-  <span class="hl-kw">const</span> splitter = <span class="hl-kw">new</span> RecursiveCharacterTextSplitter({ chunkSize: size, chunkOverlap: overlap });
-  <span class="hl-kw">return</span> splitter.splitDocuments(docs);
-}</code></pre></div></div><div class='why'>Same job, different boundaries - and that difference is the entire reason Q3 grounds differently later. It is the cheapest possible demonstration that a component swap is not a no-op.</div></section>
+<span class="hl-com">// --------------------------------------------------------------- LangChain</span>
+
+<span class="hl-kw">function</span> lcLoad() {
+  <span class="hl-kw">return</span> readdirSync(CORPUS_DIR)
+    .filter((name) =&gt; name.endsWith(<span class="hl-str">".md"</span>))
+    .sort()</code></pre></div></div><div class='why'>Same job, different boundaries - and that difference is the entire reason Q3 grounds differently later. It is the cheapest possible demonstration that a component swap is not a no-op.</div></section>
 <section class='slide'><div class='step-no'>Step 4</div><h2>The escape hatch - a chat model LangChain has never heard of</h2><p>The course's default provider is the <strong>Claude Code CLI</strong>. LangChain has no adapter for it and never will. <code>SimpleChatModel</code> asks for exactly one method - messages in, string out - and in exchange every LCEL chain in the ecosystem can now drive Claude Code, Ollama, Gemini, or OpenAI, with streaming, batching, and callbacks you did not write.</p><div class='lang lang-python'><div class='block'><div class='label'>python/lc_provider.py</div><pre><code class='lang-python'>
 <span class="hl-kw">def</span> _truncate_at_stop(text: str, stop: Optional[List[str]]) -&gt; str:
     <span class="hl-str">"""Enforce LangChain's `stop` contract on providers that have no stop parameter.
@@ -273,7 +273,7 @@ class LocalRagBM25Retriever(BaseRetriever):
   }
 }
 
-<span class="hl-com">// localrag/retriever.py:Bm25Retriever.search - top-k, dropping the tail that</span></code></pre></div></div><div class='why'>The version-churn cost is usually argued in the abstract. Here it is dated: the package this lesson was drafted against went end-of-life during the writing of it. Twenty lines of your own code did not.</div></section>
+<span class="hl-com">// One index per corpus, built on first use and reused for every later query -</span></code></pre></div></div><div class='why'>The version-churn cost is usually argued in the abstract. Here it is dated: the package this lesson was drafted against went end-of-life during the writing of it. Twenty lines of your own code did not.</div></section>
 <section class='slide'><div class='step-no'>Step 6</div><h2>LCEL - the chain that replaced engine.answer_question()</h2><p>Read the <code>|</code> left to right: fan the question into a context lookup and a passthrough, render the prompt, call the model, take the text out. Your <code>engine.answer_question()</code> did the same five things in imperative Python.</p><div class='lang lang-python'><div class='block'><div class='label'>python/lc_pipeline.py</div><pre><code class='lang-python'>    <span class="hl-str">"""engine.answer_question(), as an LCEL chain.
 
     Read the `|` left to right: fan the question into a context lookup and a
