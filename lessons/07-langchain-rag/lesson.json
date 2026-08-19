@@ -31,7 +31,7 @@
       "file": "data/questions.json",
       "kicker": "Step 1",
       "title": "The corpus and the questions",
-      "body": "Three questions, each aimed at a different document in [`data/corpus/`](./data/corpus): the factory reset lives in the manual, the amber status ring in the FAQ, the buffer export in the API reference. `chunk_size` and `chunk_overlap` are the settings **both** pipelines are handed, and `top_k` is how many chunks reach the prompt. One file drives the demo, the test, the playground, and the Node port.",
+      "body": "Three questions, each aimed at a different document under `data/corpus/`: the factory reset lives in the manual, the amber status ring in the FAQ, the buffer export in the API reference. `chunk_size` and `chunk_overlap` are the settings **both** pipelines are handed, and `top_k` is how many chunks reach the prompt. One file drives the demo, the test, the playground, and the Node port.",
       "why": "Both pipelines read their settings from the same place for the same reason they share a system prompt: if the framework got a different chunk size or a better brief, the comparison would be theatre rather than a measurement."
     },
     {
