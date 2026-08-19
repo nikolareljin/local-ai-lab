@@ -33,6 +33,23 @@ typed items (they may be intermingled):
 Any element may be `lang`-tagged for per-language walkthroughs. File paths are relative to the lesson
 directory. Add code/commands/media by dropping files and referencing them here - no engine changes.
 
+## The action contract
+
+Every lesson in the course - including the hand-authored Lessons 1-2 - answers to the
+same four actions. A new lesson is not finished until all four work:
+
+| action | what it must do |
+|--------|-----------------|
+| `demo` | print what the lesson does and exit; **no model, no network**, so it is reproducible and pinned by `expected-output.txt` |
+| `test` | the lesson's offline test |
+| `show` | read the lesson in the terminal |
+| `preview` | read the lesson in a browser, served locally |
+
+`show` and `preview` come free from the engine for config-driven lessons, so a
+`lesson.json` only has to declare `demo` and `test` (plus `web` if it has a playground).
+`tests/test_lesson_actions.py` enforces this, so drift fails the suite rather than
+surfacing later as a reader who cannot open a lesson without GitHub Pages.
+
 ## Running & previewing (`./run`)
 
 ```bash

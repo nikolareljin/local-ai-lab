@@ -598,6 +598,107 @@ def cmd_preview(args):
     return 0
 
 
+# --------------------------------------------------------------------------- guide (Lessons 1-2)
+# Lessons 1 and 2 predate the config-driven format: their guides are hand-authored
+# Markdown at the repo root and hand-authored pages under docs/. They still need
+# `show` and `preview`, because `./run -h` offers both for every lesson and a
+# reader should never have to reach for GitHub Pages to read a lesson locally.
+GUIDE_PAGES = {1: "lesson-1-rag.html", 2: "lesson-2-mcp.html"}
+
+
+def guide_sources(number):
+    """(markdown guide, published page) for a hand-authored lesson, or (None, None).
+
+    `number` arrives as a string from argparse, like every other subcommand here.
+    """
+    n = int(number)
+    md = ROOT / f"LESSON{n}.md"
+    name = GUIDE_PAGES.get(n)
+    page = ROOT / "docs" / name if name else None
+    return (md if md.is_file() else None, page if page and page.is_file() else None)
+
+
+def _render_markdown_terminal(text: str) -> str:
+    """Light terminal rendering: enough structure to read a guide in a pager.
+
+    Deliberately small - no Markdown dependency, since `show` has to work on the
+    bare course venv.
+    """
+    out, in_code = [], False
+    for line in text.splitlines():
+        if line.startswith("```"):
+            in_code = not in_code
+            out.append("  " + "-" * 68 if in_code else "  " + "-" * 68)
+            continue
+        if in_code:
+            out.append("  | " + line)
+            continue
+        if line.startswith("# "):
+            out.append("")
+            out.append("=" * 72)
+            out.append(line[2:].strip().upper())
+            out.append("=" * 72)
+        elif line.startswith("## "):
+            out.append("")
+            out.append(line[3:].strip())
+            out.append("-" * len(line[3:].strip()))
+        elif line.startswith("### "):
+            out.append("")
+            out.append("* " + line[4:].strip())
+        elif line.startswith("> "):
+            out.append("  > " + line[2:].strip())
+        else:
+            out.append(line)
+    return "\n".join(out)
+
+
+def cmd_guide(args):
+    """`show` / `preview` for the hand-authored lessons (1-2).
+
+    show    - print the Markdown guide in the terminal
+    preview - serve the published page locally, so the lesson reads exactly as it
+              does on the course site, with no network and no GitHub Pages
+    """
+    md, page = guide_sources(args.number)
+    if md is None:
+        sys.exit(f"[ERROR] No written guide found for lesson {args.number} (expected LESSON{args.number}.md).")
+
+    if not args.preview:
+        print(_render_markdown_terminal(md.read_text(encoding="utf-8")))
+        if page is not None:
+            print()
+            warn(f"Prefer the rendered page? ./run -l {args.number} preview")
+        return 0
+
+    if page is None:
+        sys.exit(f"[ERROR] No published page for lesson {args.number} under docs/.")
+
+    docs_root = ROOT / "docs"
+    target = page.name
+
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        def translate_path(self, path):
+            # Decode before normalising so percent-encoded traversal cannot escape docs/.
+            rel = unquote(path.split("?", 1)[0].split("#", 1)[0]).lstrip("/")
+            clean = os.path.normpath(rel or target)
+            if clean in (".", "") or clean.startswith("..") or os.path.isabs(clean):
+                return str(docs_root / target)
+            return str(docs_root / clean)
+
+        def log_message(self, *a):
+            pass
+
+    port = free_port()
+    with socketserver.TCPServer(("127.0.0.1", port), Handler) as httpd:
+        print(f"Lesson {args.number} · instructions preview → http://127.0.0.1:{port}  (Ctrl-C to stop)",
+              flush=True)
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            pass
+    return 0
+
+
 def cmd_build(args):
     """Generate the publishable GitHub Pages page (docs/lesson-N-slug.html).
 
@@ -668,6 +769,12 @@ def main(argv=None):
     sp.add_argument("number", type=int)
     sp.add_argument("--lang", default=None, choices=SUPPORTED_LANGS)
     sp.set_defaults(fn=cmd_preview)
+
+    sp = sub.add_parser("guide", help="show/preview a hand-authored lesson guide (Lessons 1-2)")
+    sp.add_argument("number")
+    sp.add_argument("--preview", action="store_true",
+                    help="serve the published page locally instead of printing the Markdown")
+    sp.set_defaults(fn=cmd_guide)
 
     sp = sub.add_parser("build", help="generate the publishable docs/ page (GitHub Pages)")
     sp.add_argument("number", type=int)

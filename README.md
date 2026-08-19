@@ -162,12 +162,21 @@ approach and related work on the **[About page](https://nikolareljin.github.io/l
 - **[PRODUCTION_NOTES.md](./PRODUCTION_NOTES.md)** - using this for real? What the demo keeps simple on
   purpose (security, testing, performance) and what you'd harden for production.
 
+Every lesson - 1 through 7 - understands the same four actions, so you never have to
+remember which era a lesson comes from:
+
 ```bash
 ./run list                 # every lesson and its actions
-./run -l <N> demo          # one-shot, print-and-exit run (lessons 3-7; --lang node|csharp where ported)
-./run -l <N> test          # the lesson's offline test (no network, no model)
-./run -h                   # full help
+./run -l <N> demo          # one-shot, print-and-exit run: no model, no network
+./run -l <N> test          # the lesson's offline test
+./run -l <N> show          # read the lesson in your terminal
+./run -l <N> preview       # read the lesson in a browser, served locally (no GitHub Pages)
+./run -l <N>               # the interactive playground (the default)
+./run -h                   # full help, including each lesson's extras
 ```
+
+`show` and `preview` are the two to reach for when you want to **read** a lesson rather
+than run it, and `demo` when you want to watch it work without a model or an API key.
 
 ---
 

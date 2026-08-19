@@ -19,28 +19,31 @@ local-ai-lab — run a lesson locally
 
 Usage:
   ./run -l <N> [--lang python|node|csharp] [action] [args]
-  ./run -l <N> show                           # walk through the lesson in the terminal (code, configs, prompts, commands)
-  ./run -l <N> preview                        # serve the rendered instructions locally (browser, no GitHub Pages)
   ./run list                                  # list all lessons
 
-Lessons:
-  -l 1   RAG app       actions:  web (default) · ask "question" · repl · index · test
-  -l 2   MCP server    actions:  web (default) · demo · serve · register · test
-  -l 3+  config-driven: actions are defined per lesson in lessons/NN-*/lesson.json (run + show)
+Every lesson understands the same four actions:
+  demo        one-shot: print what the lesson does and exit (no model, no network)
+  test        the lesson's offline test
+  show        read the lesson in your terminal
+  preview     read the lesson in a browser, served locally (no GitHub Pages)
+  web         the interactive playground — the default when you pass no action
+
+Lesson-specific extras:
+  -l 1   RAG app       ask "question" · repl · index
+  -l 2   MCP server    serve · register
+  -l 7   LangChain     ask "question" [--native] [--arm bm25|embed]
 
 Examples:
   ./run -l 1                                  # launch the RAG web UI (auto-picks a free port)
-  ./run -l 1 ask "How do I reset the device?" # one-shot question in the terminal
-  ./run -l 1 test                             # run Lesson 1 tests
-  ./run -l 2                                  # launch the MCP tool GUI (auto-picks a free port)
-  ./run -l 2 demo                             # call the MCP tools over stdio in the terminal (no LLM needed)
-  ./run -l 3                                  # launch Lesson 3's experiment GUI (auto-picks a free port)
-  ./run -l 3 demo                             # one-shot demo: print the rankings and exit (Python)
-  ./run -l 3 --lang csharp demo               # the C#/.NET port of the Lesson 3 demo
-  ./run -l 3 show                             # walk through Lesson 3's steps (terminal)
-  ./run -l 3 preview                          # preview the instructions in a browser, locally
-  ./run -l 3 show --html > /tmp/l3.html        # standalone HTML of the instructions
-  ./run -l 1 --lang node                      # Node.js implementation (where ported)
+  ./run -l 1 demo                             # the whole pipeline printed, no model needed
+  ./run -l 1 show                             # read Lesson 1 in the terminal
+  ./run -l 1 preview                          # read Lesson 1 in a browser, locally
+  ./run -l 1 ask "How do I reset the device?" # one-shot question (calls a provider)
+  ./run -l 2 demo                             # call the MCP tools over stdio (no LLM needed)
+  ./run -l 3 demo                             # print Lesson 3's rankings and exit
+  ./run -l 3 --lang csharp demo               # the C#/.NET port of the same demo
+  ./run -l 7 preview                          # read Lesson 7 in a browser, locally
+  ./run -l 3 show --html > /tmp/l3.html       # standalone HTML of the instructions
 
 Languages (polyglot — Option B): python (default/reference) · node · csharp.
 Lessons 1 and 2 are ported to all three; where a lesson isn't ported yet,
@@ -154,6 +157,10 @@ run_lesson_1() {
       log_info "Lesson 1 · RAG web UI → http://127.0.0.1:${port}    (Ctrl-C to stop)"
       exec "$PYTHON_BIN" -m localrag web --port "$port"
       ;;
+    demo)
+      log_info "Lesson 1 · RAG pipeline, printed end to end - no model is called."
+      exec "$PYTHON_BIN" "$ROOT_DIR/examples/rag_demo.py" "$@"
+      ;;
     ask)
       announce_provider
       exec "$PYTHON_BIN" -m localrag ask "$@"
@@ -168,8 +175,14 @@ run_lesson_1() {
     test)
       exec "$PYTHON_BIN" -m pytest -q "$ROOT_DIR/tests/test_smoke.py"
       ;;
+    show)
+      exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" guide "1"
+      ;;
+    preview)
+      exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" guide "1" --preview
+      ;;
     *)
-      log_error "Lesson 1 actions:  web | ask \"q\" | repl | index | test"
+      log_error "Lesson 1 actions:  web | demo | ask \"q\" | repl | index | test | show | preview"
       exit 1
       ;;
   esac
@@ -198,8 +211,14 @@ run_lesson_2() {
     test)
       exec "$PYTHON_BIN" -m pytest -q "$ROOT_DIR/tests/test_mcp.py"
       ;;
+    show)
+      exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" guide "2"
+      ;;
+    preview)
+      exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" guide "2" --preview
+      ;;
     *)
-      log_error "Lesson 2 actions:  web | demo | serve | register | test"
+      log_error "Lesson 2 actions:  web | demo | serve | register | test | show | preview"
       exit 1
       ;;
   esac
