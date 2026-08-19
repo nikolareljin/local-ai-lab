@@ -47,7 +47,8 @@ A lesson is two things, and the actions say which is which.
 
 | action | what it must do | applies to |
 |--------|-----------------|------------|
-| `demo` | print what the lesson does and exit; **no model, no network**, so it is reproducible and pinned by `expected-output.txt` | every lesson, 1-7 |
+| `demo` | print what the lesson does and exit; **no model, no network** | every lesson, 1-7 |
+| `demo` output | committed as `expected-output.txt` and diffed by the lesson's test, so the printed run cannot drift | config-driven lessons (3+) |
 | `test` | the lesson's offline test | every lesson, 1-7 |
 | `web` | the interactive playground, and the default action | where the lesson has one |
 
