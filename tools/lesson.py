@@ -609,7 +609,8 @@ GUIDE_PAGES = {1: "lesson-1-rag.html", 2: "lesson-2-mcp.html"}
 def guide_sources(number):
     """(markdown guide, published page) for a hand-authored lesson, or (None, None).
 
-    `number` arrives as a string from argparse, like every other subcommand here.
+    `number` is a lesson number; anything int() accepts works, so callers can pass
+    the parsed CLI value or a plain int from a test.
     """
     n = int(number)
     md = ROOT / f"LESSON{n}.md"
@@ -732,7 +733,7 @@ def main(argv=None):
     sp.set_defaults(fn=cmd_preview)
 
     sp = sub.add_parser("guide", help="serve a hand-authored lesson page locally - backs `./run -l N lesson` for Lessons 1-2")
-    sp.add_argument("number")
+    sp.add_argument("number", type=int)
     sp.set_defaults(fn=cmd_guide)
 
     sp = sub.add_parser("build", help="generate the publishable docs/ page (GitHub Pages)")
