@@ -7,7 +7,7 @@
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 >
-> **Lessons:** [1 · RAG](../LESSON1.md) → [2 · MCP](../LESSON2.md) → [3 · Hybrid retrieval](../lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../lessons/05-rag-evaluation-regression-testing/README.md) → 6 · Repo assistant → [7 · LangChain](./LESSON7-langchain.md) → **8 · LangGraph (you are here)** → 9 · Ollama tools → 10 · Semantic Kernel → 11 · Bedrock Agents → 12 · Google ADK → ... → 15 · Docs from changes
+> **Lessons:** [1 · RAG](../LESSON1.md) → [2 · MCP](../LESSON2.md) → [3 · Hybrid retrieval](../lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../lessons/05-rag-evaluation-regression-testing/README.md) → 6 · Repo assistant → [7 · LangChain](../lessons/07-langchain-rag/README.md) → **8 · LangGraph (you are here)** → 9 · Ollama tools → 10 · Semantic Kernel → 11 · Bedrock Agents → 12 · Google ADK → ... → 15 · Docs from changes
 >
 > **Status: planned.** Outline below; full step-by-step coming later. ⭐ the repo to follow along.
 
@@ -60,7 +60,7 @@ A graph with nodes such as:
 |---------|-----------|
 | retrieve / ground / answer | [Lesson 1](../LESSON1.md) |
 | `search_docs` as a callable tool | [Lesson 2](../LESSON2.md) |
-| LangChain retrievers & chat models | [Lesson 7](./LESSON7-langchain.md) |
+| LangChain retrievers & chat models | [Lesson 7](../lessons/07-langchain-rag/README.md) |
 | **graph, state, cycles, self-correction** | **Lesson 8 (this one)** |
 
 > **Where it all lands:** by the end of the course you can build a local, private, self-correcting
@@ -68,7 +68,7 @@ A graph with nodes such as:
 
 ## Prerequisites
 
-Lessons [1](../LESSON1.md), [2](../LESSON2.md), and [7 · LangChain](./LESSON7-langchain.md). The agent
+Lessons [1](../LESSON1.md), [2](../LESSON2.md), and [7 · LangChain](../lessons/07-langchain-rag/README.md). The agent
 reuses the retriever, the MCP tool, and the LangChain components from earlier lessons.
 
 ## Next lesson

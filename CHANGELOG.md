@@ -6,6 +6,43 @@ All notable changes to this project are documented here. This project follows
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-08-18
+
+### Added
+- **Lesson 7 · Rebuild RAG with LangChain** - a new working lesson in **Python and Node.js**, and the
+  first of the framework-tour cluster. It rebuilds the Lesson 1 pipeline on **LangChain v1** over the
+  same corpus with the same system prompt, compares what each side grounds on question by question,
+  and prints a scorecard mapping every LangChain component onto the hand-rolled file it replaced -
+  lines of code you still maintain against packages that moved into your dependency tree. The
+  hand-rolled arm imports `localrag` directly rather than reimplementing it, so the comparison runs
+  against the real Lesson 1 code. Ships with an interactive playground, an offline test, a seven
+  document corpus, and a committed `expected-output.txt`.
+- **Two LangChain adapters you write yourself** - `LocalRagChatModel` (a `SimpleChatModel`) lets any
+  LCEL chain drive the course's default Claude Code provider, which LangChain has no adapter for, plus
+  Ollama, Gemini and OpenAI; `LocalRagEmbeddings` does the same for embeddings. A third,
+  `LocalRagBM25Retriever` (a `BaseRetriever` over `rank_bm25`), replaces the `BM25Retriever` from the
+  now-sunset `langchain-community`, keeping the install at 67 packages instead of 80.
+- **A local Ollama arm** - `ask --arm embed` retrieves with real vectors through `InMemoryVectorStore`,
+  and `ask --native` runs the same chain through framework-native `ChatOllama` and `OllamaEmbeddings`,
+  so the lesson can put a sixty-line adapter you own next to a package you install and let you judge
+  the trade. `langchain-ollama` is an opt-in install rather than a lesson requirement, so the printed
+  dependency scorecard matches exactly what `./run -l 7` puts in the venv; the paths that need it exit
+  with the install command rather than a traceback.
+
+### Changed
+- Lesson 7 graduates out of `roadmap/` into `lessons/07-langchain-rag/`; inbound links across the
+  roadmap outlines, `LESSON1.md`, the README, and the course site now point at the live lesson.
+- Course-site navigation, the curriculum table, the syllabus, and the PDF menus updated for seven live
+  lessons. Several counts that were already stale at Lesson 6 are corrected in the same pass.
+
+### Notes
+- Lesson 7 is the **only lesson that installs a third-party package**, and that is deliberate: the
+  dependency is its subject. Dependencies stay lesson-local, so the repo-root requirements are
+  unchanged and Lessons 1-6 keep their eight-package install. With LangChain absent, the demo runs the
+  hand-rolled side, prints the install command, and exits 0; the offline test passes either way.
+- There is no C# port: LangChain ships official Python and JavaScript SDKs only. Microsoft's answer is
+  Semantic Kernel, which is Lesson 10.
+
 ## [0.10.0] - 2026-07-02
 
 ### Added

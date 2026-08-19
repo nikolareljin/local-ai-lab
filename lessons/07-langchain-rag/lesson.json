@@ -17,7 +17,7 @@
       "kicker": "Overview",
       "title": "What you'll build",
       "file": "overview.txt",
-      "body": "Lessons 1-6 built every RAG primitive by hand. **LangChain ships all of them as components.** This lesson rebuilds the same pipeline on top of it - same corpus, same system prompt, same citation contract - and then does the thing most framework write-ups skip: it **counts the cost**.\n\nYou'll watch the two pipelines ground the same questions, find the one question where they *disagree* (and understand why), and read a scorecard that maps every LangChain component onto the Lesson 1 file it replaced. Then the part that matters: LangChain replaces five of seven components outright, and for the other two - your provider and your retriever - **you subclass its base classes and hand it your own.**\n\nNothing here is mysterious, because you wrote the twin of every component. Pick a language above and press → to begin."
+      "body": "**New to LangChain?** It is an open-source framework for building on top of language models - not a model, not a database. Two things: a **catalogue of components** for steps you already have (load, split, embed, retrieve, prompt, call a model) and a way to **compose** them with `|`, called LCEL. It ships official Python and JavaScript SDKs, and no .NET one - which is why this lesson is Python and Node, and why **.NET gets its own lesson (10 · Semantic Kernel)** rather than a LangChain impersonation.\n\nLessons 1-6 built every RAG primitive by hand. **LangChain ships all of them as components.** This lesson rebuilds the same pipeline on top of it - same corpus, same system prompt, same citation contract - and then does the thing most framework write-ups skip: it **counts the cost**.\n\nYou'll watch the two pipelines ground the same questions, find the one question where they *disagree* (and understand why), and read a scorecard that maps every LangChain component onto the Lesson 1 file it replaced. Then the part that matters: LangChain replaces five of seven components outright, and for the other two - your provider and your retriever - **you subclass its base classes and hand it your own.**\n\nNothing here is mysterious, because you wrote the twin of every component. Pick a language above and press → to begin."
     },
     {
       "type": "command",
@@ -31,7 +31,7 @@
       "file": "data/questions.json",
       "kicker": "Step 1",
       "title": "The corpus and the questions",
-      "body": "Three questions, each aimed at a different document in [`data/corpus/`](./data/corpus): the factory reset lives in the manual, the amber status ring in the FAQ, the buffer export in the API reference. `chunk_size` and `chunk_overlap` are the settings **both** pipelines are handed, and `top_k` is how many chunks reach the prompt. One file drives the demo, the test, the playground, and the Node port.",
+      "body": "Three questions, each aimed at a different document under `data/corpus/`: the factory reset lives in the manual, the amber status ring in the FAQ, the buffer export in the API reference. `chunk_size` and `chunk_overlap` are the settings **both** pipelines are handed, and `top_k` is how many chunks reach the prompt. One file drives the demo, the test, the playground, and the Node port.",
       "why": "Both pipelines read their settings from the same place for the same reason they share a system prompt: if the framework got a different chunk size or a better brief, the comparison would be theatre rather than a measurement."
     },
     {

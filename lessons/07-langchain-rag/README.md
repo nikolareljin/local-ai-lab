@@ -17,6 +17,41 @@
 
 ---
 
+## First - what is LangChain?
+
+If you have not used it: **LangChain is an open-source framework for building applications on top of
+language models.** It is not a model and not a database. It is two things:
+
+1. **A catalogue of components** for the steps a system like ours already has - loading documents,
+   splitting them into chunks, storing and searching embeddings, formatting prompts, calling a chat
+   model, parsing what comes back. You import them instead of writing them.
+2. **A way to compose those components**, called LCEL, where each stage is piped into the next with
+   `|` and the resulting chain can stream, batch, and run async without you implementing any of it.
+
+That is the whole idea. The catalogue is large - hundreds of loaders, dozens of vector stores, an
+adapter for nearly every model provider - and that breadth is the main reason people reach for it.
+
+Three things worth knowing before you start:
+
+- **It ships two official SDKs, Python and JavaScript.** Both are in this lesson. There is no
+  official .NET version, which is why there is no C# port here - see below.
+- **It moves fast.** Packages get split, renamed, and retired. One package this lesson was drafted
+  against was sunset while it was being written, and you will see the consequence in Concept 2.
+- **It is a dependency, not a library you vendor.** Two lines in `requirements.txt` pull in 18
+  packages. Whether that is a good trade is what the rest of the lesson measures.
+
+You already have a working RAG pipeline from Lesson 1, built by hand. That makes you the ideal reader
+for this: you can look at each LangChain component and know exactly which of your own files it
+replaces, because you wrote the equivalent.
+
+> **Why no C# in this lesson?** LangChain has no official .NET SDK - NuGet's `LangChain` 0.17.1 is an
+> unofficial community port, still pre-1.0. Rebuilding on it would teach you a third party's reading
+> of LangChain rather than LangChain itself. **.NET is not being skipped**: Microsoft's answer to this
+> problem is **Semantic Kernel**, and it gets its own lesson - **Lesson 10** - rather than a footnote
+> here.
+
+---
+
 ## What you'll learn
 
 In Lesson 1 you built every RAG primitive by hand: a loader, a splitter, a retriever, a prompt, and
@@ -189,7 +224,7 @@ earns its place, not because it exists.**
 
 The splitter is where the two pipelines genuinely part company:
 
-| | `localrag/chunk.py` | `RecursiveCharacterTextSplitter` |
+| Behaviour | `localrag/chunk.py` | `RecursiveCharacterTextSplitter` |
 |---|---|---|
 | whitespace | collapses everything to single spaces first | preserves the text as written |
 | break points | `". "`, `"! "`, `"? "`, newline, space, past the halfway mark | walks blank line, newline, space, empty in order |
@@ -299,7 +334,7 @@ one choosing.
 
 ## What the framework buys, and what it costs
 
-| | LangChain wins | Hand-rolled wins |
+| Dimension | LangChain wins | Hand-rolled wins |
 |---|---|---|
 | **Swapping components** | `InMemoryVectorStore` to FAISS is one line | you edit `store.py` |
 | **Ecosystem** | loaders, stores, and integrations already written | you write what you need |
@@ -339,10 +374,11 @@ The scorecard half deliberately is **not** identical:
 Same framework, same components, a different bill. Faking parity there would have hidden the one
 number this lesson exists to show you.
 
-There is no C# port because there is no official LangChain for .NET. NuGet has `LangChain` 0.17.1, a
-community port, still pre-1.0. Microsoft's answer to this problem is **Semantic Kernel**, and that is
-Lesson 10 - rebuilding here would teach you a third party's reading of LangChain rather than
-LangChain.
+There is no C# port because there is no official LangChain for .NET, as the primer at the top said.
+NuGet has `LangChain` 0.17.1, a community port, still pre-1.0, and rebuilding on it would teach you a
+third party's reading of LangChain rather than LangChain. **.NET is not being skipped** - Microsoft's
+answer to this problem is **Semantic Kernel**, and it gets a lesson of its own, **Lesson 10**, where
+it can be taught on its own terms instead of as a LangChain impersonation.
 
 ---
 

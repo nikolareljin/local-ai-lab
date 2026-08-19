@@ -241,8 +241,9 @@ polyglot. **[EXTEND.md](./EXTEND.md)** walks through three ways to take this fur
 
 ## Next lesson
 
-**Lesson 7 · LangChain** - rebuild the RAG pipeline with a framework, and see what the framework buys
-you (and what it costs) over the from-scratch version.
+[**Lesson 7 · Rebuild RAG with LangChain →**](../07-langchain-rag/README.md) - rebuild the pipeline
+on a framework, watch where it grounds differently, and price the swap in components replaced,
+lines you still write, and packages you did not read.
 
 ---
 
