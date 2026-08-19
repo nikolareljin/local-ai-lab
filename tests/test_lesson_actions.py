@@ -41,6 +41,18 @@ def config_driven_lessons():
     return found
 
 
+def dispatcher_body(number: int) -> str:
+    """The body of `run_lesson_<number>()` in the run script.
+
+    Asserts the function exists first: splitting on a missing marker would raise
+    IndexError and tell whoever renamed it nothing useful.
+    """
+    run = (ROOT / "run").read_text(encoding="utf-8")
+    marker = f"run_lesson_{number}()"
+    assert marker in run, f"`run` no longer defines {marker}; update BASH_LESSONS or the dispatcher"
+    return run.split(marker, 1)[1].split("\n}", 1)[0]
+
+
 def actions_in(lesson_json: Path) -> set:
     data = json.loads(lesson_json.read_text(encoding="utf-8"))
     return {
@@ -61,8 +73,7 @@ def test_config_driven_lesson_offers_demo_and_test(number):
 @pytest.mark.parametrize("number", BASH_LESSONS)
 def test_bash_lesson_offers_every_core_action(number):
     """Lessons 1-2 have to spell every core action out, since they bypass the engine."""
-    run = (ROOT / "run").read_text(encoding="utf-8")
-    body = run.split(f"run_lesson_{number}()", 1)[1].split("\n}", 1)[0]
+    body = dispatcher_body(number)
     for action in CORE_ACTIONS:
         # Case labels may be alternations, e.g. `lesson|preview)`.
         assert re.search(rf"^\s*[\w|]*\b{action}\b[\w|]*\)", body, re.M), (
@@ -94,9 +105,8 @@ def test_help_separates_training_from_running():
 
 def test_show_is_not_offered_for_the_hand_authored_lessons():
     """Lessons 1-2 have no elements to walk, so `show` must not pretend otherwise."""
-    run = (ROOT / "run").read_text(encoding="utf-8")
     for number in BASH_LESSONS:
-        body = run.split(f"run_lesson_{number}()", 1)[1].split("\n}", 1)[0]
+        body = dispatcher_body(number)
         assert not re.search(r"^\s*show\)", body, re.M), (
             f"run_lesson_{number} handles `show`, which the contract excludes"
         )
