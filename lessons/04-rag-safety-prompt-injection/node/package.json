@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Lesson 4 - RAG safety & prompt injection, Node.js port",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "start": "node safe_rag_demo.mjs"
   }

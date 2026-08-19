@@ -31,8 +31,9 @@ program, so you finish understanding how the thing actually works - not just how
 
 ## Quickstart
 
-Needs **Python 3.10+** (add **Node.js 18+** / **.NET 8 SDK** only for those ports; Lesson 7's Node
-port needs **Node 20+**, which is LangChain's floor, not ours).
+Needs **Python 3.10+** (add **Node.js 22+** / **.NET 8 SDK** only for those ports). Node 18 and 20
+are both past end-of-life and no longer receive security fixes, so the ports target **Node 22**, with
+**Node 24 LTS** the better choice if you are installing fresh.
 
 ```bash
 python -m venv venv && source venv/bin/activate    # Windows (PowerShell): .\venv\Scripts\Activate.ps1

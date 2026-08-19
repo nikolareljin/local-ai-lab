@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Lesson 5 - RAG evaluation & regression testing, Node.js port",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "start": "node eval_rag.mjs"
   }

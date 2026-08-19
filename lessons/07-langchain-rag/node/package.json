@@ -8,7 +8,7 @@
     "start": "node langchain_rag.mjs"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "dependencies": {
     "@langchain/core": "^1.2.0",

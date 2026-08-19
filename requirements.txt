@@ -5,5 +5,8 @@ numpy>=1.24
 requests>=2.31
 python-dotenv>=1.0
 flask>=3.0
-mcp>=1.2
+# Pinned below 2.0: mcp 2.0 renamed FastMCP to MCPServer and removed
+# mcp.server.fastmcp, which Lesson 2's server imports. Migrating that lesson
+# (Python, Node and .NET ports plus its written guide) is its own piece of work.
+mcp>=1.2,<2
 pytest>=7.0          # test runner for `./run -l N test` / `pytest -q`

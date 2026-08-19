@@ -10,9 +10,12 @@
     "ask": "node src/cli.js ask",
     "web": "node src/cli.js web"
   },
+  "engines": {
+    "node": ">=22"
+  },
   "dependencies": {
-    "express": "^4.19.2",
-    "mammoth": "^1.7.2",
+    "express": "^5.2.1",
+    "mammoth": "^1.12.1",
     "multer": "^2.2.0",
     "pdf-parse": "^1.1.1"
   }
