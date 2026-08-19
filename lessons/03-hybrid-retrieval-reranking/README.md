@@ -5,6 +5,7 @@
 > **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** - a hands-on course for building local AI.
 >
 > **Interactive version (slides):** https://nikolareljin.github.io/local-ai-lab/lesson-3-hybrid-retrieval-reranking.html
+> **Read it locally (no GitHub Pages):** `./run -l 3 lesson`
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 > **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
@@ -65,6 +66,7 @@ From the repo root - the `demo` action prints the rankings and exits, with **not
 ./run -l 3 --lang node demo     # Node.js - same output
 ./run -l 3 --lang csharp demo   # C# / .NET 8 - same output
 ./run -l 3 test                 # the offline Python test
+./run -l 3 lesson               # read this lesson in a browser, served locally
 ./run -l 3 show                 # walk through this lesson's steps (code, data, prompts, commands)
 ```
 

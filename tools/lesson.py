@@ -559,7 +559,7 @@ def cmd_preview(args):
     class Handler(http.server.SimpleHTTPRequestHandler):
         def do_GET(self):
             # Only the root is the lesson; /index.html falls through to docs/index.html
-            # so the nav "Home" link works in the preview.
+            # so the nav "Home" link works when reading the lesson locally.
             if self.path.split("?")[0] == "/":
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -589,7 +589,70 @@ def cmd_preview(args):
 
     port = free_port()
     with socketserver.TCPServer(("127.0.0.1", port), Handler) as httpd:
-        print(f"Lesson {args.number} · instructions preview → http://127.0.0.1:{port}  (Ctrl-C to stop)",
+        print(f"Lesson {args.number} → http://127.0.0.1:{port}   (served locally, Ctrl-C to stop)",
+              flush=True)
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            pass
+    return 0
+
+
+# --------------------------------------------------------------------------- guide (Lessons 1-2)
+# Lessons 1 and 2 predate the config-driven format: their guides are hand-authored
+# Markdown at the repo root and hand-authored pages under docs/. They still need
+# `lesson`, because a reader should never have to reach for GitHub Pages to read a
+# lesson locally - whichever era the lesson comes from.
+GUIDE_PAGES = {1: "lesson-1-rag.html", 2: "lesson-2-mcp.html"}
+
+
+def guide_sources(number):
+    """(markdown guide, published page) for a hand-authored lesson, or (None, None).
+
+    `number` is a lesson number; anything int() accepts works, so callers can pass
+    the parsed CLI value or a plain int from a test.
+    """
+    n = int(number)
+    md = ROOT / f"LESSON{n}.md"
+    name = GUIDE_PAGES.get(n)
+    page = ROOT / "docs" / name if name else None
+    return (md if md.is_file() else None, page if page and page.is_file() else None)
+
+
+def cmd_guide(args):
+    """Backs `./run -l N lesson` for the hand-authored lessons (1-2).
+
+    Serves the published page from docs/ so the lesson reads exactly as it does on
+    the course site, with no network and no GitHub Pages.
+
+    There is deliberately no terminal equivalent here. For config-driven lessons
+    `show` walks the elements in lesson.json - code, configs, commands, filtered by
+    language - which exists in no other form. Lessons 1-2 have no such structure:
+    their guide is a Markdown file, and `less LESSON1.md` already reads it better
+    than anything this script would print.
+    """
+    _, page = guide_sources(args.number)
+    if page is None:
+        sys.exit(f"[ERROR] No published page for lesson {args.number} under docs/.")
+
+    docs_root = ROOT / "docs"
+    target = page.name
+
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        def translate_path(self, path):
+            # Decode before normalising so percent-encoded traversal cannot escape docs/.
+            rel = unquote(path.split("?", 1)[0].split("#", 1)[0]).lstrip("/")
+            clean = os.path.normpath(rel or target)
+            if clean in (".", "") or clean.startswith("..") or os.path.isabs(clean):
+                return str(docs_root / target)
+            return str(docs_root / clean)
+
+        def log_message(self, *a):
+            pass
+
+    port = free_port()
+    with socketserver.TCPServer(("127.0.0.1", port), Handler) as httpd:
+        print(f"Lesson {args.number} → http://127.0.0.1:{port}   (served locally, Ctrl-C to stop)",
               flush=True)
         try:
             httpd.serve_forever()
@@ -601,7 +664,7 @@ def cmd_preview(args):
 def cmd_build(args):
     """Generate the publishable GitHub Pages page (docs/lesson-N-slug.html).
 
-    Same template + assets as the local preview, but with relative `./assets`
+    Same template + assets as `./run -l N lesson` serves, but with relative `./assets`
     references so it renders on Pages exactly like the hand-authored Lessons 1-2.
     Code/config/text are baked in from the referenced files at build time.
     """
@@ -664,10 +727,14 @@ def main(argv=None):
     sp.add_argument("--html", action="store_true", help="emit a standalone HTML page instead of terminal text")
     sp.set_defaults(fn=cmd_show)
 
-    sp = sub.add_parser("preview", help="serve the rendered lesson instructions locally")
+    sp = sub.add_parser("preview", help="serve a config-driven lesson locally - backs `./run -l N lesson`")
     sp.add_argument("number", type=int)
     sp.add_argument("--lang", default=None, choices=SUPPORTED_LANGS)
     sp.set_defaults(fn=cmd_preview)
+
+    sp = sub.add_parser("guide", help="serve a hand-authored lesson page locally - backs `./run -l N lesson` for Lessons 1-2")
+    sp.add_argument("number", type=int)
+    sp.set_defaults(fn=cmd_guide)
 
     sp = sub.add_parser("build", help="generate the publishable docs/ page (GitHub Pages)")
     sp.add_argument("number", type=int)

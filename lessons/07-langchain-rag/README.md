@@ -5,6 +5,7 @@
 > **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** - a hands-on course for building local AI.
 >
 > **Interactive version (slides):** https://nikolareljin.github.io/local-ai-lab/lesson-7-langchain-rag.html
+> **Read it locally (no GitHub Pages):** `./run -l 7 lesson`
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 > **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
@@ -109,17 +110,19 @@ From the repo root. The first run installs this lesson's dependencies into the c
 
 ```bash
 ./run -l 7 demo                 # Python - the comparison, then the scorecard
-./run -l 7 --lang node demo     # Node.js - same pipeline, different bill (needs Node 20+)
+./run -l 7 --lang node demo     # Node.js - same pipeline, different bill
 ./run -l 7 test                 # the offline test (works with or without LangChain)
+./run -l 7 lesson               # read this lesson in a browser, served locally
 ./run -l 7 show                 # walk through this lesson's steps
 ./run -l 7                      # the playground (default)
 ```
 
-> **The Node port needs Node 20+, not the course's usual 18+.** `@langchain/core` and
-> `@langchain/textsplitters` both declare `node >= 20`. That is worth noticing rather than working
-> around: taking the dependency also took its floor, and moved the runtime requirement of a lesson
-> whose Python half runs happily on 3.10. `node/package.json` declares the same engine so `npm
-> install` says so up front instead of failing somewhere further in.
+> **A dependency can move your runtime floor.** `@langchain/core` and `@langchain/textsplitters`
+> both declare `node >= 20`, so taking them would have ruled out Node 18 - which the course used to
+> recommend - even though this lesson's Python half runs happily on 3.10. That cost is real and worth
+> watching for. It happens not to bind here: Node 18 and 20 are both end-of-life now, so the whole
+> course targets **Node 22** regardless, and every port declares that engine. Check this on your own
+> projects, where the arithmetic often comes out the other way.
 
 Output:
 
@@ -369,7 +372,7 @@ The scorecard half deliberately is **not** identical:
 | Runtime | Packages | Install size | Minimum runtime |
 |---------|----------|--------------|-----------------|
 | Python (`langchain-core` + `langchain-text-splitters`) | +18, to 67 | +~9 MB, to ~43 MB | 3.10, unchanged |
-| Node (`@langchain/core` + `@langchain/textsplitters`) | +12, from none at all | +~48 MB | 18 → **20** |
+| Node (`@langchain/core` + `@langchain/textsplitters`) | +12, from none at all | +~48 MB | needs 20; course floor is 22 |
 
 Same framework, same components, a different bill. Faking parity there would have hidden the one
 number this lesson exists to show you.

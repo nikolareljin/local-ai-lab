@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Lesson 6 - Repo-aware AI assistant, Node.js port",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "start": "node repo_assistant.mjs"
   }

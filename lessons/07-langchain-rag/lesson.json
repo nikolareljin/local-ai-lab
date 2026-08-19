@@ -23,7 +23,7 @@
       "type": "command",
       "kicker": "Setup",
       "title": "What you need",
-      "body": "This is the **one lesson in the course that installs something**, and that is deliberate: the dependency is the subject. `./run -l 7` puts `langchain-core` and `langchain-text-splitters` into the course venv on first use. If you skip the install, the demo still runs the hand-rolled side, marks the LangChain column *not installed*, and tells you the command - and `./run -l 7 test` passes either way. The Node port additionally needs **Node 20+**, not the course's usual 18+, because `@langchain/core` declares `node >= 20` - taking the dependency also took its floor. Run everything from the repo root:",
+      "body": "This is the **one lesson in the course that installs something**, and that is deliberate: the dependency is the subject. `./run -l 7` puts `langchain-core` and `langchain-text-splitters` into the course venv on first use. If you skip the install, the demo still runs the hand-rolled side, marks the LangChain column *not installed*, and tells you the command - and `./run -l 7 test` passes either way. `@langchain/core` declares `node >= 20`, so the dependency would have moved the runtime floor on its own - it happens not to bind, because Node 18 and 20 are both end-of-life and the whole course now targets **Node 22**. Run everything from the repo root:",
       "shell": "./run -l 7                 # Python: the playground (default)\n./run -l 7 demo            # Python: the comparison + scorecard, print and exit\n./run -l 7 --lang node demo  # Node.js: same pipeline, different dependency bill"
     },
     {

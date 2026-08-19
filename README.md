@@ -31,8 +31,9 @@ program, so you finish understanding how the thing actually works - not just how
 
 ## Quickstart
 
-Needs **Python 3.10+** (add **Node.js 18+** / **.NET 8 SDK** only for those ports; Lesson 7's Node
-port needs **Node 20+**, which is LangChain's floor, not ours).
+Needs **Python 3.10+** (add **Node.js 22+** / **.NET 8 SDK** only for those ports). Node 18 and 20
+are both past end-of-life and no longer receive security fixes, so the ports target **Node 22**, with
+**Node 24 LTS** the better choice if you are installing fresh.
 
 ```bash
 python -m venv venv && source venv/bin/activate    # Windows (PowerShell): .\venv\Scripts\Activate.ps1
@@ -161,12 +162,23 @@ approach and related work on the **[About page](https://nikolareljin.github.io/l
 - **[PRODUCTION_NOTES.md](./PRODUCTION_NOTES.md)** - using this for real? What the demo keeps simple on
   purpose (security, testing, performance) and what you'd harden for production.
 
+There are two ways into every lesson, 1 through 7 - **read it**, or **run it**:
+
 ```bash
+# TRAINING - read the lesson and click through the steps, served from your machine
+./run -l <N> lesson        # opens the lesson in a browser (no GitHub Pages, works offline)
+
+# RUNNING - run the code and tinker with it
+./run -l <N>               # the interactive playground (the default action)
+./run -l <N> demo          # one-shot, print-and-exit: no model, no network, nothing to configure
+./run -l <N> test          # the lesson's offline test
+
 ./run list                 # every lesson and its actions
-./run -l <N> demo          # one-shot, print-and-exit run (lessons 3-7; --lang node|csharp where ported)
-./run -l <N> test          # the lesson's offline test (no network, no model)
-./run -h                   # full help
+./run -h                   # full help, including each lesson's extras
 ```
+
+`demo` is the one to reach for first: it shows what a lesson does with no provider
+configured and no API key.
 
 ---
 
