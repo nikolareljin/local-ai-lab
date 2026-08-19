@@ -162,21 +162,23 @@ approach and related work on the **[About page](https://nikolareljin.github.io/l
 - **[PRODUCTION_NOTES.md](./PRODUCTION_NOTES.md)** - using this for real? What the demo keeps simple on
   purpose (security, testing, performance) and what you'd harden for production.
 
-Every lesson - 1 through 7 - understands the same four actions, so you never have to
-remember which era a lesson comes from:
+There are two ways into every lesson, 1 through 7 - **read it**, or **run it**:
 
 ```bash
-./run list                 # every lesson and its actions
-./run -l <N> demo          # one-shot, print-and-exit run: no model, no network
+# TRAINING - read the lesson and click through the steps, served from your machine
+./run -l <N> lesson        # opens the lesson in a browser (no GitHub Pages, works offline)
+
+# RUNNING - run the code and tinker with it
+./run -l <N>               # the interactive playground (the default action)
+./run -l <N> demo          # one-shot, print-and-exit: no model, no network, nothing to configure
 ./run -l <N> test          # the lesson's offline test
-./run -l <N> show          # read the lesson in your terminal
-./run -l <N> preview       # read the lesson in a browser, served locally (no GitHub Pages)
-./run -l <N>               # the interactive playground (the default)
+
+./run list                 # every lesson and its actions
 ./run -h                   # full help, including each lesson's extras
 ```
 
-`show` and `preview` are the two to reach for when you want to **read** a lesson rather
-than run it, and `demo` when you want to watch it work without a model or an API key.
+`demo` is the one to reach for first: it shows what a lesson does with no provider
+configured and no API key.
 
 ---
 

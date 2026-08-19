@@ -21,28 +21,30 @@ Usage:
   ./run -l <N> [--lang python|node|csharp] [action] [args]
   ./run list                                  # list all lessons
 
-Every lesson understands the same four actions:
-  demo        one-shot: print what the lesson does and exit (no model, no network)
-  test        the lesson's offline test
-  show        read the lesson in your terminal
-  preview     read the lesson in a browser, served locally (no GitHub Pages)
-  web         the interactive playground — the default when you pass no action
+Two ways into any lesson, 1 through 7:
+
+  TRAINING - read the lesson, click through the steps
+    ./run -l <N> lesson       open the lesson in a browser, served locally (no GitHub Pages)
+
+  RUNNING - run the code and tinker with it
+    ./run -l <N>              the interactive playground (the default action)
+    ./run -l <N> demo         one-shot: print what it does and exit - no model, no network
+    ./run -l <N> test         the lesson's offline test
 
 Lesson-specific extras:
   -l 1   RAG app       ask "question" · repl · index
   -l 2   MCP server    serve · register
+  -l 3+  authoring     show   walk the lesson's code and configs in the terminal
   -l 7   LangChain     ask "question" [--native] [--arm bm25|embed]
 
 Examples:
-  ./run -l 1                                  # launch the RAG web UI (auto-picks a free port)
-  ./run -l 1 demo                             # the whole pipeline printed, no model needed
-  ./run -l 1 show                             # read Lesson 1 in the terminal
-  ./run -l 1 preview                          # read Lesson 1 in a browser, locally
+  ./run -l 1 lesson                           # read Lesson 1 locally, click through it
+  ./run -l 1                                  # run it: the RAG web UI (auto-picks a free port)
+  ./run -l 1 demo                             # run it without any AI: the pipeline, printed
   ./run -l 1 ask "How do I reset the device?" # one-shot question (calls a provider)
   ./run -l 2 demo                             # call the MCP tools over stdio (no LLM needed)
-  ./run -l 3 demo                             # print Lesson 3's rankings and exit
   ./run -l 3 --lang csharp demo               # the C#/.NET port of the same demo
-  ./run -l 7 preview                          # read Lesson 7 in a browser, locally
+  ./run -l 7 lesson                           # read Lesson 7 locally
   ./run -l 3 show --html > /tmp/l3.html       # standalone HTML of the instructions
 
 Languages (polyglot — Option B): python (default/reference) · node · csharp.
@@ -175,14 +177,11 @@ run_lesson_1() {
     test)
       exec "$PYTHON_BIN" -m pytest -q "$ROOT_DIR/tests/test_smoke.py"
       ;;
-    show)
+    lesson|preview)
       exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" guide "1"
       ;;
-    preview)
-      exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" guide "1" --preview
-      ;;
     *)
-      log_error "Lesson 1 actions:  web | demo | ask \"q\" | repl | index | test | show | preview"
+      log_error "Lesson 1 actions:  lesson | web | demo | ask \"q\" | repl | index | test"
       exit 1
       ;;
   esac
@@ -211,14 +210,11 @@ run_lesson_2() {
     test)
       exec "$PYTHON_BIN" -m pytest -q "$ROOT_DIR/tests/test_mcp.py"
       ;;
-    show)
+    lesson|preview)
       exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" guide "2"
       ;;
-    preview)
-      exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" guide "2" --preview
-      ;;
     *)
-      log_error "Lesson 2 actions:  web | demo | serve | register | test | show | preview"
+      log_error "Lesson 2 actions:  lesson | web | demo | serve | register | test"
       exit 1
       ;;
   esac
@@ -238,7 +234,8 @@ run_registry_lesson() {
   if [[ -n "$dir" ]]; then
     case "${ACTION:-}" in
       show)    exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" show    "$LESSON" ${langargs[@]+"${langargs[@]}"} "$@" ;;
-      preview) exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" preview "$LESSON" ${langargs[@]+"${langargs[@]}"} ;;
+      lesson|preview)
+               exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" preview "$LESSON" ${langargs[@]+"${langargs[@]}"} ;;
       build)   exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" build   "$LESSON" ${langargs[@]+"${langargs[@]}"} ;;
       *)       exec "$PYTHON_BIN" "$ROOT_DIR/tools/lesson.py" run     "$LESSON" ${ACTION:+"$ACTION"} ${langargs[@]+"${langargs[@]}"} "$@" ;;
     esac

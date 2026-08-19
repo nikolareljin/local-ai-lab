@@ -19,7 +19,8 @@ Describe the demo. Run it from the repo root:
 
 ```bash
 ./run -l N            # default action
-./run -l N show       # walk through the lesson's elements
+./run -l N lesson     # read the lesson in a browser, served locally (training)
+./run -l N show       # walk through the lesson's elements (authoring)
 ```
 
 ## Concept

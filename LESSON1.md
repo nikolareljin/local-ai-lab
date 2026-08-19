@@ -5,6 +5,7 @@
 > **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** - a hands-on course for building local AI.
 >
 > **Interactive version (slides):** https://nikolareljin.github.io/local-ai-lab/lesson-1-rag.html
+> **Read it locally (no GitHub Pages):** `./run -l 1 lesson`
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 > **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)

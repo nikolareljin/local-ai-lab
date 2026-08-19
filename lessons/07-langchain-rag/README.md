@@ -5,6 +5,7 @@
 > **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** - a hands-on course for building local AI.
 >
 > **Interactive version (slides):** https://nikolareljin.github.io/local-ai-lab/lesson-7-langchain-rag.html
+> **Read it locally (no GitHub Pages):** `./run -l 7 lesson`
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 > **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
@@ -111,6 +112,7 @@ From the repo root. The first run installs this lesson's dependencies into the c
 ./run -l 7 demo                 # Python - the comparison, then the scorecard
 ./run -l 7 --lang node demo     # Node.js - same pipeline, different bill
 ./run -l 7 test                 # the offline test (works with or without LangChain)
+./run -l 7 lesson               # read this lesson in a browser, served locally
 ./run -l 7 show                 # walk through this lesson's steps
 ./run -l 7                      # the playground (default)
 ```
