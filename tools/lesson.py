@@ -559,7 +559,7 @@ def cmd_preview(args):
     class Handler(http.server.SimpleHTTPRequestHandler):
         def do_GET(self):
             # Only the root is the lesson; /index.html falls through to docs/index.html
-            # so the nav "Home" link works in the preview.
+            # so the nav "Home" link works when reading the lesson locally.
             if self.path.split("?")[0] == "/":
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -589,7 +589,7 @@ def cmd_preview(args):
 
     port = free_port()
     with socketserver.TCPServer(("127.0.0.1", port), Handler) as httpd:
-        print(f"Lesson {args.number} · instructions preview → http://127.0.0.1:{port}  (Ctrl-C to stop)",
+        print(f"Lesson {args.number} → http://127.0.0.1:{port}   (served locally, Ctrl-C to stop)",
               flush=True)
         try:
             httpd.serve_forever()
@@ -619,7 +619,7 @@ def guide_sources(number):
 
 
 def cmd_guide(args):
-    """`preview` for the hand-authored lessons (1-2).
+    """Backs `./run -l N lesson` for the hand-authored lessons (1-2).
 
     Serves the published page from docs/ so the lesson reads exactly as it does on
     the course site, with no network and no GitHub Pages.
@@ -651,7 +651,7 @@ def cmd_guide(args):
 
     port = free_port()
     with socketserver.TCPServer(("127.0.0.1", port), Handler) as httpd:
-        print(f"Lesson {args.number} · instructions preview → http://127.0.0.1:{port}  (Ctrl-C to stop)",
+        print(f"Lesson {args.number} → http://127.0.0.1:{port}   (served locally, Ctrl-C to stop)",
               flush=True)
         try:
             httpd.serve_forever()
@@ -663,7 +663,7 @@ def cmd_guide(args):
 def cmd_build(args):
     """Generate the publishable GitHub Pages page (docs/lesson-N-slug.html).
 
-    Same template + assets as the local preview, but with relative `./assets`
+    Same template + assets as `./run -l N lesson` serves, but with relative `./assets`
     references so it renders on Pages exactly like the hand-authored Lessons 1-2.
     Code/config/text are baked in from the referenced files at build time.
     """
@@ -726,12 +726,12 @@ def main(argv=None):
     sp.add_argument("--html", action="store_true", help="emit a standalone HTML page instead of terminal text")
     sp.set_defaults(fn=cmd_show)
 
-    sp = sub.add_parser("preview", help="serve the rendered lesson instructions locally")
+    sp = sub.add_parser("preview", help="serve a config-driven lesson locally - backs `./run -l N lesson`")
     sp.add_argument("number", type=int)
     sp.add_argument("--lang", default=None, choices=SUPPORTED_LANGS)
     sp.set_defaults(fn=cmd_preview)
 
-    sp = sub.add_parser("guide", help="preview a hand-authored lesson page locally (Lessons 1-2)")
+    sp = sub.add_parser("guide", help="serve a hand-authored lesson page locally - backs `./run -l N lesson` for Lessons 1-2")
     sp.add_argument("number")
     sp.set_defaults(fn=cmd_guide)
 

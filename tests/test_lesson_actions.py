@@ -60,7 +60,7 @@ def test_config_driven_lesson_offers_demo_and_test(number):
 
 @pytest.mark.parametrize("number", BASH_LESSONS)
 def test_bash_lesson_offers_every_core_action(number):
-    """Lessons 1-2 have to spell all four out, since they bypass the engine."""
+    """Lessons 1-2 have to spell every core action out, since they bypass the engine."""
     run = (ROOT / "run").read_text(encoding="utf-8")
     body = run.split(f"run_lesson_{number}()", 1)[1].split("\n}", 1)[0]
     for action in CORE_ACTIONS:
