@@ -1,0 +1,26 @@
+# Lesson 7 only. The course itself stays on the dependencies in the repo-root
+# requirements.txt - this file is the dependency the lesson is arguing about.
+#
+#   ./run -l 7            installs these into the course venv
+#   ./run -l 7 test       does NOT need them; the test runs offline either way
+#
+# Measured with `pip download` (see `--measure` to re-derive on your machine):
+#   repo-root requirements alone ......... 49 packages, ~34 MB
+#   plus the two lines below ............. 67 packages, ~43 MB
+# so this lesson costs 18 extra packages and about 9 MB.
+#
+# langchain-community is deliberately absent: it is sunset upstream, and the
+# twenty-line BaseRetriever in python/lc_provider.py replaces the one thing we
+# needed from it. Adding it would take the install to 80 packages and ~52 MB.
+langchain-core>=1.0
+langchain-text-splitters>=1.0
+
+# NOT installed by `./run -l 7`, and deliberately not listed above: the scorecard
+# has to match exactly what the lesson installs. Only the `--native` paths need it
+# (`ask --native` and `ask --native --arm embed`); they import it lazily and print
+# this command if it is missing. It costs 2 further packages:
+#   pip install langchain-ollama
+#
+# `ask --arm embed` on its own does NOT need it - that path embeds through
+# LocalRagEmbeddings, the adapter in python/lc_provider.py, so it needs Ollama
+# running but no extra package.

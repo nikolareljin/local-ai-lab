@@ -1,0 +1,10 @@
+{
+  "chunk_size": 700,
+  "chunk_overlap": 120,
+  "top_k": 3,
+  "questions": [
+    "What is the factory reset procedure?",
+    "Why does the status ring stay amber?",
+    "Which endpoint exports the logging buffer?"
+  ]
+}
