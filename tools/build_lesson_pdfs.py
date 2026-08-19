@@ -145,6 +145,9 @@ def css() -> str:
       th, td { border: 1px solid #94a3b8; padding: 3pt 5pt; font-size: 8.8pt;
                text-align: left; vertical-align: top; }
       th { background: #e2e8f0; }
+      /* Inline code defaults to 9pt, larger than the 8.8pt table text, so a long
+         identifier in a narrow column overruns the cell border. Shrink it to fit. */
+      th code, td code { font-size: 7.4pt; padding: 0 1pt; }
       blockquote { color: #475569; border-left: 3px solid #5b9dff;
                    padding: 2pt 0 2pt 9pt; margin: 8pt 0; }
       hr { border: none; border-top: 1px solid #e2e8f0; margin: 10pt 0; }
@@ -207,6 +210,11 @@ def build(spec: tuple[str, str]) -> bool:
     # inline-code background would bleed onto code blocks. Unwrap <code> inside <pre>.
     body = re.sub(r"<pre><code[^>]*>", "<pre>", body)
     body = re.sub(r"</code></pre>", "</pre>", body)
+    # An empty header cell (a Markdown table written as `| | A | B |`) makes
+    # xhtml2pdf size that column at zero, after which every body cell in the row
+    # is drawn on top of its neighbour. Give such cells a non-breaking space so
+    # the column keeps a width and the row lays out normally.
+    body = re.sub(r"<th([^>]*)>\s*</th>", r"<th\1>&nbsp;</th>", body)
     html = (
         "<html><head><meta charset='utf-8'>"
         f"<style>{css()}</style></head><body>{body}</body></html>"
