@@ -33,7 +33,37 @@ typed items (they may be intermingled):
 Any element may be `lang`-tagged for per-language walkthroughs. File paths are relative to the lesson
 directory. Add code/commands/media by dropping files and referencing them here - no engine changes.
 
-## Running & previewing (`./run`)
+## The action contract
+
+A lesson is two things, and the actions say which is which.
+
+**Training** - read it, click through the steps:
+
+| action | what it must do | applies to |
+|--------|-----------------|------------|
+| `lesson` | serve the lesson's page locally so it reads exactly as it does on the course site, offline | every lesson, 1-7 |
+
+**Running** - run the code and tinker with it:
+
+| action | what it must do | applies to |
+|--------|-----------------|------------|
+| `demo` | print what the lesson does and exit; **no model, no network** | every lesson, 1-7 |
+| `demo` output | committed as `expected-output.txt` and diffed by the lesson's test, so the printed run cannot drift | config-driven lessons (3+) |
+| `test` | the lesson's offline test | every lesson, 1-7 |
+| `web` | the interactive playground, and the default action | where the lesson has one |
+
+A new lesson is not finished until `lesson`, `demo` and `test` all work. `lesson` comes
+free from the engine, so a `lesson.json` only has to declare `demo` and `test` (plus
+`web`). `tests/test_lesson_actions.py` enforces it, so drift fails the suite instead of
+surfacing later as a reader who cannot open a lesson without GitHub Pages.
+
+`show` is **not** part of that contract. It walks a lesson's elements in the terminal -
+code, configs, commands, filtered by language - which is an authoring and deep-dive tool,
+and only config-driven lessons have the structure for it. Lessons 1-2 deliberately do not
+implement it: their guide is a Markdown file, and `less LESSON1.md` reads it better than
+anything this engine would print.
+
+## Reading and running a lesson (`./run`)
 
 ```bash
 ./run list                       # all lessons (1-2 + the config-driven registry)
@@ -42,25 +72,25 @@ directory. Add code/commands/media by dropping files and referencing them here -
 ./run -l N --lang node|csharp    # pick a language
 
 # Operation B - go through the instructions (no GitHub Pages needed):
-./run -l N show                  # terminal walkthrough of every element
+./run -l N lesson                # serve the lesson's page at http://127.0.0.1:<port> (training)
+./run -l N show                  # terminal walkthrough of every element (authoring)
 ./run -l N show --lang node      # filtered to one language
-./run -l N preview               # serve the rendered instructions at http://127.0.0.1:<port>
 ./run -l N build                 # write the publishable docs/lesson-N-slug.html (GitHub Pages)
 ./run -l N show --html > x.html  # standalone HTML page (open in a browser)
 ```
 
-The preview is the **same step slideshow as Lessons 1-2** (language selector, dots, prev/next,
+What `lesson` serves is the **same step slideshow as Lessons 1-2** (language selector, dots, prev/next,
 `#step-N` deep links, copy buttons). `build` emits a page into `docs/` that references `./assets`
 relatively, so once committed it renders on GitHub Pages exactly like the hand-authored lessons.
 
 ### Testing the instructions locally without GitHub Pages
 
-`./run -l N preview` renders the lesson as the **same step-by-step slideshow** the published lessons
+`./run -l N lesson` renders the lesson as the **same step-by-step slideshow** the published lessons
 use (deep-linkable `#step-N`, dots, prev/next, copy buttons) and serves it on localhost. It is
 **template-driven**: [`tools/templates/lesson-preview.html`](../tools/templates/lesson-preview.html)
 *references* the real `docs/assets/style.css` + `slider.js` (not inlined) and is filled from
 `lesson.json` - one step per element, with `code`/`config` steps reading their files. So a local
-preview equals what gets published, with nothing deployed. `show` is the quick terminal version;
+what you read locally equals what gets published, with nothing deployed. `show` is the terminal version;
 `show --html` writes a standalone file (assets referenced by absolute path).
 
 ## Experiment GUI (the shared `web` action)
@@ -99,7 +129,7 @@ the byte-checked `demo` ports.
 tools/new-lesson.sh NN slug "Title"   # scaffold from lessons/_template/
 # add code under python/ node/ dotnet/, reference it in lesson.json elements
 ./run -l NN show                      # check the walkthrough
-./run -l NN preview                   # check the rendered page
+./run -l NN lesson                    # check the rendered page
 tools/sync-curriculum.sh              # regenerate lessons/CURRICULUM.md
 python3 tools/build_lesson_pdfs.py     # build the PDF (Windows: python tools/build_lesson_pdfs.py; lessons are auto-discovered → docs/pdf/LESSON<n>.pdf)
 python3 tools/sync-readme-downloads.py # refresh the README "Lessons & downloads" table (Windows: python tools/sync-readme-downloads.py)
@@ -125,6 +155,7 @@ update any cross-lesson links - the directory rename alone isn't enough.
 
 ## Engine
 
-[`../tools/lesson.py`](../tools/lesson.py) - `list` · `run` · `show` (with `--html`) · `preview`. The
+[`../tools/lesson.py`](../tools/lesson.py) - `list` · `run` · `show` (with `--html`) · `preview` (the
+engine behind `./run -l N lesson`) · `guide` (the same for Lessons 1-2). The
 bash [`../run`](../run) is a thin entry point: Lessons 1-2 use bespoke handlers; lessons 3+ delegate
 to the engine. Reuses [`../scripts/include.sh`](../scripts/include.sh) (`PYTHON_BIN`, `ensure_venv`).

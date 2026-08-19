@@ -1,0 +1,367 @@
+<!doctype html>
+<!-- GENERATED FILE - do not edit by hand. Built by tools/lesson.py (`./run -l N build`) from lessons/NN-slug/lesson.json; edit the lesson.json or tools/templates/lesson-preview.html instead. -->
+<html lang="en" data-lang="python">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lesson 7 · Rebuild RAG with LangChain - local-ai-lab</title>
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32.png" />
+  <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
+  <!-- Reuse the published course assets (NOT inlined): the same stylesheet and
+       step slider Lessons 1-2 use, so the local preview matches the live pages. -->
+  <link rel="stylesheet" href="./assets/style.css" />
+  <link rel="stylesheet" href="./assets/highlight.css" />
+  <style>.lang-badge{font-size:.7rem;background:#eef;color:#225;padding:.05rem .45rem;border-radius:999px;margin-left:.5rem;vertical-align:middle;}</style>
+  <script>try{document.documentElement.dataset.lang=localStorage.getItem('localrag-lang')||'python'}catch(e){document.documentElement.dataset.lang='python'}</script>
+</head>
+<body>
+  <div class="topbar"><div class="inner">
+    <span class="brand"><a href="./index.html" style="color:inherit">local-ai<span class="dot">·</span>lab</a></span>
+    <nav><details class="nav-dd"><summary>Lessons</summary><div class="nav-dd-menu"><a href="./lesson-1-rag.html">1 · RAG from scratch</a><a href="./lesson-2-mcp.html">2 · MCP servers</a><a href="./lesson-3-hybrid-retrieval-reranking.html">3 · Hybrid Retrieval &amp; Reranking</a><a href="./lesson-4-rag-safety-prompt-injection.html">4 · RAG Safety &amp; Prompt Injection</a><a href="./lesson-5-rag-evaluation-regression-testing.html">5 · RAG Evaluation &amp; Regression Testing</a><a href="./lesson-6-repo-aware-assistant.html">6 · Repo-aware AI Assistant</a><a href="./lesson-7-langchain-rag.html">7 · Rebuild RAG with LangChain</a></div></details><a href="./documentation.html">Documentation</a><a href="./pdf/CHEATSHEET.pdf" target="_blank" rel="noopener">Cheat-sheet</a><a href="./troubleshooting.html">Troubleshooting</a><a href="./about.html">About</a><a href="./pdf/INSTALL.pdf" target="_blank" rel="noopener">Install</a></nav>
+  </div></div>
+
+  <div class="wrap">
+    <div class="lesson-head">
+      <div class="eyebrow">Lesson 7</div>
+      <h1>Rebuild RAG with LangChain</h1>
+      <p>Rebuild the Lesson 1 RAG pipeline on LangChain over the same corpus with the same system prompt, watch where the two disagree, and price the swap: which hand-rolled file each component replaced, how many lines you still maintain, and how many packages moved into your dependency tree. Python and Node.js, with the three escape hatches - a chat model, an embeddings adapter and a retriever - you still have to write yourself.</p>
+      <div class="langsel" role="group" aria-label="Language"><span class="langsel-label">Follow along in:</span><button class="langsel-btn" data-setlang="python" aria-label="Python">Python</button><button class="langsel-btn" data-setlang="node" aria-label="Node.js">Node.js</button></div>
+    </div>
+
+    <div class="progress"><span></span></div>
+    <div class="dots"></div>
+
+    <div class="deck">
+<section class='slide'><div class='step-no'>Overview</div><h2>What you'll build</h2><p><strong>New to LangChain?</strong> It is an open-source framework for building on top of language models - not a model, not a database. Two things: a <strong>catalogue of components</strong> for steps you already have (load, split, embed, retrieve, prompt, call a model) and a way to <strong>compose</strong> them with <code>|</code>, called LCEL. It ships official Python and JavaScript SDKs, and no .NET one - which is why this lesson is Python and Node, and why <strong>.NET gets its own lesson (10 · Semantic Kernel)</strong> rather than a LangChain impersonation.</p><p>Lessons 1-6 built every RAG primitive by hand. <strong>LangChain ships all of them as components.</strong> This lesson rebuilds the same pipeline on top of it - same corpus, same system prompt, same citation contract - and then does the thing most framework write-ups skip: it <strong>counts the cost</strong>.</p><p>You'll watch the two pipelines ground the same questions, find the one question where they <em>disagree</em> (and understand why), and read a scorecard that maps every LangChain component onto the Lesson 1 file it replaced. Then the part that matters: LangChain replaces five of seven components outright, and for the other two - your provider and your retriever - <strong>you subclass its base classes and hand it your own.</strong></p><p>Nothing here is mysterious, because you wrote the twin of every component. Pick a language above and press → to begin.</p><pre><code>Rebuild RAG with LangChain, then count what the framework cost.
+
+  the same corpus ─▶ LOAD ─▶ SPLIT ─▶ RETRIEVE ─▶ PROMPT ─▶ ANSWER ─▶ cited answer
+                       │       │         │          │         │
+        ┌──────────────┴───────┴─────────┴──────────┴─────────┴──────────────┐
+        ▼                                                                     ▼
+   hand-rolled (Lesson 1)                                        LangChain (Lesson 7)
+   extract.py    45L                                             Document(...)
+   chunk.py      46L                                             RecursiveCharacterTextSplitter
+   store.py      66L                                             InMemoryVectorStore
+   retriever.py 119L                                             BaseRetriever subclass  ◀── yours
+   prompts.py    19L                                             ChatPromptTemplate
+   providers/    37L                                             SimpleChatModel subclass ◀── yours
+   engine.py     47L                                             LCEL  ( | )
+        │                                                                     │
+        ▼                                                                     ▼
+   379 lines you can read                                        147 lines you still write
+   49 packages installed                                         67 packages installed
+
+Two things the framework could NOT replace: your provider and your retriever. You
+subclass its base classes and hand it your own - which is why writing the
+primitives first was worth it. Nothing above is mysterious; you wrote its twin.</code></pre></section>
+<section class='slide'><div class='step-no'>Setup</div><h2>What you need</h2><p>This is the <strong>one lesson in the course that installs something</strong>, and that is deliberate: the dependency is the subject. <code>./run -l 7</code> puts <code>langchain-core</code> and <code>langchain-text-splitters</code> into the course venv on first use. If you skip the install, the demo still runs the hand-rolled side, marks the LangChain column <em>not installed</em>, and tells you the command - and <code>./run -l 7 test</code> passes either way. <code>@langchain/core</code> declares <code>node &gt;= 20</code>, so the dependency would have moved the runtime floor on its own - it happens not to bind, because Node 18 and 20 are both end-of-life and the whole course now targets <strong>Node 22</strong>. Run everything from the repo root:</p><div class='block'><div class='label'>run</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">7</span>                 <span class="hl-com"># Python: the playground (default)</span>
+./run -l <span class="hl-num">7</span> demo            <span class="hl-com"># Python: the comparison + scorecard, print and exit</span>
+./run -l <span class="hl-num">7</span> --lang node demo  <span class="hl-com"># Node.js: same pipeline, different dependency bill</span></code></pre></div></section>
+<section class='slide'><div class='step-no'>Step 1</div><h2>The corpus and the questions</h2><p>Three questions, each aimed at a different document under <code>data/corpus/</code>: the factory reset lives in the manual, the amber status ring in the FAQ, the buffer export in the API reference. <code>chunk_size</code> and <code>chunk_overlap</code> are the settings <strong>both</strong> pipelines are handed, and <code>top_k</code> is how many chunks reach the prompt. One file drives the demo, the test, the playground, and the Node port.</p><div class='block'><div class='label'>data/questions.json</div><pre><code class='lang-json'>{
+  <span class="hl-str">"chunk_size"</span>: <span class="hl-num">700</span>,
+  <span class="hl-str">"chunk_overlap"</span>: <span class="hl-num">120</span>,
+  <span class="hl-str">"top_k"</span>: <span class="hl-num">3</span>,
+  <span class="hl-str">"questions"</span>: [
+    <span class="hl-str">"What is the factory reset procedure?"</span>,
+    <span class="hl-str">"Why does the status ring stay amber?"</span>,
+    <span class="hl-str">"Which endpoint exports the logging buffer?"</span>
+  ]
+}</code></pre></div><div class='why'>Both pipelines read their settings from the same place for the same reason they share a system prompt: if the framework got a different chunk size or a better brief, the comparison would be theatre rather than a measurement.</div></section>
+<section class='slide'><div class='step-no'>Step 2</div><h2>The hand-rolled side - imported, not rewritten</h2><p>Every step here calls the module you wrote in <strong>Lesson 1</strong>. <code>load</code> is <code>extract.py</code>, <code>split</code> is <code>chunk.py</code>, <code>retrieve</code> is <code>retriever.py</code>, <code>render_prompt</code> is <code>prompts.py</code>, <code>answer</code> is <code>providers/</code>. Nothing is reimplemented for the comparison.</p><div class='lang lang-python'><div class='block'><div class='label'>python/handrolled_pipeline.py</div><pre><code class='lang-python'>
+    The cache directory <span class="hl-kw">is</span> deliberately a throwaway: running the lesson must never
+    touch the index under your real `.localrag/`.
+    <span class="hl-str">"""
+    config = load_config()
+    config.docs_dir = CORPUS_DIR
+    config.cache_dir = Path(_SCRATCH.name)
+    if provider:
+        config.provider = provider
+    return config
+
+
+def load(corpus_dir: Path = CORPUS_DIR) -&gt; List[Page]:
+    """</span>extract.py - every supported file under the corpus, <span class="hl-kw">in</span> sorted order.<span class="hl-str">"""
+    pages: List[Page] = []
+    for path in discover_files(corpus_dir):
+        pages.extend(extract_pages(path))
+    return pages
+
+
+def split(pages: List[Page], size: int, overlap: int) -&gt; List[Chunk]:
+    """</span>chunk.py - overlapping chunks that each remember source <span class="hl-kw">and</span> page.<span class="hl-str">"""
+    return chunk_pages(pages, size=size, overlap=overlap)
+
+
+def build_retriever(chunks: List[Chunk]) -&gt; Bm25Retriever:
+    """</span>retriever.py - build the BM25 index once, then answer many queries <span class="hl-kw">from</span> it.
+
+    Lesson <span class="hl-num">1</span> builds BM25 <span class="hl-kw">in</span> `Bm25Retriever.__init__` <span class="hl-kw">and</span> reuses it, <span class="hl-kw">and</span> the LangChain
+    arm does the same, so this arm must too. Rebuilding per query would tokenize the
+    whole corpus on every question <span class="hl-kw">and</span> make the comparison a measurement of who</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/langchain_rag.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> splitText(text, size, overlap) {
+  <span class="hl-kw">const</span> normalized = text.split(/\s+/).filter(Boolean).join(<span class="hl-str">" "</span>);
+  <span class="hl-kw">if</span> (normalized.length &lt;= size) <span class="hl-kw">return</span> normalized ? [normalized] : [];
+
+  <span class="hl-kw">const</span> chunks = [];
+  <span class="hl-kw">let</span> start = <span class="hl-num">0</span>;
+  <span class="hl-kw">const</span> n = normalized.length;
+  <span class="hl-kw">while</span> (start &lt; n) {
+    <span class="hl-kw">let</span> end = Math.min(start + size, n);
+    <span class="hl-kw">if</span> (end &lt; n) {
+      <span class="hl-kw">const</span> window = normalized.slice(start, end);
+      <span class="hl-kw">for</span> (<span class="hl-kw">const</span> sep <span class="hl-kw">of</span> [<span class="hl-str">". "</span>, <span class="hl-str">"! "</span>, <span class="hl-str">"? "</span>, <span class="hl-str">"\n"</span>, <span class="hl-str">" "</span>]) {
+        <span class="hl-kw">const</span> pos = window.lastIndexOf(sep);
+        <span class="hl-kw">if</span> (pos &gt; Math.floor(size / <span class="hl-num">2</span>)) {
+          end = start + pos + sep.length;
+          break;
+        }
+      }
+    }
+    <span class="hl-kw">const</span> piece = normalized.slice(start, end).trim();
+    <span class="hl-kw">if</span> (piece) chunks.push(piece);
+    <span class="hl-kw">if</span> (end &gt;= n) break;
+    start = Math.max(end - overlap, start + <span class="hl-num">1</span>);
+  }
+  <span class="hl-kw">return</span> chunks;
+}
+
+<span class="hl-kw">function</span> handSplit(pages, size, overlap) {
+  <span class="hl-kw">const</span> chunks = [];
+  <span class="hl-kw">let</span> index = <span class="hl-num">0</span>;
+  <span class="hl-kw">for</span> (<span class="hl-kw">const</span> page <span class="hl-kw">of</span> pages) {
+    <span class="hl-kw">for</span> (<span class="hl-kw">const</span> piece <span class="hl-kw">of</span> splitText(page.text, size, overlap)) {
+      chunks.push({ source: page.source, page_number: page.page_number, chunk_index: index, text: piece });
+      index += <span class="hl-num">1</span>;
+    }
+  }
+  <span class="hl-kw">return</span> chunks;
+}
+
+<span class="hl-com">// rank_bm25.BM25Okapi, ported exactly - including the epsilon floor it applies to</span></code></pre></div></div><div class='why'>A benchmark against a simplified straw-man version of your own code proves nothing. The only way the scorecard means anything is if the left-hand column is the real Lesson 1 pipeline, running unmodified.</div></section>
+<section class='slide'><div class='step-no'>Step 3</div><h2>Load and split, the LangChain way</h2><p>A <code>Document</code> is a string plus a metadata dict, so for markdown this builds them directly rather than pulling in a loader package - <strong>use the component when it earns its place, not because it exists.</strong> The splitter is the real swap: <code>RecursiveCharacterTextSplitter</code> keeps the text as written and walks a separator list, while <code>chunk.py</code> collapses whitespace first and breaks on sentence punctuation.</p><div class='lang lang-python'><div class='block'><div class='label'>python/lc_pipeline.py</div><pre><code class='lang-python'>    <span class="hl-str">"""LangChain ships loaders (`PyPDFLoader`, `Docx2txtLoader`, ...), but for plain
+    text a `Document` is just a string plus metadata - so build it directly and keep
+    the dependency list short. `page` mirrors Lesson 1's page numbering for markdown."""</span>
+    docs: List[Document] = []
+    <span class="hl-kw">for</span> path <span class="hl-kw">in</span> sorted(corpus_dir.rglob(<span class="hl-str">"*.md"</span>)):
+        docs.append(
+            Document(
+                page_content=path.read_text(encoding=<span class="hl-str">"utf-8"</span>).strip(),
+                metadata={<span class="hl-str">"source"</span>: path.name, <span class="hl-str">"page"</span>: <span class="hl-num">1</span>},
+            )
+        )
+    <span class="hl-kw">return</span> docs
+
+
+<span class="hl-kw">def</span> split(docs: List[Document], size: int, overlap: int) -&gt; List[Document]:
+    <span class="hl-str">"""The component that replaces chunk.py - and the one that behaves differently.
+
+    `RecursiveCharacterTextSplitter` walks separators in order ("\\n\\n", "\\n", " ", "")
+    and preserves the text as written. Lesson 1's `_split_text` first collapses all
+    whitespace, then breaks on sentence punctuation. Same job, different boundaries -
+    which is exactly what the playground lets you watch."""</span>
+    splitter = RecursiveCharacterTextSplitter(chunk_size=size, chunk_overlap=overlap)
+    <span class="hl-kw">return</span> splitter.split_documents(docs)</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/langchain_rag.mjs</div><pre><code class='lang-js'>
+<span class="hl-com">// localrag/engine.py:dedup_sources</span>
+<span class="hl-kw">function</span> citations(pairs) {
+  <span class="hl-kw">const</span> seen = [];
+  <span class="hl-kw">for</span> (<span class="hl-kw">const</span> [source, page] <span class="hl-kw">of</span> pairs) {
+    <span class="hl-kw">const</span> tag = <span class="hl-str">`${source}:${page}`</span>;
+    <span class="hl-kw">if</span> (!seen.includes(tag)) seen.push(tag);
+  }
+  <span class="hl-kw">return</span> seen;
+}
+
+<span class="hl-com">// --------------------------------------------------------------- LangChain</span>
+
+<span class="hl-kw">function</span> lcLoad() {
+  <span class="hl-kw">return</span> readdirSync(CORPUS_DIR)
+    .filter((name) =&gt; name.endsWith(<span class="hl-str">".md"</span>))
+    .sort()</code></pre></div></div><div class='why'>Same job, different boundaries - and that difference is the entire reason Q3 grounds differently later. It is the cheapest possible demonstration that a component swap is not a no-op.</div></section>
+<section class='slide'><div class='step-no'>Step 4</div><h2>The escape hatch - a chat model LangChain has never heard of</h2><p>The course's default provider is the <strong>Claude Code CLI</strong>. LangChain has no adapter for it and never will. <code>SimpleChatModel</code> asks for exactly one method - messages in, string out - and in exchange every LCEL chain in the ecosystem can now drive Claude Code, Ollama, Gemini, or OpenAI, with streaming, batching, and callbacks you did not write.</p><div class='lang lang-python'><div class='block'><div class='label'>python/lc_provider.py</div><pre><code class='lang-python'>
+<span class="hl-kw">def</span> _truncate_at_stop(text: str, stop: Optional[List[str]]) -&gt; str:
+    <span class="hl-str">"""Enforce LangChain's `stop` contract on providers that have no stop parameter.
+
+    A caller can pass stop sequences to any chat model and expect output to end at
+    the first one. None of Lesson 1's providers take a stop argument, so honour it
+    here by cutting the response - silently ignoring `stop` would hand the caller
+    text they explicitly asked not to receive.
+    """</span>
+    <span class="hl-kw">if</span> <span class="hl-kw">not</span> stop:
+        <span class="hl-kw">return</span> text
+    cut = len(text)
+    <span class="hl-kw">for</span> sequence <span class="hl-kw">in</span> stop:
+        <span class="hl-kw">if</span> <span class="hl-kw">not</span> sequence:
+            <span class="hl-kw">continue</span>
+        found = text.find(sequence)
+        <span class="hl-kw">if</span> found != -<span class="hl-num">1</span>:
+            cut = min(cut, found)
+    <span class="hl-kw">return</span> text[:cut]
+
+
+<span class="hl-kw">class</span> LocalRagChatModel(SimpleChatModel):
+    <span class="hl-str">""</span>"Drive any localrag provider (claude / ollama / gemini / openai) <span class="hl-kw">from</span> an LCEL chain.
+
+    `SimpleChatModel` asks <span class="hl-kw">for</span> exactly one method: turn a list of messages into a
+    string. Everything <span class="hl-kw">else</span> - streaming, batching, callbacks, `|` composition -</code></pre></div></div><div class='why'>This is the shape of every framework: a wide catalogue, plus a few base classes for the things it cannot know about. The two components LangChain could <strong>not</strong> replace are exactly the two that had to know something about your system - which is the most useful sentence in this lesson.</div></section>
+<section class='slide'><div class='step-no'>Step 5</div><h2>The second escape hatch - your own retriever</h2><p>LangChain ships a <code>BM25Retriever</code>, in <code>langchain-community</code> - a package that is now <strong>sunset upstream</strong> and warns on import. Twenty lines against <code>BaseRetriever</code> removes the dependency, the warning, and next year's migration, and keeps the install at 67 packages instead of 80.</p><div class='lang lang-python'><div class='block'><div class='label'>python/lc_provider.py</div><pre><code class='lang-python'>
+    Note what this cannot do: the Claude Code provider has no embedding endpoint, so
+    asking it to embed raises `EmbeddingError`. That limit <span class="hl-kw">is</span> a property of the
+    provider, <span class="hl-kw">not</span> of the wrapper - exactly <span class="hl-kw">as</span> it was <span class="hl-kw">in</span> Lesson <span class="hl-num">1</span>.
+    <span class="hl-str">"""
+
+    def __init__(self, config: Any, provider_name: str = "ollama") -&gt; None:
+        self.config = config
+        self.provider_name = provider_name
+
+    def embed_documents(self, texts: List[str]) -&gt; List[List[float]]:
+        return embed_texts(self.provider_name, self.config, list(texts))
+
+    def embed_query(self, text: str) -&gt; List[float]:
+        return self.embed_documents([text])[0]
+
+
+def _tokenize(text: str) -&gt; List[str]:
+    """</span>The same tokenizer Lesson <span class="hl-num">1</span> uses, so the two BM25 arms differ only <span class="hl-kw">in</span> their input.<span class="hl-str">"""
+    return re.findall(r"[a-z0-9]+", text.lower())
+
+
+class LocalRagBM25Retriever(BaseRetriever):
+    """</span>BM25 over LangChain `Document`s, using rank_bm25 - already a course dependency.</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/langchain_rag.mjs</div><pre><code class='lang-js'><span class="hl-kw">class</span> BM25Okapi {
+  constructor(corpus, k1 = <span class="hl-num">1.5</span>, b = <span class="hl-num">0.75</span>, epsilon = <span class="hl-num">0.25</span>) {
+    <span class="hl-kw">this</span>.k1 = k1;
+    <span class="hl-kw">this</span>.b = b;
+    <span class="hl-kw">this</span>.corpusSize = corpus.length;
+    <span class="hl-kw">this</span>.docFreqs = [];
+    <span class="hl-kw">this</span>.docLen = [];
+    <span class="hl-kw">this</span>.idf = <span class="hl-kw">new</span> Map();
+
+    <span class="hl-kw">const</span> nd = <span class="hl-kw">new</span> Map();
+    <span class="hl-kw">let</span> numDoc = <span class="hl-num">0</span>;
+    <span class="hl-kw">for</span> (<span class="hl-kw">const</span> document <span class="hl-kw">of</span> corpus) {
+      <span class="hl-kw">this</span>.docLen.push(document.length);
+      numDoc += document.length;
+      <span class="hl-kw">const</span> frequencies = <span class="hl-kw">new</span> Map();
+      <span class="hl-kw">for</span> (<span class="hl-kw">const</span> word <span class="hl-kw">of</span> document) frequencies.set(word, (frequencies.get(word) ?? <span class="hl-num">0</span>) + <span class="hl-num">1</span>);
+      <span class="hl-kw">this</span>.docFreqs.push(frequencies);
+      <span class="hl-kw">for</span> (<span class="hl-kw">const</span> word <span class="hl-kw">of</span> frequencies.keys()) nd.set(word, (nd.get(word) ?? <span class="hl-num">0</span>) + <span class="hl-num">1</span>);
+    }
+    <span class="hl-kw">this</span>.avgdl = numDoc / <span class="hl-kw">this</span>.corpusSize;
+
+    <span class="hl-kw">let</span> idfSum = <span class="hl-num">0</span>;
+    <span class="hl-kw">const</span> negative = [];
+    <span class="hl-kw">for</span> (<span class="hl-kw">const</span> [word, freq] <span class="hl-kw">of</span> nd) {
+      <span class="hl-kw">const</span> idf = Math.log(<span class="hl-kw">this</span>.corpusSize - freq + <span class="hl-num">0.5</span>) - Math.log(freq + <span class="hl-num">0.5</span>);
+      <span class="hl-kw">this</span>.idf.set(word, idf);
+      idfSum += idf;
+      <span class="hl-kw">if</span> (idf &lt; <span class="hl-num">0</span>) negative.push(word);
+    }
+    <span class="hl-kw">const</span> eps = epsilon * (idfSum / <span class="hl-kw">this</span>.idf.size);
+    <span class="hl-kw">for</span> (<span class="hl-kw">const</span> word <span class="hl-kw">of</span> negative) <span class="hl-kw">this</span>.idf.set(word, eps);
+  }
+
+  getScores(query) {
+    <span class="hl-kw">const</span> scores = <span class="hl-kw">new</span> Array(<span class="hl-kw">this</span>.corpusSize).fill(<span class="hl-num">0</span>);
+    <span class="hl-kw">for</span> (<span class="hl-kw">const</span> q <span class="hl-kw">of</span> query) {
+      <span class="hl-kw">const</span> idf = <span class="hl-kw">this</span>.idf.get(q) ?? <span class="hl-num">0</span>;
+      <span class="hl-kw">for</span> (<span class="hl-kw">let</span> i = <span class="hl-num">0</span>; i &lt; <span class="hl-kw">this</span>.corpusSize; i += <span class="hl-num">1</span>) {
+        <span class="hl-kw">const</span> freq = <span class="hl-kw">this</span>.docFreqs[i].get(q) ?? <span class="hl-num">0</span>;
+        <span class="hl-kw">const</span> denom = freq + <span class="hl-kw">this</span>.k1 * (<span class="hl-num">1</span> - <span class="hl-kw">this</span>.b + (<span class="hl-kw">this</span>.b * <span class="hl-kw">this</span>.docLen[i]) / <span class="hl-kw">this</span>.avgdl);
+        scores[i] += (idf * (freq * (<span class="hl-kw">this</span>.k1 + <span class="hl-num">1</span>))) / denom;
+      }
+    }
+    <span class="hl-kw">return</span> scores;
+  }
+}
+
+<span class="hl-com">// One index per corpus, built on first use and reused for every later query -</span></code></pre></div></div><div class='why'>The version-churn cost is usually argued in the abstract. Here it is dated: the package this lesson was drafted against went end-of-life during the writing of it. Twenty lines of your own code did not.</div></section>
+<section class='slide'><div class='step-no'>Step 6</div><h2>LCEL - the chain that replaced engine.answer_question()</h2><p>Read the <code>|</code> left to right: fan the question into a context lookup and a passthrough, render the prompt, call the model, take the text out. Your <code>engine.answer_question()</code> did the same five things in imperative Python.</p><div class='lang lang-python'><div class='block'><div class='label'>python/lc_pipeline.py</div><pre><code class='lang-python'>    <span class="hl-str">"""engine.answer_question(), as an LCEL chain.
+
+    Read the `|` left to right: fan the question into a context lookup and a
+    passthrough, render the prompt, call the model, take the text out."""</span>
+    <span class="hl-kw">return</span> (
+        {<span class="hl-str">"context"</span>: retriever | format_docs, <span class="hl-str">"question"</span>: RunnablePassthrough()}
+        | prompt_template()
+        | llm
+        | StrOutputParser()
+    )</code></pre></div></div><div class='why'>Every stage being a <code>Runnable</code> is what buys streaming, batching, and async for free. It is also what puts the framework's dispatch machinery between you and a stack trace when the chain misbehaves. Both are true, and the trade only looks obvious from one side.</div></section>
+<section class='slide'><div class='step-no'>Command</div><h2>Run the comparison</h2><div class='lang lang-python'><div class='block'><div class='label'>demo · python</div><pre><code class='lang-bash'>$ python -m pip install -q -r requirements.txt</code></pre></div></div><div class='lang lang-python'><div class='block'><div class='label'>demo · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">7</span> demo</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>demo · node</div><pre><code class='lang-bash'>$ npm --prefix node install --silent --no-audit --no-fund</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>demo · node</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">7</span> --lang node demo</code></pre></div></div></section>
+<section class='slide'><div class='step-no'>Run it</div><h2>Read the output</h2><p>Q1 and Q2 <strong>agree</strong>: both pipelines cite the same sources in the same order. Q3 <strong>differs</strong> - LangChain's splitter cut the corpus elsewhere, so retrieval pulled in <code>installation.md</code> too. Neither is wrong, and the 2/3 line is the honest result; engineering all three into agreement would have taught you nothing.</p><p>Then the bill. Five of seven components became an import. The two that did not - the retriever and the provider - are the two you subclassed. <strong>379 lines you can read against 147 lines you still write, and 18 extra packages for two requirements lines.</strong> The line counts are measured off disk at run time, so they can never drift from the code.</p><pre><code>Rebuild RAG with LangChain  -  7 documents, same corpus, same system prompt
+chunked at size=700 overlap=120, retrieving top 3
+
+  hand-rolled   15 chunks   (chunk.py: collapse whitespace, break on sentences)
+  langchain     15 chunks   (RecursiveCharacterTextSplitter: keep text, split on separators)
+
+Q1  What is the factory reset procedure?
+    hand-rolled   sources: manual.md:1 . warranty.md:1
+    langchain     sources: manual.md:1 . warranty.md:1
+    GROUNDING AGREES  -  same sources, same order
+
+Q2  Why does the status ring stay amber?
+    hand-rolled   sources: faq.md:1 . manual.md:1 . warranty.md:1
+    langchain     sources: faq.md:1 . manual.md:1 . warranty.md:1
+    GROUNDING AGREES  -  same sources, same order
+
+Q3  Which endpoint exports the logging buffer?
+    hand-rolled   sources: api.md:1 . manual.md:1
+    langchain     sources: api.md:1 . manual.md:1 . installation.md:1
+    GROUNDING DIFFERS  -  langchain also cites installation.md:1
+
+    2/3 questions grounded identically. Different chunk boundaries, mostly the same evidence.
+
+Component by component
+  step      hand-rolled (Lesson 1)               LangChain (Lesson 7)
+  -------------------------------------------------------------------------------
+  load      localrag/extract.py              45L  Document(...)
+  split     localrag/chunk.py                46L  RecursiveCharacterTextSplitter
+  index     localrag/store.py                66L  InMemoryVectorStore
+  retrieve  localrag/retriever.py           119L  BaseRetriever subclass (yours)
+  prompt    localrag/prompts.py              19L  ChatPromptTemplate
+  provider  localrag/providers/__init__.py   37L  SimpleChatModel subclass (yours)
+  chain     localrag/engine.py               47L  LCEL  ( | )
+  -------------------------------------------------------------------------------
+
+What it cost
+                            hand-rolled      LangChain
+  code you maintain           379 lines      147 lines
+  requirements lines                  8             10
+  packages installed                 49             67
+  install size                   ~34 MB         ~43 MB
+
+  Two requirements lines cost 18 packages and ~9 MB.
+  Taking BM25 from the sunset langchain-community, rather than writing the
+  twenty-line retriever, would have made it 80 packages and ~52 MB.</code></pre></section>
+<section class='slide'><div class='step-no'>Try it</div><h2>A question both pipelines agree on</h2><p>Start where the two arms line up. Same sources, same order, from two completely different chunkings - which is the result you would hope for, and worth seeing before the one that breaks:</p><div class='block'><pre><code>Why does the status ring stay amber?</code></pre></div></section>
+<section class='slide'><div class='step-no'>Try it</div><h2>The question where they diverge</h2><p>Now the interesting one. Watch LangChain cite an extra file. Then push <strong>chunk size</strong> up to 1600 and watch the disagreement vanish, because at that size both splitters keep each document whole. The divergence was never about retrieval quality - it was about where the text got cut.</p><div class='block'><pre><code>Which endpoint exports the logging buffer?</code></pre></div></section>
+<section class='slide'><div class='step-no'>Try it</div><h2>Ask for a real answer</h2><p>The comparison is deliberately offline. This runs the whole LCEL chain through a model - retrieval, prompt, provider - using the chat model adapter you wrote, so the course's default Claude Code provider works inside LangChain with no LangChain adapter for it. Add <code>--native</code> to run the same chain through <code>ChatOllama</code> instead and compare the two paths, or <code>--arm embed</code> to retrieve with real local vectors rather than BM25.</p><div class='block'><div class='label'>ask · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">7</span> ask <span class="hl-str">"What is the factory reset procedure?"</span></code></pre></div></section>
+<section class='slide'><div class='step-no'>Try it</div><h2>Confirm it with the test</h2><p>An offline test pins the lesson's claims: the hand-rolled side grounds and cites every question; both pipelines are handed the <strong>same system prompt</strong>; both lead with the same top source; the chat model adapter forwards system and user text correctly (with a fake provider - no subprocess, no network); the scorecard reads real files; and the demo <strong>still exits 0 with a useful message when LangChain is not installed.</strong> No network, no model, no API key.</p><div class='block'><div class='label'>test · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">7</span> test</code></pre></div></section>
+<section class='slide'><div class='step-no'>Command</div><h2>Watch the two splitters disagree - no code editing</h2><div class='lang lang-python'><div class='block'><div class='label'>web · python</div><pre><code class='lang-bash'>$ python -m pip install -q -r requirements.txt</code></pre></div></div><div class='lang lang-python'><div class='block'><div class='label'>web · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">7</span></code></pre></div></div></section>
+<section class='slide'><div class='step-no'>Experiment</div><h2>Try - drop the chunk size</h2><p>Pull <strong>chunk size</strong> down to 300. Both pipelines now cut mid-procedure, and the citations start to scatter. Small chunks retrieve precisely and answer badly, because the evidence arrives without the sentence that gave it meaning.</p><div class='block'><pre><code>What is the factory reset procedure?</code></pre></div></section>
+<section class='slide'><div class='step-no'>Experiment</div><h2>Try - show the rendered prompt</h2><p>Turn on <strong>Show the rendered prompt</strong> and read both. The system prompt is byte-identical - it is imported from <code>localrag.prompts</code>, not retyped - and the template is the same. Only the retrieved text differs. That is what makes the comparison a measurement rather than an opinion.</p><div class='block'><pre><code>Which endpoint exports the logging buffer?</code></pre></div></section>
+<section class='slide'><div class='step-no'>Going further</div><h2>From demo to production</h2><p>This is a teaching artefact: in a real system you pick one pipeline, because two chunkers means two sets of citations to explain.</p><p><strong>Pin your versions</strong> - <code>langchain-core&gt;=1.0</code> is fine for a lesson and reckless for a service; pin exactly and read the changelog before every bump. <strong>Keep the citation contract at the boundary</strong> - <code>source:page</code> survived this rewrite untouched, so make <em>that</em> the thing your tests assert and you can change frameworks without changing what you promise callers. <strong>Measure before you adopt</strong> - packages, install size, cold start, stack depth on a failure; four numbers, ten minutes, and they outlast any framework comparison online. <strong>Own your adapters</strong> - the sixty lines of <code>LocalRagChatModel</code> are the reason this pipeline is not locked to one vendor. <strong>Fold it into Lesson 5</strong> - put both pipelines in the golden set and let the evaluation gate tell you whether the rewrite changed answer quality, instead of guessing from three questions.</p></section>
+<section class='slide'><div class='step-no'>Recap</div><h2>What you learned</h2><p>You rebuilt the Lesson 1 pipeline on LangChain and priced the swap. Five components became imports; two - the provider and the retriever - you had to write yourself against <code>SimpleChatModel</code> and <code>BaseRetriever</code>, which is the honest shape of every framework. You saw two of three questions ground identically and one diverge because the splitters cut differently, and you watched that divergence appear and vanish as you moved a slider.</p><p>The numbers: <strong>379 lines you maintain against 147 you still write, and two requirements lines that cost 18 packages.</strong> A framework does not remove work; it moves it out of your files and into your dependency tree, where only one of the two shows up in a diff. You are now equipped to make that trade deliberately rather than by default - including the part where a package this lesson was drafted against was sunset while it was being written.</p><p>Next: <strong>Lesson 8 · LangGraph</strong> - turn this linear chain into a stateful agent graph with retries, tool routing, and memory.</p></section>
+    </div><!-- /deck -->
+
+    <div class="controls">
+      <button class="nav-btn" data-prev>&larr; Prev</button>
+      <div class="langsel compact" role="group" aria-label="Language"><button class="langsel-btn" data-setlang="python" aria-label="Python">Py</button><button class="langsel-btn" data-setlang="node" aria-label="Node.js">Node</button></div>
+      <span class="spacer"></span>
+      <span class="counter"></span>
+      <button class="nav-btn" data-next>Next &rarr;</button>
+    </div>
+    <div class="kbd-hint">Use <kbd>&larr;</kbd> <kbd>&rarr;</kbd> arrow keys, the dots, or the buttons. Deep-link a step with <code>#step-N</code>.</div>
+  </div>
+
+  <footer class="site"><div class="inner">
+    &copy; 2023&ndash;2026 <a href="https://www.linkedin.com/in/nikolareljin" target="_blank" rel="noopener">Nik Reljin</a> &middot;
+    Source on <a href="https://github.com/nikolareljin/local-ai-lab" target="_blank" rel="noopener">GitHub</a> &middot;
+    <a href="./index.html">Home</a> &middot; <a href="./about.html">About</a> &middot;
+    Built as a hands-on training course.
+  </div></footer>
+
+  <!-- The same slider that powers the published lessons: steps, dots, progress,
+       #step-N deep links, copy buttons. Read from the file, not inlined. -->
+  <script src="./assets/slider.js"></script>
+  <!-- Privacy-friendly analytics (GoatCounter): analytics.js loads GoatCounter on the production site only; cookieless -->
+  <script src="./assets/analytics.js" defer></script>
+</body>
+</html>

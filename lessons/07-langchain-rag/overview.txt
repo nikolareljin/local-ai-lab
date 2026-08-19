@@ -1,0 +1,22 @@
+Rebuild RAG with LangChain, then count what the framework cost.
+
+  the same corpus ─▶ LOAD ─▶ SPLIT ─▶ RETRIEVE ─▶ PROMPT ─▶ ANSWER ─▶ cited answer
+                       │       │         │          │         │
+        ┌──────────────┴───────┴─────────┴──────────┴─────────┴──────────────┐
+        ▼                                                                     ▼
+   hand-rolled (Lesson 1)                                        LangChain (Lesson 7)
+   extract.py    45L                                             Document(...)
+   chunk.py      46L                                             RecursiveCharacterTextSplitter
+   store.py      66L                                             InMemoryVectorStore
+   retriever.py 119L                                             BaseRetriever subclass  ◀── yours
+   prompts.py    19L                                             ChatPromptTemplate
+   providers/    37L                                             SimpleChatModel subclass ◀── yours
+   engine.py     47L                                             LCEL  ( | )
+        │                                                                     │
+        ▼                                                                     ▼
+   379 lines you can read                                        147 lines you still write
+   49 packages installed                                         67 packages installed
+
+Two things the framework could NOT replace: your provider and your retriever. You
+subclass its base classes and hand it your own - which is why writing the
+primitives first was worth it. Nothing above is mysterious; you wrote its twin.

@@ -5,6 +5,7 @@
 > **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** - a hands-on course for building local AI.
 >
 > **Interactive version (slides):** https://nikolareljin.github.io/local-ai-lab/lesson-4-rag-safety-prompt-injection.html
+> **Read it locally (no GitHub Pages):** `./run -l 4 lesson`
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 > **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
@@ -74,6 +75,7 @@ standard library). Pick any language; all three give the **same** output:
 ./run -l 4 --lang node demo     # Node.js - same output
 ./run -l 4 --lang csharp demo   # C# / .NET 8 - same output
 ./run -l 4 test                 # the offline Python test
+./run -l 4 lesson               # read this lesson in a browser, served locally
 ./run -l 4 show                 # walk through this lesson's steps (code, data, prompts, commands)
 ```
 

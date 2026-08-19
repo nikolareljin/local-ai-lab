@@ -2,12 +2,15 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, "release/**"]
     paths-ignore:
       - "docs/**"
       - "**/*.md"
+  # Release branches are covered too. Without this, a PR into release/x.y.z ran no
+  # checks at all, so breakage only surfaced on the final PR into main - which is
+  # exactly how an unbounded `mcp>=1.2` reached a release branch unnoticed.
   pull_request:
-    branches: [main]
+    branches: [main, "release/**"]
     paths-ignore:
       - "docs/**"
       - "**/*.md"

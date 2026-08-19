@@ -22,11 +22,13 @@ pytest -q                              # offline tests
 python -m localrag ask "your question" # one-shot RAG query
 python -m localrag web                 # drag-and-drop UI on :5000
 ./update && ./start                    # sync submodule, launch the app
-./run -l N show | preview              # walk through / preview a config-driven lesson (no Pages)
+./run -l N lesson                      # read a lesson locally in a browser (any lesson, no Pages)
+./run -l N demo | test                 # run it without a model / run its offline test
+./run -l N show                        # walk a config-driven lesson's code + configs (Lessons 3+)
 ```
 
 Lessons 3+ are config-driven (`lessons/NN-slug/lesson.json`); see
-[`lessons/README.md`](lessons/README.md) for the element model and the run/show/preview engine.
+[`lessons/README.md`](lessons/README.md) for the element model and the run/show/lesson engine.
 
 ## Coding Style & Naming Conventions
 - Python, PEP 8, 4-space indent, type hints. `snake_case` functions, `PascalCase` classes.

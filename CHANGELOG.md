@@ -6,6 +6,89 @@ All notable changes to this project are documented here. This project follows
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-08-18
+
+### Added
+- **Lesson 7 · Rebuild RAG with LangChain** - a new working lesson in **Python and Node.js**, and the
+  first of the framework-tour cluster. It rebuilds the Lesson 1 pipeline on **LangChain v1** over the
+  same corpus with the same system prompt, compares what each side grounds on question by question,
+  and prints a scorecard mapping every LangChain component onto the hand-rolled file it replaced -
+  lines of code you still maintain against packages that moved into your dependency tree. The
+  hand-rolled arm imports `localrag` directly rather than reimplementing it, so the comparison runs
+  against the real Lesson 1 code. Ships with an interactive playground, an offline test, a seven
+  document corpus, and a committed `expected-output.txt`.
+- **Two LangChain adapters you write yourself** - `LocalRagChatModel` (a `SimpleChatModel`) lets any
+  LCEL chain drive the course's default Claude Code provider, which LangChain has no adapter for, plus
+  Ollama, Gemini and OpenAI; `LocalRagEmbeddings` does the same for embeddings. A third,
+  `LocalRagBM25Retriever` (a `BaseRetriever` over `rank_bm25`), replaces the `BM25Retriever` from the
+  now-sunset `langchain-community`, keeping the install at 67 packages instead of 80.
+- **A local Ollama arm** - `ask --arm embed` retrieves with real vectors through `InMemoryVectorStore`,
+  and `ask --native` runs the same chain through framework-native `ChatOllama` and `OllamaEmbeddings`,
+  so the lesson can put a sixty-line adapter you own next to a package you install and let you judge
+  the trade. `langchain-ollama` is an opt-in install rather than a lesson requirement, so the printed
+  dependency scorecard matches exactly what `./run -l 7` puts in the venv; the paths that need it exit
+  with the install command rather than a traceback.
+
+### Changed
+- Lesson 7 graduates out of `roadmap/` into `lessons/07-langchain-rag/`; inbound links across the
+  roadmap outlines, `LESSON1.md`, the README, and the course site now point at the live lesson.
+- Course-site navigation, the curriculum table, the syllabus, and the PDF menus updated for seven live
+  lessons. Several counts that were already stale at Lesson 6 are corrected in the same pass.
+- **One way in to every lesson, whichever era it comes from.** Lessons 1-2 are dispatched by the `run`
+  script and Lessons 3+ by `lesson.json`, and the two had drifted: `./run -h` advertised a browser
+  preview for every lesson while Lessons 1 and 2 rejected it, so reading Lesson 1 without GitHub Pages
+  meant knowing it lived in `docs/lesson-1-rag.html` and serving it yourself. The actions now say which
+  of two things you want - **training** (`lesson`) or **running** (`web` / `demo` / `test`) - and all of
+  them work on all seven lessons.
+- `preview` is renamed **`lesson`**, because readers are not previewing anything, they are reading the
+  lesson. `preview` still works as an alias, so nothing already written down breaks.
+- `show` is no longer offered for Lessons 1-2. For config-driven lessons it walks the elements in
+  `lesson.json` - code, configs, commands, filtered by language, with an `--html` export - which exists
+  in no other form. For Lessons 1-2 it printed the Markdown guide through a hand-rolled renderer that
+  left `**bold**` and `[text](url)` markers in the output, which `less LESSON1.md` does better. It stays
+  where it earns its place.
+- **Node ports target Node 22.** Node 18 (EOL April 2025) and Node 20 (EOL April 2026) no longer receive
+  security fixes, and the course was still recommending 18. Every `package.json` declares
+  `engines: node >=22`; README, SYLLABUS, INSTALL and the course site recommend 22, with Node 24 LTS for
+  a fresh install. Lesson 7's note about LangChain raising the runtime floor is rewritten rather than
+  removed: the point stands, it simply no longer binds.
+- Node dependencies moved up with the security fixes: **express 4 → 5**, **zod 3 → 4** (the MCP SDK
+  accepts `^3.25 || ^4.0`), `@modelcontextprotocol/sdk` 1.30, and mammoth 1.12. `pdf-parse` deliberately
+  stays on 1.x - 2.x restructured its exports, so it needs a code change and PDF fixtures, and it
+  carries no advisory.
+
+### Fixed
+- **CI was failing on `main` as well as here.** `mcp` 2.0.0 renamed `FastMCP` to `MCPServer` and removed
+  `mcp.server.fastmcp`, which Lesson 2's server imports; `requirements.txt` asked for `mcp>=1.2` with no
+  upper bound, so a fresh install resolved 2.0.0 and `tests/test_mcp.py` failed. Pinned to
+  `mcp>=1.2,<2`. Migrating Lesson 2 to the 2.0 API touches its Python, Node and .NET ports plus its
+  guide, and is tracked as follow-up rather than smuggled into a release.
+- **All 16 open Dependabot alerts cleared** (4 high, 9 moderate, 3 low), every one transitive in the
+  Lesson 1-2 Node ports: `fast-uri`, `ip-address`, `hono`, `@hono/node-server` and `body-parser`. Both
+  projects report zero vulnerabilities.
+- **Lesson 1 had no way to run it without an AI.** `web`, `ask` and `repl` all call a provider, so the
+  first lesson of the course could not be seen working without Claude Code, Ollama or an API key.
+  `./run -l 1 demo` prints the pipeline - extract, chunk, retrieve, and the grounded prompt in full -
+  stopping one step short of generation.
+- CI now runs on `release/**` as well as `main`. A PR into a release branch previously ran no checks at
+  all, which is how an unbounded `mcp>=1.2` crossed two merged PRs unnoticed.
+- Lesson 6's Node excerpt was declared as lines 64-90, one short of the closing brace of `relTo()`, so
+  the published slideshow rendered an unterminated function running into the C# block.
+- Markdown tables with an empty first header cell made xhtml2pdf size that column at zero, so PDF table
+  rows drew on top of each other. The builder fills empty header cells, and inline code in table cells
+  is sized to fit its column.
+
+### Notes
+- Lesson 7 is the **only lesson that installs a third-party package**, and that is deliberate: the
+  dependency is its subject. Dependencies stay lesson-local, so the repo-root requirements are
+  unchanged and Lessons 1-6 keep their eight-package install. With LangChain absent, the demo runs the
+  hand-rolled side, prints the install command, and exits 0; the offline test passes either way.
+- There is no C# port: LangChain ships official Python and JavaScript SDKs only. Microsoft's answer is
+  Semantic Kernel, which is Lesson 10.
+- `tests/test_lesson_actions.py` pins the action contract for both lesson eras, including that Lessons
+  1-2 must *not* offer `show`, so the two cannot drift apart again. `lessons/README.md` documents the
+  contract as the definition of a finished lesson.
+
 ## [0.10.0] - 2026-07-02
 
 ### Added

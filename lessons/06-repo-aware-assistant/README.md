@@ -5,6 +5,7 @@
 > **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** - a hands-on course for building local AI.
 >
 > **Interactive version (slides):** https://nikolareljin.github.io/local-ai-lab/lesson-6-repo-aware-assistant.html
+> **Read it locally (no GitHub Pages):** `./run -l 6 lesson`
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 > **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
@@ -68,6 +69,7 @@ standard library). Pick any language; all three give the **same** output:
 ./run -l 6 --lang node demo     # Node.js - same output
 ./run -l 6 --lang csharp demo   # C# / .NET 8 - same output
 ./run -l 6 test                 # the offline Python test
+./run -l 6 lesson               # read this lesson in a browser, served locally
 ./run -l 6 show                 # walk through this lesson's steps (code, data, prompts, commands)
 ```
 
@@ -241,8 +243,9 @@ polyglot. **[EXTEND.md](./EXTEND.md)** walks through three ways to take this fur
 
 ## Next lesson
 
-**Lesson 7 · LangChain** - rebuild the RAG pipeline with a framework, and see what the framework buys
-you (and what it costs) over the from-scratch version.
+[**Lesson 7 · Rebuild RAG with LangChain →**](../07-langchain-rag/README.md) - rebuild the pipeline
+on a framework, watch where it grounds differently, and price the swap in components replaced,
+lines you still write, and packages you did not read.
 
 ---
 

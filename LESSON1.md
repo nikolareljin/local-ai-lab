@@ -5,6 +5,7 @@
 > **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** - a hands-on course for building local AI.
 >
 > **Interactive version (slides):** https://nikolareljin.github.io/local-ai-lab/lesson-1-rag.html
+> **Read it locally (no GitHub Pages):** `./run -l 1 lesson`
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 > **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
@@ -358,7 +359,7 @@ uniformity is the whole point.
 
 > **Teaching point.** This is the pattern every "LLM framework" is built around - a provider
 > interface plus adapters. Once you've written it by hand, LangChain's `ChatModel` and friends stop
-> looking like magic. (You'll see exactly that in [Lesson 7 · LangChain](./roadmap/LESSON7-langchain.md).)
+> looking like magic. (You'll see exactly that in [Lesson 7 · LangChain](./lessons/07-langchain-rag/README.md).)
 
 ---
 

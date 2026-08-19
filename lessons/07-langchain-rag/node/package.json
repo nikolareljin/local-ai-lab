@@ -1,0 +1,17 @@
+{
+  "name": "lesson07-langchain-rag",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Lesson 7 - Rebuild RAG with LangChain, Node.js port",
+  "scripts": {
+    "start": "node langchain_rag.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@langchain/core": "^1.2.0",
+    "@langchain/textsplitters": "^1.0.0"
+  }
+}

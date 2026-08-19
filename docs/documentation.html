@@ -21,6 +21,7 @@
         <a href="./lesson-4-rag-safety-prompt-injection.html">4 · RAG safety &amp; prompt injection</a>
         <a href="./lesson-5-rag-evaluation-regression-testing.html">5 · RAG evaluation &amp; regression testing</a>
         <a href="./lesson-6-repo-aware-assistant.html">6 · Repo-aware AI assistant</a>
+        <a href="./lesson-7-langchain-rag.html">7 · Rebuild RAG with LangChain</a>
       </div></details>
       <a href="./documentation.html">Documentation</a><a href="./pdf/CHEATSHEET.pdf" target="_blank" rel="noopener">Cheat-sheet</a>
       <a href="./troubleshooting.html">Troubleshooting</a>
@@ -67,7 +68,7 @@
       first-class PowerShell and cmd instructions alongside Linux and macOS.</p>
 
     <h2 id="install">Install</h2>
-    <p>You need <b>Python 3.10+</b> for every lesson. Add <b>Node.js 18+</b> only for the Node ports and
+    <p>You need <b>Python 3.10+</b> for every lesson. Add <b>Node.js 22+</b> only for the Node ports and
       the <b>.NET 8 SDK</b> only for the C# ports.</p>
 
     <h3>Linux / macOS</h3>
@@ -106,13 +107,20 @@ pip install -r requirements.txt</code></pre>
     <h2 id="run">Run a lesson</h2>
     <p>One command runs any lesson locally. It sets up the virtualenv on first use and, by default,
       uses the Claude Code CLI as the AI.</p>
-    <pre><code>./run -l &lt;N&gt; [--lang python|node|csharp] [action]   # run a lesson
-./run -l &lt;N&gt; show                                   # walk through the lesson in the terminal
-./run -l &lt;N&gt; preview                                # serve the rendered lesson locally (browser)
+    <p>There are two ways into every lesson: <b>read it</b>, or <b>run it</b>.</p>
+    <pre><code># TRAINING - read the lesson, click through the steps, served from your machine
+./run -l &lt;N&gt; lesson                                 # opens in a browser; no GitHub Pages, works offline
+
+# RUNNING - run the code and tinker with it
+./run -l &lt;N&gt; [--lang python|node|csharp] [action]   # run a lesson
+./run -l &lt;N&gt; demo                                   # one-shot, print and exit: no model, no network
+./run -l &lt;N&gt; test                                   # the lesson's offline test
+
 ./run list                                          # list every lesson
 ./run -h                                            # full help</code></pre>
-    <p>Each lesson defines its own actions. The common ones:</p>
+    <p>Each lesson adds its own extras on top of those. The common ones:</p>
     <pre><code>./run -l 1                                   # Lesson 1: launch the RAG web UI (auto-picks a free port)
+./run -l 1 demo                              # the whole pipeline printed, with no AI at all
 ./run -l 1 ask "How do I reset the device?"  # one-shot grounded answer in the terminal
 ./run -l 1 repl                              # interactive Q&amp;A loop
 ./run -l 1 index [--reindex]                 # build/refresh the index from documents/
@@ -122,9 +130,11 @@ pip install -r requirements.txt</code></pre>
 ./run -l 3                                   # Lesson 3: hybrid-retrieval experiment GUI
 ./run -l 4                                   # Lesson 4: RAG-safety defence playground
 ./run -l 5                                   # Lesson 5: evaluation scorecard
-./run -l &lt;N&gt; demo                            # the one-shot, print-and-exit run for lessons 3-5
+./run -l 6                                   # Lesson 6: repo-aware assistant playground
+./run -l 7                                   # Lesson 7: LangChain vs hand-rolled playground
 ./run -l &lt;N&gt; --lang node demo                # the Node.js port (byte-identical output)
-./run -l &lt;N&gt; --lang csharp demo              # the C# / .NET port (byte-identical output)</code></pre>
+./run -l &lt;N&gt; --lang csharp demo              # the C# / .NET port (Lessons 1-6)
+./run -l &lt;N&gt; show                            # walk a lesson's code and configs (Lessons 3+)</code></pre>
 
     <h3>Switching the AI provider</h3>
     <p>The default provider is Claude Code (no key). Override it with <code>RAG_PROVIDER</code>
@@ -212,7 +222,7 @@ pytest -q                  # the full offline suite (from the repo root, venv ac
     <p>From Lesson 3 onward each lesson is <b>config-driven</b>: a single
       <code>lessons/NN-slug/lesson.json</code> describes both how to run it and how to present it. The
       engine (<code>tools/lesson.py</code>) reads that file to run actions, render the terminal
-      walkthrough (<code>show</code>), serve a local preview (<code>preview</code>), and build the
+      walkthrough (<code>show</code>), serve the lesson locally (<code>./run -l N lesson</code>), and build the
       published page (<code>build</code>). Adding code or steps is just dropping files and referencing
       them in <code>lesson.json</code> - no engine changes.</p>
 

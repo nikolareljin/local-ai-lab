@@ -26,6 +26,16 @@ every implemented lesson today. Foundational lessons are also being implemented 
 If a language isn't ported for a lesson yet, `./run` tells you and points to the Python reference.
 See each lesson's **"Dependencies & Installation"** section for its language availability.
 
+> **Node 18 and 20 are end-of-life** (April 2025 and April 2026), so every Node port now declares
+> `engines: node >=22`. Node 24 is the current LTS if you are installing fresh.
+
+> **Lesson 7 is the one lesson that installs a third-party package.** Lessons 1-6 need only the base
+> requirements below; Lesson 7 rebuilds the pipeline on **LangChain**, so `./run -l 7` adds
+> `langchain-core` and `langchain-text-splitters` (plus `@langchain/core` for the Node port) into the
+> course virtualenv on first use. That dependency is the subject of the lesson, not an accident. Skip
+> the install and the demo still runs the hand-rolled side and tells you the command; `./run -l 7 test`
+> passes either way. There is no C# port - LangChain has no official .NET SDK.
+
 ---
 
 ## 1. Base prerequisites (every lesson)
@@ -48,7 +58,7 @@ cd local-ai-lab
 - **macOS:** `brew install python`
 - **Windows:** `winget install -e --id Python.Python.3.12`  (or [python.org](https://www.python.org/downloads/) - tick *Add to PATH*)
 
-### Node.js 18+ (only for `--lang node`)
+### Node.js 22+ (only for `--lang node`)
 - **Linux:** [NodeSource](https://github.com/nodesource/distributions) or `sudo apt install -y nodejs npm`
 - **macOS:** `brew install node` · **Windows:** `winget install -e --id OpenJS.NodeJS.LTS`
 

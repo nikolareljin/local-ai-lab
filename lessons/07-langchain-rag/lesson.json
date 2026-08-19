@@ -1,0 +1,238 @@
+{
+  "title": "Rebuild RAG with LangChain",
+  "slug": "langchain-rag",
+  "status": "working",
+  "summary": "Rebuild the Lesson 1 RAG pipeline on LangChain over the same corpus with the same system prompt, watch where the two disagree, and price the swap: which hand-rolled file each component replaced, how many lines you still maintain, and how many packages moved into your dependency tree. Python and Node.js, with the three escape hatches - a chat model, an embeddings adapter and a retriever - you still have to write yourself.",
+  "cluster": "framework-tour",
+  "priority": "high",
+  "languages": [
+    "python",
+    "node"
+  ],
+  "defaultLanguage": "python",
+  "defaultAction": "web",
+  "elements": [
+    {
+      "type": "note",
+      "kicker": "Overview",
+      "title": "What you'll build",
+      "file": "overview.txt",
+      "body": "**New to LangChain?** It is an open-source framework for building on top of language models - not a model, not a database. Two things: a **catalogue of components** for steps you already have (load, split, embed, retrieve, prompt, call a model) and a way to **compose** them with `|`, called LCEL. It ships official Python and JavaScript SDKs, and no .NET one - which is why this lesson is Python and Node, and why **.NET gets its own lesson (10 · Semantic Kernel)** rather than a LangChain impersonation.\n\nLessons 1-6 built every RAG primitive by hand. **LangChain ships all of them as components.** This lesson rebuilds the same pipeline on top of it - same corpus, same system prompt, same citation contract - and then does the thing most framework write-ups skip: it **counts the cost**.\n\nYou'll watch the two pipelines ground the same questions, find the one question where they *disagree* (and understand why), and read a scorecard that maps every LangChain component onto the Lesson 1 file it replaced. Then the part that matters: LangChain replaces five of seven components outright, and for the other two - your provider and your retriever - **you subclass its base classes and hand it your own.**\n\nNothing here is mysterious, because you wrote the twin of every component. Pick a language above and press → to begin."
+    },
+    {
+      "type": "command",
+      "kicker": "Setup",
+      "title": "What you need",
+      "body": "This is the **one lesson in the course that installs something**, and that is deliberate: the dependency is the subject. `./run -l 7` puts `langchain-core` and `langchain-text-splitters` into the course venv on first use. If you skip the install, the demo still runs the hand-rolled side, marks the LangChain column *not installed*, and tells you the command - and `./run -l 7 test` passes either way. `@langchain/core` declares `node >= 20`, so the dependency would have moved the runtime floor on its own - it happens not to bind, because Node 18 and 20 are both end-of-life and the whole course now targets **Node 22**. Run everything from the repo root:",
+      "shell": "./run -l 7                 # Python: the playground (default)\n./run -l 7 demo            # Python: the comparison + scorecard, print and exit\n./run -l 7 --lang node demo  # Node.js: same pipeline, different dependency bill"
+    },
+    {
+      "type": "config",
+      "file": "data/questions.json",
+      "kicker": "Step 1",
+      "title": "The corpus and the questions",
+      "body": "Three questions, each aimed at a different document under `data/corpus/`: the factory reset lives in the manual, the amber status ring in the FAQ, the buffer export in the API reference. `chunk_size` and `chunk_overlap` are the settings **both** pipelines are handed, and `top_k` is how many chunks reach the prompt. One file drives the demo, the test, the playground, and the Node port.",
+      "why": "Both pipelines read their settings from the same place for the same reason they share a system prompt: if the framework got a different chunk size or a better brief, the comparison would be theatre rather than a measurement."
+    },
+    {
+      "type": "code",
+      "file": "python/handrolled_pipeline.py",
+      "lang": "python",
+      "lines": "66-96",
+      "group": "handrolled",
+      "kicker": "Step 2",
+      "title": "The hand-rolled side - imported, not rewritten",
+      "body": "Every step here calls the module you wrote in **Lesson 1**. `load` is `extract.py`, `split` is `chunk.py`, `retrieve` is `retriever.py`, `render_prompt` is `prompts.py`, `answer` is `providers/`. Nothing is reimplemented for the comparison.",
+      "why": "A benchmark against a simplified straw-man version of your own code proves nothing. The only way the scorecard means anything is if the left-hand column is the real Lesson 1 pipeline, running unmodified."
+    },
+    {
+      "type": "code",
+      "file": "node/langchain_rag.mjs",
+      "lang": "node",
+      "lines": "48-87",
+      "group": "handrolled"
+    },
+    {
+      "type": "code",
+      "file": "python/lc_pipeline.py",
+      "lang": "python",
+      "lines": "48-72",
+      "group": "load-split",
+      "kicker": "Step 3",
+      "title": "Load and split, the LangChain way",
+      "body": "A `Document` is a string plus a metadata dict, so for markdown this builds them directly rather than pulling in a loader package - **use the component when it earns its place, not because it exists.** The splitter is the real swap: `RecursiveCharacterTextSplitter` keeps the text as written and walks a separator list, while `chunk.py` collapses whitespace first and breaks on sentence punctuation.",
+      "why": "Same job, different boundaries - and that difference is the entire reason Q3 grounds differently later. It is the cheapest possible demonstration that a component swap is not a no-op."
+    },
+    {
+      "type": "code",
+      "file": "node/langchain_rag.mjs",
+      "lang": "node",
+      "lines": "162-178",
+      "group": "load-split"
+    },
+    {
+      "type": "code",
+      "file": "python/lc_provider.py",
+      "lang": "python",
+      "lines": "36-61",
+      "group": "adapter",
+      "kicker": "Step 4",
+      "title": "The escape hatch - a chat model LangChain has never heard of",
+      "body": "The course's default provider is the **Claude Code CLI**. LangChain has no adapter for it and never will. `SimpleChatModel` asks for exactly one method - messages in, string out - and in exchange every LCEL chain in the ecosystem can now drive Claude Code, Ollama, Gemini, or OpenAI, with streaming, batching, and callbacks you did not write.",
+      "why": "This is the shape of every framework: a wide catalogue, plus a few base classes for the things it cannot know about. The two components LangChain could **not** replace are exactly the two that had to know something about your system - which is the most useful sentence in this lesson."
+    },
+    {
+      "type": "code",
+      "file": "python/lc_provider.py",
+      "lang": "python",
+      "lines": "87-110",
+      "group": "retriever",
+      "kicker": "Step 5",
+      "title": "The second escape hatch - your own retriever",
+      "body": "LangChain ships a `BM25Retriever`, in `langchain-community` - a package that is now **sunset upstream** and warns on import. Twenty lines against `BaseRetriever` removes the dependency, the warning, and next year's migration, and keeps the install at 67 packages instead of 80.",
+      "why": "The version-churn cost is usually argued in the abstract. Here it is dated: the package this lesson was drafted against went end-of-life during the writing of it. Twenty lines of your own code did not."
+    },
+    {
+      "type": "code",
+      "file": "node/langchain_rag.mjs",
+      "lang": "node",
+      "lines": "89-136",
+      "group": "retriever"
+    },
+    {
+      "type": "code",
+      "file": "python/lc_pipeline.py",
+      "lang": "python",
+      "lines": "133-143",
+      "group": "chain",
+      "kicker": "Step 6",
+      "title": "LCEL - the chain that replaced engine.answer_question()",
+      "body": "Read the `|` left to right: fan the question into a context lookup and a passthrough, render the prompt, call the model, take the text out. Your `engine.answer_question()` did the same five things in imperative Python.",
+      "why": "Every stage being a `Runnable` is what buys streaming, batching, and async for free. It is also what puts the framework's dispatch machinery between you and a stack trace when the chain misbehaves. Both are true, and the trade only looks obvious from one side."
+    },
+    {
+      "type": "command",
+      "action": "demo",
+      "lang": "python",
+      "group": "run-demo",
+      "venv": true,
+      "shell": "python -m pip install -q -r requirements.txt"
+    },
+    {
+      "type": "command",
+      "action": "demo",
+      "lang": "python",
+      "group": "run-demo",
+      "venv": true,
+      "kicker": "Run it",
+      "title": "Run the comparison",
+      "body": "This loads the corpus twice, splits it two different ways, retrieves for all three questions, and prints the scorecard. It is **offline and deterministic** - it compares what each pipeline *grounds on*, not what a model says, because retrieval is reproducible and generated prose is not.",
+      "display": "./run -l 7 demo",
+      "shell": "python python/langchain_rag.py"
+    },
+    {
+      "type": "command",
+      "action": "demo",
+      "lang": "node",
+      "group": "run-demo",
+      "shell": "npm --prefix node install --silent --no-audit --no-fund"
+    },
+    {
+      "type": "command",
+      "action": "demo",
+      "lang": "node",
+      "group": "run-demo",
+      "display": "./run -l 7 --lang node demo",
+      "shell": "node node/langchain_rag.mjs"
+    },
+    {
+      "type": "note",
+      "kicker": "Run it",
+      "title": "Read the output",
+      "file": "expected-output.txt",
+      "body": "Q1 and Q2 **agree**: both pipelines cite the same sources in the same order. Q3 **differs** - LangChain's splitter cut the corpus elsewhere, so retrieval pulled in `installation.md` too. Neither is wrong, and the 2/3 line is the honest result; engineering all three into agreement would have taught you nothing.\n\nThen the bill. Five of seven components became an import. The two that did not - the retriever and the provider - are the two you subclassed. **379 lines you can read against 147 lines you still write, and 18 extra packages for two requirements lines.** The line counts are measured off disk at run time, so they can never drift from the code."
+    },
+    {
+      "type": "text",
+      "kicker": "Try it",
+      "title": "A question both pipelines agree on",
+      "text": "Why does the status ring stay amber?",
+      "body": "Start where the two arms line up. Same sources, same order, from two completely different chunkings - which is the result you would hope for, and worth seeing before the one that breaks:"
+    },
+    {
+      "type": "text",
+      "kicker": "Try it",
+      "title": "The question where they diverge",
+      "text": "Which endpoint exports the logging buffer?",
+      "body": "Now the interesting one. Watch LangChain cite an extra file. Then push **chunk size** up to 1600 and watch the disagreement vanish, because at that size both splitters keep each document whole. The divergence was never about retrieval quality - it was about where the text got cut."
+    },
+    {
+      "type": "command",
+      "action": "ask",
+      "lang": "python",
+      "venv": true,
+      "kicker": "Try it",
+      "title": "Ask for a real answer",
+      "body": "The comparison is deliberately offline. This runs the whole LCEL chain through a model - retrieval, prompt, provider - using the chat model adapter you wrote, so the course's default Claude Code provider works inside LangChain with no LangChain adapter for it. Add `--native` to run the same chain through `ChatOllama` instead and compare the two paths, or `--arm embed` to retrieve with real local vectors rather than BM25.",
+      "display": "./run -l 7 ask \"What is the factory reset procedure?\"",
+      "shell": "python python/langchain_rag.py ask"
+    },
+    {
+      "type": "command",
+      "action": "test",
+      "lang": "python",
+      "kicker": "Try it",
+      "title": "Confirm it with the test",
+      "body": "An offline test pins the lesson's claims: the hand-rolled side grounds and cites every question; both pipelines are handed the **same system prompt**; both lead with the same top source; the chat model adapter forwards system and user text correctly (with a fake provider - no subprocess, no network); the scorecard reads real files; and the demo **still exits 0 with a useful message when LangChain is not installed.** No network, no model, no API key.",
+      "display": "./run -l 7 test",
+      "shell": "python -m pytest -q python/test_langchain_rag.py",
+      "venv": true
+    },
+    {
+      "type": "command",
+      "action": "web",
+      "lang": "python",
+      "group": "run-web",
+      "venv": true,
+      "shell": "python -m pip install -q -r requirements.txt"
+    },
+    {
+      "type": "command",
+      "action": "web",
+      "lang": "python",
+      "group": "run-web",
+      "venv": true,
+      "kicker": "Experiment",
+      "title": "Watch the two splitters disagree - no code editing",
+      "body": "This is the payoff: `./run -l 7` (the default) opens both pipelines side by side over the same corpus. Type a question and read what each arm retrieved, then move **chunk size** and watch two pipelines that agreed a moment ago start citing different files. Flip on **Show the rendered prompt** to confirm they really are getting the same brief - same system prompt, same template, only the retrieved text differs.",
+      "display": "./run -l 7",
+      "shell": "python python/web.py"
+    },
+    {
+      "type": "text",
+      "kicker": "Experiment",
+      "title": "Try - drop the chunk size",
+      "text": "What is the factory reset procedure?",
+      "body": "Pull **chunk size** down to 300. Both pipelines now cut mid-procedure, and the citations start to scatter. Small chunks retrieve precisely and answer badly, because the evidence arrives without the sentence that gave it meaning."
+    },
+    {
+      "type": "text",
+      "kicker": "Experiment",
+      "title": "Try - show the rendered prompt",
+      "text": "Which endpoint exports the logging buffer?",
+      "body": "Turn on **Show the rendered prompt** and read both. The system prompt is byte-identical - it is imported from `localrag.prompts`, not retyped - and the template is the same. Only the retrieved text differs. That is what makes the comparison a measurement rather than an opinion."
+    },
+    {
+      "type": "note",
+      "kicker": "Going further",
+      "title": "From demo to production",
+      "body": "This is a teaching artefact: in a real system you pick one pipeline, because two chunkers means two sets of citations to explain.\n\n**Pin your versions** - `langchain-core>=1.0` is fine for a lesson and reckless for a service; pin exactly and read the changelog before every bump. **Keep the citation contract at the boundary** - `source:page` survived this rewrite untouched, so make *that* the thing your tests assert and you can change frameworks without changing what you promise callers. **Measure before you adopt** - packages, install size, cold start, stack depth on a failure; four numbers, ten minutes, and they outlast any framework comparison online. **Own your adapters** - the sixty lines of `LocalRagChatModel` are the reason this pipeline is not locked to one vendor. **Fold it into Lesson 5** - put both pipelines in the golden set and let the evaluation gate tell you whether the rewrite changed answer quality, instead of guessing from three questions."
+    },
+    {
+      "type": "note",
+      "kicker": "Recap",
+      "title": "What you learned",
+      "body": "You rebuilt the Lesson 1 pipeline on LangChain and priced the swap. Five components became imports; two - the provider and the retriever - you had to write yourself against `SimpleChatModel` and `BaseRetriever`, which is the honest shape of every framework. You saw two of three questions ground identically and one diverge because the splitters cut differently, and you watched that divergence appear and vanish as you moved a slider.\n\nThe numbers: **379 lines you maintain against 147 you still write, and two requirements lines that cost 18 packages.** A framework does not remove work; it moves it out of your files and into your dependency tree, where only one of the two shows up in a diff. You are now equipped to make that trade deliberately rather than by default - including the part where a package this lesson was drafted against was sunset while it was being written.\n\nNext: **Lesson 8 · LangGraph** - turn this linear chain into a stateful agent graph with retries, tool routing, and memory."
+    }
+  ]
+}
