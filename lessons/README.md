@@ -157,10 +157,12 @@ table and a navigation label listing the wrong lesson range each reached `main`.
 [`.github/workflows/docs.yml`](../.github/workflows/docs.yml) closes that gap by running
 [`tools/check_docs.py`](../tools/check_docs.py), which asserts four things:
 
-- every relative link in a tracked Markdown file resolves to something on disk
+- every relative link in a tracked Markdown file resolves, and does not escape the repository
+  (one `../` too many can land on a path that exists on your machine and 404s on GitHub)
 - the README "Lessons & downloads" table is not stale
 - `lessons/CURRICULUM.md` matches the lesson registry
-- every `status: working` lesson has a published page under `docs/`
+- every published page has a lesson behind it, and every lesson has a page - including the
+  hand-authored Lesson 1-2 pages, so a renumber cannot leave a stale URL being served
 
 Run it before opening a pull request - it is standard library only and takes a second:
 

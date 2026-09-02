@@ -9,11 +9,12 @@ Every one of those has happened in this repository.
 Checks, in order of how often they have actually broken:
 
   1. relative links   every `](./x)` / `](../x)` in a tracked Markdown file
-                      resolves to something on disk
+                      resolves, and stays inside the repository
   2. README table     `tools/sync-readme-downloads.py --check` is clean
   3. curriculum       `lessons/CURRICULUM.md` matches the lesson registry
   4. lesson pages     every `status: working` lesson has a published page under
-                      `docs/`, and every published page has a lesson behind it
+                      `docs/`, every published page has a lesson behind it, and the
+                      hand-authored Lesson 1-2 pages are still there
 
 Run it locally the same way CI does:
 
@@ -44,15 +45,24 @@ def markdown_files() -> list[Path]:
 
 
 def check_links() -> list[str]:
-    """Relative links that point at nothing. CI ignores Markdown, so nothing else catches these."""
+    """Relative links that point at nothing. CI ignores Markdown, so nothing else catches these.
+
+    A target that resolves OUTSIDE the repository is treated as broken even when it
+    exists. One `../` too many in a file near the root lands on the checkout's parent
+    directory, which may well exist on a developer's machine and on the runner - and
+    is still a 404 for anyone reading the file on GitHub or GitHub Pages.
+    """
     problems = []
     for path in markdown_files():
         text = path.read_text(encoding="utf-8", errors="ignore")
+        rel = path.relative_to(ROOT)
         for match in LINK.finditer(text):
-            target = (path.parent / match.group(1)).resolve()
-            if not target.exists():
-                rel = path.relative_to(ROOT)
-                problems.append(f"{rel}: broken link -> {match.group(1)}")
+            link = match.group(1)
+            target = (path.parent / link).resolve()
+            if not target.is_relative_to(ROOT):
+                problems.append(f"{rel}: link escapes the repository -> {link}")
+            elif not target.exists():
+                problems.append(f"{rel}: broken link -> {link}")
     return problems
 
 
@@ -91,16 +101,39 @@ def check_curriculum() -> list[str]:
     return problems
 
 
+# Lessons 1-2 predate the config-driven layout: their pages are hand-authored and
+# have no lesson.json to derive a filename from, so they are named here explicitly.
+HAND_AUTHORED_PAGES = {
+    "lesson-1-rag.html": "Lesson 1 (hand-authored)",
+    "lesson-2-mcp.html": "Lesson 2 (hand-authored)",
+}
+
+
 def check_published_pages() -> list[str]:
-    """A working lesson with no page is unreachable; a page with no lesson is a ghost."""
+    """A working lesson with no page is unreachable; a page with no lesson is a ghost.
+
+    Both directions matter. A missing page means a lesson nobody can open. A leftover
+    page means a stale URL still being served and still linked from the nav - which is
+    what a renumber produces if only the directory is renamed.
+    """
     problems = []
     published = {p.name for p in (ROOT / "docs").glob("lesson-*.html")}
+    expected = dict(HAND_AUTHORED_PAGES)
     for number, lesson in lesson_registry():
         if lesson.get("status") != "working":
             continue
-        expected = f"lesson-{number}-{lesson.get('slug')}.html"
-        if expected not in published:
-            problems.append(f"docs/{expected} is missing - run: ./run -l {number} build")
+        expected[f"lesson-{number}-{lesson.get('slug')}.html"] = f"Lesson {number}"
+
+    for name, label in sorted(expected.items()):
+        if name not in published:
+            hint = ("restore it - it is hand-authored, not generated"
+                    if name in HAND_AUTHORED_PAGES
+                    else f"run: ./run -l {name.split('-')[1]} build")
+            problems.append(f"docs/{name} is missing ({label}) - {hint}")
+
+    for name in sorted(published - set(expected)):
+        problems.append(f"docs/{name} has no lesson behind it - delete it, or give the "
+                        f"lesson status 'working'")
     return problems
 
 
