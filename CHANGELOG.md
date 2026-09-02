@@ -7,6 +7,13 @@ All notable changes to this project are documented here. This project follows
 ## [Unreleased]
 
 ### Added
+- **`tools/check_docs.py` and a `Docs` workflow** - `ci.yml` ignores `docs/**` and `**/*.md`, so a
+  docs-only change ran **no checks at all**; that is how a broken relative link, a stale generated
+  table and a PDF menu labelled with the wrong lesson range each reached `main`. The new check
+  asserts that every relative Markdown link resolves, the README downloads table is current,
+  `lessons/CURRICULUM.md` matches the registry, and every working lesson has a published page. It is
+  standard library only, and its `pull_request` trigger is deliberately **not** filtered by base
+  branch, so a stacked pull request no longer reports zero checks.
 - **Roadmap outlines for Lessons 13-15** - `AI-assisted testing`, `AI code review & issue detection`
   and `Documentation from sprint changes`. Cluster 4 was the only cluster with no files at all: the
   three lessons existed as one line each in `SYLLABUS.md` and as three dead rows in the README. They
