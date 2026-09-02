@@ -7,7 +7,7 @@
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 >
-> **Lessons:** [1 · RAG](../LESSON1.md) → [2 · MCP](../LESSON2.md) → [3 · Hybrid retrieval](../lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../lessons/05-rag-evaluation-regression-testing/README.md) → 6 · Repo assistant → [7 · LangChain](../lessons/07-langchain-rag/README.md) → [8 · LangGraph](./LESSON8-langgraph.md) → [9 · Ollama tools](./LESSON9-ollama.md) → [10 · Semantic Kernel](./LESSON10-semantic-kernel.md) → [11 · Bedrock Agents](./LESSON11-bedrock.md) → **12 · Google ADK (you are here)**
+> **Lessons:** [1 · RAG](../LESSON1.md) → [2 · MCP](../LESSON2.md) → [3 · Hybrid retrieval](../lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../lessons/05-rag-evaluation-regression-testing/README.md) → 6 · Repo assistant → [7 · LangChain](../lessons/07-langchain-rag/README.md) → [8 · LangGraph](../lessons/08-langgraph/README.md) → [9 · Ollama tools](./LESSON9-ollama.md) → [10 · Semantic Kernel](./LESSON10-semantic-kernel.md) → [11 · Bedrock Agents](./LESSON11-bedrock.md) → **12 · Google ADK (you are here)**
 >
 > **Status: planned.** Outline below; full published slideshow lesson + step-by-step coming later.
 > ADK **runs locally** (`adk run` / `adk web`) against Gemini. ⭐ the repo to follow along.
@@ -61,7 +61,7 @@ root_agent = Agent(
 |---------|------|
 | `search_docs` retriever tool | [Lesson 1](../LESSON1.md) |
 | function/tool calling | [Lesson 9](./LESSON9-ollama.md) |
-| agent frameworks compared | [Lessons 7](../lessons/07-langchain-rag/README.md), [8](./LESSON8-langgraph.md), [10](./LESSON10-semantic-kernel.md) |
+| agent frameworks compared | [Lessons 7](../lessons/07-langchain-rag/README.md), [8](../lessons/08-langgraph/README.md), [10](./LESSON10-semantic-kernel.md) |
 | **ADK agents, tools, runners, eval** | **Lesson 12 (this one)** |
 
 ## Prerequisites
