@@ -69,11 +69,18 @@ root_agent = Agent(
 Python, a Gemini API key (`GEMINI_API_KEY`), and `pip install google-adk`. [Lesson 1](../LESSON1.md)
 provides the retriever the agent calls.
 
-## Course complete
+## End of the framework tour
 
 You've built the same local-first document agent six ways - from a hand-rolled RAG pipeline up
 through MCP, local function calling, Semantic Kernel, Bedrock Agents, and ADK - and you understand
-every layer. Back to [the course home](https://nikolareljin.github.io/local-ai-lab/).
+every layer.
+
+The last three lessons stop building agents and start pointing them at your own work.
+
+## Next lesson
+
+[**Lesson 13 · AI-Assisted Testing →**](./LESSON13-ai-assisted-testing.md) - generate tests from a
+change, run them, and let the failure guide the fix.
 
 ---
 
