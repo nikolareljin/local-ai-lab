@@ -1,0 +1,132 @@
+Lesson 8 · A stateful agent with LangGraph
+corpus: lessons/07-langchain-rag/data/corpus  (7 documents - Lesson 7's, by path)
+settings: top_k=3 threshold=0.67 max_attempts=3 grader=coverage rewriter=glossary
+
+Nine questions. Three arms. The same corpus and the same settings.
+
+       linear  loop    graph   att  question
+  ------------------------------------------
+  q1   PASS    PASS    PASS    1    What is the factory reset procedure?
+  q2   PASS    PASS    PASS    1    Why does the status ring stay amber?
+  q3   PASS    PASS    PASS    1    Which endpoint exports the logging buffer?
+  q4   FAIL    PASS    PASS    2    The light is orange and it will not connect.
+  q5   FAIL    PASS    PASS    2    How do I wipe the device and start over?
+  q6   FAIL    PASS    PASS    2    What paperwork does an RMA need?
+  q7   FAIL    PASS    PASS    2    Is 5GHz supported?
+  q8   PASS    PASS    PASS    2    Can I mount it sideways?
+  q9   FAIL    PASS    PASS    2    What is the MTBF?
+
+  why each question is here
+    q1  control - carried from Lesson 7, and it must not regress
+    q2  control - carried from Lesson 7
+    q3  control - carried from Lesson 7
+    q4  vocabulary - the reader says 'orange light', the docs say 'amber status ring'
+    q5  user-speak - the reader says 'wipe', the docs say 'factory reset'
+    q6  acronym - the reader says 'RMA', the docs say 'warranty claim'
+    q7  notation - the reader types '5GHz', the docs spell out 'five gigahertz'
+    q8  FALSE ALARM - already correct on the first try; the grader loops anyway and buys nothing
+    q9  not in the corpus at all - the loop has to give up rather than spin
+
+The scorecard
+                                   linear (L7)      loop (while) graph (LangGraph)
+  top source correct                       4/8               8/8               8/8
+  correctly abstained                      0/1               1/1               1/1
+  --------------------------------------------------------------------------------
+  retrieval calls                            9        15  (+67%)                15
+  grade calls                                0                15                15
+  rewrite calls                              0                 7                 7
+  --------------------------------------------------------------------------------
+  state survives a process                   -                 -      checkpointer
+  pause / resume mid-run                     -                 -       interrupt()
+  topology you can query                     -                 -       get_graph()
+
+  The loop fixed 4 questions the chain got wrong (q4, q5, q6, q7), and
+  refused the 1 it could not answer at all - for 67% more retrieval calls.
+  q8 was already right on the first try and looped anyway: a retrieval that bought nothing.
+
+  The while loop and the graph agree on all 9 questions: exactly.
+  LangGraph did not make the agent smarter. It made it resumable,
+  pausable and inspectable - the three rows above that only it can fill.
+
+The topology, as data
+  nodes  ['abstain', 'generate', 'grade', 'retrieve', 'review', 'rewrite', 'veto']
+  edges
+    __start__  -> retrieve
+    abstain    -> __end__
+    generate   -> __end__
+    grade      -> abstain
+    grade      -> generate
+    grade      -> review
+    grade      -> rewrite
+    retrieve   -> grade
+    review     -> generate
+    review     -> retrieve
+    review     -> veto
+    rewrite    -> abstain
+    rewrite    -> retrieve   <- the cycle
+    veto       -> __end__
+
+  A while loop cannot answer the question 'what are your edges?' at runtime.
+  Its control flow is `if` and `while`; this one is a value you can print.
+
+Human in the loop
+  question: 'How do I wipe the device and start over?'
+  This question matters: the manual says a factory reset destroys the logging
+  buffer permanently, and the warranty page says a claim without that export
+  cannot be assessed. Answering helpfully and immediately costs the reader
+  their evidence. So the graph stops and asks.
+
+  invoke #1 ->  the graph STOPPED. It did not answer.
+                status              paused
+                get_state().next    ('review',)
+                answer in state?    False
+                review packet       citations=['manual.md:1', 'troubleshooting.md:1']
+                                    attempts=2  ask='approve | veto | edit:<new query>'
+                retrievals so far   2
+
+  invoke #2 ->  Command(resume='approve') on the same thread_id
+                retrievals now      2      <- unchanged. It resumed; it did not restart.
+                status              answered
+
+  invoke #2' -> Command(resume='veto') on a fresh thread
+                status              vetoed - generate never ran
+
+  invoke #2'' -> Command(resume='edit:...') - the reviewer hands back a query
+                retrievals now      3      <- it re-entered the cycle at retrieve
+                a second way into the loop, which is why review is a node
+
+Memory - two turns on one thread
+  thread 'aurora'  turn 1  What is the factory reset procedure?
+                   cited ['manual.md:1', 'warranty.md:1']
+  thread 'aurora'  turn 2  Which endpoint exports the logging buffer?
+                   cited ['api.md:1', 'manual.md:1']
+  thread 'somebody-else'  turn 1  <- a different thread_id remembers nothing
+  checkpoints written on 'aurora': 10
+
+  MemorySaver keeps this in the process. For state that outlives the process:
+    pip install langgraph-checkpoint-sqlite
+    ./run -l 8 chat --sqlite /tmp/aurora.db --thread aurora "..."
+  It is a separate package on purpose - see the bill below.
+
+What it cost
+                                        linear      loop (while) graph (LangGraph)
+  code you maintain                   68 lines         294 lines         464 lines
+  requirements lines                         0                 0                 1
+  packages installed                        48                48                71
+  install size                          ~34 MB            ~34 MB            ~43 MB
+
+  The corrective loop cost 226 lines and ZERO packages, and it delivered
+  the entire accuracy gain in the scorecard above. Most of those lines are the
+  grader and the rewriter, which the graph needs too. The loop ITSELF is
+  61 lines of `while`.
+
+  Swapping those 61 lines for LangGraph cost 170 lines of graph
+  wiring and 23 packages - for answers that are identical on all nine
+  questions. What it bought is the three rows the loop could not fill:
+  checkpoints, interrupts, and a topology you can query.
+  If you already did Lesson 7 it is only 5 more packages (67 -> 72),
+  because LangGraph depends on langchain-core and you are already paying for it.
+  Which of those two numbers applies to you is the whole question.
+
+grader: coverage (deterministic). Run with --llm-grade for the grader you
+should actually use; it will not print the same thing twice, and that is the point.

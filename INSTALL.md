@@ -190,13 +190,21 @@ ollama pull nomic-embed-text   # embeddings (RAG_RETRIEVER=embeddings)
 | Lesson | Languages | Extra dependencies | Install |
 |--------|-----------|--------------------|---------|
 | **1 · RAG** | Python ✓ · Node ◑ · C# ◑ | base only (Node/C# auto-install on first `./run`) | `pip install -r requirements.txt` |
-| **2 · MCP** | Python ✓ · Node ◔ · C# ◔ | `mcp` (in requirements) + Claude Code | §2 + §3 |
-| **3 · LangChain** | Python | LangChain + a vector store | `pip install langchain langchain-community langchain-ollama langchain-openai faiss-cpu` |
-| **4 · LangGraph** | Python | LangGraph | `pip install langgraph langchain` |
-| **5 · Ollama + Function Calling** | Python · Node ◔ | Ollama + a tool-capable model | §4 (Ollama) + `ollama pull llama3.1` |
-| **6 · Semantic Kernel** | **C#/.NET** | .NET 8 SDK + SK NuGet | §1 (.NET) + `dotnet add package Microsoft.SemanticKernel` |
-| **7 · AWS Bedrock Agents** | Python | AWS CLI + boto3 | [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) + `pip install boto3` + `aws configure` |
-| **8 · Google ADK** | Python | `google-adk` + Gemini key | `pip install google-adk` + §4 (Gemini) |
+| **2 · MCP** | Python ✓ · Node ◑ · C# ◑ | `mcp` (in requirements) + Claude Code | §2 + §3 |
+| **3 · Hybrid retrieval** | Python ✓ · Node ◑ · C# ◑ | base only | §2 |
+| **4 · RAG safety** | Python ✓ · Node ◑ · C# ◑ | base only | §2 |
+| **5 · RAG evaluation** | Python ✓ · Node ◑ · C# ◑ | base only | §2 |
+| **6 · Repo-aware assistant** | Python ✓ · Node ◑ · C# ◑ | base only | §2 |
+| **7 · LangChain** | Python ✓ · Node ✓ | `langchain-core`, `langchain-text-splitters` | `pip install -r lessons/07-langchain-rag/requirements.txt` |
+| **8 · LangGraph** | Python ✓ · Node ✓ | `langgraph` (brings `langchain-core` with it) | `pip install -r lessons/08-langgraph/requirements.txt` |
+| **9 · Ollama + Function Calling** | Python · Node ◔ | Ollama + a tool-capable model | §4 (Ollama) + `ollama pull llama3.1` |
+| **10 · Semantic Kernel** | **C#/.NET** | .NET 8 SDK + SK NuGet | §1 (.NET) + `dotnet add package Microsoft.SemanticKernel` |
+| **11 · AWS Bedrock Agents** | Python | AWS CLI + boto3 | [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) + `pip install boto3` + `aws configure` |
+| **12 · Google ADK** | Python | `google-adk` + Gemini key | `pip install google-adk` + §4 (Gemini) |
+
+Lessons 7 and 8 are the only two that install anything beyond the base requirements, and in both
+cases the dependency is what the lesson is arguing about. Both still run, and both still print their
+main result, with the package absent - they say so and exit 0.
 
 Legend: ✓ available · ◑ runnable port (BM25 retrieval; `claude`/`ollama` providers) · ◔ planned
 (Option B port in progress) · blank = single-language by nature.

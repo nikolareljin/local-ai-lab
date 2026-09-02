@@ -1,0 +1,33 @@
+# Lesson 8 only. The course itself stays on the dependencies in the repo-root
+# requirements.txt - this file is the second time the course installs anything,
+# and like Lesson 7 the dependency is part of the argument.
+#
+#   ./run -l 8            installs this into the course venv
+#   ./run -l 8 test       does NOT need it; the test runs offline either way
+#   ./run -l 8 demo       runs without it too, and says so - the linear and loop
+#                         arms carry the whole accuracy result on their own
+#
+# Measured with `pip download` against this repo (re-derive with `./run -l 8 measure`):
+#   repo-root requirements alone ................ 48 packages, ~34 MB
+#   plus langgraph .............................. 71 packages, ~43 MB
+#   Lesson 7's requirements alone ............... 67 packages, ~42 MB
+#   Lesson 7's requirements plus langgraph ...... 72 packages, ~43 MB
+#
+# Read those four lines together, because they are the whole dependency story:
+# LangGraph costs 23 packages on a clean machine and 5 on one that has already
+# done Lesson 7. It depends on langchain-core, so if you are already paying
+# LangChain's bill you are most of the way to paying this one.
+langgraph>=1.0,<2
+
+# NOT installed by `./run -l 8`, deliberately: the printed scorecard has to match
+# exactly what the lesson installs. Only `--sqlite` needs it, and that path prints
+# this command and falls back to MemorySaver when it is missing.
+#
+#   pip install langgraph-checkpoint-sqlite
+#
+# One more thing worth knowing, and the reason Concept 7 exists: installing
+# langgraph also installs `langsmith`, LangChain's hosted tracing client, as a
+# transitive dependency of langchain-core. It is inert - `tracing_is_enabled()`
+# is False until you set LANGSMITH_TRACING - but it is on your machine either
+# way, and one environment variable away from sending every node's input and
+# output to a third party. That is a choice worth making on purpose.

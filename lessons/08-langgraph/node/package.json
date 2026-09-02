@@ -1,0 +1,16 @@
+{
+  "name": "lesson08-langgraph",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Lesson 8 - A stateful agent with LangGraph, Node.js port",
+  "scripts": {
+    "start": "node langgraph_agent.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@langchain/langgraph": "^1.0.0"
+  }
+}

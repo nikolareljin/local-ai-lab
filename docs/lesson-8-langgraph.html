@@ -1,0 +1,559 @@
+<!doctype html>
+<!-- GENERATED FILE - do not edit by hand. Built by tools/lesson.py (`./run -l N build`) from lessons/NN-slug/lesson.json; edit the lesson.json or tools/templates/lesson-preview.html instead. -->
+<html lang="en" data-lang="python">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lesson 8 · A Stateful Agent with LangGraph - local-ai-lab</title>
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32.png" />
+  <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
+  <!-- Reuse the published course assets (NOT inlined): the same stylesheet and
+       step slider Lessons 1-2 use, so the local preview matches the live pages. -->
+  <link rel="stylesheet" href="./assets/style.css" />
+  <link rel="stylesheet" href="./assets/highlight.css" />
+  <style>.lang-badge{font-size:.7rem;background:#eef;color:#225;padding:.05rem .45rem;border-radius:999px;margin-left:.5rem;vertical-align:middle;}</style>
+  <script>try{document.documentElement.dataset.lang=localStorage.getItem('localrag-lang')||'python'}catch(e){document.documentElement.dataset.lang='python'}</script>
+</head>
+<body>
+  <div class="topbar"><div class="inner">
+    <span class="brand"><a href="./index.html" style="color:inherit">local-ai<span class="dot">·</span>lab</a></span>
+    <nav><details class="nav-dd"><summary>Lessons</summary><div class="nav-dd-menu"><a href="./lesson-1-rag.html">1 · RAG from scratch</a><a href="./lesson-2-mcp.html">2 · MCP servers</a><a href="./lesson-3-hybrid-retrieval-reranking.html">3 · Hybrid Retrieval &amp; Reranking</a><a href="./lesson-4-rag-safety-prompt-injection.html">4 · RAG Safety &amp; Prompt Injection</a><a href="./lesson-5-rag-evaluation-regression-testing.html">5 · RAG Evaluation &amp; Regression Testing</a><a href="./lesson-6-repo-aware-assistant.html">6 · Repo-aware AI Assistant</a><a href="./lesson-7-langchain-rag.html">7 · Rebuild RAG with LangChain</a><a href="./lesson-8-langgraph.html">8 · A Stateful Agent with LangGraph</a></div></details><a href="./documentation.html">Documentation</a><a href="./pdf/CHEATSHEET.pdf" target="_blank" rel="noopener">Cheat-sheet</a><a href="./troubleshooting.html">Troubleshooting</a><a href="./about.html">About</a><a href="./pdf/INSTALL.pdf" target="_blank" rel="noopener">Install</a></nav>
+  </div></div>
+
+  <div class="wrap">
+    <div class="lesson-head">
+      <div class="eyebrow">Lesson 8</div>
+      <h1>A Stateful Agent with LangGraph</h1>
+      <p>Turn the linear RAG pipeline into an agent that grades its own retrieval, rewrites its query and retries - then price the graph honestly against the same loop written as forty-five lines of <code>while</code>. Three arms over Lesson 7's corpus: the chain fixes 4 of 8, the loop fixes 8 of 8 and correctly refuses the ninth, and the graph matches the loop exactly. Everything LangGraph costs buys checkpoints, interrupts and an inspectable topology - not better answers. Python and Node.js.</p>
+      <div class="langsel" role="group" aria-label="Language"><span class="langsel-label">Follow along in:</span><button class="langsel-btn" data-setlang="python" aria-label="Python">Python</button><button class="langsel-btn" data-setlang="node" aria-label="Node.js">Node.js</button></div>
+    </div>
+
+    <div class="progress"><span></span></div>
+    <div class="dots"></div>
+
+    <div class="deck">
+<section class='slide'><div class='step-no'>Overview</div><h2>What you'll build</h2><p><strong>New to LangGraph?</strong> It is not LangChain 2.0, and it is not an agent framework in the "hand it tools and hope" sense. It is <strong>a small state-machine library with checkpoints</strong>: you declare a typed state, write nodes that return updates to it, and connect them with edges - including edges that point backwards. It ships Python and JavaScript SDKs, both used here, and it depends on <code>langchain-core</code>, so this lesson sits <strong>on top of</strong> Lesson 7's dependency rather than beside it.</p><p>Lesson 7 rebuilt the pipeline on a framework and asked what it cost. This lesson asks the harder version of that question. A corrective loop - retrieve, grade the evidence, rewrite the query, try again - fixes four of the nine questions here that a single retrieval gets wrong. But you do not need LangGraph for a loop. <strong>You need <code>while</code>.</strong></p><p>So this lesson runs three arms, not two: the linear chain, the same loop written as forty-five lines of <code>while</code>, and the loop as a <code>StateGraph</code>. The <code>while</code> loop and the graph agree on every single question. That zero is the lesson. Pick a language above and press → to begin.</p><pre><code>   A chain runs once. A graph decides whether to run again.
+
+                        ┌───────────────────────────────┐
+                        │  START     question, attempt=1 │
+                        └───────────────┬───────────────┘
+                                        ▼
+                        ┌───────────────────────────────┐
+              ┌────────▶│  retrieve     BM25 · top-k     │  retrievals +1
+              │         └───────────────┬───────────────┘
+              │                         ▼
+              │         ┌───────────────────────────────┐
+              │         │  grade      coverage or LLM    │  grades +1
+              │         └──────┬─────────────────┬──────┘
+              │      weak, and │                 │ grounded
+              │   attempts left│                 │
+              │                ▼                 ▼
+              │  ┌──────────────────────┐   ┌──────────────────────────┐
+              └──┤  rewrite   glossary  │   │  review     ⏸ interrupt()│
+                 └──────────┬───────────┘   └───┬──────────┬───────────┘
+                            │       approve     │          │ veto
+                    edit    └───────────────────┤          │
+                                                ▼          ▼
+   weak, no attempts left            ┌──────────────┐  ┌──────────────┐
+   ─────────────────────────────────▶│   abstain    │  │   generate   │
+                                     └──────┬───────┘  └──────┬───────┘
+                                            ▼                 ▼
+                                           END               END
+
+   Three things this picture has that a chain cannot draw:
+
+     ◀──   an edge that points BACKWARDS            (rewrite → retrieve)
+     ⏸     a node that STOPS and waits for a human  (review)
+     ▼ ▼   two different ways to finish             (generate · abstain)
+
+
+   Measured over Lesson 7's corpus, nine questions:
+
+                              linear      loop (while)   graph (LangGraph)
+     top source correct          4/8               8/8                 8/8
+     correctly abstained         0/1               1/1                 1/1
+     retrieval calls               9         15 (+67%)                  15
+
+   The while loop and the graph agree on every question. That is not a
+   disappointment - it is the finding. Everything LangGraph costs is paid
+   for the three things the loop cannot do at all: keep state past the
+   process, stop halfway and ask a human, and tell you its own shape.</code></pre></section>
+<section class='slide'><div class='step-no'>Setup</div><h2>What you need</h2><p>This is the <strong>second lesson that installs something</strong>, and like Lesson 7 the dependency is part of the argument. <code>./run -l 8</code> puts <code>langgraph</code> into the course venv on first use. If you skip it, the demo still runs the linear and loop arms, prints the whole accuracy result, marks the graph column <em>not installed</em>, and exits 0 - which is a better degradation than Lesson 7 managed, because here the dependency is not what produces the result. Run everything from the repo root:</p><div class='block'><div class='label'>run</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">8</span>                    <span class="hl-com"># Python: the playground (default)</span>
+./run -l <span class="hl-num">8</span> demo               <span class="hl-com"># Python: the three-arm comparison and the scorecard</span>
+./run -l <span class="hl-num">8</span> --lang node demo   <span class="hl-com"># Node.js: same control flow, a different bill</span></code></pre></div></section>
+<section class='slide'><div class='step-no'>Step 1</div><h2>Nine questions, and why each one is here</h2><p>Three are carried straight from Lesson 7 as controls. Four are phrased the way a real person asks - <code>orange light</code> when the docs say <em>amber status ring</em>, <code>wipe</code> when they say <em>factory reset</em>, <code>RMA</code> when they say <em>warranty claim</em>, <code>5GHz</code> when they spell out <em>five gigahertz</em>. One is already correct on the first try and makes the loop spend a retrieval for nothing. One has no answer in the corpus at all.</p><p>Every question carries its own <code>why</code>, and the demo prints it, so the reason a question exists lives in the data rather than only in this prose.</p><div class='block'><div class='label'>data/questions.json</div><pre><code class='lang-json'>{
+  <span class="hl-str">"chunk_size"</span>: <span class="hl-num">700</span>,
+  <span class="hl-str">"chunk_overlap"</span>: <span class="hl-num">120</span>,
+  <span class="hl-str">"top_k"</span>: <span class="hl-num">3</span>,
+  <span class="hl-str">"grade_threshold"</span>: <span class="hl-num">0.67</span>,
+  <span class="hl-str">"max_attempts"</span>: <span class="hl-num">3</span>,
+  <span class="hl-str">"questions"</span>: [
+    { <span class="hl-str">"id"</span>: <span class="hl-str">"q1"</span>, <span class="hl-str">"ask"</span>: <span class="hl-str">"What is the factory reset procedure?"</span>,
+      <span class="hl-str">"expect"</span>: <span class="hl-str">"manual.md"</span>,
+      <span class="hl-str">"why"</span>: <span class="hl-str">"control - carried from Lesson 7, and it must not regress"</span> },
+    { <span class="hl-str">"id"</span>: <span class="hl-str">"q2"</span>, <span class="hl-str">"ask"</span>: <span class="hl-str">"Why does the status ring stay amber?"</span>,
+      <span class="hl-str">"expect"</span>: <span class="hl-str">"faq.md"</span>,
+      <span class="hl-str">"why"</span>: <span class="hl-str">"control - carried from Lesson 7"</span> },
+    { <span class="hl-str">"id"</span>: <span class="hl-str">"q3"</span>, <span class="hl-str">"ask"</span>: <span class="hl-str">"Which endpoint exports the logging buffer?"</span>,
+      <span class="hl-str">"expect"</span>: <span class="hl-str">"api.md"</span>,
+      <span class="hl-str">"why"</span>: <span class="hl-str">"control - carried from Lesson 7"</span> },
+    { <span class="hl-str">"id"</span>: <span class="hl-str">"q4"</span>, <span class="hl-str">"ask"</span>: <span class="hl-str">"The light is orange and it will not connect."</span>,
+      <span class="hl-str">"expect"</span>: <span class="hl-str">"faq.md"</span>,
+      <span class="hl-str">"why"</span>: <span class="hl-str">"vocabulary - the reader says 'orange light', the docs say 'amber status ring'"</span> },
+    { <span class="hl-str">"id"</span>: <span class="hl-str">"q5"</span>, <span class="hl-str">"ask"</span>: <span class="hl-str">"How do I wipe the device and start over?"</span>,
+      <span class="hl-str">"expect"</span>: <span class="hl-str">"manual.md"</span>,
+      <span class="hl-str">"why"</span>: <span class="hl-str">"user-speak - the reader says 'wipe', the docs say 'factory reset'"</span> },
+    { <span class="hl-str">"id"</span>: <span class="hl-str">"q6"</span>, <span class="hl-str">"ask"</span>: <span class="hl-str">"What paperwork does an RMA need?"</span>,
+      <span class="hl-str">"expect"</span>: <span class="hl-str">"warranty.md"</span>,
+      <span class="hl-str">"why"</span>: <span class="hl-str">"acronym - the reader says 'RMA', the docs say 'warranty claim'"</span> },
+    { <span class="hl-str">"id"</span>: <span class="hl-str">"q7"</span>, <span class="hl-str">"ask"</span>: <span class="hl-str">"Is 5GHz supported?"</span>,
+      <span class="hl-str">"expect"</span>: <span class="hl-str">"networking.md"</span>,
+      <span class="hl-str">"why"</span>: <span class="hl-str">"notation - the reader types '5GHz', the docs spell out 'five gigahertz'"</span> },
+    { <span class="hl-str">"id"</span>: <span class="hl-str">"q8"</span>, <span class="hl-str">"ask"</span>: <span class="hl-str">"Can I mount it sideways?"</span>,
+      <span class="hl-str">"expect"</span>: <span class="hl-str">"installation.md"</span>,
+      <span class="hl-str">"why"</span>: <span class="hl-str">"FALSE ALARM - already correct on the first try; the grader loops anyway and buys nothing"</span> },
+    { <span class="hl-str">"id"</span>: <span class="hl-str">"q9"</span>, <span class="hl-str">"ask"</span>: <span class="hl-str">"What is the MTBF?"</span>,
+      <span class="hl-str">"expect"</span>: <span class="hl-kw">null</span>,
+      <span class="hl-str">"why"</span>: <span class="hl-str">"not in the corpus at all - the loop has to give up rather than spin"</span> }
+  ]
+}</code></pre></div><div class='why'>Corrective RAG only demonstrates itself on questions the first search actually fails. These fail for a boring, reproducible reason - the words are not in the documents - which is exactly what makes the result provable offline, through retrieval alone, with no model in the loop.</div></section>
+<section class='slide'><div class='step-no'>Step 2</div><h2>The grader - one judgement the whole graph turns on</h2><p>Term coverage: what fraction of the query's content words appear anywhere in the retrieved text? It is a real information-retrieval signal, it detects precisely the failure this lesson is about, and <code>missing</code> - the terms that did not land - is exactly what the rewriter needs next.</p><div class='lang lang-python'><div class='block'><div class='label'>python/graders.py</div><pre><code class='lang-python'><span class="hl-kw">class</span> CoverageGrader:
+    <span class="hl-str">"""Term coverage: what fraction of the query's content words does the evidence contain?
+
+    This is a real information-retrieval signal, not a stand-in for one. It
+    detects the exact failure this lesson is about - a reader asking in words the
+    documents never use - because those words cannot appear in any retrieved
+    chunk, whatever the retriever ranks first.
+
+    It also explains itself. `missing` is the list of terms that did not land,
+    which is precisely what the rewriter needs, so the two nodes are coupled
+    through data rather than through a shared hard-coded table.
+    """</span>
+
+    name = <span class="hl-str">"coverage"</span>
+
+    <span class="hl-kw">def</span> __init__(self, threshold: float) -&gt; <span class="hl-kw">None</span>:
+        self.threshold = threshold
+
+    <span class="hl-kw">def</span> grade(self, question: str, query: str, docs: List[rag_core.Chunk]) -&gt; Grade:
+        terms = rag_core.content_terms(query)
+        <span class="hl-kw">if</span> <span class="hl-kw">not</span> terms:
+            <span class="hl-com"># A query with no content words cannot be judged this way. Say so</span>
+            <span class="hl-com"># rather than dividing by zero or silently passing.</span>
+            <span class="hl-kw">return</span> Grade(verdict=<span class="hl-str">"weak"</span>, score=<span class="hl-num">0.0</span>, missing=[],
+                         reason=<span class="hl-str">"no content terms to look for"</span>, grader=self.name)
+        haystack = set(rag_core.tokens(rag_core.evidence_text(docs)))
+        missing = [t <span class="hl-kw">for</span> t <span class="hl-kw">in</span> terms <span class="hl-kw">if</span> t <span class="hl-kw">not</span> <span class="hl-kw">in</span> haystack]
+        score = (len(terms) - len(missing)) / len(terms)
+        grounded = score &gt;= self.threshold
+        <span class="hl-kw">return</span> Grade(
+            verdict=<span class="hl-str">"grounded"</span> <span class="hl-kw">if</span> grounded <span class="hl-kw">else</span> <span class="hl-str">"weak"</span>,
+            score=round(score, <span class="hl-num">2</span>),
+            missing=missing,
+            reason=(f<span class="hl-str">"evidence covers {len(terms) - len(missing)}/{len(terms)} query terms"</span>
+                    + (<span class="hl-str">""</span> <span class="hl-kw">if</span> grounded <span class="hl-kw">else</span> f<span class="hl-str">"; missing {missing}"</span>)),
+            grader=self.name,
+        )
+
+
+GRADE_SYSTEM = (
+    <span class="hl-str">"You judge whether retrieved documentation is enough to answer a question. "</span>
+    <span class="hl-str">"You are strict: if the evidence does not actually address the question, say WEAK."</span>
+)
+
+GRADE_BRIEF = <span class="hl-str">"""\
+Reply with exactly one word on the first line: GROUNDED or WEAK.
+On the second line, at most fifteen words saying why.
+If WEAK, on the third line list the query terms the evidence is missing, comma separated.
+
+Question: {question}
+Search query used: {query}
+
+Retrieved evidence:
+{evidence}
+"""</span></code></pre></div></div><div class='why'>The grader is never shown the expected answer. It cannot be: <code>expect</code> lives in the data and is used only to score the run afterwards. A test asserts that on the function signature, because a grader that can read the label turns the whole measurement into theatre.</div></section>
+<section class='slide'><div class='step-no'>Step 3</div><h2>The rewriter - and an admission</h2><p>When the grader says the evidence is weak, the <em>query</em> has to change or the next attempt just repeats the last one. This expands the missing terms into the words the documents actually use, and drops the ones that landed nowhere.</p><div class='lang lang-python'><div class='block'><div class='label'>python/rewriter.py</div><pre><code class='lang-python'><span class="hl-kw">class</span> GlossaryRewriter:
+    <span class="hl-str">"""Expand the terms the evidence did not cover into the words the docs use.
+
+    Only `missing` terms are expanded. Rewriting on a grade with nothing missing
+    is a no-op, which keeps the rewriter honest: it reacts to the grader's finding
+    instead of reaching for the table whenever it is called.
+    """</span>
+
+    name = <span class="hl-str">"glossary"</span>
+
+    <span class="hl-kw">def</span> __init__(self, glossary: Optional[Dict[str, List[str]]] = <span class="hl-kw">None</span>) -&gt; <span class="hl-kw">None</span>:
+        self.glossary = glossary <span class="hl-kw">if</span> glossary <span class="hl-kw">is</span> <span class="hl-kw">not</span> <span class="hl-kw">None</span> <span class="hl-kw">else</span> rag_core.load_glossary()
+
+    <span class="hl-kw">def</span> rewrite(self, question: str, query: str, missing: List[str]) -&gt; str:
+        <span class="hl-kw">if</span> <span class="hl-kw">not</span> missing:
+            <span class="hl-kw">return</span> query
+        expanded: List[str] = []
+        <span class="hl-kw">for</span> term <span class="hl-kw">in</span> missing:
+            expanded.extend(self.glossary.get(term, []))
+        <span class="hl-kw">if</span> <span class="hl-kw">not</span> expanded:
+            <span class="hl-com"># Nothing in the table matches. Returning the query unchanged is the</span>
+            <span class="hl-com"># honest move: the loop will grade it weak again and, at the cap,</span>
+            <span class="hl-com"># abstain - which is the correct outcome for a question the corpus</span>
+            <span class="hl-com"># does not answer. Inventing a rewrite here would turn "we have no</span>
+            <span class="hl-com"># document about this" into "we tried harder", which is worse.</span>
+            <span class="hl-kw">return</span> query
+        <span class="hl-com"># Keep the terms that DID land, drop the ones that did not, add the</span>
+        <span class="hl-com"># documents' words. Dropping the misses is the point: "orange" is not in</span>
+        <span class="hl-com"># any chunk, so leaving it in only dilutes the BM25 score of the rest.</span>
+        kept = [t <span class="hl-kw">for</span> t <span class="hl-kw">in</span> rag_core.content_terms(query) <span class="hl-kw">if</span> t <span class="hl-kw">not</span> <span class="hl-kw">in</span> missing]
+        out: List[str] = []
+        <span class="hl-kw">for</span> term <span class="hl-kw">in</span> kept + expanded:
+            <span class="hl-kw">if</span> term <span class="hl-kw">not</span> <span class="hl-kw">in</span> out:
+                out.append(term)
+        <span class="hl-kw">return</span> <span class="hl-str">" "</span>.join(out)
+
+
+REWRITE_SYSTEM = (
+    <span class="hl-str">"You rewrite a failed documentation search query using the vocabulary the "</span>
+    <span class="hl-str">"documentation itself is likely to use. Reply with the query only."</span>
+)
+
+REWRITE_BRIEF = <span class="hl-str">"""\
+The question was: {question}
+The search query "{query}" returned nothing useful.
+These terms appear nowhere in the retrieved text: {missing}
+
+Write one better search query, using words a technical manual would use.
+Reply with the query and nothing else.
+"""</span></code></pre></div></div><div class='why'>It is a lookup table, and a lookup table is a fixture rather than a design. It fixes <code>orange</code> only because somebody wrote <code>orange</code> into a JSON file, and it will not fix the phrasing nobody anticipated. It exists so this page prints the same thing on every machine. That is the entire argument for <code>--llm-rewrite</code>, and the lesson would rather say so than let you discover it.</div></section>
+<section class='slide'><div class='step-no'>Step 4</div><h2>Arm B - the objection, written out in full</h2><p>Before any graph: here is the corrective loop as a plain <code>while</code>. It calls the same retrieve, the same grader and the same rewriter the graph will call. Note the early exit - if the rewriter hands back the query unchanged, there is nothing left to try, and a cycle that cannot change its own input is an infinite loop with extra steps.</p><div class='lang lang-python'><div class='block'><div class='label'>python/loop_agent.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> run(retriever, question: str, *, grader: Grader, rewriter: Rewriter,
+        top_k: int, max_attempts: int,
+        generate: Optional[Callable] = <span class="hl-kw">None</span>) -&gt; dict:
+    <span class="hl-str">"""Retrieve, grade, and re-search with a better query until the evidence holds up."""</span>
+    query = question
+    attempt = <span class="hl-num">1</span>
+    retrievals = grades = rewrites = <span class="hl-num">0</span>
+    trace: List[str] = []
+    verdicts: List[str] = []
+    docs: List[rag_core.Chunk] = []
+    grade = <span class="hl-kw">None</span>
+
+    <span class="hl-kw">while</span> <span class="hl-kw">True</span>:
+        docs = rag_core.retrieve(retriever, query, top_k)
+        retrievals += <span class="hl-num">1</span>
+        trace.append(f<span class="hl-str">"retrieve  attempt={attempt} query={query!r} -&gt; {rag_core.sources(docs)}"</span>)
+
+        grade = grader.grade(question, query, docs)
+        grades += <span class="hl-num">1</span>
+        verdicts.append(grade[<span class="hl-str">"verdict"</span>])
+        trace.append(f<span class="hl-str">"grade     {grade['verdict']} score={grade['score']} - {grade['reason']}"</span>)
+
+        <span class="hl-kw">if</span> grade[<span class="hl-str">"verdict"</span>] == <span class="hl-str">"grounded"</span>:
+            <span class="hl-kw">break</span>
+        <span class="hl-kw">if</span> attempt &gt;= max_attempts:
+            trace.append(f<span class="hl-str">"abstain   {attempt} attempts used, evidence still weak"</span>)
+            <span class="hl-kw">break</span>
+
+        new_query = rewriter.rewrite(question, query, grade[<span class="hl-str">"missing"</span>])
+        rewrites += <span class="hl-num">1</span>
+        <span class="hl-kw">if</span> new_query == query:
+            <span class="hl-com"># The rewriter had nothing left to try. Retrying an identical query</span>
+            <span class="hl-com"># would retrieve identical chunks and grade identically - a cycle that</span>
+            <span class="hl-com"># cannot change its own input is an infinite loop with extra steps.</span>
+            <span class="hl-com"># Stopping here reaches the same decision the cap would, one wasted</span>
+            <span class="hl-com"># retrieval sooner.</span>
+            trace.append(<span class="hl-str">"abstain   rewrite changed nothing - no point asking again"</span>)
+            <span class="hl-kw">break</span>
+        trace.append(f<span class="hl-str">"rewrite   {query!r} -&gt; {new_query!r}  (missing {grade['missing']})"</span>)
+        query = new_query
+        attempt += <span class="hl-num">1</span>
+
+    grounded = grade[<span class="hl-str">"verdict"</span>] == <span class="hl-str">"grounded"</span>
+    answer = <span class="hl-str">""</span>
+    <span class="hl-kw">if</span> grounded <span class="hl-kw">and</span> generate <span class="hl-kw">is</span> <span class="hl-kw">not</span> <span class="hl-kw">None</span>:
+        answer = generate(question, docs)
+    <span class="hl-kw">elif</span> <span class="hl-kw">not</span> grounded:
+        answer = rag_core.ABSTAIN_TEXT
+
+    <span class="hl-kw">return</span> {
+        <span class="hl-str">"question"</span>: question, <span class="hl-str">"query"</span>: query, <span class="hl-str">"attempts"</span>: attempt,
+        <span class="hl-str">"retrievals"</span>: retrievals, <span class="hl-str">"grades"</span>: grades, <span class="hl-str">"rewrites"</span>: rewrites,
+        <span class="hl-str">"sources"</span>: rag_core.sources(docs) <span class="hl-kw">if</span> grounded <span class="hl-kw">else</span> [],
+        <span class="hl-str">"verdicts"</span>: verdicts, <span class="hl-str">"grade"</span>: grade, <span class="hl-str">"docs"</span>: docs,
+        <span class="hl-str">"status"</span>: <span class="hl-str">"answered"</span> <span class="hl-kw">if</span> grounded <span class="hl-kw">else</span> <span class="hl-str">"abstained"</span>,
+        <span class="hl-str">"answer"</span>: answer, <span class="hl-str">"trace"</span>: trace,
+    }</code></pre></div></div><div class='why'>Benchmarking LangGraph against a single-shot chain would prove that looping helps, which is not the same claim. A reader would be right to answer "so write a while loop". Lesson 7's authority came from refusing to benchmark against a straw man; dropping that standard one lesson later would be worse than never having had it.</div></section>
+<section class='slide'><div class='step-no'>Step 5</div><h2>State, and what a reducer actually is</h2><p>Look at the two kinds of field in one struct. <code>trace</code>, <code>turns</code> and the three counters are <code>Annotated[..., operator.add]</code>, so a node returning <code>{"retrievals": 1}</code> <strong>adds one</strong> to the running total. Everything else is last-write-wins, so a node returning <code>{"query": ...}</code> <strong>replaces</strong> it.</p><div class='lang lang-python'><div class='block'><div class='label'>python/graph_agent.py</div><pre><code class='lang-python'>    <span class="hl-str">"""Everything that flows between nodes.
+
+    Note the two kinds of field, deliberately side by side:
+
+      `trace`, `turns`, and the three counters are Annotated with operator.add,
+      so a node returning {"retrievals": 1} ADDS ONE to the running total.
+
+      everything else is last-write-wins, so a node returning {"query": "..."}
+      REPLACES the query.
+
+    That difference is what a reducer is, and it is easier to see in one struct
+    than in any amount of prose.
+    """</span>
+
+    question: str          <span class="hl-com"># the human's words. Never mutated.</span>
+    query: str             <span class="hl-com"># the CURRENT search query. `rewrite` replaces this.</span>
+    attempt: int
+    docs: List[rag_core.Chunk]
+    sources: List[str]
+    grade: Grade
+
+    trace: Annotated[List[str], operator.add]
+    turns: Annotated[List[dict], operator.add]
+    retrievals: Annotated[int, operator.add]
+    grades: Annotated[int, operator.add]
+    rewrites: Annotated[int, operator.add]
+
+    decision: str          <span class="hl-com"># "approve" | "veto" | "edit:&lt;new query&gt;"</span>
+    answer: str
+    status: str            <span class="hl-com"># "answered" | "abstained" | "vetoed"</span></code></pre></div></div><div class='why'>That contrast is the clearest available definition of a reducer, and it is far easier to see side by side in one TypedDict than in any amount of explanation. It is also why the scorecard's counters are measured rather than asserted: the graph counts itself.</div></section>
+<section class='slide'><div class='step-no'>Step 6</div><h2>Conditional edges, and the edge that points backwards</h2><p><code>add_conditional_edges</code> takes a function that returns a <strong>string key</strong>, and a map from those keys to nodes. <code>rewrite -&gt; retrieve</code> is the cycle. <code>grade</code> has three or four ways out depending on whether a human is in the loop.</p><div class='lang lang-python'><div class='block'><div class='label'>python/graph_agent.py</div><pre><code class='lang-python'>        <span class="hl-kw">if</span> state[<span class="hl-str">"grade"</span>][<span class="hl-str">"verdict"</span>] == <span class="hl-str">"grounded"</span>:
+            <span class="hl-kw">return</span> <span class="hl-str">"review"</span> <span class="hl-kw">if</span> human_review <span class="hl-kw">else</span> <span class="hl-str">"generate"</span>
+        <span class="hl-kw">if</span> state[<span class="hl-str">"attempt"</span>] &gt;= max_attempts:
+            <span class="hl-com"># The cap is a decision, not a crash. It produces a good answer -</span>
+            <span class="hl-com"># "not in your documents" - rather than an exception.</span>
+            <span class="hl-kw">return</span> <span class="hl-str">"abstain"</span>
+        <span class="hl-kw">return</span> <span class="hl-str">"rewrite"</span>
+
+    <span class="hl-kw">def</span> route_after_review(state: AgentState) -&gt; str:
+        decision = (state.get(<span class="hl-str">"decision"</span>) <span class="hl-kw">or</span> <span class="hl-str">"approve"</span>)
+        <span class="hl-kw">if</span> decision == <span class="hl-str">"veto"</span>:
+            <span class="hl-kw">return</span> <span class="hl-str">"veto"</span>
+        <span class="hl-kw">if</span> decision.startswith(<span class="hl-str">"edit:"</span>):
+            <span class="hl-kw">return</span> <span class="hl-str">"retrieve"</span>
+        <span class="hl-kw">return</span> <span class="hl-str">"generate"</span>
+
+    builder = StateGraph(AgentState)
+    builder.add_node(<span class="hl-str">"retrieve"</span>, retrieve_node)
+    builder.add_node(<span class="hl-str">"grade"</span>, grade_node)
+    builder.add_node(<span class="hl-str">"rewrite"</span>, rewrite_node)
+    builder.add_node(<span class="hl-str">"generate"</span>, generate_node)
+    builder.add_node(<span class="hl-str">"abstain"</span>, abstain_node)
+    <span class="hl-kw">if</span> human_review:
+        builder.add_node(<span class="hl-str">"review"</span>, review_node)
+        builder.add_node(<span class="hl-str">"veto"</span>, veto_node)
+
+    builder.add_edge(START, <span class="hl-str">"retrieve"</span>)
+    builder.add_edge(<span class="hl-str">"retrieve"</span>, <span class="hl-str">"grade"</span>)
+    targets = {<span class="hl-str">"rewrite"</span>: <span class="hl-str">"rewrite"</span>, <span class="hl-str">"generate"</span>: <span class="hl-str">"generate"</span>, <span class="hl-str">"abstain"</span>: <span class="hl-str">"abstain"</span>}
+    <span class="hl-kw">if</span> human_review:
+        targets[<span class="hl-str">"review"</span>] = <span class="hl-str">"review"</span>
+    builder.add_conditional_edges(<span class="hl-str">"grade"</span>, route_after_grade, targets)
+    builder.add_conditional_edges(<span class="hl-str">"rewrite"</span>, _rewrite_router,
+                                  {<span class="hl-str">"retrieve"</span>: <span class="hl-str">"retrieve"</span>, <span class="hl-str">"abstain"</span>: <span class="hl-str">"abstain"</span>})
+    <span class="hl-kw">if</span> human_review:
+        builder.add_conditional_edges(<span class="hl-str">"review"</span>, route_after_review,
+                                      {<span class="hl-str">"generate"</span>: <span class="hl-str">"generate"</span>, <span class="hl-str">"retrieve"</span>: <span class="hl-str">"retrieve"</span>,
+                                       <span class="hl-str">"veto"</span>: <span class="hl-str">"veto"</span>})
+        builder.add_edge(<span class="hl-str">"veto"</span>, END)
+    builder.add_edge(<span class="hl-str">"generate"</span>, END)
+    builder.add_edge(<span class="hl-str">"abstain"</span>, END)
+
+    graph = builder.compile(checkpointer=checkpointer)
+    graph._retrieve_node = retrieve_node  <span class="hl-com"># so run() can attach the retriever</span>
+    <span class="hl-kw">return</span> graph</code></pre></div></div><div class='why'>Because the routing function returns a key rather than a node, the topology stays separable from the logic - which is what lets <code>get_graph().edges</code> print the back-edge as a value. A <code>while</code> loop cannot answer "what are your edges?" at runtime. Its control flow is <code>if</code> and <code>while</code>; this one is data.</div></section>
+<section class='slide'><div class='step-no'>Step 7</div><h2>interrupt() - stopping to ask a human</h2><p>The graph stops here and hands back a <strong>review packet</strong>: the question, the query it ended up searching, how many attempts it took, the citations, and the evidence itself. You resume with <code>Command(resume="approve")</code>, <code>"veto"</code>, or <code>"edit:&lt;a better query&gt;"</code> - and that last one re-enters the cycle at <code>retrieve</code>.</p><div class='lang lang-python'><div class='block'><div class='label'>python/graph_agent.py</div><pre><code class='lang-python'>        <span class="hl-str">"""Stop, and hand a human everything they need to judge the answer.
+
+        The payload IS the review packet. That is why this uses the dynamic
+        `interrupt()` rather than `interrupt_before=["generate"]`: the static form
+        pauses without telling the reviewer anything, and a human approving a
+        grounded answer needs to see the evidence it is grounded in.
+        """</span>
+        decision = interrupt({
+            <span class="hl-str">"question"</span>: state[<span class="hl-str">"question"</span>],
+            <span class="hl-str">"query_used"</span>: state[<span class="hl-str">"query"</span>],
+            <span class="hl-str">"attempts"</span>: state[<span class="hl-str">"attempt"</span>],
+            <span class="hl-str">"citations"</span>: state[<span class="hl-str">"sources"</span>],
+            <span class="hl-str">"evidence"</span>: [d[<span class="hl-str">"text"</span>][:<span class="hl-num">200</span>] <span class="hl-kw">for</span> d <span class="hl-kw">in</span> state[<span class="hl-str">"docs"</span>]],
+            <span class="hl-str">"ask"</span>: <span class="hl-str">"approve | veto | edit:&lt;new query&gt;"</span>,
+        })
+        out = {<span class="hl-str">"decision"</span>: decision, <span class="hl-str">"trace"</span>: [f<span class="hl-str">"review    human said {decision!r}"</span>]}
+        <span class="hl-kw">if</span> isinstance(decision, str) <span class="hl-kw">and</span> decision.startswith(<span class="hl-str">"edit:"</span>):
+            <span class="hl-com"># The reviewer did not just approve or refuse - they handed back a</span>
+            <span class="hl-com"># better query. That re-enters the cycle at `retrieve`, which is a</span>
+            <span class="hl-com"># second way into the loop and the reason `review` earns a node</span>
+            <span class="hl-com"># rather than being a flag on `generate`.</span>
+            edited = decision[len(<span class="hl-str">"edit:"</span>):].strip()
+            <span class="hl-kw">if</span> edited:
+                out[<span class="hl-str">"query"</span>] = edited
+                out[<span class="hl-str">"attempt"</span>] = state[<span class="hl-str">"attempt"</span>] + <span class="hl-num">1</span>
+                out[<span class="hl-str">"trace"</span>] = [f<span class="hl-str">"review    human rewrote the query -&gt; {edited!r}"</span>]
+        <span class="hl-kw">return</span> out
+
+    <span class="hl-kw">def</span> generate_node(state: AgentState) -&gt; dict:</code></pre></div></div><div class='why'>This uses the dynamic <code>interrupt()</code> rather than the older <code>interrupt_before=["generate"]</code>, because the payload IS the point. A static pause tells the reviewer nothing, and a human approving a grounded answer needs to see what it is grounded in. The <code>edit</code> branch is also why <code>review</code> earns a node instead of being a flag on <code>generate</code>: it is a second way into the loop.</div></section>
+<section class='slide'><div class='step-no'>Command</div><h2>Run the comparison</h2><div class='lang lang-python'><div class='block'><div class='label'>demo · python</div><pre><code class='lang-bash'>$ python -m pip install -q -r requirements.txt</code></pre></div></div><div class='lang lang-python'><div class='block'><div class='label'>demo · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">8</span> demo</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>demo · node</div><pre><code class='lang-bash'>$ npm --prefix node install --silent --no-audit --no-fund</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>demo · node</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">8</span> --lang node demo</code></pre></div></div></section>
+<section class='slide'><div class='step-no'>Run it</div><h2>Read the output</h2><p><strong>The headline: 4/8 becomes 8/8, plus the abstention the chain never makes, for 67% more retrieval calls.</strong> The four the loop fixes are exactly the four where the reader's words are not the documents' words. <code>q8</code> was already right and looped anyway - a retrieval that bought nothing, left in because pretending the loop is free would be a lie. <code>q9</code> has no answer in the corpus, and the loop refuses rather than spinning.</p><p>Then the part that matters. <strong>The <code>while</code> loop and the graph agree on all nine questions - exactly.</strong> LangGraph did not make the agent smarter. Everything it cost bought the three rows the loop leaves blank: state that survives the process, a run you can pause and resume, and a topology you can print. The line counts and package counts are read off disk at run time, so they cannot drift from the code.</p><pre><code>Lesson 8 · A stateful agent with LangGraph
+corpus: lessons/07-langchain-rag/data/corpus  (7 documents - Lesson 7's, by path)
+settings: top_k=3 threshold=0.67 max_attempts=3 grader=coverage rewriter=glossary
+
+Nine questions. Three arms. The same corpus and the same settings.
+
+       linear  loop    graph   att  question
+  ------------------------------------------
+  q1   PASS    PASS    PASS    1    What is the factory reset procedure?
+  q2   PASS    PASS    PASS    1    Why does the status ring stay amber?
+  q3   PASS    PASS    PASS    1    Which endpoint exports the logging buffer?
+  q4   FAIL    PASS    PASS    2    The light is orange and it will not connect.
+  q5   FAIL    PASS    PASS    2    How do I wipe the device and start over?
+  q6   FAIL    PASS    PASS    2    What paperwork does an RMA need?
+  q7   FAIL    PASS    PASS    2    Is 5GHz supported?
+  q8   PASS    PASS    PASS    2    Can I mount it sideways?
+  q9   FAIL    PASS    PASS    2    What is the MTBF?
+
+  why each question is here
+    q1  control - carried from Lesson 7, and it must not regress
+    q2  control - carried from Lesson 7
+    q3  control - carried from Lesson 7
+    q4  vocabulary - the reader says 'orange light', the docs say 'amber status ring'
+    q5  user-speak - the reader says 'wipe', the docs say 'factory reset'
+    q6  acronym - the reader says 'RMA', the docs say 'warranty claim'
+    q7  notation - the reader types '5GHz', the docs spell out 'five gigahertz'
+    q8  FALSE ALARM - already correct on the first try; the grader loops anyway and buys nothing
+    q9  not in the corpus at all - the loop has to give up rather than spin
+
+The scorecard
+                                   linear (L7)      loop (while) graph (LangGraph)
+  top source correct                       4/8               8/8               8/8
+  correctly abstained                      0/1               1/1               1/1
+  --------------------------------------------------------------------------------
+  retrieval calls                            9        15  (+67%)                15
+  grade calls                                0                15                15
+  rewrite calls                              0                 7                 7
+  --------------------------------------------------------------------------------
+  state survives a process                   -                 -      checkpointer
+  pause / resume mid-run                     -                 -       interrupt()
+  topology you can query                     -                 -       get_graph()
+
+  The loop fixed 4 questions the chain got wrong (q4, q5, q6, q7), and
+  refused the 1 it could not answer at all - for 67% more retrieval calls.
+  q8 was already right on the first try and looped anyway: a retrieval that bought nothing.
+
+  The while loop and the graph agree on all 9 questions: exactly.
+  LangGraph did not make the agent smarter. It made it resumable,
+  pausable and inspectable - the three rows above that only it can fill.
+
+The topology, as data
+  nodes  ['abstain', 'generate', 'grade', 'retrieve', 'review', 'rewrite', 'veto']
+  edges
+    __start__  -&gt; retrieve
+    abstain    -&gt; __end__
+    generate   -&gt; __end__
+    grade      -&gt; abstain
+    grade      -&gt; generate
+    grade      -&gt; review
+    grade      -&gt; rewrite
+    retrieve   -&gt; grade
+    review     -&gt; generate
+    review     -&gt; retrieve
+    review     -&gt; veto
+    rewrite    -&gt; abstain
+    rewrite    -&gt; retrieve   &lt;- the cycle
+    veto       -&gt; __end__
+
+  A while loop cannot answer the question 'what are your edges?' at runtime.
+  Its control flow is `if` and `while`; this one is a value you can print.
+
+Human in the loop
+  question: 'How do I wipe the device and start over?'
+  This question matters: the manual says a factory reset destroys the logging
+  buffer permanently, and the warranty page says a claim without that export
+  cannot be assessed. Answering helpfully and immediately costs the reader
+  their evidence. So the graph stops and asks.
+
+  invoke #1 -&gt;  the graph STOPPED. It did not answer.
+                status              paused
+                get_state().next    ('review',)
+                answer in state?    False
+                review packet       citations=['manual.md:1', 'troubleshooting.md:1']
+                                    attempts=2  ask='approve | veto | edit:&lt;new query&gt;'
+                retrievals so far   2
+
+  invoke #2 -&gt;  Command(resume='approve') on the same thread_id
+                retrievals now      2      &lt;- unchanged. It resumed; it did not restart.
+                status              answered
+
+  invoke #2' -&gt; Command(resume='veto') on a fresh thread
+                status              vetoed - generate never ran
+
+  invoke #2'' -&gt; Command(resume='edit:...') - the reviewer hands back a query
+                retrievals now      3      &lt;- it re-entered the cycle at retrieve
+                a second way into the loop, which is why review is a node
+
+Memory - two turns on one thread
+  thread 'aurora'  turn 1  What is the factory reset procedure?
+                   cited ['manual.md:1', 'warranty.md:1']
+  thread 'aurora'  turn 2  Which endpoint exports the logging buffer?
+                   cited ['api.md:1', 'manual.md:1']
+  thread 'somebody-else'  turn 1  &lt;- a different thread_id remembers nothing
+  checkpoints written on 'aurora': 10
+
+  MemorySaver keeps this in the process. For state that outlives the process:
+    pip install langgraph-checkpoint-sqlite
+    ./run -l 8 chat --sqlite /tmp/aurora.db --thread aurora "..."
+  It is a separate package on purpose - see the bill below.
+
+What it cost
+                                        linear      loop (while) graph (LangGraph)
+  code you maintain                   68 lines         294 lines         464 lines
+  requirements lines                         0                 0                 1
+  packages installed                        48                48                71
+  install size                          ~34 MB            ~34 MB            ~43 MB
+
+  The corrective loop cost 226 lines and ZERO packages, and it delivered
+  the entire accuracy gain in the scorecard above. Most of those lines are the
+  grader and the rewriter, which the graph needs too. The loop ITSELF is
+  61 lines of `while`.
+
+  Swapping those 61 lines for LangGraph cost 170 lines of graph
+  wiring and 23 packages - for answers that are identical on all nine
+  questions. What it bought is the three rows the loop could not fill:
+  checkpoints, interrupts, and a topology you can query.
+  If you already did Lesson 7 it is only 5 more packages (67 -&gt; 72),
+  because LangGraph depends on langchain-core and you are already paying for it.
+  Which of those two numbers applies to you is the whole question.
+
+grader: coverage (deterministic). Run with --llm-grade for the grader you
+should actually use; it will not print the same thing twice, and that is the point.</code></pre></section>
+<section class='slide'><div class='step-no'>Try it</div><h2>The question where the words are wrong</h2><p>Nothing in the corpus says <em>orange</em>, and nothing says <em>light</em>. The documents say <strong>amber status ring</strong>. The first search returns <code>warranty.md</code> and <code>networking.md</code> - plausible, and wrong. Watch the grader score it 0.00, name what is missing, and watch the second attempt land on <code>faq.md</code>.</p><div class='block'><pre><code>The light is orange and it will not connect.</code></pre></div></section>
+<section class='slide'><div class='step-no'>Try it</div><h2>The question with no answer</h2><p>The rewriter does its job correctly - it expands the acronym to <em>mean time between failures</em> - and the search still fails, because the corpus genuinely does not cover it. That is the distinction worth having: a <strong>bad query</strong> and a <strong>missing document</strong> are different problems, and only one of them is worth retrying. The agent abstains.</p><div class='block'><pre><code>What is the MTBF?</code></pre></div></section>
+<section class='slide'><div class='step-no'>Try it</div><h2>Watch one question, attempt by attempt</h2><p>Every retrieve, every grade, every rewrite, in order. Add <code>--recursion-limit 4</code> to a question that loops and watch LangGraph's own cap fire instead of yours - they are not the same thing, and the lesson explains why that distinction matters more than it looks.</p><div class='block'><div class='label'>trace · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">8</span> trace <span class="hl-str">"What paperwork does an RMA need?"</span></code></pre></div></section>
+<section class='slide'><div class='step-no'>Try it</div><h2>Stop the agent and decide yourself</h2><p>This pauses mid-graph on real stdin and shows you the review packet before anything is generated. The question is not chosen at random: the manual says a factory reset destroys the logging buffer permanently, and the warranty page says a claim without that export cannot be assessed. <strong>Answering promptly and helpfully costs the reader their evidence.</strong> Approve it, veto it, or hand back a better query.</p><div class='block'><div class='label'>review · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">8</span> review <span class="hl-str">"How do I wipe the device and start over?"</span></code></pre></div></section>
+<section class='slide'><div class='step-no'>Try it</div><h2>The grader you should actually be using</h2><p><strong>Run this one.</strong> It calls the LLM grader several times against byte-identical evidence and prints the spread of verdicts it gives back, next to the deterministic grader answering the same thing every time.</p><p>The deterministic grader is the default here for exactly one reason: <code>demo</code> is committed to a file and diffed by a test, so it has to print the same thing twice. That is a property this lesson needs and your system almost certainly does not. <strong>On your own documents, use <code>--llm-grade</code></strong> - it is the better grader, it generalises to phrasings no glossary anticipated, and the fact that it will not repeat itself is something to measure rather than something to avoid.</p><div class='block'><div class='label'>spread · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">8</span> spread <span class="hl-str">"Is 5GHz supported?"</span> --runs <span class="hl-num">7</span></code></pre></div></section>
+<section class='slide'><div class='step-no'>Try it</div><h2>A real answer, through the graph</h2><p>The comparison is deliberately offline. This runs the whole graph with a model at the end - retrieval, grading, rewriting, generation - through the course's configured provider. Add <code>--llm-grade</code> to put the model in the grading node too, which is how you would actually run this.</p><div class='block'><div class='label'>ask · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">8</span> ask <span class="hl-str">"Why is the light orange?"</span> --llm-grade</code></pre></div></section>
+<section class='slide'><div class='step-no'>Try it</div><h2>Print the graph's own shape</h2><p>The topology as data: every node, every edge, and the back-edge marked. This is the thing a <code>while</code> loop cannot answer about itself at runtime, and it costs one call to <code>get_graph()</code>.</p><div class='block'><div class='label'>graph · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">8</span> graph</code></pre></div></section>
+<section class='slide'><div class='step-no'>Try it</div><h2>Re-derive the dependency numbers here</h2><p>Do not trust the bill in this lesson - recompute it. This walks LangGraph's actual dependency closure on your machine and counts the code off disk.</p><p><strong>Look for <code>langsmith</code> in that list.</strong> LangChain's hosted tracing client arrives as a transitive dependency whether you asked for it or not. It is inert until you set <code>LANGSMITH_TRACING</code>, and the command prints that too - but it is on your machine, one environment variable from live. Concept 7 in the README is about what that means.</p><div class='block'><div class='label'>measure · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">8</span> measure</code></pre></div></section>
+<section class='slide'><div class='step-no'>Try it</div><h2>Confirm it with the test</h2><p>An offline test pins every claim on this page: the loop's exact attempt and retrieval counts, the 4/8 → 8/8 result, that the grader <strong>cannot see the expected answer</strong>, that the graph and the <code>while</code> loop are indistinguishable, that the cycle really cycles, that a runaway graph raises instead of hanging, that the interrupt pauses before generating, that resuming does not re-retrieve, and that a veto never calls the model at all. No network, no model, no API key - and it passes whether or not LangGraph is installed.</p><div class='block'><div class='label'>test · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">8</span> test</code></pre></div></section>
+<section class='slide'><div class='step-no'>Command</div><h2>Watch the loop iterate - no code editing</h2><div class='lang lang-python'><div class='block'><div class='label'>web · python</div><pre><code class='lang-bash'>$ python -m pip install -q -r requirements.txt</code></pre></div></div><div class='lang lang-python'><div class='block'><div class='label'>web · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">8</span></code></pre></div></div></section>
+<section class='slide'><div class='step-no'>Experiment</div><h2>Try - turn off the rewriter</h2><p>Untick <strong>Rewrite the query between attempts</strong> and the loop still runs, but it re-searches the same words and gets the same chunks back, so it gives up. A cycle that cannot change its own input is not a cycle - it is a chain that runs slower. Turn it back on and the same question gets answered.</p><div class='block'><pre><code>Is 5GHz supported?</code></pre></div></section>
+<section class='slide'><div class='step-no'>Experiment</div><h2>Try - pause it, then resume it</h2><p>Leave <strong>Human review</strong> on <code>0 pause</code>. The graph stops before generating and shows you what it wants to answer from. Now move it to <code>1 approve</code> and watch <strong>retrievals when paused</strong> and <strong>retrievals after resume</strong> - they are the same number. The graph picked up where it stopped instead of starting the question again. That is what a checkpoint is, and it is the one thing on this page a <code>while</code> loop has no answer for.</p><div class='block'><pre><code>How do I wipe the device and start over?</code></pre></div></section>
+<section class='slide'><div class='step-no'>Going further</div><h2>From demo to production</h2><p><strong>Pin <code>langgraph</code> exactly</strong> - the interrupt API moved recently, and <code>Command(resume=)</code> is not what the tutorials from a year ago show you.</p><p><strong>Give the checkpointer real storage, and a retention policy.</strong> A checkpoint is a copy of your users' questions and your documents' text, sitting in a database. Decide how long that lives before you write the first one, not after.</p><p><strong>Make <code>thread_id</code> a real identity</strong> - a conversation, a ticket, a session. A hash of the query means two people asking the same thing share memory.</p><p><strong>Set both caps.</strong> <code>max_attempts</code> is your domain logic and produces a good answer; <code>recursion_limit</code> is LangGraph's structural floor and raises. Alert on the <em>abstain rate</em>, not on individual abstentions - one refusal is correct behaviour, a rising rate is a corpus problem.</p><p><strong>Log every <code>Grade</code>, including its <code>reason</code>.</strong> That is what turns the LLM grader's run-to-run spread from a mystery into a metric.</p><p><strong>Fold it into Lesson 5.</strong> Put all three arms in the golden set and let the evaluation gate tell you whether the loop actually helped on <em>your</em> documents, rather than trusting nine questions someone else wrote.</p></section>
+<section class='slide'><div class='step-no'>Recap</div><h2>What you learned</h2><p>You turned a linear RAG pipeline into an agent that grades its own retrieval, rewrites its own query, and knows when to stop. It fixed <strong>four of the nine questions the chain got wrong and refused the one nothing could answer, for 67% more retrieval calls</strong> - one of which bought nothing at all.</p><p>Then you priced the graph honestly. The corrective loop is 61 lines of <code>while</code> and zero packages, and it delivered <strong>the entire accuracy gain</strong>. Swapping those 61 lines for LangGraph cost 170 lines of wiring and 23 packages, for answers that are identical on every question. What it bought is real but narrow: state that outlives the process, a run you can pause and hand to a human, and a topology you can query at runtime.</p><p><strong>A framework earns its place when you need what it does, not when it does what you already did.</strong> If you never checkpoint and no human is ever in the path, you have bought a state machine you will not use. If they are - and for anything touching an irreversible action, they should be - there is no cheap way to write this yourself.</p><p>Next: <strong>Lesson 9 · Ollama + function calling</strong> - stop routing tools yourself and let a local model decide when to call them, fully offline.</p></section>
+    </div><!-- /deck -->
+
+    <div class="controls">
+      <button class="nav-btn" data-prev>&larr; Prev</button>
+      <div class="langsel compact" role="group" aria-label="Language"><button class="langsel-btn" data-setlang="python" aria-label="Python">Py</button><button class="langsel-btn" data-setlang="node" aria-label="Node.js">Node</button></div>
+      <span class="spacer"></span>
+      <span class="counter"></span>
+      <button class="nav-btn" data-next>Next &rarr;</button>
+    </div>
+    <div class="kbd-hint">Use <kbd>&larr;</kbd> <kbd>&rarr;</kbd> arrow keys, the dots, or the buttons. Deep-link a step with <code>#step-N</code>.</div>
+  </div>
+
+  <footer class="site"><div class="inner">
+    &copy; 2023&ndash;2026 <a href="https://www.linkedin.com/in/nikolareljin" target="_blank" rel="noopener">Nik Reljin</a> &middot;
+    Source on <a href="https://github.com/nikolareljin/local-ai-lab" target="_blank" rel="noopener">GitHub</a> &middot;
+    <a href="./index.html">Home</a> &middot; <a href="./about.html">About</a> &middot;
+    Built as a hands-on training course.
+  </div></footer>
+
+  <!-- The same slider that powers the published lessons: steps, dots, progress,
+       #step-N deep links, copy buttons. Read from the file, not inlined. -->
+  <script src="./assets/slider.js"></script>
+  <!-- Privacy-friendly analytics (GoatCounter): analytics.js loads GoatCounter on the production site only; cookieless -->
+  <script src="./assets/analytics.js" defer></script>
+</body>
+</html>

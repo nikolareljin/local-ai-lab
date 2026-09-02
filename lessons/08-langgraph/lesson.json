@@ -1,0 +1,283 @@
+{
+  "title": "A Stateful Agent with LangGraph",
+  "slug": "langgraph",
+  "status": "working",
+  "summary": "Turn the linear RAG pipeline into an agent that grades its own retrieval, rewrites its query and retries - then price the graph honestly against the same loop written as forty-five lines of `while`. Three arms over Lesson 7's corpus: the chain fixes 4 of 8, the loop fixes 8 of 8 and correctly refuses the ninth, and the graph matches the loop exactly. Everything LangGraph costs buys checkpoints, interrupts and an inspectable topology - not better answers. Python and Node.js.",
+  "cluster": "framework-tour",
+  "priority": "high",
+  "languages": [
+    "python",
+    "node"
+  ],
+  "defaultLanguage": "python",
+  "defaultAction": "web",
+  "elements": [
+    {
+      "type": "note",
+      "kicker": "Overview",
+      "title": "What you'll build",
+      "file": "overview.txt",
+      "body": "**New to LangGraph?** It is not LangChain 2.0, and it is not an agent framework in the \"hand it tools and hope\" sense. It is **a small state-machine library with checkpoints**: you declare a typed state, write nodes that return updates to it, and connect them with edges - including edges that point backwards. It ships Python and JavaScript SDKs, both used here, and it depends on `langchain-core`, so this lesson sits **on top of** Lesson 7's dependency rather than beside it.\n\nLesson 7 rebuilt the pipeline on a framework and asked what it cost. This lesson asks the harder version of that question. A corrective loop - retrieve, grade the evidence, rewrite the query, try again - fixes four of the nine questions here that a single retrieval gets wrong. But you do not need LangGraph for a loop. **You need `while`.**\n\nSo this lesson runs three arms, not two: the linear chain, the same loop written as forty-five lines of `while`, and the loop as a `StateGraph`. The `while` loop and the graph agree on every single question. That zero is the lesson. Pick a language above and press → to begin."
+    },
+    {
+      "type": "command",
+      "kicker": "Setup",
+      "title": "What you need",
+      "body": "This is the **second lesson that installs something**, and like Lesson 7 the dependency is part of the argument. `./run -l 8` puts `langgraph` into the course venv on first use. If you skip it, the demo still runs the linear and loop arms, prints the whole accuracy result, marks the graph column *not installed*, and exits 0 - which is a better degradation than Lesson 7 managed, because here the dependency is not what produces the result. Run everything from the repo root:",
+      "shell": "./run -l 8                    # Python: the playground (default)\n./run -l 8 demo               # Python: the three-arm comparison and the scorecard\n./run -l 8 --lang node demo   # Node.js: same control flow, a different bill"
+    },
+    {
+      "type": "config",
+      "file": "data/questions.json",
+      "kicker": "Step 1",
+      "title": "Nine questions, and why each one is here",
+      "body": "Three are carried straight from Lesson 7 as controls. Four are phrased the way a real person asks - `orange light` when the docs say *amber status ring*, `wipe` when they say *factory reset*, `RMA` when they say *warranty claim*, `5GHz` when they spell out *five gigahertz*. One is already correct on the first try and makes the loop spend a retrieval for nothing. One has no answer in the corpus at all.\n\nEvery question carries its own `why`, and the demo prints it, so the reason a question exists lives in the data rather than only in this prose.",
+      "why": "Corrective RAG only demonstrates itself on questions the first search actually fails. These fail for a boring, reproducible reason - the words are not in the documents - which is exactly what makes the result provable offline, through retrieval alone, with no model in the loop."
+    },
+    {
+      "type": "code",
+      "file": "python/graders.py",
+      "lang": "python",
+      "lines": "41-96",
+      "group": "grader",
+      "kicker": "Step 2",
+      "title": "The grader - one judgement the whole graph turns on",
+      "body": "Term coverage: what fraction of the query's content words appear anywhere in the retrieved text? It is a real information-retrieval signal, it detects precisely the failure this lesson is about, and `missing` - the terms that did not land - is exactly what the rewriter needs next.",
+      "why": "The grader is never shown the expected answer. It cannot be: `expect` lives in the data and is used only to score the run afterwards. A test asserts that on the function signature, because a grader that can read the label turns the whole measurement into theatre."
+    },
+    {
+      "type": "code",
+      "file": "python/rewriter.py",
+      "lang": "python",
+      "lines": "32-83",
+      "group": "rewriter",
+      "kicker": "Step 3",
+      "title": "The rewriter - and an admission",
+      "body": "When the grader says the evidence is weak, the *query* has to change or the next attempt just repeats the last one. This expands the missing terms into the words the documents actually use, and drops the ones that landed nowhere.",
+      "why": "It is a lookup table, and a lookup table is a fixture rather than a design. It fixes `orange` only because somebody wrote `orange` into a JSON file, and it will not fix the phrasing nobody anticipated. It exists so this page prints the same thing on every machine. That is the entire argument for `--llm-rewrite`, and the lesson would rather say so than let you discover it."
+    },
+    {
+      "type": "code",
+      "file": "python/loop_agent.py",
+      "lang": "python",
+      "lines": "27-84",
+      "group": "loop",
+      "kicker": "Step 4",
+      "title": "Arm B - the objection, written out in full",
+      "body": "Before any graph: here is the corrective loop as a plain `while`. It calls the same retrieve, the same grader and the same rewriter the graph will call. Note the early exit - if the rewriter hands back the query unchanged, there is nothing left to try, and a cycle that cannot change its own input is an infinite loop with extra steps.",
+      "why": "Benchmarking LangGraph against a single-shot chain would prove that looping helps, which is not the same claim. A reader would be right to answer \"so write a while loop\". Lesson 7's authority came from refusing to benchmark against a straw man; dropping that standard one lesson later would be worse than never having had it."
+    },
+    {
+      "type": "code",
+      "file": "python/graph_agent.py",
+      "lang": "python",
+      "lines": "33-64",
+      "group": "state",
+      "kicker": "Step 5",
+      "title": "State, and what a reducer actually is",
+      "body": "Look at the two kinds of field in one struct. `trace`, `turns` and the three counters are `Annotated[..., operator.add]`, so a node returning `{\"retrievals\": 1}` **adds one** to the running total. Everything else is last-write-wins, so a node returning `{\"query\": ...}` **replaces** it.",
+      "why": "That contrast is the clearest available definition of a reducer, and it is far easier to see side by side in one TypedDict than in any amount of explanation. It is also why the scorecard's counters are measured rather than asserted: the graph counts itself."
+    },
+    {
+      "type": "code",
+      "file": "python/graph_agent.py",
+      "lang": "python",
+      "lines": "163-209",
+      "group": "edges",
+      "kicker": "Step 6",
+      "title": "Conditional edges, and the edge that points backwards",
+      "body": "`add_conditional_edges` takes a function that returns a **string key**, and a map from those keys to nodes. `rewrite -> retrieve` is the cycle. `grade` has three or four ways out depending on whether a human is in the loop.",
+      "why": "Because the routing function returns a key rather than a node, the topology stays separable from the logic - which is what lets `get_graph().edges` print the back-edge as a value. A `while` loop cannot answer \"what are your edges?\" at runtime. Its control flow is `if` and `while`; this one is data."
+    },
+    {
+      "type": "code",
+      "file": "python/graph_agent.py",
+      "lang": "python",
+      "lines": "108-136",
+      "group": "interrupt",
+      "kicker": "Step 7",
+      "title": "interrupt() - stopping to ask a human",
+      "body": "The graph stops here and hands back a **review packet**: the question, the query it ended up searching, how many attempts it took, the citations, and the evidence itself. You resume with `Command(resume=\"approve\")`, `\"veto\"`, or `\"edit:<a better query>\"` - and that last one re-enters the cycle at `retrieve`.",
+      "why": "This uses the dynamic `interrupt()` rather than the older `interrupt_before=[\"generate\"]`, because the payload IS the point. A static pause tells the reviewer nothing, and a human approving a grounded answer needs to see what it is grounded in. The `edit` branch is also why `review` earns a node instead of being a flag on `generate`: it is a second way into the loop."
+    },
+    {
+      "type": "command",
+      "action": "demo",
+      "lang": "python",
+      "group": "run-demo",
+      "venv": true,
+      "shell": "python -m pip install -q -r requirements.txt"
+    },
+    {
+      "type": "command",
+      "action": "demo",
+      "lang": "python",
+      "group": "run-demo",
+      "venv": true,
+      "kicker": "Run it",
+      "title": "Run the comparison",
+      "body": "Nine questions, three arms, one corpus. **Offline and deterministic** - it compares which documents each arm retrieves and how many times it had to ask, never what a model says, because retrieval and control flow are reproducible and generated prose is not.",
+      "display": "./run -l 8 demo",
+      "shell": "python python/langgraph_agent.py demo"
+    },
+    {
+      "type": "command",
+      "action": "demo",
+      "lang": "node",
+      "group": "run-demo",
+      "shell": "npm --prefix node install --silent --no-audit --no-fund"
+    },
+    {
+      "type": "command",
+      "action": "demo",
+      "lang": "node",
+      "group": "run-demo",
+      "display": "./run -l 8 --lang node demo",
+      "shell": "node node/langgraph_agent.mjs"
+    },
+    {
+      "type": "note",
+      "kicker": "Run it",
+      "title": "Read the output",
+      "file": "expected-output.txt",
+      "body": "**The headline: 4/8 becomes 8/8, plus the abstention the chain never makes, for 67% more retrieval calls.** The four the loop fixes are exactly the four where the reader's words are not the documents' words. `q8` was already right and looped anyway - a retrieval that bought nothing, left in because pretending the loop is free would be a lie. `q9` has no answer in the corpus, and the loop refuses rather than spinning.\n\nThen the part that matters. **The `while` loop and the graph agree on all nine questions - exactly.** LangGraph did not make the agent smarter. Everything it cost bought the three rows the loop leaves blank: state that survives the process, a run you can pause and resume, and a topology you can print. The line counts and package counts are read off disk at run time, so they cannot drift from the code."
+    },
+    {
+      "type": "text",
+      "kicker": "Try it",
+      "title": "The question where the words are wrong",
+      "text": "The light is orange and it will not connect.",
+      "body": "Nothing in the corpus says *orange*, and nothing says *light*. The documents say **amber status ring**. The first search returns `warranty.md` and `networking.md` - plausible, and wrong. Watch the grader score it 0.00, name what is missing, and watch the second attempt land on `faq.md`."
+    },
+    {
+      "type": "text",
+      "kicker": "Try it",
+      "title": "The question with no answer",
+      "text": "What is the MTBF?",
+      "body": "The rewriter does its job correctly - it expands the acronym to *mean time between failures* - and the search still fails, because the corpus genuinely does not cover it. That is the distinction worth having: a **bad query** and a **missing document** are different problems, and only one of them is worth retrying. The agent abstains."
+    },
+    {
+      "type": "command",
+      "action": "trace",
+      "lang": "python",
+      "venv": true,
+      "kicker": "Try it",
+      "title": "Watch one question, attempt by attempt",
+      "body": "Every retrieve, every grade, every rewrite, in order. Add `--recursion-limit 4` to a question that loops and watch LangGraph's own cap fire instead of yours - they are not the same thing, and the lesson explains why that distinction matters more than it looks.",
+      "display": "./run -l 8 trace \"What paperwork does an RMA need?\"",
+      "shell": "python python/langgraph_agent.py trace"
+    },
+    {
+      "type": "command",
+      "action": "review",
+      "lang": "python",
+      "venv": true,
+      "kicker": "Try it",
+      "title": "Stop the agent and decide yourself",
+      "body": "This pauses mid-graph on real stdin and shows you the review packet before anything is generated. The question is not chosen at random: the manual says a factory reset destroys the logging buffer permanently, and the warranty page says a claim without that export cannot be assessed. **Answering promptly and helpfully costs the reader their evidence.** Approve it, veto it, or hand back a better query.",
+      "display": "./run -l 8 review \"How do I wipe the device and start over?\"",
+      "shell": "python python/langgraph_agent.py review"
+    },
+    {
+      "type": "command",
+      "action": "spread",
+      "lang": "python",
+      "venv": true,
+      "kicker": "Try it",
+      "title": "The grader you should actually be using",
+      "body": "**Run this one.** It calls the LLM grader several times against byte-identical evidence and prints the spread of verdicts it gives back, next to the deterministic grader answering the same thing every time.\n\nThe deterministic grader is the default here for exactly one reason: `demo` is committed to a file and diffed by a test, so it has to print the same thing twice. That is a property this lesson needs and your system almost certainly does not. **On your own documents, use `--llm-grade`** - it is the better grader, it generalises to phrasings no glossary anticipated, and the fact that it will not repeat itself is something to measure rather than something to avoid.",
+      "display": "./run -l 8 spread \"Is 5GHz supported?\" --runs 7",
+      "shell": "python python/langgraph_agent.py spread"
+    },
+    {
+      "type": "command",
+      "action": "ask",
+      "lang": "python",
+      "venv": true,
+      "kicker": "Try it",
+      "title": "A real answer, through the graph",
+      "body": "The comparison is deliberately offline. This runs the whole graph with a model at the end - retrieval, grading, rewriting, generation - through the course's configured provider. Add `--llm-grade` to put the model in the grading node too, which is how you would actually run this.",
+      "display": "./run -l 8 ask \"Why is the light orange?\" --llm-grade",
+      "shell": "python python/langgraph_agent.py ask"
+    },
+    {
+      "type": "command",
+      "action": "graph",
+      "lang": "python",
+      "venv": true,
+      "kicker": "Try it",
+      "title": "Print the graph's own shape",
+      "body": "The topology as data: every node, every edge, and the back-edge marked. This is the thing a `while` loop cannot answer about itself at runtime, and it costs one call to `get_graph()`.",
+      "display": "./run -l 8 graph",
+      "shell": "python python/langgraph_agent.py graph"
+    },
+    {
+      "type": "command",
+      "action": "measure",
+      "lang": "python",
+      "venv": true,
+      "kicker": "Try it",
+      "title": "Re-derive the dependency numbers here",
+      "body": "Do not trust the bill in this lesson - recompute it. This walks LangGraph's actual dependency closure on your machine and counts the code off disk.\n\n**Look for `langsmith` in that list.** LangChain's hosted tracing client arrives as a transitive dependency whether you asked for it or not. It is inert until you set `LANGSMITH_TRACING`, and the command prints that too - but it is on your machine, one environment variable from live. Concept 7 in the README is about what that means.",
+      "display": "./run -l 8 measure",
+      "shell": "python python/langgraph_agent.py measure"
+    },
+    {
+      "type": "command",
+      "action": "test",
+      "lang": "python",
+      "venv": true,
+      "kicker": "Try it",
+      "title": "Confirm it with the test",
+      "body": "An offline test pins every claim on this page: the loop's exact attempt and retrieval counts, the 4/8 → 8/8 result, that the grader **cannot see the expected answer**, that the graph and the `while` loop are indistinguishable, that the cycle really cycles, that a runaway graph raises instead of hanging, that the interrupt pauses before generating, that resuming does not re-retrieve, and that a veto never calls the model at all. No network, no model, no API key - and it passes whether or not LangGraph is installed.",
+      "display": "./run -l 8 test",
+      "shell": "python -m pytest -q python/test_langgraph_agent.py"
+    },
+    {
+      "type": "command",
+      "action": "web",
+      "lang": "python",
+      "group": "run-web",
+      "venv": true,
+      "shell": "python -m pip install -q -r requirements.txt"
+    },
+    {
+      "type": "command",
+      "action": "web",
+      "lang": "python",
+      "group": "run-web",
+      "venv": true,
+      "kicker": "Experiment",
+      "title": "Watch the loop iterate - no code editing",
+      "body": "`./run -l 8` (the default) opens the graph over the same corpus. Every attempt gets a row: the query it used, the coverage it scored, and what it cited. Then drag **Grade threshold** to 0 and watch the graph stop looping entirely - at that setting it *is* Lesson 7's linear chain. Set **Max attempts** to 1 and you get there by a different route. Graph and chain are a continuum you configure, not two products.",
+      "display": "./run -l 8",
+      "shell": "python python/web.py"
+    },
+    {
+      "type": "text",
+      "kicker": "Experiment",
+      "title": "Try - turn off the rewriter",
+      "text": "Is 5GHz supported?",
+      "body": "Untick **Rewrite the query between attempts** and the loop still runs, but it re-searches the same words and gets the same chunks back, so it gives up. A cycle that cannot change its own input is not a cycle - it is a chain that runs slower. Turn it back on and the same question gets answered."
+    },
+    {
+      "type": "text",
+      "kicker": "Experiment",
+      "title": "Try - pause it, then resume it",
+      "text": "How do I wipe the device and start over?",
+      "body": "Leave **Human review** on `0 pause`. The graph stops before generating and shows you what it wants to answer from. Now move it to `1 approve` and watch **retrievals when paused** and **retrievals after resume** - they are the same number. The graph picked up where it stopped instead of starting the question again. That is what a checkpoint is, and it is the one thing on this page a `while` loop has no answer for."
+    },
+    {
+      "type": "note",
+      "kicker": "Going further",
+      "title": "From demo to production",
+      "body": "**Pin `langgraph` exactly** - the interrupt API moved recently, and `Command(resume=)` is not what the tutorials from a year ago show you.\n\n**Give the checkpointer real storage, and a retention policy.** A checkpoint is a copy of your users' questions and your documents' text, sitting in a database. Decide how long that lives before you write the first one, not after.\n\n**Make `thread_id` a real identity** - a conversation, a ticket, a session. A hash of the query means two people asking the same thing share memory.\n\n**Set both caps.** `max_attempts` is your domain logic and produces a good answer; `recursion_limit` is LangGraph's structural floor and raises. Alert on the *abstain rate*, not on individual abstentions - one refusal is correct behaviour, a rising rate is a corpus problem.\n\n**Log every `Grade`, including its `reason`.** That is what turns the LLM grader's run-to-run spread from a mystery into a metric.\n\n**Fold it into Lesson 5.** Put all three arms in the golden set and let the evaluation gate tell you whether the loop actually helped on *your* documents, rather than trusting nine questions someone else wrote."
+    },
+    {
+      "type": "note",
+      "kicker": "Recap",
+      "title": "What you learned",
+      "body": "You turned a linear RAG pipeline into an agent that grades its own retrieval, rewrites its own query, and knows when to stop. It fixed **four of the nine questions the chain got wrong and refused the one nothing could answer, for 67% more retrieval calls** - one of which bought nothing at all.\n\nThen you priced the graph honestly. The corrective loop is 61 lines of `while` and zero packages, and it delivered **the entire accuracy gain**. Swapping those 61 lines for LangGraph cost 170 lines of wiring and 23 packages, for answers that are identical on every question. What it bought is real but narrow: state that outlives the process, a run you can pause and hand to a human, and a topology you can query at runtime.\n\n**A framework earns its place when you need what it does, not when it does what you already did.** If you never checkpoint and no human is ever in the path, you have bought a state machine you will not use. If they are - and for anything touching an irreversible action, they should be - there is no cheap way to write this yourself.\n\nNext: **Lesson 9 · Ollama + function calling** - stop routing tools yourself and let a local model decide when to call them, fully offline."
+    }
+  ]
+}

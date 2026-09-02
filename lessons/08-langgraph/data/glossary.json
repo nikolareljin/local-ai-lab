@@ -1,0 +1,13 @@
+{
+  "_comment": "The deterministic rewriter's whole vocabulary. It is a fixture, not a design: it exists so `./run -l 8 demo` prints the same thing every time and the test can diff it. Needing to hand-write it is exactly the argument for --llm-rewrite. See the README, Concept 6.",
+  "orange":    ["amber", "status", "ring"],
+  "light":     ["status", "ring"],
+  "connect":   ["joined", "network", "band"],
+  "wifi":      ["network", "gateway"],
+  "wipe":      ["factory", "reset", "erases", "credentials"],
+  "rma":       ["warranty", "claim"],
+  "paperwork": ["claim", "form", "serial", "number", "export"],
+  "5ghz":      ["five", "gigahertz", "band"],
+  "sideways":  ["horizontal", "mounting", "vertically", "condensation"],
+  "mtbf":      ["mean", "time", "between", "failures"]
+}

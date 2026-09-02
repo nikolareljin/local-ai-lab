@@ -414,8 +414,9 @@ it can be taught on its own terms instead of as a LangChain impersonation.
 
 ## Next lesson
 
-[**Lesson 8 · LangGraph →**](../../roadmap/LESSON8-langgraph.md) - turn this linear chain into a
-stateful agent graph with retries, tool routing, and memory.
+[**Lesson 8 · LangGraph →**](../08-langgraph/README.md) - turn this linear chain into a stateful
+agent graph that grades its own retrieval, retries with a better query, and stops to ask a human
+before it does something irreversible.
 
 ---
 

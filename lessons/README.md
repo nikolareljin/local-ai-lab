@@ -123,6 +123,14 @@ reference implementation: BM25 `k1`/`b`, the RRF `k`, and a synonyms toggle, wit
 score breakdown. The GUI is Python-only by convention; cross-language **algorithm** parity stays in
 the byte-checked `demo` ports.
 
+[Lesson 8](08-langgraph/python/web.py) is the first playground that holds **resumable state** rather
+than a read-only cache: its entries are paused LangGraph threads that a later request resumes. Two
+consequences worth copying if you build another one. The cache key deliberately **excludes** the
+control that resumes the run, or moving that control would address a different thread and start the
+question over. And `search()` must never take the module lock while calling something that takes it
+again - building the retriever inside the locked section deadlocked the request thread exactly once
+during authoring.
+
 ## Authoring a new lesson
 
 ```bash

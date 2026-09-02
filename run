@@ -21,7 +21,7 @@ Usage:
   ./run -l <N> [--lang python|node|csharp] [action] [args]
   ./run list                                  # list all lessons
 
-Two ways into any lesson, 1 through 7:
+Two ways into any lesson, 1 through 8:
 
   TRAINING - read the lesson, click through the steps
     ./run -l <N> lesson       open the lesson in a browser, served locally (no GitHub Pages)
@@ -36,6 +36,8 @@ Lesson-specific extras:
   -l 2   MCP server    serve · register
   -l 3+  authoring     show   walk the lesson's code and configs in the terminal
   -l 7   LangChain     ask "question" [--native] [--arm bm25|embed]
+  -l 8   LangGraph     trace · chat · review · spread · ask "question" · graph · measure
+                       [--llm-grade] [--llm-rewrite] [--llm] [--provider NAME]
 
 Examples:
   ./run -l 1 lesson                           # read Lesson 1 locally, click through it
@@ -45,6 +47,8 @@ Examples:
   ./run -l 2 demo                             # call the MCP tools over stdio (no LLM needed)
   ./run -l 3 --lang csharp demo               # the C#/.NET port of the same demo
   ./run -l 7 lesson                           # read Lesson 7 locally
+  ./run -l 8 trace "Is 5GHz supported?"       # watch the agent re-search after a weak result
+  ./run -l 8 spread "Is 5GHz supported?"      # watch an LLM grader disagree with itself
   ./run -l 3 show --html > /tmp/l3.html       # standalone HTML of the instructions
 
 Languages (polyglot — Option B): python (default/reference) · node · csharp.

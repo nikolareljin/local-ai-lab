@@ -1,0 +1,46 @@
+   A chain runs once. A graph decides whether to run again.
+
+                        ┌───────────────────────────────┐
+                        │  START     question, attempt=1 │
+                        └───────────────┬───────────────┘
+                                        ▼
+                        ┌───────────────────────────────┐
+              ┌────────▶│  retrieve     BM25 · top-k     │  retrievals +1
+              │         └───────────────┬───────────────┘
+              │                         ▼
+              │         ┌───────────────────────────────┐
+              │         │  grade      coverage or LLM    │  grades +1
+              │         └──────┬─────────────────┬──────┘
+              │      weak, and │                 │ grounded
+              │   attempts left│                 │
+              │                ▼                 ▼
+              │  ┌──────────────────────┐   ┌──────────────────────────┐
+              └──┤  rewrite   glossary  │   │  review     ⏸ interrupt()│
+                 └──────────┬───────────┘   └───┬──────────┬───────────┘
+                            │       approve     │          │ veto
+                    edit    └───────────────────┤          │
+                                                ▼          ▼
+   weak, no attempts left            ┌──────────────┐  ┌──────────────┐
+   ─────────────────────────────────▶│   abstain    │  │   generate   │
+                                     └──────┬───────┘  └──────┬───────┘
+                                            ▼                 ▼
+                                           END               END
+
+   Three things this picture has that a chain cannot draw:
+
+     ◀──   an edge that points BACKWARDS            (rewrite → retrieve)
+     ⏸     a node that STOPS and waits for a human  (review)
+     ▼ ▼   two different ways to finish             (generate · abstain)
+
+
+   Measured over Lesson 7's corpus, nine questions:
+
+                              linear      loop (while)   graph (LangGraph)
+     top source correct          4/8               8/8                 8/8
+     correctly abstained         0/1               1/1                 1/1
+     retrieval calls               9         15 (+67%)                  15
+
+   The while loop and the graph agree on every question. That is not a
+   disappointment - it is the finding. Everything LangGraph costs is paid
+   for the three things the loop cannot do at all: keep state past the
+   process, stop halfway and ask a human, and tell you its own shape.

@@ -6,6 +6,49 @@ All notable changes to this project are documented here. This project follows
 
 ## [Unreleased]
 
+### Added
+- **Lesson 8 · A Stateful Agent with LangGraph** - a new working lesson in **Python and Node.js**,
+  graduating the roadmap outline into `lessons/08-langgraph/`. It turns the linear RAG pipeline into
+  a corrective agent that grades its own retrieval, rewrites the query and searches again - and then
+  prices the graph honestly. Measured over Lesson 7's corpus: the linear chain gets **4 of 8**
+  answerable questions' top citation right and never refuses; the loop gets **8 of 8** and correctly
+  abstains on the ninth, for **67% more retrieval calls**, one of which buys nothing.
+- **A third arm, so the comparison is not a straw man** - the same corrective loop written as 61
+  lines of plain `while`, calling the identical retrieve/grade/rewrite functions. It matches the
+  LangGraph arm on every question, and `test_graph_and_loop_are_indistinguishable` pins that. The
+  finding the lesson is built around: LangGraph buys nothing on answer quality, and everything on
+  checkpointing, interrupts and an inspectable topology.
+- **Checkpointed memory and a human-in-the-loop gate** - `MemorySaver` by default with `SqliteSaver`
+  behind `--sqlite` (a separate package, kept opt-in so the printed scorecard matches what `./run -l 8`
+  installs), plus a dynamic `interrupt()` that stops before generating and hands a reviewer the
+  citations and the evidence. The gate is not a demo checkbox: the corpus says a factory reset
+  destroys the logging buffer permanently and that a warranty claim without that export cannot be
+  assessed, so answering promptly costs the reader their evidence.
+- **Two graders, and an argument about which to use** - a deterministic term-coverage grader (the
+  default, and only because `demo` is byte-diffed by the test) and an LLM grader behind `--llm-grade`,
+  which the lesson recommends for real documents. A `spread` action runs the LLM grader N times
+  against byte-identical evidence and prints the disagreement, so run-to-run variance is taught
+  rather than hidden.
+- **Concept 7 · observability** - LangSmith, what it records field by field for this graph, and the
+  open-source alternatives (Phoenix, Langfuse, OpenLLMetry, OpenTelemetry GenAI conventions, MLflow,
+  Opik, Helicone), plus the trace-versus-eval boundary pointing back at Lesson 5. Includes the
+  verifiable detail that `langsmith` installs as a transitive dependency of `langgraph` and sits
+  dormant until `LANGSMITH_TRACING` is set - `./run -l 8 measure` prints its own closure and the
+  live `tracing_is_enabled()` value.
+- **New `./run -l 8` actions** - `trace`, `chat`, `review`, `spread`, `ask`, `graph` and `measure`,
+  alongside the standard `demo`, `test` and `web`.
+
+### Changed
+- **Lesson 8 leaves `roadmap/`** and its cross-links move with it: Lesson 7's "next lesson" and
+  recap teaser, Lesson 9's chain, `roadmap/README.md`, `SYLLABUS.md`, the README curriculum table and
+  the generated curriculum and downloads tables.
+- **`INSTALL.md` section 5 renumbered** - the per-lesson dependency table still used pre-renumber
+  numbering ("3 · LangChain", "4 · LangGraph"), and listed dependencies for Lesson 7 that the lesson
+  explicitly refuses (`langchain-community`, `faiss-cpu`). All twelve rows corrected.
+- **Site navigation** - every static page gains Lesson 8, and `docs/lesson-1-rag.html` and
+  `docs/lesson-2-mcp.html` gain Lesson 7 as well, which they had been missing.
+- **`./run -h`** covers lessons 1 through 8 and lists Lesson 8's extra actions.
+
 ## [0.11.0] - 2026-08-18
 
 ### Added
