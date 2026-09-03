@@ -36,12 +36,26 @@ LINK = re.compile(r"\]\((\.{1,2}/[^)#\s]+)")
 
 
 def markdown_files() -> list[Path]:
-    out = []
-    for path in ROOT.rglob("*.md"):
-        if any(part in SKIP_DIRS for part in path.relative_to(ROOT).parts):
-            continue
-        out.append(path)
-    return sorted(out)
+    """Every Markdown file **git tracks**, which is the set that reaches GitHub.
+
+    `rglob` would also pick up ignored local files - `.gitignore` names `/PLAN.md`,
+    `/ANALYTICS_PLAN.md` and `/REORGANIZE_PLAN.md` precisely because they show up in
+    working copies - and failing someone's local run over a scratch file they will
+    never commit is a good way to teach them to stop running the check.
+
+    Falls back to a filesystem walk when git is unavailable (a source tarball, say),
+    since a slightly wider scan beats no check at all.
+    """
+    try:
+        result = subprocess.run(["git", "ls-files", "-z", "*.md"], cwd=ROOT,
+                                capture_output=True, text=True, check=True)
+        tracked = [ROOT / name for name in result.stdout.split("\0") if name]
+        if tracked:
+            return sorted(tracked)
+    except (OSError, subprocess.CalledProcessError):
+        pass  # not a git checkout, or no git on PATH - fall through
+    return sorted(path for path in ROOT.rglob("*.md")
+                  if not any(part in SKIP_DIRS for part in path.relative_to(ROOT).parts))
 
 
 def check_links() -> list[str]:
@@ -67,12 +81,20 @@ def check_links() -> list[str]:
 
 
 def check_readme_table() -> list[str]:
+    """Delegate to the generator's own --check, and keep what it said.
+
+    It fails for more than one reason - a stale table, but also missing HTML markers
+    - and swallowing its output would leave a CI log saying only that something is
+    wrong with a table.
+    """
     result = subprocess.run([sys.executable, str(ROOT / "tools" / "sync-readme-downloads.py"),
                              "--check"], cwd=ROOT, capture_output=True, text=True)
-    if result.returncode != 0:
-        return ["README 'Lessons & downloads' table is stale - "
-                "run: python3 tools/sync-readme-downloads.py"]
-    return []
+    if result.returncode == 0:
+        return []
+    detail = " ".join((result.stdout + " " + result.stderr).split())
+    message = ("README 'Lessons & downloads' table check failed - "
+               "run: python3 tools/sync-readme-downloads.py")
+    return [f"{message}\n      {detail}" if detail else message]
 
 
 def lesson_registry() -> list[tuple[int, dict]]:
