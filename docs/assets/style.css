@@ -89,6 +89,17 @@ th { background: var(--panel); }
 .lesson-head p { color: var(--muted); margin: 0; }
 
 /* ---- language selector (Python / Node.js / C#) ---- */
+/* Downloadable lesson PDF control, shared by published and local lesson views. */
+.lesson-download { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 16px 0 2px; }
+.lesson-pdf-download {
+  display: inline-flex; align-items: center; gap: 7px; background: var(--panel); border: 1px solid var(--accent2);
+  border-radius: 9px; color: var(--txt); padding: 8px 12px; font-size: 13px; font-weight: 700;
+}
+.lesson-pdf-download:hover { background: var(--accent2); color: #fff; text-decoration: none; }
+.lesson-pdf-download span { color: var(--accent); font-size: 18px; line-height: .8; }
+.lesson-pdf-download:hover span { color: #fff; }
+.download-note { color: var(--muted); font-size: 12px; }
+
 .langsel { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 14px 0 2px; }
 .langsel-label { color: var(--muted); font-size: 13px; margin-right: 2px; }
 .langsel-btn {

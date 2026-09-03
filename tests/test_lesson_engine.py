@@ -78,3 +78,10 @@ def test_lang_token_is_a_safe_css_class():
     # No angle brackets, quotes, or spaces can survive into the class attribute.
     for hostile in ('x"><b>', "a b c", "py;rm -rf"):
         assert re.fullmatch(r"[a-z0-9_-]*", lesson._lang_token(hostile)), hostile
+
+def test_rendered_lesson_offers_its_pdf_as_a_download():
+    """The template must keep the live and local lesson views downloadable."""
+    rendered = lesson.render_html(3, L3, _l3_spec())
+    assert 'href="./pdf/LESSON3.pdf"' in rendered
+    assert 'download="LESSON3.pdf"' in rendered
+    assert "PDF · downloadable" in rendered
