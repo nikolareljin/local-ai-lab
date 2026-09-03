@@ -20,6 +20,7 @@ start again.
 Launch it with:  ./run -l 8
 """
 
+import math
 import sys
 import threading
 from collections import OrderedDict
@@ -89,10 +90,20 @@ _MAX_THREADS = 32
 
 
 def _clamp(value, low, high, default):
-    """Never trust a number from the browser: /api/search takes arbitrary JSON."""
+    """Never trust a number from the browser: /api/search takes arbitrary JSON.
+
+    Python's JSON decoder accepts the non-standard `NaN`, `Infinity` and
+    `-Infinity` tokens, so those really can arrive here. NaN needs rejecting
+    explicitly: every comparison against it is False, so `max(low, min(high, nan))`
+    quietly returns `high` rather than raising - a crafted request would land on the
+    most extreme setting the UI offers while looking like it had been clamped.
+    A value that is not a real number is not a value; fall back to the default.
+    """
     try:
         number = float(value)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
+        return default
+    if not math.isfinite(number):
         return default
     return max(low, min(high, number))
 

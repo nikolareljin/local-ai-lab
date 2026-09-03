@@ -500,6 +500,18 @@ def test_playground_clamps_client_supplied_params():
         web._ARM_CACHE.clear()
 
 
+def test_playground_clamp_survives_non_finite_numbers():
+    """int(float('inf')) raises OverflowError, not ValueError.
+
+    Python's JSON decoder accepts the non-standard `Infinity` token, so an
+    unguarded /api/search request crashed rather than falling back.
+    """
+    import web
+    for junk in (float("inf"), float("-inf"), float("nan"), "Infinity"):
+        assert web._clamp("chunk_size", junk, 700) == 700, junk
+    assert web._clamp("chunk_size", 900, 700) == 900
+
+
 def test_playground_cache_is_bounded():
     """A long session moving sliders must not retain every corpus it ever built."""
     lc_module()

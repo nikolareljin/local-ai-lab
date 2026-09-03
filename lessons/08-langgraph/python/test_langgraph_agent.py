@@ -587,6 +587,22 @@ def test_playground_clamps_client_supplied_params(playground):
     assert playground._clamp(-5, 0.0, 1.0, 0.67) == 0.0
 
 
+def test_playground_rejects_non_finite_numbers(playground):
+    """Python's JSON decoder accepts NaN/Infinity, and NaN does not clamp.
+
+    Every comparison against NaN is False, so `max(low, min(high, nan))` returns
+    `high` - a crafted request would silently land on the most extreme setting the
+    UI offers while looking clamped. Non-finite means fall back to the default.
+    """
+    import math
+    for junk in (float("nan"), float("inf"), float("-inf"), "nan", "Infinity"):
+        assert playground._clamp(junk, 1, 6, 3) == 3, junk
+        assert playground._clamp(junk, 0.0, 1.0, 0.67) == 0.67, junk
+    # and a real number still clamps normally
+    assert playground._clamp(99, 1, 6, 3) == 6
+    assert math.isfinite(playground._clamp(4, 1, 6, 3))
+
+
 def test_playground_survives_junk_from_the_browser(playground):
     result = playground.search("Is 5GHz supported?",
                               {"top_k": "many", "threshold": None, "max_attempts": [],
