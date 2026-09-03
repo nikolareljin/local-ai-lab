@@ -140,13 +140,13 @@ Build and run a Gemini agent locally with Google's open-source ADK.
 
 ### Cluster 4 · Applied dev workflows
 
-#### Lesson 13 - AI-assisted testing · 🚧 planned · Python · Node · .NET
+#### Lesson 13 - AI-assisted testing · 🚧 planned · Python · Node · .NET · [outline](./roadmap/LESSON13-ai-assisted-testing.md)
 Generate, run, and review tests, and let failures guide the fix.
 
-#### Lesson 14 - AI code review & issue detection · 🚧 planned · language-agnostic
+#### Lesson 14 - AI code review & issue detection · 🚧 planned · language-agnostic · [outline](./roadmap/LESSON14-ai-code-review.md)
 Use AI to catch the serious issues in review - real bugs, security, risky changes.
 
-#### Lesson 15 - Documentation from sprint changes · 🚧 planned · language-agnostic
+#### Lesson 15 - Documentation from sprint changes · 🚧 planned · language-agnostic · [outline](./roadmap/LESSON15-docs-from-changes.md)
 Generate release notes and docs straight from a sprint's commits and pull requests.
 
 ---

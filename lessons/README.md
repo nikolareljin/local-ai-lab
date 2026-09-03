@@ -145,8 +145,33 @@ python3 tools/sync-readme-downloads.py # refresh the README "Lessons & downloads
 
 Both `build_lesson_pdfs.py` and `sync-readme-downloads.py` **auto-discover** lessons from disk
 (root `LESSON<n>.md`, `lessons/<NN>-slug/README.md`, `roadmap/LESSON<n>-slug.md`) - so a new lesson is
-picked up with no edits to either tool. Run `sync-readme-downloads.py --check` in CI to fail when the
-README table is stale.
+picked up with no edits to either tool. `sync-readme-downloads.py --check` now runs in CI, as part of
+[`tools/check_docs.py`](../tools/check_docs.py) - see below.
+
+## What CI checks about a lesson
+
+`ci.yml` ignores `docs/**` and `**/*.md`, so the Python suite is not re-run for prose. That left
+docs-only changes with **no checks at all**, which is how a broken relative link, a stale generated
+table and a navigation label listing the wrong lesson range each reached `main`.
+
+[`.github/workflows/docs.yml`](../.github/workflows/docs.yml) closes that gap by running
+[`tools/check_docs.py`](../tools/check_docs.py), which asserts four things:
+
+- every relative link in a tracked Markdown file resolves, and does not escape the repository
+  (one `../` too many can land on a path that exists on your machine and 404s on GitHub)
+- the README "Lessons & downloads" table is not stale
+- `lessons/CURRICULUM.md` matches the lesson registry
+- every published page has a lesson behind it, and every lesson has a page - including the
+  hand-authored Lesson 1-2 pages, so a renumber cannot leave a stale URL being served
+
+Run it before opening a pull request - it is standard library only and takes a second:
+
+```bash
+python3 tools/check_docs.py
+```
+
+It is deliberately **not** filtered by base branch, so a stacked pull request opened against another
+feature branch still gets checked.
 
 ## Reordering
 

@@ -1,0 +1,50 @@
+name: Docs
+
+# The counterpart to ci.yml, which ignores `docs/**` and `**/*.md` so the Python
+# suite is not re-run for prose. That exclusion is correct and it left a gap: a
+# docs-only change ran NO checks at all, so a broken relative link, a stale
+# generated table, or a lesson with no published page could only be caught by a
+# human noticing. Each of those has reached main at least once.
+#
+# Deliberately NOT filtered by base branch. A stacked pull request - one opened
+# against another feature branch - otherwise reports no checks whatsoever, which
+# is the same hole ci.yml closed for release branches.
+on:
+  push:
+    branches: [main, "release/**"]
+    paths:
+      - "docs/**"
+      - "**/*.md"
+      - "lessons/**/lesson.json"
+      - "tools/check_docs.py"
+      - ".github/workflows/docs.yml"
+  pull_request:
+    paths:
+      - "docs/**"
+      - "**/*.md"
+      - "lessons/**/lesson.json"
+      - "tools/check_docs.py"
+      - ".github/workflows/docs.yml"
+
+concurrency:
+  # Distinct from ci.yml's group on purpose: sharing one would let the two
+  # workflows cancel each other on the same ref.
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # No dependencies: check_docs.py is standard library only, so this stays
+      # fast and cannot break on a package it does not need.
+      - name: Validate documentation
+        run: python3 tools/check_docs.py
