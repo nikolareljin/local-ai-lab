@@ -79,6 +79,7 @@ def test_lang_token_is_a_safe_css_class():
     for hostile in ('x"><b>', "a b c", "py;rm -rf"):
         assert re.fullmatch(r"[a-z0-9_-]*", lesson._lang_token(hostile)), hostile
 
+
 def test_rendered_lesson_offers_its_pdf_as_a_download():
     """The template must keep the live and local lesson views downloadable."""
     rendered = lesson.render_html(3, L3, _l3_spec())
