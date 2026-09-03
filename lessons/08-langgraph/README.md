@@ -95,7 +95,7 @@ graph look good; a test asserts the path still resolves under `07-langchain-rag`
 | Arm | What it is | Answers the question |
 |---|---|---|
 | **linear** | retrieve once, cite, answer. Lesson 1 and Lesson 7's shape | *Why loop at all?* |
-| **loop** | the corrective loop as 61 lines of plain `while` | *Why LangGraph and not a `while` loop?* |
+| **loop** | the corrective loop as 63 lines of plain `while` | *Why LangGraph and not a `while` loop?* |
 | **graph** | the same loop as a `StateGraph`, with a checkpointer and an interrupt | - |
 
 The middle arm is the important one. Benchmarking LangGraph against a single-shot chain would prove
@@ -659,7 +659,7 @@ LangChainInstrumentor().instrument(tracer_provider=provider)
 | Dimension | LangGraph wins | A `while` loop wins |
 |---|---|---|
 | **Answer quality** | nothing - identical on all 9 | nothing - identical on all 9 |
-| **Lines of code** | 170 lines of wiring | **61 lines** |
+| **Lines of code** | 172 lines of wiring | **63 lines** |
 | **Dependencies** | +23 packages (+5 after Lesson 7) | **zero** |
 | **Debuggability** | a trace, and a queryable topology | a stack trace that is your own code |
 | **State across turns** | **checkpointer + `thread_id`** | you write it, and its migrations |

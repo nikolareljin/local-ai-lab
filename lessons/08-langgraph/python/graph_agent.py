@@ -99,9 +99,13 @@ def build_graph(*, grader: Grader, rewriter: Rewriter, top_k: int, max_attempts:
             # than spending another identical retrieval on it.
             return {"rewrites": 1,
                     "trace": ["abstain   rewrite changed nothing - no point asking again"]}
+        # Same note as loop_agent, and for the same reason: the two arms must stay
+        # indistinguishable, including in what they record.
+        note = "  [fell back to the glossary]" if getattr(rewriter, "fell_back", False) else ""
         return {
             "query": new, "attempt": state["attempt"] + 1, "rewrites": 1,
-            "trace": [f"rewrite   {old!r} -> {new!r}  (missing {state['grade']['missing']})"],
+            "trace": [f"rewrite   {old!r} -> {new!r}  "
+                      f"(missing {state['grade']['missing']}){note}"],
         }
 
     def review_node(state: AgentState) -> dict:

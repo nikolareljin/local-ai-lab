@@ -74,6 +74,12 @@ DECISIONS = {0: "pause", 1: "approve", 2: "veto"}
 # corpus each time would be sluggish and would contradict the "build the index
 # once" contract the rest of the lesson pins with tests.
 _LOCK = threading.Lock()
+# Flask's development server defaults to threaded=True, and the shared GUI fires a
+# request on both slider `input` and slider `change` - so two requests for the same
+# thread_id really can arrive at once. Resuming a graph twice concurrently is not
+# something LangGraph is asked to survive, so graph work is serialised here. This is
+# a single-user local playground; the cost of that is not measurable.
+_GRAPH_LOCK = threading.Lock()
 _RETRIEVER = None
 # Live graph threads, keyed by everything that changes what the RUN does. The
 # review decision is deliberately NOT in the key: that is what lets moving the
@@ -100,27 +106,47 @@ def retriever():
         return _RETRIEVER
 
 
-def _graph_thread(key, ga, grader, rw, top_k, max_attempts, question):
-    """Get or create the paused graph run for this exact configuration.
+def _pending_interrupt(snapshot):
+    """The interrupt payload a paused graph is waiting on, or None if it is not paused.
 
-    The retriever is resolved BEFORE the lock is taken. `retriever()` takes the
-    same lock, and `threading.Lock` is not reentrant, so building it inside here
-    would deadlock the request thread - which it did, once.
+    Read from the checkpoint rather than remembered from an earlier request. A
+    snapshot cached at pause time goes stale the moment the run is resumed, and a
+    page that keeps rendering it will keep insisting a finished run is waiting for
+    a human.
+    """
+    for task in getattr(snapshot, "tasks", ()) or ():
+        for interrupt in getattr(task, "interrupts", ()) or ():
+            return interrupt.value
+    return None
+
+
+def _graph_thread(key, ga, grader, rw, top_k, max_attempts, question, restart=False):
+    """Get or create the live graph and thread config for this exact configuration.
+
+    Only `(graph, config)` is cached. The run's *state* always comes from
+    `graph.get_state(config)`, which is the checkpointer's own record and cannot
+    fall out of step with what actually happened.
+
+    The retriever is resolved BEFORE the lock is taken. `retriever()` takes the same
+    lock, and `threading.Lock` is not reentrant, so building it inside here would
+    deadlock the request thread - which it did, once.
     """
     index = retriever()
     with _LOCK:
-        if key in _THREADS:
+        if key in _THREADS and not restart:
             _THREADS.move_to_end(key)
             return _THREADS[key]
+        # A restart gets its own thread_id: resuming is one-way, so replaying the
+        # pause means a new conversation, not a rewound one.
+        generation = _THREADS[key][2] + 1 if (restart and key in _THREADS) else 0
         graph = ga.build_graph(
             grader=grader, rewriter=rw, top_k=top_k, max_attempts=max_attempts,
             human_review=True,
             generate=lambda q, d: "(a grounded answer would be generated here)",
             checkpointer=ga.memory_saver())
-        thread_id = f"web-{abs(hash(key))}"
-        config = {"configurable": {"thread_id": thread_id}}
-        first = ga.run(graph, index, question, config=config)
-        _THREADS[key] = (graph, config, first)
+        config = {"configurable": {"thread_id": f"web-{abs(hash(key))}-{generation}"}}
+        ga.run(graph, index, question, config=config)  # run to its first stop
+        _THREADS[key] = (graph, config, generation)
         while len(_THREADS) > _MAX_THREADS:
             _THREADS.popitem(last=False)
         return _THREADS[key]
@@ -253,14 +279,39 @@ def _review_blocks(question, grader, rw, top_k, max_attempts, decision,
                  "off. Everything above is the while-loop arm, which needs no dependency. "
                  f"To switch it on: {agent.INSTALL_HINT}"}]
     key = (question, top_k, round(threshold, 3), max_attempts, do_rewrite)
-    graph, config, paused = _graph_thread(key, ga, grader, rw, top_k, max_attempts, question)
+    index = retriever()  # resolved before _GRAPH_LOCK; retriever() takes _LOCK
+    with _GRAPH_LOCK:
+        return _review_blocks_locked(key, ga, grader, rw, top_k, max_attempts, question,
+                                     decision, show_state, index)
+
+
+def _review_blocks_locked(key, ga, grader, rw, top_k, max_attempts, question,
+                          decision, show_state, index):
+    """The whole read-decide-resume sequence, under one lock.
+
+    Splitting the check from the resume would let two requests both observe a paused
+    graph and both resume it.
+    """
+    graph, config, _gen = _graph_thread(key, ga, grader, rw, top_k, max_attempts, question)
+    payload = _pending_interrupt(graph.get_state(config))
+
+    # Sliding back to `pause` after a run has already been approved or vetoed cannot
+    # rewind it - resuming is one-way. Start a fresh thread instead, so the pause is
+    # demonstrable again rather than reported as still waiting when it is not.
+    if payload is None and decision == "pause":
+        graph, config, _gen = _graph_thread(key, ga, grader, rw, top_k, max_attempts,
+                                            question, restart=True)
+        payload = _pending_interrupt(graph.get_state(config))
+
     blocks = []
-    if paused["status"] != "paused":
+    snapshot = graph.get_state(config)
+    if payload is None:
         blocks.append({"kind": "note", "text":
-                       f"This run finished without stopping ({paused['status']}) - there was "
-                       "nothing to approve."})
+                       f"This run finished without stopping "
+                       f"({snapshot.values.get('status', 'done')}) - there was nothing to "
+                       "approve. Only a grounded answer is worth a human's time; an "
+                       "abstention has nothing to review."})
     elif decision == "pause":
-        payload = paused["__interrupt__"][0].value
         evidence = "".join(f"\n  - {s[:140]}..." for s in payload["evidence"])
         blocks.append({"kind": "note", "text":
                        "PAUSED. The graph stopped before generating and is waiting for a "
@@ -270,13 +321,14 @@ def _review_blocks(question, grader, rw, top_k, max_attempts, decision,
                        "approve or 2 to veto. It is waiting, not restarting - watch the "
                        "retrieval count when you do."})
     else:
-        resumed = ga.run(graph, retriever(), question, config=config, resume=decision)
+        before = snapshot.values.get("retrievals", 0)
+        resumed = ga.run(graph, index, question, config=config, resume=decision)
         blocks.append({"kind": "stats", "items": [
-            {"v": str(paused["retrievals"]), "l": "retrievals when paused"},
+            {"v": str(before), "l": "retrievals when paused"},
             {"v": str(resumed["retrievals"]), "l": "retrievals after resume"},
             {"v": resumed["status"], "l": "outcome"},
         ]})
-        if resumed["retrievals"] == paused["retrievals"]:
+        if resumed["retrievals"] == before:
             blocks.append({"kind": "note", "text":
                            "Those two numbers are the same, and that is the whole point of a "
                            "checkpoint: the graph picked up where it stopped instead of "

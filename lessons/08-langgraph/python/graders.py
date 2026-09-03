@@ -18,6 +18,7 @@ asserts that on the signature, so it cannot quietly change.
 
 from __future__ import annotations
 
+import re
 from typing import Callable, List, Optional, Protocol, TypedDict
 
 import rag_core
@@ -151,16 +152,15 @@ def _parse_verdict(reply: str) -> Optional[tuple]:
     """
     lines = [ln.strip() for ln in (reply or "").splitlines() if ln.strip()]
     upper = " ".join(lines).upper()
-    if "GROUNDED" in upper and "WEAK" in upper:
-        # Both words present: believe whichever came first, which is the one the
-        # brief asked for on line 1.
-        verdict = "grounded" if upper.index("GROUNDED") < upper.index("WEAK") else "weak"
-    elif "GROUNDED" in upper:
-        verdict = "grounded"
-    elif "WEAK" in upper:
-        verdict = "weak"
-    else:
+    # Whole words only. "GROUNDED" is a substring of "UNGROUNDED", and a model that
+    # answers UNGROUNDED means the exact opposite of what a substring test would
+    # record - silently, with no fallback, which is the one outcome this class
+    # promises never to produce.
+    found = [(m.start(), m.group()) for m in re.finditer(r"\b(GROUNDED|WEAK)\b", upper)]
+    if not found:
         return None
+    # Believe the first verdict word, which is the one the brief asks for on line 1.
+    verdict = "grounded" if found[0][1] == "GROUNDED" else "weak"
     reason = lines[1] if len(lines) > 1 else ""
     missing: List[str] = []
     if verdict == "weak" and len(lines) > 2:

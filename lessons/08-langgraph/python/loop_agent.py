@@ -11,7 +11,7 @@ disagree on any of the nine questions, one of them has drifted and the whole
 scorecard is void - which is what `test_graph_and_loop_are_indistinguishable`
 is for.
 
-The loop is about forty-five lines. Read it before you read the graph, and then
+The loop is sixty-three lines. Read it before you read the graph, and then
 decide for yourself what the graph is worth.
 """
 
@@ -62,7 +62,11 @@ def run(retriever, question: str, *, grader: Grader, rewriter: Rewriter,
             # retrieval sooner.
             trace.append("abstain   rewrite changed nothing - no point asking again")
             break
-        trace.append(f"rewrite   {query!r} -> {new_query!r}  (missing {grade['missing']})")
+        # A rewriter that quietly fell back to the glossary must not look like one
+        # that produced this query itself.
+        note = "  [fell back to the glossary]" if getattr(rewriter, "fell_back", False) else ""
+        trace.append(
+            f"rewrite   {query!r} -> {new_query!r}  (missing {grade['missing']}){note}")
         query = new_query
         attempt += 1
 

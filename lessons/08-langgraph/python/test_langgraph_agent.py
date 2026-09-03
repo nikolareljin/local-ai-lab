@@ -144,6 +144,23 @@ def test_llm_grader_makes_exactly_one_call_per_grade(setup):
     assert len(calls) == 1
 
 
+def test_llm_grader_does_not_read_ungrounded_as_grounded(setup):
+    """"GROUNDED" is a substring of "UNGROUNDED", and a substring test would record
+    the exact opposite of what the model said - silently, with no fallback."""
+    assert graders._parse_verdict("UNGROUNDED\nthe band is never named\n5ghz") is None
+    assert graders._parse_verdict("NOT UNGROUNDED") is None
+    assert graders._parse_verdict("GROUNDED\nit answers directly")[0] == "grounded"
+    assert graders._parse_verdict("WEAK\nnope\nfoo")[0] == "weak"
+
+
+def test_an_unparsable_verdict_falls_back_rather_than_guessing(setup):
+    q, retriever, coverage, _ = setup
+    docs = rag_core.retrieve(retriever, "Is 5GHz supported?", q["top_k"])
+    grade = graders.LlmGrader(lambda s, u: "UNGROUNDED\nthe band is never named",
+                              coverage, label="llm:fake").grade("q", "q", docs)
+    assert grade["grader"] == "llm:fake(fell back)"
+
+
 def test_llm_grader_parses_a_well_formed_reply(setup):
     q, retriever, coverage, _ = setup
     docs = rag_core.retrieve(retriever, "anything", q["top_k"])
@@ -165,6 +182,39 @@ def test_rewriter_leaves_unknown_terms_alone():
     """Nothing in the table matches, so it must not invent a rewrite."""
     rw = rewriter.GlossaryRewriter(glossary={"orange": ["amber"]})
     assert rw.rewrite("q", "quokka velocity", ["quokka"]) == "quokka velocity"
+
+
+def test_llm_rewriter_marks_a_silent_fallback(setup):
+    """A glossary fallback must not be indistinguishable from a model rewrite.
+
+    The class docstring promised this before the code did.
+    """
+    base = rewriter.GlossaryRewriter()
+
+    def boom(system, user):
+        raise RuntimeError("provider is down")
+
+    rw = rewriter.LlmRewriter(boom, base, label="llm:fake")
+    out = rw.rewrite("q", "the light is orange", ["orange"])
+    assert rw.fell_back is True
+    assert out == base.rewrite("q", "the light is orange", ["orange"])
+
+    rw_ok = rewriter.LlmRewriter(lambda s, u: "amber status ring", base, label="llm:fake")
+    assert rw_ok.rewrite("q", "the light is orange", ["orange"]) == "amber status ring"
+    assert rw_ok.fell_back is False
+
+
+def test_a_rewriter_fallback_reaches_the_trace(setup):
+    q, retriever, grader, _ = setup
+
+    def boom(system, user):
+        raise RuntimeError("down")
+
+    rw = rewriter.LlmRewriter(boom, rewriter.GlossaryRewriter(), label="llm:fake")
+    result = loop_agent.run(retriever, "The light is orange and it will not connect.",
+                            grader=grader, rewriter=rw, top_k=q["top_k"],
+                            max_attempts=q["max_attempts"])
+    assert any("fell back to the glossary" in line for line in result["trace"]), result["trace"]
 
 
 def test_rewriter_drops_the_missing_terms_it_replaces():
@@ -495,3 +545,141 @@ def test_the_bill_counts_files_that_exist():
     for arm, paths in agent.ARM_FILES.items():
         for rel in paths:
             assert (LESSON_DIR / rel).is_file(), f"{arm} counts a missing file: {rel}"
+
+
+# --------------------------------------------------------------- the playground
+# The playground is the only part of this lesson that holds MUTABLE, RESUMABLE state
+# rather than a read-only cache, which makes it the easiest place to get something
+# subtly wrong. It has already produced two bugs: a deadlock (the module lock taken
+# twice on one request) and a snapshot cached at pause time that kept insisting a
+# finished run was still waiting for a human.
+pytest.importorskip("flask")
+
+
+@pytest.fixture(scope="module")
+def playground():
+    import web
+    return web
+
+
+PAUSING_QUESTION = "How do I wipe the device and start over?"
+
+
+def test_playground_does_not_reindex_on_every_query(playground):
+    """Re-splitting the corpus per keystroke would be sluggish and would contradict
+    the 'build the index once' contract the rest of the lesson pins."""
+    assert playground.retriever() is playground.retriever()
+
+
+def test_playground_clamps_client_supplied_params(playground):
+    """/api/search takes arbitrary JSON, so every number from the browser is suspect."""
+    assert playground._clamp("nonsense", 1, 6, 3) == 3
+    assert playground._clamp(None, 1, 6, 3) == 3
+    assert playground._clamp(999, 1, 6, 3) == 6
+    assert playground._clamp(-5, 0.0, 1.0, 0.67) == 0.0
+
+
+def test_playground_survives_junk_from_the_browser(playground):
+    result = playground.search("Is 5GHz supported?",
+                              {"top_k": "many", "threshold": None, "max_attempts": [],
+                               "review_decision": "yes", "rewrite": "sure"})
+    assert result["arms"] and result["blocks"]
+
+
+def test_playground_cache_is_bounded(playground):
+    assert playground._MAX_THREADS > 0
+    for i in range(playground._MAX_THREADS + 5):
+        playground._THREADS[("filler", i)] = (None, None, 0)
+        while len(playground._THREADS) > playground._MAX_THREADS:
+            playground._THREADS.popitem(last=False)
+    assert len(playground._THREADS) <= playground._MAX_THREADS
+    playground._THREADS.clear()
+
+
+@needs_langgraph
+def test_playground_resume_keeps_the_same_checkpoint(playground):
+    """The lesson's central claim, asserted through the page the reader actually uses."""
+    playground._THREADS.clear()
+    playground.search(PAUSING_QUESTION, {"review_decision": 0})
+    resumed = playground.search(PAUSING_QUESTION, {"review_decision": 1})
+    stats = next(b for b in resumed["blocks"]
+                 if b["kind"] == "stats"
+                 and any(i["l"].startswith("retrievals when") for i in b["items"]))
+    before = next(i["v"] for i in stats["items"] if i["l"] == "retrievals when paused")
+    after = next(i["v"] for i in stats["items"] if i["l"] == "retrievals after resume")
+    assert before == after, "resuming re-retrieved; the checkpoint is not doing its job"
+    assert any(i["v"] == "answered" for i in stats["items"])
+
+
+@needs_langgraph
+def test_playground_never_claims_a_finished_run_is_paused(playground):
+    """Regression: the paused snapshot used to be cached and then rendered forever.
+
+    Once a run has been approved, every later request - a keystroke, a slider nudge -
+    kept reporting it as waiting for a human, and would try to resume it again.
+    """
+    playground._THREADS.clear()
+    playground.search(PAUSING_QUESTION, {"review_decision": 0})
+    playground.search(PAUSING_QUESTION, {"review_decision": 1})
+
+    # Asking again with the same decision must NOT resume a second time.
+    again = playground.search(PAUSING_QUESTION, {"review_decision": 1})
+    notes = [b["text"] for b in again["blocks"] if b["kind"] == "note"]
+    assert any("finished" in text for text in notes), notes
+    assert not [b for b in again["blocks"]
+                if b["kind"] == "stats"
+                and any(i["l"].startswith("retrievals when") for i in b["items"])]
+
+
+@needs_langgraph
+def test_playground_can_show_the_pause_again_after_a_resume(playground):
+    """Resuming is one-way, so replaying the pause has to start a fresh thread."""
+    playground._THREADS.clear()
+    playground.search(PAUSING_QUESTION, {"review_decision": 0})
+    playground.search(PAUSING_QUESTION, {"review_decision": 1})
+    back = playground.search(PAUSING_QUESTION, {"review_decision": 0})
+    assert any("PAUSED" in b["text"] for b in back["blocks"] if b["kind"] == "note")
+
+
+def test_playground_rewrite_toggle_off_makes_the_loop_give_up(playground):
+    """A cycle that cannot change its own input is not a cycle."""
+    playground._THREADS.clear()
+    result = playground.search("Is 5GHz supported?", {"rewrite": False})
+    assert result["arms"][1]["ranking"] == ["(abstained - nothing grounded it)"]
+
+
+def test_playground_threshold_zero_collapses_the_graph_into_a_chain(playground):
+    playground._THREADS.clear()
+    result = playground.search("The light is orange and it will not connect.",
+                               {"threshold": 0.0})
+    rows = next(b for b in result["blocks"] if b.get("title") == "Every attempt")["rows"]
+    assert len(rows) == 1, "nothing should be graded weak at threshold 0"
+
+
+# --------------------------------------------------------------- the lesson's own numbers
+def test_the_stated_loop_line_count_matches_the_file():
+    """The lesson claims a specific size for the `while` loop. Pin it to the file.
+
+    The prose said 'forty-five lines' for a while after the real figure had settled
+    at sixty-three - the exact drift between description and behaviour this course
+    spends a lesson warning about.
+    """
+    measured = agent.code_lines(LESSON_DIR / "python" / "loop_agent.py")
+    words = {45: "forty-five", 61: "sixty-one", 63: "sixty-three"}
+    claimed = words.get(measured)
+    assert claimed, (f"loop_agent.py is now {measured} lines; add the spelling to this "
+                     f"test and update the prose that states it")
+    sources = {
+        "lesson.json": (LESSON_DIR / "lesson.json").read_text(encoding="utf-8"),
+        "README.md": (LESSON_DIR / "README.md").read_text(encoding="utf-8"),
+        "loop_agent.py": (LESSON_DIR / "python" / "loop_agent.py").read_text(encoding="utf-8"),
+        "langgraph_agent.py": (LESSON_DIR / "python"
+                               / "langgraph_agent.py").read_text(encoding="utf-8"),
+    }
+    for name, text in sources.items():
+        for wrong_count, wrong_word in words.items():
+            if wrong_count == measured:
+                continue
+            assert wrong_word not in text, (
+                f"{name} still says '{wrong_word}' but loop_agent.py is {measured} lines")
+            assert f"{wrong_count} lines of `while`" not in text, name

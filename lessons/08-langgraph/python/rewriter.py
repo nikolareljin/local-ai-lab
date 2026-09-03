@@ -86,7 +86,8 @@ class LlmRewriter:
 
     This is the arm that generalises, because it does not need to have been told
     in advance that "orange" means "amber". On any failure it falls back to the
-    glossary and stamps the name, so a fallback is visible in the trace.
+    glossary and sets `fell_back`, which both arms append to their trace line - so a
+    silent fallback cannot be mistaken for a model rewrite that worked.
     """
 
     def __init__(self, chat: Callable[[str, str], str], fallback: GlossaryRewriter,
@@ -94,8 +95,13 @@ class LlmRewriter:
         self.chat = chat
         self.fallback = fallback
         self.name = label
+        # Read by the arms after each call, so a fallback reaches the trace the same
+        # way LlmGrader stamps `grader` into the Grade it returns. Without it, a
+        # silent glossary fallback and a real model rewrite look identical.
+        self.fell_back = False
 
     def rewrite(self, question: str, query: str, missing: List[str]) -> str:
+        self.fell_back = False
         try:
             reply = self.chat(
                 REWRITE_SYSTEM,
@@ -103,11 +109,15 @@ class LlmRewriter:
                                      missing=", ".join(missing) or "(none)"),
             )
         except Exception:
-            return self.fallback.rewrite(question, query, missing)
+            return self._fell_back(question, query, missing)
         candidate = _first_line(reply)
         if not candidate or not rag_core.content_terms(candidate):
-            return self.fallback.rewrite(question, query, missing)
+            return self._fell_back(question, query, missing)
         return candidate
+
+    def _fell_back(self, question: str, query: str, missing: List[str]) -> str:
+        self.fell_back = True
+        return self.fallback.rewrite(question, query, missing)
 
 
 def _first_line(reply: str) -> str:

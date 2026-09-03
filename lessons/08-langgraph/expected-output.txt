@@ -110,17 +110,17 @@ Memory - two turns on one thread
 
 What it cost
                                         linear      loop (while) graph (LangGraph)
-  code you maintain                   68 lines         294 lines         464 lines
+  code you maintain                   68 lines         298 lines         470 lines
   requirements lines                         0                 0                 1
   packages installed                        48                48                71
   install size                          ~34 MB            ~34 MB            ~43 MB
 
-  The corrective loop cost 226 lines and ZERO packages, and it delivered
+  The corrective loop cost 230 lines and ZERO packages, and it delivered
   the entire accuracy gain in the scorecard above. Most of those lines are the
   grader and the rewriter, which the graph needs too. The loop ITSELF is
-  61 lines of `while`.
+  63 lines of `while`.
 
-  Swapping those 61 lines for LangGraph cost 170 lines of graph
+  Swapping those 63 lines for LangGraph cost 172 lines of graph
   wiring and 23 packages - for answers that are identical on all nine
   questions. What it bought is the three rows the loop could not fill:
   checkpoints, interrupts, and a topology you can query.

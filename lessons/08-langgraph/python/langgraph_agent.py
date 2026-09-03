@@ -4,7 +4,7 @@ Three arms over Lesson 7's corpus, with the same settings and the same citation
 contract, arguing about one thing only: control flow.
 
   linear   retrieve once, answer.                     Lesson 1 and Lesson 7's shape.
-  loop     retrieve, grade, rewrite, retry.           ~45 lines of `while`.
+  loop     retrieve, grade, rewrite, retry.           63 lines of `while`.
   graph    the same loop as a LangGraph StateGraph.   Plus checkpoints and interrupts.
 
 Run:
