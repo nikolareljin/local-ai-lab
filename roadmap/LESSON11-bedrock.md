@@ -7,7 +7,7 @@
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 >
-> **Lessons:** [1 · RAG](../LESSON1.md) → [2 · MCP](../LESSON2.md) → [3 · Hybrid retrieval](../lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../lessons/05-rag-evaluation-regression-testing/README.md) → 6 · Repo assistant → [7 · LangChain](../lessons/07-langchain-rag/README.md) → [8 · LangGraph](./LESSON8-langgraph.md) → [9 · Ollama tools](./LESSON9-ollama.md) → [10 · Semantic Kernel](./LESSON10-semantic-kernel.md) → **11 · Bedrock Agents (you are here)** → 12 · Google ADK → ... → 15 · Docs from changes
+> **Lessons:** [1 · RAG](../LESSON1.md) → [2 · MCP](../LESSON2.md) → [3 · Hybrid retrieval](../lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../lessons/05-rag-evaluation-regression-testing/README.md) → [6 · Repo assistant](../lessons/06-repo-aware-assistant/README.md) → [7 · LangChain](../lessons/07-langchain-rag/README.md) → [8 · LangGraph](../lessons/08-langgraph/README.md) → [9 · Ollama tools](./LESSON9-ollama.md) → [10 · Semantic Kernel](./LESSON10-semantic-kernel.md) → **11 · Bedrock Agents (you are here)** → [12 · Google ADK](./LESSON12-google-adk.md) → [13 · AI-assisted testing](./LESSON13-ai-assisted-testing.md) → [14 · AI code review](./LESSON14-ai-code-review.md) → [15 · Docs from changes](./LESSON15-docs-from-changes.md)
 >
 > **Status: planned.** Outline below; full published slideshow lesson + step-by-step coming later.
 > This is a **managed cloud** lesson - you build and drive it from a **local** dev environment (AWS
@@ -58,7 +58,7 @@ resp = agent.invoke_agent(
 |---------|------|------------------|
 | extract → chunk → embed → retrieve | [Lesson 1](../LESSON1.md) | Bedrock Knowledge Base |
 | a tool the agent can call | [Lesson 9](./LESSON9-ollama.md) | Action group + Lambda |
-| orchestration / control flow | [Lesson 8](./LESSON8-langgraph.md) | Bedrock Agent runtime |
+| orchestration / control flow | [Lesson 8](../lessons/08-langgraph/README.md) | Bedrock Agent runtime |
 
 ## Prerequisites
 

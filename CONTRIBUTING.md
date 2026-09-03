@@ -46,10 +46,27 @@ Run a lesson with the wrapper script:
 pytest -q                  # the full offline test suite (no network / API keys needed)
 ```
 
-CI mirrors this: it syntax-checks every module with `py_compile` and runs `pytest -q`. The
-README "Lessons & downloads" table is generated - if you add a lesson or rebuild PDFs, run
-`python3 tools/sync-readme-downloads.py` to regenerate it (and `--check` to verify it's up to
-date before you commit).
+CI mirrors this, and also runs **each lesson's own suite**:
+
+```bash
+python3 tools/run_lesson_tests.py        # every lesson, one process each
+python3 tools/run_lesson_tests.py 7 8    # or just these
+```
+
+One process per lesson is deliberate. Six lessons ship a `python/web.py` and their tests import it
+by bare name, so a single pytest session would resolve `import web` to whichever lesson is earlier
+on `sys.path` - and one lesson's tests would quietly exercise another lesson's module.
+
+Prose and generated files are checked separately, because the Python job deliberately ignores
+`docs/**` and `**/*.md`. Run this before you open a pull request:
+
+```bash
+python3 tools/check_docs.py     # relative links, generated tables, published lesson pages
+```
+
+The README "Lessons & downloads" table is generated - if you add a lesson or rebuild PDFs, run
+`python3 tools/sync-readme-downloads.py` to regenerate it. `check_docs.py` covers the `--check`
+for you and fails the build when it is stale.
 
 ## Coding style
 

@@ -82,7 +82,10 @@ def _clamp(name, value, fallback):
     spec = next((p for p in PARAMS if p["name"] == name), None)
     try:
         number = int(value)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
+        # OverflowError is the one that bites: Python's JSON decoder accepts the
+        # non-standard `Infinity` token, and int(inf) raises it rather than the
+        # ValueError that NaN raises - so an unguarded request crashed here.
         return fallback
     if spec and spec.get("kind") == "range":
         return max(int(spec["min"]), min(int(spec["max"]), number))

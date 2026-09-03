@@ -123,6 +123,14 @@ reference implementation: BM25 `k1`/`b`, the RRF `k`, and a synonyms toggle, wit
 score breakdown. The GUI is Python-only by convention; cross-language **algorithm** parity stays in
 the byte-checked `demo` ports.
 
+[Lesson 8](08-langgraph/python/web.py) is the first playground that holds **resumable state** rather
+than a read-only cache: its entries are paused LangGraph threads that a later request resumes. Two
+consequences worth copying if you build another one. The cache key deliberately **excludes** the
+control that resumes the run, or moving that control would address a different thread and start the
+question over. And `search()` must never take the module lock while calling something that takes it
+again - building the retriever inside the locked section deadlocked the request thread exactly once
+during authoring.
+
 ## Authoring a new lesson
 
 ```bash
@@ -137,8 +145,54 @@ python3 tools/sync-readme-downloads.py # refresh the README "Lessons & downloads
 
 Both `build_lesson_pdfs.py` and `sync-readme-downloads.py` **auto-discover** lessons from disk
 (root `LESSON<n>.md`, `lessons/<NN>-slug/README.md`, `roadmap/LESSON<n>-slug.md`) - so a new lesson is
-picked up with no edits to either tool. Run `sync-readme-downloads.py --check` in CI to fail when the
-README table is stale.
+picked up with no edits to either tool. `sync-readme-downloads.py --check` now runs in CI, as part of
+[`tools/check_docs.py`](../tools/check_docs.py) - see below.
+
+## What CI checks about a lesson
+
+**A lesson's own tests now run in CI.** They did not until recently: `pyproject.toml` pins
+`testpaths` to `tests/`, so `pytest -q` covered the engine and the action contract and nothing under
+`lessons/`. A lesson could ship a broken suite and CI stayed green.
+
+[`tools/run_lesson_tests.py`](../tools/run_lesson_tests.py) runs each lesson's suite **in its own
+process**, and `ci.yml` installs every `lessons/*/requirements.txt` first so the framework-tour
+lessons test the framework rather than skipping it. Run it yourself the way CI does:
+
+```bash
+python3 tools/run_lesson_tests.py
+```
+
+The one-process-per-lesson rule is not cosmetic: six lessons ship a `python/web.py`, and their tests
+add their own directory to `sys.path` and import it by bare name. In a single session `import web`
+resolves to whichever lesson sorted first - which really did fail six of Lesson 7's playground tests
+against Lesson 8's module.
+
+A lesson whose optional dependency is absent must **skip**, not fail. If a test asserts something
+that only holds with the dependency installed - a committed transcript, say - gate it, the way
+Lessons 7 and 8 gate theirs.
+
+`ci.yml` ignores `docs/**` and `**/*.md`, so the Python suite is not re-run for prose. That left
+docs-only changes with **no checks at all**, which is how a broken relative link, a stale generated
+table and a navigation label listing the wrong lesson range each reached `main`.
+
+[`.github/workflows/docs.yml`](../.github/workflows/docs.yml) closes that gap by running
+[`tools/check_docs.py`](../tools/check_docs.py), which asserts four things:
+
+- every relative link in a tracked Markdown file resolves, and does not escape the repository
+  (one `../` too many can land on a path that exists on your machine and 404s on GitHub)
+- the README "Lessons & downloads" table is not stale
+- `lessons/CURRICULUM.md` matches the lesson registry
+- every published page has a lesson behind it, and every lesson has a page - including the
+  hand-authored Lesson 1-2 pages, so a renumber cannot leave a stale URL being served
+
+Run it before opening a pull request - it is standard library only and takes a second:
+
+```bash
+python3 tools/check_docs.py
+```
+
+It is deliberately **not** filtered by base branch, so a stacked pull request opened against another
+feature branch still gets checked.
 
 ## Reordering
 

@@ -6,6 +6,71 @@ All notable changes to this project are documented here. This project follows
 
 ## [Unreleased]
 
+### Added
+- **Lesson test suites now run in CI** - `pyproject.toml` pins `testpaths` to `tests/`, so
+  `pytest -q` covered the engine and the action contract and nothing under `lessons/`: every
+  lesson's own suite, 102 tests across six lessons, ran only when somebody typed `./run -l N test`.
+  `tools/run_lesson_tests.py` runs each lesson in its **own process** - six lessons ship a
+  `python/web.py` and their tests import it by bare name, so one pytest session resolves
+  `import web` by `sys.path` order and six of Lesson 7's playground tests fail against Lesson 8's
+  module. `ci.yml` also installs every `lessons/*/requirements.txt` first, so Lessons 7 and 8
+  exercise LangChain and LangGraph instead of skipping the tests that cover them. No change to
+  `ci-helpers` was needed; `test_command` was already an arbitrary shell string.
+- **`tools/check_docs.py` and a `Docs` workflow** - `ci.yml` ignores `docs/**` and `**/*.md`, so a
+  docs-only change ran **no checks at all**; that is how a broken relative link, a stale generated
+  table and a PDF menu labelled with the wrong lesson range each reached `main`. The new check
+  asserts that every relative Markdown link resolves, the README downloads table is current,
+  `lessons/CURRICULUM.md` matches the registry, and every working lesson has a published page. It is
+  standard library only, and its `pull_request` trigger is deliberately **not** filtered by base
+  branch, so a stacked pull request no longer reports zero checks.
+- **Roadmap outlines for Lessons 13-15** - `AI-assisted testing`, `AI code review & issue detection`
+  and `Documentation from sprint changes`. Cluster 4 was the only cluster with no files at all: the
+  three lessons existed as one line each in `SYLLABUS.md` and as three dead rows in the README. They
+  now have outlines in the same shape as Lessons 9-12, are picked up automatically by the PDF and
+  README-table generators, and are linked from the syllabus, the roadmap index and the site's PDF
+  menu. Lesson 12 no longer claims the course ends with it.
+- **Lesson 8 · A Stateful Agent with LangGraph** - a new working lesson in **Python and Node.js**,
+  graduating the roadmap outline into `lessons/08-langgraph/`. It turns the linear RAG pipeline into
+  a corrective agent that grades its own retrieval, rewrites the query and searches again - and then
+  prices the graph honestly. Measured over Lesson 7's corpus: the linear chain gets **4 of 8**
+  answerable questions' top citation right and never refuses; the loop gets **8 of 8** and correctly
+  abstains on the ninth, for **67% more retrieval calls**, one of which buys nothing.
+- **A third arm, so the comparison is not a straw man** - the same corrective loop written as 63
+  lines of plain `while`, calling the identical retrieve/grade/rewrite functions. It matches the
+  LangGraph arm on every question, and `test_graph_and_loop_are_indistinguishable` pins that. The
+  finding the lesson is built around: LangGraph buys nothing on answer quality, and everything on
+  checkpointing, interrupts and an inspectable topology.
+- **Checkpointed memory and a human-in-the-loop gate** - `MemorySaver` by default with `SqliteSaver`
+  behind `--sqlite` (a separate package, kept opt-in so the printed scorecard matches what `./run -l 8`
+  installs), plus a dynamic `interrupt()` that stops before generating and hands a reviewer the
+  citations and the evidence. The gate is not a demo checkbox: the corpus says a factory reset
+  destroys the logging buffer permanently and that a warranty claim without that export cannot be
+  assessed, so answering promptly costs the reader their evidence.
+- **Two graders, and an argument about which to use** - a deterministic term-coverage grader (the
+  default, and only because `demo` is byte-diffed by the test) and an LLM grader behind `--llm-grade`,
+  which the lesson recommends for real documents. A `spread` action runs the LLM grader N times
+  against byte-identical evidence and prints the disagreement, so run-to-run variance is taught
+  rather than hidden.
+- **Concept 7 · observability** - LangSmith, what it records field by field for this graph, and the
+  open-source alternatives (Phoenix, Langfuse, OpenLLMetry, OpenTelemetry GenAI conventions, MLflow,
+  Opik, Helicone), plus the trace-versus-eval boundary pointing back at Lesson 5. Includes the
+  verifiable detail that `langsmith` installs as a transitive dependency of `langgraph` and sits
+  dormant until `LANGSMITH_TRACING` is set - `./run -l 8 measure` prints its own closure and the
+  live `tracing_is_enabled()` value.
+- **New `./run -l 8` actions** - `trace`, `chat`, `review`, `spread`, `ask`, `graph` and `measure`,
+  alongside the standard `demo`, `test` and `web`.
+
+### Changed
+- **Lesson 8 leaves `roadmap/`** and its cross-links move with it: Lesson 7's "next lesson" and
+  recap teaser, Lesson 9's chain, `roadmap/README.md`, `SYLLABUS.md`, the README curriculum table and
+  the generated curriculum and downloads tables.
+- **`INSTALL.md` section 5 renumbered** - the per-lesson dependency table still used pre-renumber
+  numbering ("3 · LangChain", "4 · LangGraph"), and listed dependencies for Lesson 7 that the lesson
+  explicitly refuses (`langchain-community`, `faiss-cpu`). All twelve rows corrected.
+- **Site navigation** - every static page gains Lesson 8, and `docs/lesson-1-rag.html` and
+  `docs/lesson-2-mcp.html` gain Lesson 7 as well, which they had been missing.
+- **`./run -h`** covers lessons 1 through 8 and lists Lesson 8's extra actions.
+
 ## [0.11.0] - 2026-08-18
 
 ### Added

@@ -7,7 +7,7 @@
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 >
-> **Lessons:** [1 · RAG](../LESSON1.md) → [2 · MCP](../LESSON2.md) → [3 · Hybrid retrieval](../lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../lessons/05-rag-evaluation-regression-testing/README.md) → 6 · Repo assistant → [7 · LangChain](../lessons/07-langchain-rag/README.md) → [8 · LangGraph](./LESSON8-langgraph.md) → [9 · Ollama tools](./LESSON9-ollama.md) → [10 · Semantic Kernel](./LESSON10-semantic-kernel.md) → [11 · Bedrock Agents](./LESSON11-bedrock.md) → **12 · Google ADK (you are here)**
+> **Lessons:** [1 · RAG](../LESSON1.md) → [2 · MCP](../LESSON2.md) → [3 · Hybrid retrieval](../lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../lessons/05-rag-evaluation-regression-testing/README.md) → [6 · Repo assistant](../lessons/06-repo-aware-assistant/README.md) → [7 · LangChain](../lessons/07-langchain-rag/README.md) → [8 · LangGraph](../lessons/08-langgraph/README.md) → [9 · Ollama tools](./LESSON9-ollama.md) → [10 · Semantic Kernel](./LESSON10-semantic-kernel.md) → [11 · Bedrock Agents](./LESSON11-bedrock.md) → **12 · Google ADK (you are here)** → [13 · AI-assisted testing](./LESSON13-ai-assisted-testing.md) → [14 · AI code review](./LESSON14-ai-code-review.md) → [15 · Docs from changes](./LESSON15-docs-from-changes.md)
 >
 > **Status: planned.** Outline below; full published slideshow lesson + step-by-step coming later.
 > ADK **runs locally** (`adk run` / `adk web`) against Gemini. ⭐ the repo to follow along.
@@ -61,7 +61,7 @@ root_agent = Agent(
 |---------|------|
 | `search_docs` retriever tool | [Lesson 1](../LESSON1.md) |
 | function/tool calling | [Lesson 9](./LESSON9-ollama.md) |
-| agent frameworks compared | [Lessons 7](../lessons/07-langchain-rag/README.md), [8](./LESSON8-langgraph.md), [10](./LESSON10-semantic-kernel.md) |
+| agent frameworks compared | [Lessons 7](../lessons/07-langchain-rag/README.md), [8](../lessons/08-langgraph/README.md), [10](./LESSON10-semantic-kernel.md) |
 | **ADK agents, tools, runners, eval** | **Lesson 12 (this one)** |
 
 ## Prerequisites
@@ -69,11 +69,18 @@ root_agent = Agent(
 Python, a Gemini API key (`GEMINI_API_KEY`), and `pip install google-adk`. [Lesson 1](../LESSON1.md)
 provides the retriever the agent calls.
 
-## Course complete
+## End of the framework tour
 
 You've built the same local-first document agent six ways - from a hand-rolled RAG pipeline up
 through MCP, local function calling, Semantic Kernel, Bedrock Agents, and ADK - and you understand
-every layer. Back to [the course home](https://nikolareljin.github.io/local-ai-lab/).
+every layer.
+
+The last three lessons stop building agents and start pointing them at your own work.
+
+## Next lesson
+
+[**Lesson 13 · AI-Assisted Testing →**](./LESSON13-ai-assisted-testing.md) - generate tests from a
+change, run them, and let the failure guide the fix.
 
 ---
 

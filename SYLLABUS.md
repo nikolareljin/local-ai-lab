@@ -103,7 +103,7 @@ abstain instead of guess; produce a plan-before-edit; and extend it to your repo
 ### Cluster 3 · Framework tour
 
 > Each rebuilds the *same* document agent on a major framework and compares the trade-offs against your
-> from-scratch version. **Lesson 7 is live**; outlines for 8-12 exist under [`roadmap/`](./roadmap/).
+> from-scratch version. **Lessons 7-8 are live**; outlines for 9-12 exist under [`roadmap/`](./roadmap/).
 
 #### Lesson 7 - Rebuild RAG with LangChain · ✅ live · Python · Node · ≈ 45-60 min
 **Build:** the Lesson 1 pipeline rebuilt on LangChain over the same corpus with the same system
@@ -115,8 +115,16 @@ chain; extend a framework through its base classes when the catalogue does not f
 dependency in packages, install size, and cold start instead of adopting it on reputation.
 **Assumes:** Lesson 1 (Lesson 3 helpful). The one lesson that installs a third-party package.
 
-#### Lesson 8 - LangGraph · 🚧 planned · Python · [outline](./roadmap/LESSON8-langgraph.md)
-Turn the linear pipeline into a stateful agent graph with retries, tool routing, and memory.
+#### Lesson 8 - A Stateful Agent with LangGraph · ✅ live · Python · Node · ≈ 60-75 min
+**Build:** the Lesson 7 corpus behind three arms - the linear chain, the same corrective loop
+written as sixty-three lines of `while`, and that loop as a LangGraph `StateGraph` - plus a
+checkpointed conversation, a human-in-the-loop gate before an irreversible answer, and a scorecard
+that prices the graph against the loop rather than against a straw man.
+**You'll be able to:** write a typed graph state and say what a reducer does; branch and cycle on a
+grading step; tell your own attempt cap apart from the framework's recursion limit; checkpoint a run
+against a `thread_id` and resume it; pause before a destructive action and hand a human the
+evidence; and decide when a graph is worth its dependency - including the case where it is not.
+**Assumes:** Lessons 1 and 7 (Lesson 2 helpful). The second lesson that installs a package.
 
 #### Lesson 9 - Ollama + function calling · 🚧 planned · Python · [outline](./roadmap/LESSON9-ollama.md)
 Give a local model real tools it can call - 100% offline.
@@ -132,13 +140,13 @@ Build and run a Gemini agent locally with Google's open-source ADK.
 
 ### Cluster 4 · Applied dev workflows
 
-#### Lesson 13 - AI-assisted testing · 🚧 planned · Python · Node · .NET
+#### Lesson 13 - AI-assisted testing · 🚧 planned · Python · Node · .NET · [outline](./roadmap/LESSON13-ai-assisted-testing.md)
 Generate, run, and review tests, and let failures guide the fix.
 
-#### Lesson 14 - AI code review & issue detection · 🚧 planned · language-agnostic
+#### Lesson 14 - AI code review & issue detection · 🚧 planned · language-agnostic · [outline](./roadmap/LESSON14-ai-code-review.md)
 Use AI to catch the serious issues in review - real bugs, security, risky changes.
 
-#### Lesson 15 - Documentation from sprint changes · 🚧 planned · language-agnostic
+#### Lesson 15 - Documentation from sprint changes · 🚧 planned · language-agnostic · [outline](./roadmap/LESSON15-docs-from-changes.md)
 Generate release notes and docs straight from a sprint's commits and pull requests.
 
 ---
