@@ -524,6 +524,7 @@ def render_html(number, ldir, lesson, lang=None, assets_href="/assets", media_ba
            .replace("{{NAV}}", _nav_html(nav_base))
            .replace("{{HOME}}", html.escape(nav_base + "index.html", quote=True))
            .replace("{{ABOUT}}", html.escape(nav_base + "about.html", quote=True))
+           .replace("{{PDF}}", html.escape(nav_base + f"pdf/LESSON{number}.pdf", quote=True))
            .replace("{{NUMBER}}", str(number))
            .replace("{{TITLE}}", _esc(lesson.get("title", "")))
            .replace("{{SUMMARY}}", _inline(lesson.get("summary", "")))

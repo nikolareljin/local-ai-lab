@@ -110,3 +110,13 @@ def test_show_is_not_offered_for_the_hand_authored_lessons():
         assert not re.search(r"^\s*show\)", body, re.M), (
             f"run_lesson_{number} handles `show`, which the contract excludes"
         )
+
+
+@pytest.mark.parametrize("number", BASH_LESSONS)
+def test_hand_authored_lessons_offer_a_downloadable_pdf(number):
+    """Older pages keep the same explicit PDF-download affordance as the template."""
+    slug = "rag" if number == 1 else "mcp"
+    html = (ROOT / "docs" / f"lesson-{number}-{slug}.html").read_text(encoding="utf-8")
+    assert f'href="./pdf/LESSON{number}.pdf"' in html
+    assert f'download="LESSON{number}.pdf"' in html
+    assert "PDF · downloadable" in html
