@@ -117,7 +117,7 @@ dependency in packages, install size, and cold start instead of adopting it on r
 
 #### Lesson 8 - A Stateful Agent with LangGraph · ✅ live · Python · Node · ≈ 60-75 min
 **Build:** the Lesson 7 corpus behind three arms - the linear chain, the same corrective loop
-written as sixty-one lines of `while`, and that loop as a LangGraph `StateGraph` - plus a
+written as sixty-three lines of `while`, and that loop as a LangGraph `StateGraph` - plus a
 checkpointed conversation, a human-in-the-loop gate before an irreversible answer, and a scorecard
 that prices the graph against the loop rather than against a straw man.
 **You'll be able to:** write a typed graph state and say what a reducer does; branch and cycle on a

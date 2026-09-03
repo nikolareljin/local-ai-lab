@@ -16,6 +16,7 @@ Two of these matter more than the rest and are worth reading first:
 from __future__ import annotations
 
 import inspect
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -657,29 +658,72 @@ def test_playground_threshold_zero_collapses_the_graph_into_a_chain(playground):
 
 
 # --------------------------------------------------------------- the lesson's own numbers
+NUMBER_WORDS = {45: "forty-five", 61: "sixty-one", 63: "sixty-three",
+                170: "one hundred and seventy", 172: "one hundred and seventy-two"}
+
+# Phrasings that describe THIS lesson's arms, anywhere in the repository. Matching on
+# the phrase rather than on a bare number is what keeps Lesson 7's unrelated "61 lines
+# you wrote and understand" out of this check.
+LOOP_CLAIMS = (
+    re.compile(r"([\w-]+) lines of `while`"),
+    re.compile(r"([\w-]+) lines of plain `while`"),
+    re.compile(r"([\w-]+) lines of plain <code>while</code>"),
+)
+# Anchored on the sentence that prices the swap, not on "lines of wiring" alone:
+# an exercise legitimately says "two lines of wiring" about adding a single node.
+GRAPH_CLAIMS = (
+    re.compile(r"cost ([\w-]+) lines of graph\s+wiring"),
+    re.compile(r"cost ([\w-]+) lines of wiring"),
+    re.compile(r"\| ([\w-]+) lines of wiring \|"),
+)
+
+
+def _repo_text_files():
+    """Tracked prose and config anywhere in the repo - the claim escaped the lesson
+    directory once already, into SYLLABUS.md and the site's landing page."""
+    result = subprocess.run(["git", "ls-files", "-z"], cwd=LESSON_DIR.parents[1],
+                            capture_output=True, text=True, check=True)
+    root = LESSON_DIR.parents[1]
+    for name in result.stdout.split("\0"):
+        if name.endswith((".md", ".html", ".json", ".py", ".txt")):
+            yield root / name
+
+
+def _assert_claims_match(patterns, measured, label):
+    expected = {str(measured), NUMBER_WORDS.get(measured, "")}
+    wrong = []
+    for path in _repo_text_files():
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        for pattern in patterns:
+            for match in pattern.finditer(text):
+                if match.group(1) not in expected:
+                    wrong.append(f"{path.name}: {label} claimed as "
+                                 f"{match.group(1)!r}, measured {measured}")
+    assert not wrong, "\n".join(wrong)
+
+
 def test_the_stated_loop_line_count_matches_the_file():
     """The lesson claims a specific size for the `while` loop. Pin it to the file.
 
-    The prose said 'forty-five lines' for a while after the real figure had settled
+    The prose said "forty-five lines" for a while after the real figure had settled
     at sixty-three - the exact drift between description and behaviour this course
-    spends a lesson warning about.
+    spends a lesson warning about. It then drifted a second time, into SYLLABUS.md
+    and docs/index.html, which is why this scans the whole repository rather than
+    the lesson directory.
     """
     measured = agent.code_lines(LESSON_DIR / "python" / "loop_agent.py")
-    words = {45: "forty-five", 61: "sixty-one", 63: "sixty-three"}
-    claimed = words.get(measured)
-    assert claimed, (f"loop_agent.py is now {measured} lines; add the spelling to this "
-                     f"test and update the prose that states it")
-    sources = {
-        "lesson.json": (LESSON_DIR / "lesson.json").read_text(encoding="utf-8"),
-        "README.md": (LESSON_DIR / "README.md").read_text(encoding="utf-8"),
-        "loop_agent.py": (LESSON_DIR / "python" / "loop_agent.py").read_text(encoding="utf-8"),
-        "langgraph_agent.py": (LESSON_DIR / "python"
-                               / "langgraph_agent.py").read_text(encoding="utf-8"),
-    }
-    for name, text in sources.items():
-        for wrong_count, wrong_word in words.items():
-            if wrong_count == measured:
-                continue
-            assert wrong_word not in text, (
-                f"{name} still says '{wrong_word}' but loop_agent.py is {measured} lines")
-            assert f"{wrong_count} lines of `while`" not in text, name
+    assert measured in NUMBER_WORDS, (
+        f"loop_agent.py is now {measured} lines; add the spelling to NUMBER_WORDS "
+        "and update the prose that states it")
+    _assert_claims_match(LOOP_CLAIMS, measured, "the loop")
+
+
+def test_the_stated_graph_line_count_matches_the_file():
+    measured = agent.code_lines(LESSON_DIR / "python" / "graph_agent.py")
+    assert measured in NUMBER_WORDS, (
+        f"graph_agent.py is now {measured} lines; add the spelling to NUMBER_WORDS "
+        "and update the prose that states it")
+    _assert_claims_match(GRAPH_CLAIMS, measured, "the graph wiring")
