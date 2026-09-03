@@ -26,5 +26,19 @@ jobs:
       python_version: "3.12"
       working_directory: "."
       lint_command: "pip install -e '.[dev]' && ruff check localrag tests tools examples && mypy localrag"
-      test_command: "pip install -e '.[dev]' && python -m pytest -q"
+      # Three steps, and the order matters.
+      #   1. the repo-root suite: pyproject pins testpaths to tests/, so this is the
+      #      engine and the action contract, and nothing under lessons/.
+      #   2. each lesson's own optional dependencies. Without them Lessons 7 and 8
+      #      skip the tests that cover the framework each lesson is about - which is
+      #      most of the value - so CI installs what the lessons declare.
+      #   3. every lesson's own suite, ONE PROCESS PER LESSON. Six lessons ship a
+      #      file called python/web.py and their tests import it by bare name, so a
+      #      single pytest session resolves `import web` to whichever lesson is
+      #      earlier on sys.path. See tools/run_lesson_tests.py.
+      test_command: >-
+        pip install -e '.[dev]' &&
+        python -m pytest -q &&
+        for r in lessons/*/requirements.txt; do if [ -f "$r" ]; then pip install -q -r "$r"; fi; done &&
+        python3 tools/run_lesson_tests.py
       build_command: ""

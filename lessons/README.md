@@ -150,6 +150,27 @@ picked up with no edits to either tool. `sync-readme-downloads.py --check` now r
 
 ## What CI checks about a lesson
 
+**A lesson's own tests now run in CI.** They did not until recently: `pyproject.toml` pins
+`testpaths` to `tests/`, so `pytest -q` covered the engine and the action contract and nothing under
+`lessons/`. A lesson could ship a broken suite and CI stayed green.
+
+[`tools/run_lesson_tests.py`](../tools/run_lesson_tests.py) runs each lesson's suite **in its own
+process**, and `ci.yml` installs every `lessons/*/requirements.txt` first so the framework-tour
+lessons test the framework rather than skipping it. Run it yourself the way CI does:
+
+```bash
+python3 tools/run_lesson_tests.py
+```
+
+The one-process-per-lesson rule is not cosmetic: six lessons ship a `python/web.py`, and their tests
+add their own directory to `sys.path` and import it by bare name. In a single session `import web`
+resolves to whichever lesson sorted first - which really did fail six of Lesson 7's playground tests
+against Lesson 8's module.
+
+A lesson whose optional dependency is absent must **skip**, not fail. If a test asserts something
+that only holds with the dependency installed - a committed transcript, say - gate it, the way
+Lessons 7 and 8 gate theirs.
+
 `ci.yml` ignores `docs/**` and `**/*.md`, so the Python suite is not re-run for prose. That left
 docs-only changes with **no checks at all**, which is how a broken relative link, a stale generated
 table and a navigation label listing the wrong lesson range each reached `main`.

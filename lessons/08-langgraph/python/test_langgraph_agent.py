@@ -481,8 +481,15 @@ def test_sqlite_checkpointer_survives_a_new_graph_object(setup, tmp_path):
 
 
 # --------------------------------------------------------------- the CLI and the demo
+@needs_langgraph
 def test_demo_is_deterministic_and_matches_the_committed_transcript():
-    """`expected-output.txt` is the contract: the printed run cannot drift."""
+    """`expected-output.txt` is the contract: the printed run cannot drift.
+
+    Gated on LangGraph, because the transcript is the FULL run. Without the
+    dependency the demo correctly prints the shorter "not installed" variant, and
+    asserting the full transcript there would fail the suite for behaving exactly
+    as the lesson says it should. Lesson 7 gates its equivalent the same way.
+    """
     result = subprocess.run([sys.executable, "python/langgraph_agent.py", "demo"],
                             cwd=LESSON_DIR, capture_output=True, text=True)
     assert result.returncode == 0, result.stderr

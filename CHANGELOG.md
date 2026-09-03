@@ -7,6 +7,15 @@ All notable changes to this project are documented here. This project follows
 ## [Unreleased]
 
 ### Added
+- **Lesson test suites now run in CI** - `pyproject.toml` pins `testpaths` to `tests/`, so
+  `pytest -q` covered the engine and the action contract and nothing under `lessons/`: every
+  lesson's own suite, 102 tests across six lessons, ran only when somebody typed `./run -l N test`.
+  `tools/run_lesson_tests.py` runs each lesson in its **own process** - six lessons ship a
+  `python/web.py` and their tests import it by bare name, so one pytest session resolves
+  `import web` by `sys.path` order and six of Lesson 7's playground tests fail against Lesson 8's
+  module. `ci.yml` also installs every `lessons/*/requirements.txt` first, so Lessons 7 and 8
+  exercise LangChain and LangGraph instead of skipping the tests that cover them. No change to
+  `ci-helpers` was needed; `test_command` was already an arbitrary shell string.
 - **`tools/check_docs.py` and a `Docs` workflow** - `ci.yml` ignores `docs/**` and `**/*.md`, so a
   docs-only change ran **no checks at all**; that is how a broken relative link, a stale generated
   table and a PDF menu labelled with the wrong lesson range each reached `main`. The new check
