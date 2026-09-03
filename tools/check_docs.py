@@ -97,14 +97,19 @@ def check_readme_table() -> list[str]:
     return [f"{message}\n      {detail}" if detail else message]
 
 
-def lesson_registry() -> list[tuple[int, dict]]:
+def lesson_registry() -> list[tuple[int, dict, Path]]:
+    """Every config-driven lesson: its number, its config, and its directory.
+
+    The directory is carried along because the published-page name falls back to it
+    when a lesson.json omits `slug`, exactly as tools/lesson.py does.
+    """
     lessons = []
     for directory in sorted((ROOT / "lessons").glob("[0-9]*")):
         config = directory / "lesson.json"
         if not config.is_file():
             continue
         number = int(re.match(r"(\d+)", directory.name).group(1))
-        lessons.append((number, json.loads(config.read_text(encoding="utf-8"))))
+        lessons.append((number, json.loads(config.read_text(encoding="utf-8")), directory))
     return lessons
 
 
@@ -115,7 +120,7 @@ def check_curriculum() -> list[str]:
         return ["lessons/CURRICULUM.md is missing - run: tools/sync-curriculum.sh"]
     text = generated.read_text(encoding="utf-8")
     problems = []
-    for number, lesson in lesson_registry():
+    for number, lesson, _directory in lesson_registry():
         title = lesson.get("title", "")
         if f"| {number} | {title} |" not in text:
             problems.append(f"lessons/CURRICULUM.md is missing lesson {number} ({title}) - "
@@ -141,10 +146,15 @@ def check_published_pages() -> list[str]:
     problems = []
     published = {p.name for p in (ROOT / "docs").glob("lesson-*.html")}
     expected = dict(HAND_AUTHORED_PAGES)
-    for number, lesson in lesson_registry():
+    for number, lesson, directory in lesson_registry():
         if lesson.get("status") != "working":
             continue
-        expected[f"lesson-{number}-{lesson.get('slug')}.html"] = f"Lesson {number}"
+        # Same fallback tools/lesson.py:cmd_build uses. Erroring on a missing slug
+        # would flag a lesson that publishes perfectly well; deriving it the way the
+        # generator does is what makes this check agree with what `build` writes,
+        # and stops a missing slug producing `lesson-N-None.html`.
+        slug = lesson.get("slug") or re.sub(r"^\d+-", "", directory.name)
+        expected[f"lesson-{number}-{slug}.html"] = f"Lesson {number}"
 
     for name, label in sorted(expected.items()):
         if name not in published:

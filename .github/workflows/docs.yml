@@ -16,14 +16,24 @@ on:
       - "docs/**"
       - "**/*.md"
       - "lessons/**/lesson.json"
+      # check_docs.py shells out to the generators, so a change to one of them can
+      # break the check without touching anything else in these filters.
       - "tools/check_docs.py"
+      - "tools/sync-readme-downloads.py"
+      - "tools/sync-curriculum.sh"
+      - "tools/lesson.py"
       - ".github/workflows/docs.yml"
   pull_request:
     paths:
       - "docs/**"
       - "**/*.md"
       - "lessons/**/lesson.json"
+      # check_docs.py shells out to the generators, so a change to one of them can
+      # break the check without touching anything else in these filters.
       - "tools/check_docs.py"
+      - "tools/sync-readme-downloads.py"
+      - "tools/sync-curriculum.sh"
+      - "tools/lesson.py"
       - ".github/workflows/docs.yml"
 
 concurrency:
