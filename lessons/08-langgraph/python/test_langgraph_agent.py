@@ -679,7 +679,7 @@ LOOP_CLAIMS = (
 # Anchored on the sentence that prices the swap, not on "lines of wiring" alone:
 # an exercise legitimately says "two lines of wiring" about adding a single node.
 GRAPH_CLAIMS = (
-    re.compile(r"cost ([\w-]+) lines of graph\s+wiring"),
+    re.compile(r"cost ([\w-]+) lines of graph wiring"),
     re.compile(r"cost ([\w-]+) lines of wiring"),
     re.compile(r"\| ([\w-]+) lines of wiring \|"),
 )
@@ -704,6 +704,10 @@ def _assert_claims_match(patterns, measured, label):
             text = path.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             continue
+        # Collapse whitespace first: prose wraps, and the claim has already been
+        # split across a line break once (in CHANGELOG.md), where a line-based
+        # search silently found nothing.
+        text = re.sub(r"\s+", " ", text)
         for pattern in patterns:
             for match in pattern.finditer(text):
                 if match.group(1) not in expected:

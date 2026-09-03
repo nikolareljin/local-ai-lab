@@ -63,10 +63,17 @@ def main(argv: list[str]) -> int:
     for number, test_file in suites:
         rel = test_file.relative_to(ROOT)
         print(f"\n=== Lesson {number}: {rel} ", flush=True)
-        # cwd is the lesson directory: the tests resolve `python/...` and their data
-        # files relative to it, exactly as `./run -l N test` does.
-        result = subprocess.run([sys.executable, "-m", "pytest", "-q", test_file.name],
-                                cwd=test_file.parent)
+        # Run it exactly as `./run -l N test` does - from the LESSON directory, with
+        # the suite named as `python/test_*.py`. tools/lesson.py invokes lesson
+        # commands with cwd set to the lesson dir, and a lesson may reasonably
+        # resolve a data file against that. Running from `python/` instead would
+        # make CI a slightly different environment from the one lessons are
+        # authored and debugged in, which is the sort of difference that only ever
+        # shows up at the worst moment.
+        lesson_dir = test_file.parent.parent
+        result = subprocess.run(
+            [sys.executable, "-m", "pytest", "-q", f"python/{test_file.name}"],
+            cwd=lesson_dir)
         if result.returncode != 0:
             failures.append(f"Lesson {number} ({rel})")
 

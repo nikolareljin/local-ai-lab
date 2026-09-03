@@ -35,7 +35,7 @@ All notable changes to this project are documented here. This project follows
   prices the graph honestly. Measured over Lesson 7's corpus: the linear chain gets **4 of 8**
   answerable questions' top citation right and never refuses; the loop gets **8 of 8** and correctly
   abstains on the ninth, for **67% more retrieval calls**, one of which buys nothing.
-- **A third arm, so the comparison is not a straw man** - the same corrective loop written as 61
+- **A third arm, so the comparison is not a straw man** - the same corrective loop written as 63
   lines of plain `while`, calling the identical retrieve/grade/rewrite functions. It matches the
   LangGraph arm on every question, and `test_graph_and_loop_are_indistinguishable` pins that. The
   finding the lesson is built around: LangGraph buys nothing on answer quality, and everything on
