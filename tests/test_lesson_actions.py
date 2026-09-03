@@ -111,6 +111,7 @@ def test_show_is_not_offered_for_the_hand_authored_lessons():
             f"run_lesson_{number} handles `show`, which the contract excludes"
         )
 
+
 @pytest.mark.parametrize("number", BASH_LESSONS)
 def test_hand_authored_lessons_offer_a_downloadable_pdf(number):
     """Older pages keep the same explicit PDF-download affordance as the template."""
