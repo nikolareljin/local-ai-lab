@@ -156,7 +156,13 @@ def main(argv: Optional[List[str]] = None) -> int:
     house = House(hass=hass)
 
     # Offline the confirm step is a policy, not a prompt, so the output is repeatable.
+    # Live, a person is asked - that is the whole point of the step.
     def confirm(name: str, call_args: dict) -> bool:
+        if args.live and not args.yes:
+            try:
+                return input(f"  Allow {name}({call_args})? [y/N] ").strip().lower() == "y"
+            except EOFError:
+                return False
         print(f"  confirm {name}({call_args})? {'yes' if args.yes else 'no'} (--yes to allow)")
         return args.yes
 

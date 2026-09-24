@@ -267,8 +267,8 @@ def print_trace(result: dict) -> None:
             continue
         if m.get("tool_calls"):
             for c in m["tool_calls"]:
-                f = c["function"]
-                print(f"  assistant -> {f['name']}({f.get('arguments')})")
+                f = tool_loop._function(c)
+                print(f"  assistant -> {f.get('name')}({f.get('arguments')})")
         text = (m.get("content") or "").strip()
         if text:
             who = f"tool {m['tool_name']}" if role == "tool" else role
@@ -288,7 +288,10 @@ def cmd_trace(args) -> int:
     if task and model_name and cassette_path(model_name).exists() and not args.live:
         tape = cassette.load(cassette_path(model_name))
         print(f"(replaying {model_name}, recorded {tape['recorded']})")
-        rec = tape["tasks"][task["id"]]
+        rec = tape["tasks"].get(task["id"])
+        if rec is None:
+            print(f"  {model_name} has no recording of {task['id']}; add --live to run it.")
+            return 1
         if rec.get("error"):
             print(f"  recorded run crashed: {rec['error']}")
             return 0
@@ -395,6 +398,13 @@ def cmd_models(_args) -> int:
     return 0
 
 
+def _at_least_one(text: str) -> int:
+    value = int(text)
+    if value < 1:
+        raise argparse.ArgumentTypeError("must be at least 1")
+    return value
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     p.add_argument("action", nargs="?", default="demo",
@@ -407,7 +417,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--lenient", action="store_true",
                    help="recover tool calls a model wrote as JSON text")
     p.add_argument("--live", action="store_true", help="trace: call Ollama even for a task")
-    p.add_argument("--max-turns", type=int, default=5)
+    p.add_argument("--max-turns", type=_at_least_one, default=5)
     p.add_argument("--hardware", default="", help="record: describe the machine")
     args = p.parse_args(argv)
     actions = {"demo": cmd_demo, "trace": cmd_trace, "ask": cmd_ask, "bench": cmd_bench,

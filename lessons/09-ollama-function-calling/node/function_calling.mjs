@@ -298,7 +298,7 @@ function parseArgs(argv) {
     else if (a === "--think") args.think = true;
     else if (a === "--no-think") args.think = false;
     else if (a === "--lenient") args.lenient = true;
-    else if (a === "--max-turns") args.maxTurns = Number.parseInt(argv[++i], 10);
+    else if (a === "--max-turns") args.maxTurns = /^[-+]?\d+$/.test(argv[++i] ?? "") ? Number(argv[i]) : NaN;
     else if (a.startsWith("--")) throw new UsageError(`unrecognized argument: ${a}`);
     else positional.push(a);
   }
@@ -310,7 +310,8 @@ function parseArgs(argv) {
     args.action = positional[0];
   }
   if (positional[1] !== undefined) args.question = positional[1];
-  if (!Number.isInteger(args.maxTurns) || args.maxTurns < 1) throw new UsageError("--max-turns needs a whole number >= 1");
+  if (!Number.isInteger(args.maxTurns)) throw new UsageError("argument --max-turns: needs a whole number");
+  if (args.maxTurns < 1) throw new UsageError("argument --max-turns: must be at least 1");
   if (args.model === undefined) throw new UsageError("--model needs a value");
   return args;
 }

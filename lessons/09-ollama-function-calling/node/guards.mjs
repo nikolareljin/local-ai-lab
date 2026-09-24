@@ -15,7 +15,10 @@ import {
 const TYPES = {
   string: (v) => typeof v === "string",
   integer: (v) => isPyInt(v) && !(v instanceof PyFloat),
-  number: (v) => isPyInt(v) || isPyFloat(v),
+  // A float must be finite: json.loads accepts NaN and Infinity, and NaN passes
+  // min/max. An int always is, however long (Python's math.isfinite raises on
+  // one past 1e308; here it still reaches the maximum check).
+  number: (v) => isPyInt(v) || (isPyFloat(v) && Number.isFinite(num(v))),
   boolean: (v) => typeof v === "boolean",
   object: (v) => isDict(v),
   array: (v) => Array.isArray(v),

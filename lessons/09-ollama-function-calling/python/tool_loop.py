@@ -37,6 +37,13 @@ SYSTEM = (
 Confirm = Callable[[str, dict], bool]
 
 
+def _function(call: Any) -> dict:
+    """The `function` part of one tool_calls entry. The entry is model output, so a
+    malformed one becomes an empty call (an unknown tool), never an exception."""
+    fn = call.get("function") if isinstance(call, dict) else None
+    return fn if isinstance(fn, dict) else {}
+
+
 def _signature(name: str, args: Any) -> str:
     return name + json.dumps(args, sort_keys=True, default=str)
 
@@ -49,7 +56,7 @@ def execute(toolbox, call: dict, user_text: str, *, guarded: bool,
     `not requested`, `declined`. With guarded=False nothing is checked, which is
     what the playground's "guards off" switch shows you.
     """
-    fn = call.get("function", {})
+    fn = _function(call)
     name = str(fn.get("name") or "")
     args = guards.coerce_arguments(fn.get("arguments"))
     tool = toolbox.get(name)
@@ -79,7 +86,7 @@ def execute(toolbox, call: dict, user_text: str, *, guarded: bool,
     try:
         if tool is None:
             raise KeyError(f"no tool named {name!r}")
-        result = tool.fn(**args)
+        result = str(tool.fn(**args))
     except Exception as exc:  # unguarded: whatever the model sent goes straight in
         out["status"] = f"crashed: {type(exc).__name__}"
         out["result"] = f"error: {exc}"
@@ -98,6 +105,8 @@ def run(model, question: str, toolbox, *, max_turns: int = 5, guarded: bool = Tr
         lenient: bool = False, confirm: Optional[Confirm] = None,
         system: str = SYSTEM, only: Optional[List[str]] = None) -> Dict[str, Any]:
     """Ask one question with tools. Returns the answer, a trace, and counters."""
+    if max_turns < 1:
+        raise ValueError("max_turns must be at least 1")
     tools = toolbox.specs(only)
     names = [t["function"]["name"] for t in tools]
     messages: List[dict] = [{"role": "system", "content": system},
@@ -124,12 +133,12 @@ def run(model, question: str, toolbox, *, max_turns: int = 5, guarded: bool = Tr
             break
 
         for call in proposed:
-            fn = call.get("function", {})
+            fn = _function(call)
             name = str(fn.get("name") or "")
-            sig = _signature(name, guards.coerce_arguments(fn.get("arguments")))
+            args = guards.coerce_arguments(fn.get("arguments"))
+            sig = _signature(name, args)
             if guarded and sig in seen:
-                step = {"name": name, "args": call["function"].get("arguments"),
-                        "status": "repeat", "flags": [],
+                step = {"name": name, "args": args, "status": "repeat", "flags": [],
                         "result": f"error: identical call already made in turn {seen[sig]}; "
                                   "use that result and answer."}
             else:

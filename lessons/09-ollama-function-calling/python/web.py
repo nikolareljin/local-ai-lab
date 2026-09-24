@@ -67,7 +67,10 @@ def search(query: str, values: dict) -> dict:
         label = f"{name} (live)"
     elif task and TAPES:
         tape = TAPES[int(values["model"])]
-        rec = tape["tasks"][task["id"]]
+        rec = tape["tasks"].get(task["id"])
+        if rec is None:
+            return {"arms": [], "blocks": [{"kind": "note", "text":
+                    f"{tape['model']} has no recording of {task['id']}. Switch on Live Ollama."}]}
         if rec.get("error"):
             return {"arms": [], "blocks": [{"kind": "note", "text":
                     f"{tape['model']} crashed on this task when it was recorded: {rec['error']}"}]}

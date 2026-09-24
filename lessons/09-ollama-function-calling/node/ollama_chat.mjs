@@ -7,8 +7,10 @@
 // Response:  {"message": {"role": "assistant", "content": "...",
 //                         "tool_calls": [{"function": {"name": ..., "arguments": {...}}}]}}
 
+import net from "node:net";
+
 import { RuntimeError } from "./cassette.mjs";
-import { dumps, isDict, loads, pyRound, repr } from "./pycompat.mjs";
+import { dumps, formatFixed, isDict, loads, pyRound, repr } from "./pycompat.mjs";
 
 /** The model failed: a crash, a bad request, a missing model. */
 export class OllamaError extends RuntimeError {}
@@ -26,6 +28,20 @@ async function readJson(resp) {
   }
 }
 
+// Could a TCP connection to the server be opened at all, within `ms`?
+function reachable(base, ms = 5_000) {
+  const url = new URL(base);
+  const port = Number(url.port) || (url.protocol === "https:" ? 443 : 80);
+  return new Promise((resolve) => {
+    const sock = net.connect({ host: url.hostname, port, timeout: ms });
+    const done = (ok) => {
+      sock.destroy();
+      resolve(ok);
+    };
+    sock.once("connect", () => done(true)).once("timeout", () => done(false)).once("error", () => done(false));
+  });
+}
+
 async function post(base, route, body, timeoutMs) {
   try {
     return await fetch(`${base}${route}`, {
@@ -36,6 +52,12 @@ async function post(base, route, body, timeoutMs) {
       signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (exc) {
+    // fetch has one deadline for connect and reply together, where requests has
+    // one for each. So when it fires, probe the port: a server that answers is
+    // there and the model was slow (a result); one that does not is an outage.
+    if (exc.name === "TimeoutError" && (await reachable(base))) {
+      throw new OllamaError(`no reply within ${formatFixed(timeoutMs / 1000, 0)}s`);
+    }
     throw new OllamaUnreachable(`cannot reach Ollama at ${base}: ${exc.cause?.message ?? exc.message}`);
   }
 }

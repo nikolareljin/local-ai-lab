@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import math
 import re
 from typing import Any, Callable, Dict, List
 
@@ -31,7 +32,10 @@ from lesson_core import LESSON4_DIR
 _TYPES: Dict[str, Callable[[Any], bool]] = {
     "string": lambda v: isinstance(v, str),
     "integer": lambda v: isinstance(v, int) and not isinstance(v, bool),
-    "number": lambda v: isinstance(v, (int, float)) and not isinstance(v, bool),
+    # finite: json.loads accepts NaN, and NaN passes every minimum/maximum comparison
+    # (an int is always finite, and math.isfinite on a 400-digit int overflows)
+    "number": lambda v: not isinstance(v, bool) and (
+        isinstance(v, int) or (isinstance(v, float) and math.isfinite(v))),
     "boolean": lambda v: isinstance(v, bool),
     "object": lambda v: isinstance(v, dict),
     "array": lambda v: isinstance(v, list),

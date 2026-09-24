@@ -95,6 +95,10 @@ ollama pull qwen3:<span class="hl-num">1.</span>7b        <span class="hl-com">#
         started = time.monotonic()
         <span class="hl-kw">try</span>:
             resp = requests.post(f<span class="hl-str">"{self.url}/api/chat"</span>, json=payload, timeout=self.timeout)
+        <span class="hl-kw">except</span> requests.ConnectionError <span class="hl-kw">as</span> exc:
+            <span class="hl-com"># First: ConnectTimeout is both a ConnectionError and a Timeout, and a</span>
+            <span class="hl-com"># server that cannot be reached is an outage, not the model's answer.</span>
+            <span class="hl-kw">raise</span> OllamaUnreachable(f<span class="hl-str">"cannot reach Ollama at {self.url}: {exc}"</span>) <span class="hl-kw">from</span> exc
         <span class="hl-kw">except</span> requests.Timeout <span class="hl-kw">as</span> exc:
             <span class="hl-com"># The server is there; the model did not answer in time. On a CPU that</span>
             <span class="hl-com"># is a result worth recording, not an outage.</span>
@@ -115,6 +119,8 @@ ollama pull qwen3:<span class="hl-num">1.</span>7b        <span class="hl-com">#
         lenient: bool = <span class="hl-kw">False</span>, confirm: Optional[Confirm] = <span class="hl-kw">None</span>,
         system: str = SYSTEM, only: Optional[List[str]] = <span class="hl-kw">None</span>) -&gt; Dict[str, Any]:
     <span class="hl-str">"""Ask one question with tools. Returns the answer, a trace, and counters."""</span>
+    <span class="hl-kw">if</span> max_turns &lt; <span class="hl-num">1</span>:
+        <span class="hl-kw">raise</span> ValueError(<span class="hl-str">"max_turns must be at least 1"</span>)
     tools = toolbox.specs(only)
     names = [t[<span class="hl-str">"function"</span>][<span class="hl-str">"name"</span>] <span class="hl-kw">for</span> t <span class="hl-kw">in</span> tools]
     messages: List[dict] = [{<span class="hl-str">"role"</span>: <span class="hl-str">"system"</span>, <span class="hl-str">"content"</span>: system},
@@ -141,12 +147,12 @@ ollama pull qwen3:<span class="hl-num">1.</span>7b        <span class="hl-com">#
             <span class="hl-kw">break</span>
 
         <span class="hl-kw">for</span> call <span class="hl-kw">in</span> proposed:
-            fn = call.get(<span class="hl-str">"function"</span>, {})
+            fn = _function(call)
             name = str(fn.get(<span class="hl-str">"name"</span>) <span class="hl-kw">or</span> <span class="hl-str">""</span>)
-            sig = _signature(name, guards.coerce_arguments(fn.get(<span class="hl-str">"arguments"</span>)))
+            args = guards.coerce_arguments(fn.get(<span class="hl-str">"arguments"</span>))
+            sig = _signature(name, args)
             <span class="hl-kw">if</span> guarded <span class="hl-kw">and</span> sig <span class="hl-kw">in</span> seen:
-                step = {<span class="hl-str">"name"</span>: name, <span class="hl-str">"args"</span>: call[<span class="hl-str">"function"</span>].get(<span class="hl-str">"arguments"</span>),
-                        <span class="hl-str">"status"</span>: <span class="hl-str">"repeat"</span>, <span class="hl-str">"flags"</span>: [],
+                step = {<span class="hl-str">"name"</span>: name, <span class="hl-str">"args"</span>: args, <span class="hl-str">"status"</span>: <span class="hl-str">"repeat"</span>, <span class="hl-str">"flags"</span>: [],
                         <span class="hl-str">"result"</span>: f<span class="hl-str">"error: identical call already made in turn {seen[sig]}; "</span>
                                   <span class="hl-str">"use that result and answer."</span>}
             <span class="hl-kw">else</span>:
@@ -177,7 +183,7 @@ ollama pull qwen3:<span class="hl-num">1.</span>7b        <span class="hl-com">#
     `not requested`, `declined`. With guarded=False nothing is checked, which is
     what the playground's "guards off" switch shows you.
     """</span>
-    fn = call.get(<span class="hl-str">"function"</span>, {})
+    fn = _function(call)
     name = str(fn.get(<span class="hl-str">"name"</span>) <span class="hl-kw">or</span> <span class="hl-str">""</span>)
     args = guards.coerce_arguments(fn.get(<span class="hl-str">"arguments"</span>))
     tool = toolbox.get(name)
@@ -207,7 +213,7 @@ ollama pull qwen3:<span class="hl-num">1.</span>7b        <span class="hl-com">#
     <span class="hl-kw">try</span>:
         <span class="hl-kw">if</span> tool <span class="hl-kw">is</span> <span class="hl-kw">None</span>:
             <span class="hl-kw">raise</span> KeyError(f<span class="hl-str">"no tool named {name!r}"</span>)
-        result = tool.fn(**args)
+        result = str(tool.fn(**args))
     <span class="hl-kw">except</span> Exception <span class="hl-kw">as</span> exc:  <span class="hl-com"># unguarded: whatever the model sent goes straight in</span>
         out[<span class="hl-str">"status"</span>] = f<span class="hl-str">"crashed: {type(exc).__name__}"</span>
         out[<span class="hl-str">"result"</span>] = f<span class="hl-str">"error: {exc}"</span>

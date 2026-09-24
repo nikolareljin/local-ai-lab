@@ -335,3 +335,43 @@ def test_every_slide_excerpt_is_one_whole_definition():
         # the line after the excerpt is blank, or no deeper than the excerpt's first line
         deeper = len(after) - len(after.lstrip()) > indent
         assert not after.strip() or not deeper, (el["kicker"], after)
+
+
+@pytest.mark.parametrize("entry", ["search_docs", None, {"name": "search_docs"}, {"function": 7}])
+def test_a_malformed_tool_call_is_an_unknown_tool_not_a_crash(box_factory, entry):
+    r = tool_loop.run(Scripted([entry], "ok"), "q", box_factory())
+    assert r["calls"][0]["status"] == "unknown tool" and r["answer"] == "ok"
+
+
+def test_max_turns_below_one_is_refused(box_factory):
+    with pytest.raises(ValueError):
+        tool_loop.run(Scripted("hi"), "q", box_factory(), max_turns=0)
+
+
+@pytest.mark.parametrize("raw", ['{"celsius": NaN}', '{"celsius": Infinity}'])
+def test_non_finite_numbers_fail_validation(raw):
+    schema = {"type": "object", "properties": {
+        "celsius": {"type": "number", "minimum": 10, "maximum": 28}}}
+    assert guards.validate(schema, guards.coerce_arguments(raw))
+
+
+def test_timeouts_are_results_and_connection_failures_are_outages(monkeypatch):
+    import ollama_chat
+    import requests
+
+    model = ollama_chat.OllamaModel("http://127.0.0.1:9", "m", think=None)
+    for exc, kind in [(requests.ReadTimeout(), ollama_chat.OllamaError),
+                      (requests.ConnectTimeout(), ollama_chat.OllamaUnreachable),
+                      (requests.ConnectionError(), ollama_chat.OllamaUnreachable)]:
+        def boom(*a, _exc=exc, **k):
+            raise _exc
+        monkeypatch.setattr(ollama_chat.requests, "post", boom)
+        with pytest.raises(kind) as info:
+            model.chat([], [])
+        assert type(info.value) is kind
+
+
+def test_a_huge_integer_is_checked_not_crashed(box_factory):
+    schema = box_factory().get("search_docs").parameters
+    assert guards.validate(schema, {"query": "x", "k": 10 ** 400}) == [
+        f"args.k must be <= 8, got {10 ** 400}"]

@@ -57,6 +57,10 @@ class OllamaModel:
         started = time.monotonic()
         try:
             resp = requests.post(f"{self.url}/api/chat", json=payload, timeout=self.timeout)
+        except requests.ConnectionError as exc:
+            # First: ConnectTimeout is both a ConnectionError and a Timeout, and a
+            # server that cannot be reached is an outage, not the model's answer.
+            raise OllamaUnreachable(f"cannot reach Ollama at {self.url}: {exc}") from exc
         except requests.Timeout as exc:
             # The server is there; the model did not answer in time. On a CPU that
             # is a result worth recording, not an outage.

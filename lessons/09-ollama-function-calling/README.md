@@ -242,7 +242,9 @@ Rules that paid off while recording this lesson:
   `qwen3:1.7b` did t3's arithmetic in its head - which is why the scorecard counts it.
 - **Use `enum` for anything with a fixed set of values.** It is both documentation for the model and
   a check for your validator.
-- **Keep the list short.** Every schema is sent on every turn. `run(..., only=[...])` offers a subset.
+- **Keep the list short.** Every schema is sent on every turn. `run(..., only=[...])` offers a
+  subset - and refuses the rest: a tool the model was not offered this run is an unknown tool, even
+  if it guesses the name.
 - **Put the rule in two places.** The sentence makes the right call likely; code makes the wrong one
   harmless. Neither is enough alone.
 
@@ -608,7 +610,7 @@ with this lesson open.
 - **Break the intent check.** Write a user message that contains "open a ticket" but means the
   opposite ("do not open a ticket, just tell me..."). Does the pattern pass it? Fix it the way the
   home recipe handles "do not unlock", and add the case to the test.
-- **MCP to Ollama.** Write the bridge from "What to check next": about forty lines. Point it at
+- **MCP to Ollama.** Write the bridge from "What to check next": list tools, convert schemas, route calls. Point it at
   Lesson 2's server and ask `qwen3:1.7b` a question that needs `search_docs`.
 - **Your own tasks.** Replace `data/tasks.json` with ten tasks your team would actually ask, record
   two models, and report one number: **how many tasks does the router get right, and how many does
