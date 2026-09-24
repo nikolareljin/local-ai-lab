@@ -61,11 +61,22 @@ class Tool:
 # the same error for any input a model sends.
 
 _NUMBER = r"\d+\.?\d*(?:[eE][+-]?\d+)?|\.\d+(?:[eE][+-]?\d+)?"
-_TOKEN = re.compile(rf"\s*(?:({_NUMBER})|(\*\*|//|[-+*/%^()]))")
+# re.ASCII: "\d" would otherwise accept Arabic-Indic and full-width digits.
+_TOKEN = re.compile(rf"\s*(?:({_NUMBER})|(\*\*|//|[-+*/%^()]))", re.ASCII)
 
 
 class CalcError(ValueError):
     pass
+
+
+def _finite(value: float) -> float:
+    """Every intermediate must be a finite float, or floor() and pow() misbehave."""
+    if not math.isfinite(value):
+        raise CalcError("result too large")
+    return value
+
+
+_SPACE = " \t\r\n\f\v"
 
 
 def _tokens(text: str) -> List[str]:
@@ -73,9 +84,11 @@ def _tokens(text: str) -> List[str]:
     while pos < len(text):
         m = _TOKEN.match(text, pos)
         if not m or m.end() == pos:
-            if text[pos:].strip() == "":
+            rest = text[pos:].lstrip(_SPACE)
+            if not rest:
                 break
-            raise CalcError(f"unexpected {text[pos:].strip()[0]!r} at position {pos}")
+            where = len(text) - len(rest)
+            raise CalcError(f"unexpected {rest[0]!r} at position {where}")
         out.append(m.group(1) or m.group(2))
         pos = m.end()
     return out
@@ -99,6 +112,7 @@ class _Parser:
         value = self.term()
         while self.peek() in ("+", "-"):
             value = value + self.term() if self.take() == "+" else value - self.term()
+            _finite(value)
         return value
 
     def term(self) -> float:
@@ -112,9 +126,10 @@ class _Parser:
             elif op == "/":
                 value = value / right
             elif op == "//":
-                value = math.floor(value / right)
+                value = float(math.floor(_finite(value / right)))
             else:
-                value = value - right * math.floor(value / right)
+                value = value - right * float(math.floor(_finite(value / right)))
+            _finite(value)
         return value
 
     def unary(self) -> float:
@@ -134,9 +149,9 @@ class _Parser:
             if base == 0 and exp < 0:
                 raise CalcError("division by zero")
             try:
-                return math.pow(base, exp)
-            except OverflowError:  # JS returns Infinity here; match it
-                return math.inf
+                return _finite(math.pow(base, exp))
+            except OverflowError:  # JS returns Infinity here; same message either way
+                raise CalcError("result too large") from None
         return base
 
     def atom(self) -> float:
@@ -148,7 +163,7 @@ class _Parser:
             self.take()
             return value
         if tok[0].isdigit() or tok[0] == ".":
-            return float(tok)
+            return _finite(float(tok))  # "1e400" is inf
         raise CalcError(f"unexpected {tok!r}")
 
 
