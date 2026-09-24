@@ -12,9 +12,8 @@ or thrown away, a write cannot be taken back.
 
 from __future__ import annotations
 
-import ast
 import math
-import operator
+import re
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
 
@@ -49,63 +48,131 @@ class Tool:
         }
 
 
-# --- calculator: an AST whitelist, never eval() ---------------------------------
+# --- calculator: a 60-line grammar, never eval() ---------------------------------
+#
+#   expr   := term (("+" | "-") term)*
+#   term   := unary (("*" | "/" | "//" | "%") unary)*
+#   unary  := ("+" | "-") unary | power
+#   power  := atom (("**" | "^") unary)?
+#   atom   := number | "(" expr ")"
+#
+# Numbers, operators, parentheses: nothing else can even be parsed. The Node port
+# is the same grammar line for line, so both runtimes give the same result and
+# the same error for any input a model sends.
 
-_BINOPS: Dict[type, Callable[[Any, Any], Any]] = {
-    ast.Add: operator.add,
-    ast.Sub: operator.sub,
-    ast.Mult: operator.mul,
-    ast.Div: operator.truediv,
-    ast.FloorDiv: operator.floordiv,
-    ast.Mod: operator.mod,
-    ast.Pow: operator.pow,
-}
-_UNARY: Dict[type, Callable[[Any], Any]] = {ast.USub: operator.neg, ast.UAdd: operator.pos}
+_NUMBER = r"\d+\.?\d*(?:[eE][+-]?\d+)?|\.\d+(?:[eE][+-]?\d+)?"
+_TOKEN = re.compile(rf"\s*(?:({_NUMBER})|(\*\*|//|[-+*/%^()]))")
 
 
-def _eval(node: ast.AST) -> float:
-    if isinstance(node, ast.Expression):
-        return _eval(node.body)
-    if isinstance(node, ast.Constant) and type(node.value) in (int, float):
-        return node.value
-    if isinstance(node, ast.BinOp) and type(node.op) in _BINOPS:
-        left, right = _eval(node.left), _eval(node.right)
-        if isinstance(node.op, ast.Pow) and abs(right) > 64:
-            raise ValueError("exponent too large")
-        result = _BINOPS[type(node.op)](left, right)
-        # Bound every intermediate, or (9**64)**64 builds a 13,000-digit int.
-        if isinstance(result, int) and result.bit_length() > 256:
-            raise ValueError("result too large")
-        return result
-    if isinstance(node, ast.UnaryOp) and type(node.op) in _UNARY:
-        return _UNARY[type(node.op)](_eval(node.operand))
-    raise ValueError(f"not allowed in an expression: {type(node).__name__}")
+class CalcError(ValueError):
+    pass
+
+
+def _tokens(text: str) -> List[str]:
+    out, pos = [], 0
+    while pos < len(text):
+        m = _TOKEN.match(text, pos)
+        if not m or m.end() == pos:
+            if text[pos:].strip() == "":
+                break
+            raise CalcError(f"unexpected {text[pos:].strip()[0]!r} at position {pos}")
+        out.append(m.group(1) or m.group(2))
+        pos = m.end()
+    return out
+
+
+class _Parser:
+    def __init__(self, tokens: List[str]) -> None:
+        self.t, self.i = tokens, 0
+
+    def peek(self) -> Optional[str]:
+        return self.t[self.i] if self.i < len(self.t) else None
+
+    def take(self) -> str:
+        tok = self.peek()
+        if tok is None:
+            raise CalcError("expression ends too early")
+        self.i += 1
+        return tok
+
+    def expr(self) -> float:
+        value = self.term()
+        while self.peek() in ("+", "-"):
+            value = value + self.term() if self.take() == "+" else value - self.term()
+        return value
+
+    def term(self) -> float:
+        value = self.unary()
+        while self.peek() in ("*", "/", "//", "%"):
+            op, right = self.take(), self.unary()
+            if op != "*" and right == 0:
+                raise CalcError("division by zero")
+            if op == "*":
+                value = value * right
+            elif op == "/":
+                value = value / right
+            elif op == "//":
+                value = math.floor(value / right)
+            else:
+                value = value - right * math.floor(value / right)
+        return value
+
+    def unary(self) -> float:
+        if self.peek() in ("+", "-"):
+            return -self.unary() if self.take() == "-" else self.unary()
+        return self.power()
+
+    def power(self) -> float:
+        base = self.atom()
+        if self.peek() in ("**", "^"):
+            self.take()
+            exp = self.unary()
+            if abs(exp) > 64:
+                raise CalcError("exponent too large")
+            if base < 0 and exp != int(exp):
+                raise CalcError("result is not a real number")
+            if base == 0 and exp < 0:
+                raise CalcError("division by zero")
+            try:
+                return math.pow(base, exp)
+            except OverflowError:  # JS returns Infinity here; match it
+                return math.inf
+        return base
+
+    def atom(self) -> float:
+        tok = self.take()
+        if tok == "(":
+            value = self.expr()
+            if self.peek() != ")":
+                raise CalcError("missing ')'")
+            self.take()
+            return value
+        if tok[0].isdigit() or tok[0] == ".":
+            return float(tok)
+        raise CalcError(f"unexpected {tok!r}")
 
 
 def calculate(expression: str) -> str:
-    """Evaluate plain arithmetic. Names, calls and attributes are refused.
+    """Evaluate plain arithmetic, or return `error: ...` for the model to read.
 
-    Commas are not stripped: "2,5" is a decimal in half the world and a
-    thousands separator in the other half, so it is refused rather than guessed.
+    Commas are refused rather than guessed at: "2,5" is a decimal in half the
+    world and a thousands separator in the other half.
     """
-    text = expression.replace("^", "**").strip()
-    if len(text) > 200:
+    if len(expression) > 200:
         return "error: expression longer than 200 characters"
     try:
-        value = _eval(ast.parse(text, mode="eval"))
-    except ZeroDivisionError:
-        return "error: division by zero"
-    except (SyntaxError, ValueError, TypeError, OverflowError) as exc:
+        parser = _Parser(_tokens(expression))
+        if parser.peek() is None:
+            raise CalcError("expression is empty")
+        value = parser.expr()
+        if parser.peek() is not None:
+            raise CalcError(f"unexpected {parser.peek()!r}")
+    except CalcError as exc:
         return f"error: {exc}"
-    if isinstance(value, complex):  # (-8) ** 0.5
-        return "error: result is not a real number"
-    if isinstance(value, float) and not math.isfinite(value):
-        return "error: result is not a finite number"
-    if isinstance(value, float):
-        value = round(value, 6)
-        if value.is_integer():
-            value = int(value)
-    return f"{expression} = {value}"
+    if not math.isfinite(value) or abs(value) >= 1e15:
+        return "error: result too large"
+    text = f"{value:.6f}".rstrip("0").rstrip(".")
+    return f"{expression} = {'0' if text in ('-0', '') else text}"
 
 
 # --- tool sets --------------------------------------------------------------------
