@@ -57,6 +57,10 @@ class OllamaModel:
         started = time.monotonic()
         try:
             resp = requests.post(f"{self.url}/api/chat", json=payload, timeout=self.timeout)
+        except requests.Timeout as exc:
+            # The server is there; the model did not answer in time. On a CPU that
+            # is a result worth recording, not an outage.
+            raise OllamaError(f"no reply within {self.timeout:.0f}s") from exc
         except requests.RequestException as exc:
             raise OllamaUnreachable(f"cannot reach Ollama at {self.url}: {exc}") from exc
         if resp.status_code == 404:
