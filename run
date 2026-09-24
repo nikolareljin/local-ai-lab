@@ -15,56 +15,158 @@ log_info() { echo "[INFO] $*" >&2; }
 
 usage() {
   cat <<'EOF'
-local-ai-lab — run a lesson locally
+local-ai-lab: run a lesson locally
 
 Usage:
+  ./run list
   ./run -l <N> [--lang python|node|csharp] [action] [args]
-  ./run list                                  # list all lessons
+  ./run -l <N> -h                         # help for one lesson
 
-Two ways into any lesson, 1 through 9:
+Common actions:
+  (none)    open the lesson's interactive playground
+  lesson   read the lesson as a local browser slideshow
+  demo     run the offline, deterministic demonstration
+  test     run the lesson's offline tests
 
-  TRAINING - read the lesson, click through the steps
-    ./run -l <N> lesson       open the lesson in a browser, served locally (no GitHub Pages)
-
-  RUNNING - run the code and tinker with it
-    ./run -l <N>              the interactive playground (the default action)
-    ./run -l <N> demo         one-shot: print what it does and exit - no model, no network
-    ./run -l <N> test         the lesson's offline test
-
-Lesson-specific extras:
-  -l 1   RAG app       ask "question" · repl · index
-  -l 2   MCP server    serve · register
-  -l 3+  authoring     show   walk the lesson's code and configs in the terminal
-  -l 7   LangChain     ask "question" [--native] [--arm bm25|embed]
-  -l 8   LangGraph     trace · chat · review · spread · ask "question" · graph · measure
-                       [--llm-grade] [--llm-rewrite] [--llm] [--provider NAME]
-  -l 9   Ollama tools  trace "question" · ask "question" · bench · record · models · recipe NAME
-                       [--model M] [--think] [--lenient] [--live]
+Authoring actions for Lessons 3 and later:
+  show [--html]   walk the lesson's code and configuration
+  build           regenerate its publishable docs page
 
 Examples:
-  ./run -l 1 lesson                           # read Lesson 1 locally, click through it
-  ./run -l 1                                  # run it: the RAG web UI (auto-picks a free port)
-  ./run -l 1 demo                             # run it without any AI: the pipeline, printed
-  ./run -l 1 ask "How do I reset the device?" # one-shot question (calls a provider)
-  ./run -l 2 demo                             # call the MCP tools over stdio (no LLM needed)
-  ./run -l 3 --lang csharp demo               # the C#/.NET port of the same demo
-  ./run -l 7 lesson                           # read Lesson 7 locally
-  ./run -l 8 trace "Is 5GHz supported?"       # watch the agent re-search after a weak result
-  ./run -l 8 spread "Is 5GHz supported?"      # watch an LLM grader disagree with itself
-  ./run -l 3 show --html > /tmp/l3.html       # standalone HTML of the instructions
-
-Languages (polyglot — Option B): python (default/reference) · node · csharp.
-Lessons 1 and 2 are ported to all three; where a lesson isn't ported yet,
-  --lang node|csharp points you to the Python reference.
-
-The default AI provider is the Claude Code CLI — no API key, it uses your existing
-Claude Code login. Override anytime with  RAG_PROVIDER=ollama|gemini|openai.
+  ./run -l 1 lesson
+  ./run -l 3 --lang csharp demo
+  ./run -l 8 -h
+  ./run -l 9 trace "Why does the status ring stay amber?"
 
 Options:
-  -l, --lesson N        which lesson (1, 2, or any lessons/NN-* lesson)
-  --lang LANG           python | node | csharp  (default: python)
-  -h, --help            show this help
+  -l, --lesson N   lesson number
+  --lang LANG      python | node | csharp (default: python)
+  -h, --help       show this help; use with -l for lesson-specific help
+
+Run ./run -l <N> -h for that lesson's extra actions and arguments.
 EOF
+}
+
+lesson_usage() {
+  local lesson="$1" languages="python|node|csharp"
+  case "$lesson" in
+    7|8|9) languages="python|node" ;;
+    1|2|3|4|5|6) ;;
+    *) log_error "Unknown lesson '${lesson}'. Try:  ./run list"; return 1 ;;
+  esac
+  cat <<EOF
+Lesson ${lesson}
+
+Usage:
+  ./run -l ${lesson} [--lang ${languages}] [action] [args]
+
+Common actions:
+  (none)    interactive playground
+  lesson   local browser slideshow
+  demo     offline demonstration
+  test     offline tests
+EOF
+
+  case "$lesson" in
+    1)
+      cat <<'EOF'
+
+Extra actions:
+  ask "QUESTION"   ask one question through the configured provider
+  repl             start the question prompt
+  index            rebuild the document index
+  web              open the playground explicitly
+EOF
+      ;;
+    2)
+      cat <<'EOF'
+
+Extra actions:
+  serve      run the MCP server over stdio
+  register   register the server with Claude Code
+  web        open the playground explicitly
+EOF
+      ;;
+    7)
+      cat <<'EOF'
+
+Extra actions:
+  ask "QUESTION" [--native] [--arm bm25|embed]
+  show [--html]
+  build
+  web
+
+Use --lang python|node. Advanced ask options apply to Python.
+EOF
+      ;;
+    8)
+      cat <<'EOF'
+
+Extra actions:
+  trace "QUESTION"   print the corrective retrieval path
+  chat               interactive corrective-RAG session
+  review             pause and resume a human review
+  spread "QUESTION"  compare repeated model-grader decisions
+  ask "QUESTION"     answer one question
+  graph              print the graph topology
+  measure            report dependency cost
+  show [--html]
+  build
+  web
+
+Python action options:
+  --llm-grade          use a model to grade retrieved evidence
+  --llm-rewrite        use a model to rewrite weak queries
+  --llm                enable both model-backed steps
+  --provider NAME      claude | ollama | gemini | openai
+  --top-k N
+  --threshold N
+  --max-attempts N
+  --recursion-limit N
+  --thread NAME
+  --sqlite PATH
+  --runs N              repetitions for spread
+
+Use --lang python|node. Advanced actions and options apply to Python.
+EOF
+      ;;
+    9)
+      cat <<'EOF'
+
+Extra actions:
+  trace "QUESTION"   replay or run one tool-calling trace
+  ask "QUESTION"     ask through live Ollama
+  models             list local tool-capable models
+  bench              score local models on the task set
+  record             record a replay cassette
+  recipe NAME        run a focused recipe
+  show [--html]
+  build
+  web
+
+Python action options:
+  --model NAME
+  --models A,B
+  --think | --no-think
+  --lenient
+  --live
+  --max-turns N
+  --hardware TEXT
+
+Run ./run -l 9 <action> -h for action-level details.
+Use --lang python|node. Advanced actions and options apply to Python.
+EOF
+      ;;
+    *)
+      cat <<'EOF'
+
+Extra actions for config-driven lessons:
+  show [--html]
+  build
+  web
+EOF
+      ;;
+  esac
 }
 
 # Announce the AI provider so it's obvious Claude Code is the default, and check it.
@@ -105,7 +207,7 @@ while [[ $# -gt 0 ]]; do
     -l*)          LESSON="${1#-l}"; shift ;;
     --lang)       need_value "$#" "$1" "--lang python"; LANG_CHOICE="$2"; LANG_EXPLICIT=1; shift 2 ;;
     --lang=*)     LANG_CHOICE="${1#*=}"; LANG_EXPLICIT=1; shift ;;
-    -h|--help)    usage; exit 0 ;;
+    -h|--help)    if [[ -n "$LESSON" ]]; then lesson_usage "$LESSON"; else usage; fi; exit $? ;;
     --)           shift; break ;;
     *)            break ;;
   esac
