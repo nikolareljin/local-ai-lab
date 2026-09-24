@@ -42,7 +42,7 @@ def _signature(name: str, args: Any) -> str:
 
 
 def execute(toolbox, call: dict, user_text: str, *, guarded: bool,
-            confirm: Optional[Confirm]) -> Dict[str, Any]:
+            confirm: Optional[Confirm], offered: Optional[List[str]] = None) -> Dict[str, Any]:
     """Run one proposed call. Returns {name, args, status, result}.
 
     status is `ok`, or the guard that stopped it: `unknown tool`, `invalid args`,
@@ -56,9 +56,11 @@ def execute(toolbox, call: dict, user_text: str, *, guarded: bool,
     out = {"name": name, "args": args, "status": "ok", "flags": []}
 
     if guarded:
-        if tool is None:
+        # A tool you did not offer this turn is unknown, even if the toolbox has it:
+        # `only=` is a permission, not just a shorter menu.
+        if tool is None or (offered is not None and name not in offered):
             out["status"] = "unknown tool"
-            known = ", ".join(toolbox.tools)
+            known = ", ".join(offered if offered is not None else toolbox.tools)
             out["result"] = f"error: there is no tool named {name!r}. Available: {known}."
             return out
         errors = guards.validate(tool.parameters, args)
@@ -131,7 +133,8 @@ def run(model, question: str, toolbox, *, max_turns: int = 5, guarded: bool = Tr
                         "result": f"error: identical call already made in turn {seen[sig]}; "
                                   "use that result and answer."}
             else:
-                step = execute(toolbox, call, question, guarded=guarded, confirm=confirm)
+                step = execute(toolbox, call, question, guarded=guarded, confirm=confirm,
+                               offered=names)
                 seen.setdefault(sig, turn)
             step.update(turn=turn, recovered=recovered)
             calls.append(step)

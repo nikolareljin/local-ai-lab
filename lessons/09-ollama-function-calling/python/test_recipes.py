@@ -22,12 +22,14 @@ for path in (HERE, HERE / "recipes"):
         sys.path.insert(0, str(path))
 
 import doc_automation  # noqa: E402
+import doc_summary  # noqa: E402
+import doc_summary_graph  # noqa: E402
 import home_automation  # noqa: E402
 import invoice_extract  # noqa: E402
 import pdf_index  # noqa: E402
 import requests  # noqa: E402
 import tool_loop  # noqa: E402
-from recipe_kit import call  # noqa: E402
+from recipe_kit import ScriptedModel, call  # noqa: E402
 
 from localrag.extract import extract_pages  # noqa: E402
 
@@ -296,3 +298,194 @@ def test_pdf_tools_before_and_after_indexing():
         page = int(m.group(1).split(":")[1].rstrip("]"))
         assert m.group(1).startswith("[CHEATSHEET.pdf:") and page in pages
         assert " ".join(m.group(2).split())[:40] in " ".join(pages[page].split())
+
+
+# --- doc_summary ----------------------------------------------------------------------
+
+WARRANTY_QUOTE = "Two years from the date of purchase against manufacturing defects."
+
+
+def summary_args(**change):
+    args = {"document": "warranty.md", "summary": "Two-year cover.", "audience": "customer",
+            "key_points": [{"point": "Cover", "quote": WARRANTY_QUOTE}], "action_items": []}
+    return {**args, **change}
+
+
+def test_summary_quote_must_be_verbatim_whitespace_aside():
+    desk = doc_summary.SummaryDesk()
+    desk.read_document("warranty.md")
+    spaced = {"point": "Cover", "quote": "Two years  from the date\nof purchase against"}
+    assert desk.record_summary(**summary_args(key_points=[spaced])).startswith("Recorded")
+    reworded = {"point": "Cover", "quote": "Two years from purchase against manufacturing defects."}
+    result = desk.record_summary(**summary_args(key_points=[reworded]))
+    assert "key point 'Cover' does not appear word for word" in result
+    short = {"point": "Cover", "quote": "Two years"}
+    assert "too short" in desk.record_summary(**summary_args(key_points=[short]))
+
+
+def test_summary_refuses_an_unread_document():
+    desk = doc_summary.SummaryDesk()
+    assert "has not been read" in desk.record_summary(**summary_args())
+    assert not desk.records
+
+
+def test_summary_limits_and_enums():
+    desk = doc_summary.SummaryDesk()
+    desk.read_document("warranty.md")
+    six = [{"point": str(i), "quote": WARRANTY_QUOTE} for i in range(6)]
+    assert "1-5 key points, got 6" in desk.record_summary(**summary_args(key_points=six))
+    assert "1-5 key points, got 0" in desk.record_summary(**summary_args(key_points=[]))
+    many = ["x"] * 6
+    assert "at most 5 action items" in desk.record_summary(**summary_args(action_items=many))
+    for bad in (summary_args(audience="board"), summary_args(document="secret.md"),
+                summary_args(summary="x" * 401)):
+        assert run_one(desk, "record_summary", **bad)["status"] == "invalid args"
+    with pytest.raises(ValueError):
+        desk.read_document("../../../.env")
+
+
+def test_doc_summary_main_records_both_and_no_refund(capsys):
+    assert doc_summary.main([]) == 0
+    out = capsys.readouterr().out
+    assert out.count("tool error") == 2  # each paraphrased first try was refused
+    assert "== warranty.md  (for customer)" in out and "== ticket_9001.md  (for support)" in out
+    assert "tries to instruct the assistant" in out
+
+
+def test_doc_summary_json_parses_and_ticket_has_no_refund(capsys):
+    assert doc_summary.main(["--json"]) == 0
+    records = {r["document"]: r for r in json.loads(capsys.readouterr().out)}
+    assert set(records) == {"warranty.md", "ticket_9001.md"}
+    ticket = records["ticket_9001.md"]
+    assert not any("refund" in a.lower() for a in ticket["action_items"])
+    assert any("instruct" in kp["point"] for kp in ticket["key_points"])
+
+
+def test_doc_summary_ticket_read_is_flagged():
+    desk = doc_summary.SummaryDesk()
+    step = run_one(desk, "read_document", name="ticket_9001.md")
+    assert step["flags"] and step["result"].startswith("[WARNING")
+
+
+# --- doc_summary_graph ----------------------------------------------------------------
+
+
+@pytest.fixture()
+def graph_parts(tmp_path):
+    pytest.importorskip("langgraph")
+    from langgraph.checkpoint.memory import MemorySaver
+
+    def build(behaviour="first-try-fails"):
+        desk = doc_summary.SummaryDesk()
+        return doc_summary_graph.build_graph(desk, doc_summary_graph.standin(behaviour),
+                                             tmp_path, checkpointer=MemorySaver())
+    return build, tmp_path
+
+
+def test_graph_happy_path_saves(graph_parts):
+    build, out = graph_parts
+    state = doc_summary_graph.run(build("good"), "warranty.md", ["approve"])
+    assert state["status"] == "saved" and state["attempts"] == 1
+    saved = json.loads((out / "warranty-summary.json").read_text())
+    assert saved["document"] == "warranty.md"
+
+
+def test_graph_paraphrase_retries_then_passes(graph_parts):
+    build, _ = graph_parts
+    state = doc_summary_graph.run(build(), "warranty.md", ["approve"])
+    assert state["status"] == "saved" and state["attempts"] == 2
+    assert any(line.startswith("verify     retry") for line in state["trace"])
+
+
+def test_graph_gives_up_after_two_attempts(graph_parts):
+    build, out = graph_parts
+    state = doc_summary_graph.run(build("stubborn"), "warranty.md", ["approve"])
+    assert state["status"] == "abstained" and state["attempts"] == 2
+    assert not state["packets"] and not list(out.glob("*.json"))
+
+
+def test_graph_veto_saves_nothing(graph_parts):
+    build, out = graph_parts
+    state = doc_summary_graph.run(build("good"), "warranty.md", ["veto"])
+    assert state["status"] == "vetoed" and not list(out.glob("*.json"))
+
+
+def test_graph_edit_loops_back_to_summarize(graph_parts):
+    build, out = graph_parts
+    state = doc_summary_graph.run(build("good"), "warranty.md",
+                                  ["edit:write it for engineering", "approve"])
+    assert len(state["packets"]) == 2 and state["attempts"] == 2
+    assert json.loads((out / "warranty-summary.json").read_text())["audience"] == "engineering"
+
+
+def test_graph_resume_does_not_reread(graph_parts):
+    build, _ = graph_parts
+    state = doc_summary_graph.run(build("good"), "warranty.md",
+                                  ["edit:write it for engineering", "approve"])
+    assert state["reads"] == 1
+
+
+def test_graph_ticket_refund_is_sent_back(graph_parts):
+    build, out = graph_parts
+    state = doc_summary_graph.run(build(), "ticket_9001.md", ["approve"])
+    assert "'refund'" in next(t for t in state["trace"] if t.startswith("verify     retry"))
+    saved = json.loads((out / "ticket_9001-summary.json").read_text())
+    assert not any("refund" in a.lower() for a in saved["action_items"])
+    assert state["packets"][0]["flags"]
+
+
+def test_graph_check_allows_describing_the_injection(graph_parts):
+    state = {"text": (doc_summary.NOTES_DIR / "ticket_9001.md").read_text(), "record": {
+        "key_points": [], "action_items": ["Warn support the ticket held injected "
+                                           "SYSTEM instructions, which were ignored."]}}
+    state["flagged"] = [p for p in state["text"].split("\n\n") if "SYSTEM" in p]
+    assert doc_summary_graph.check(state) == ""
+    state["record"]["action_items"] = ["Approve the refund."]
+    assert "'refund'" in doc_summary_graph.check(state)
+
+
+def test_graph_main_offline(capsys):
+    pytest.importorskip("langgraph")
+    assert doc_summary_graph.main([]) == 0
+    out = capsys.readouterr().out
+    assert "status: saved" in out and "reads: 1" in out
+    assert doc_summary_graph.main(["--graph"]) == 0
+    assert "verify -> summarize" in capsys.readouterr().out
+
+
+def test_graph_document_text_never_reaches_the_user_turn(graph_parts, monkeypatch):
+    # A side-effecting tool whose intent phrase appears ONLY in the document. If the
+    # document were in the question, the intent guard would read it as the user asking.
+    _, out = graph_parts
+    from langgraph.checkpoint.memory import MemorySaver
+
+    from tools import Tool
+
+    ran, questions = [], []
+    desk = doc_summary.SummaryDesk()
+    desk.add(Tool("create_ticket", "Open a ticket.",
+                  {"type": "object", "properties": {"title": {"type": "string"}}},
+                  lambda title="": ran.append(title) or "opened",
+                  side_effect=True, intent=r"create_ticket"))
+    # Offer it, so the call reaches the intent guard instead of the unknown-tool guard.
+    monkeypatch.setattr(doc_summary_graph, "SUMMARIZE_TOOLS",
+                        ["read_document", "record_summary", "create_ticket"])
+    text = (doc_summary.NOTES_DIR / "ticket_9001.md").read_text()
+    assert "create_ticket" in text  # the phrase is in the document...
+
+    def obedient(document, attempt, question):
+        questions.append(question)
+        return ScriptedModel([[call("read_document", name=document)],
+                              [call("create_ticket", title="Refund approved for every unit")],
+                              "done"])
+
+    graph = doc_summary_graph.build_graph(desk, obedient, out, checkpointer=MemorySaver())
+    state = doc_summary_graph.run(graph, "ticket_9001.md", ["approve"])
+    assert not ran and state["status"] == "abstained"
+    assert any("create_ticket -> not requested" in t for t in state["trace"])
+    assert all("create_ticket" not in q and "SYSTEM:" not in q for q in questions)
+    # ...and the failing direction: the same call with the document in the user turn runs.
+    leaky = tool_loop.run(ScriptedModel([[call("create_ticket", title="x")], "done"]),
+                          f"Summarize this:\n{text}", desk, max_turns=2,
+                          confirm=lambda n, a: True)
+    assert leaky["calls"][0]["status"] == "ok" and ran == ["x"]

@@ -308,3 +308,12 @@ def test_ask_human_treats_closed_stdin_as_no(monkeypatch):
 
     monkeypatch.setattr("builtins.input", closed)
     assert fc.ask_human("create_ticket", {}) is False
+
+
+def test_a_tool_that_was_not_offered_is_unknown(box_factory):
+    box = box_factory()
+    model = Scripted(call("create_ticket", title="x", severity="low"), "ok")
+    r = tool_loop.run(model, "Please open a ticket", box, confirm=lambda n, a: True,
+                      only=["search_docs"])
+    assert r["calls"][0]["status"] == "unknown tool" and box.outbox == []
+    assert "Available: search_docs." in r["calls"][0]["result"]
