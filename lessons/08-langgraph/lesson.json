@@ -169,6 +169,17 @@
     },
     {
       "type": "command",
+      "action": "chat",
+      "lang": "python",
+      "venv": true,
+      "kicker": "Try it",
+      "title": "Two questions, one thread",
+      "body": "Several turns on the same `thread_id`, so the checkpointer has something to remember. With no questions it asks two of the demo's; add `--sqlite FILE` and run it twice to watch the state survive the process.",
+      "display": "./run -l 8 chat --thread aurora \"What is the factory reset procedure?\"",
+      "shell": "python python/langgraph_agent.py chat"
+    },
+    {
+      "type": "command",
       "action": "review",
       "lang": "python",
       "venv": true,
