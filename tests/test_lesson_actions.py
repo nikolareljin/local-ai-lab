@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -93,14 +94,51 @@ def test_bash_lesson_guide_sources_exist(number):
     assert page is not None, f"no docs/ page for lesson {number}, so `lesson` has nothing to serve"
 
 
-def test_help_separates_training_from_running():
-    """The help text is the contract most readers actually see."""
-    help_text = (ROOT / "run").read_text(encoding="utf-8")
-    assert "TRAINING" in help_text and "RUNNING" in help_text, (
-        "the help no longer distinguishes reading a lesson from running it"
+def help_output(*args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [str(ROOT / "run"), *args],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
     )
+
+
+def test_global_help_keeps_only_the_shared_interface():
+    """Global help stays scannable and points to contextual details."""
+    result = help_output("-h")
+    assert result.returncode == 0
     for action in CORE_ACTIONS:
-        assert re.search(rf"\./run -l <N> {action}\b", help_text), f"help does not show `{action}`"
+        assert re.search(rf"^  {action}\b", result.stdout, re.M)
+    assert "./run -l <N> -h" in result.stdout
+    assert "build" in result.stdout
+    assert "--llm-grade" not in result.stdout
+    assert "--model NAME" not in result.stdout
+
+
+@pytest.mark.parametrize(
+    "number, expected",
+    [
+        (1, ("ask", "repl", "index")),
+        (2, ("serve", "register")),
+        (7, ("--native", "--arm bm25|embed")),
+        (8, ("trace", "review", "--recursion-limit", "--sqlite")),
+        (9, ("bench", "record", "recipe", "--max-turns")),
+    ],
+)
+def test_lesson_help_shows_only_relevant_details(number, expected):
+    result = help_output("-l", str(number), "-h")
+    assert result.returncode == 0
+    assert f"Lesson {number}" in result.stdout
+    assert all(item in result.stdout for item in expected)
+    if number < 7:
+        assert "--llm-grade" not in result.stdout
+
+
+def test_help_rejects_an_unknown_lesson():
+    result = help_output("-l", "99", "-h")
+    assert result.returncode != 0
+    assert "Unknown lesson '99'" in result.stderr
 
 
 def test_show_is_not_offered_for_the_hand_authored_lessons():
