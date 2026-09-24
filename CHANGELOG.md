@@ -71,6 +71,12 @@ All notable changes to this project are documented here. This project follows
   `docs/lesson-2-mcp.html` gain Lesson 7 as well, which they had been missing.
 - **`./run -h`** covers lessons 1 through 8 and lists Lesson 8's extra actions.
 
+### Security
+- **Node lessons 1-2 dependencies** - `multer` 2.2.0 -> 2.4.0 in `node/lesson-1` (floor raised to
+  `^2.3.0`, the first patched release) and the transitive `hono` 4.13.3 -> 4.13.9 in `node/lesson-2`.
+  Clears Dependabot alerts 29-35: three high-severity multer DoS issues, a multer upload-limit bypass,
+  and three medium hono issues. `npm audit` reports 0 vulnerabilities in all four Node lesson folders.
+
 ## [0.11.0] - 2026-08-18
 
 ### Added
