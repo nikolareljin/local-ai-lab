@@ -16,6 +16,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 import lesson  # noqa: E402
 
 L3 = ROOT / "lessons" / "03-hybrid-retrieval-reranking"
+L9 = ROOT / "lessons" / "09-ollama-function-calling"
 
 
 def _l3_spec():
@@ -86,3 +87,12 @@ def test_rendered_lesson_offers_its_pdf_as_a_download():
     assert 'href="./pdf/LESSON3.pdf"' in rendered
     assert 'download="LESSON3.pdf"' in rendered
     assert "PDF · downloadable" in rendered
+
+
+def test_rendered_lesson_offers_supplemental_pdfs():
+    """Lesson metadata can add downloads to local previews and published builds."""
+    spec = json.loads((L9 / "lesson.json").read_text(encoding="utf-8"))
+    rendered = lesson.render_html(9, L9, spec)
+    assert 'href="./pdf/LESSON9-SLIDES.pdf"' in rendered
+    assert 'download="LESSON9-SLIDES.pdf"' in rendered
+    assert "Download slide deck" in rendered
