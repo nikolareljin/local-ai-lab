@@ -1,0 +1,13 @@
+# Lesson 9 installs nothing.
+#
+# Function calling is JSON over HTTP: the loop talks to Ollama's /api/chat with
+# `requests`, which the course already depends on (root requirements.txt). The
+# argument validator is ~50 lines in python/guards.py instead of `jsonschema`,
+# and the calculator is an AST whitelist instead of a library.
+#
+# Compare Lessons 7 and 8, where the dependency was part of the argument. Here
+# the argument is that the mechanism every agent framework wraps fits in one
+# file you can read.
+#
+# Optional, not installed: the `ollama` Python package (a thin client over the
+# same endpoint) - see the README, "Python and Node".

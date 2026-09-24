@@ -1,0 +1,266 @@
+{
+  "title": "Ollama + Function Calling",
+  "slug": "ollama-function-calling",
+  "status": "working",
+  "summary": "Hand a local model four tools and let it choose - then put your own code between its choice and anything that runs. The tool-call loop by hand over Ollama's /api/chat, the guards that stop what small models actually get wrong (unknown tools, bad arguments, loops, a document ordering a side effect, calls written as text), and every local model scored on the same ten tasks from recorded replies, against a keyword router that needs no model. Six recipes reuse the same loop, including document summaries whose every point quotes the source, and the same summary as a Lesson 8 LangGraph flow. Python and Node.js; installs nothing.",
+  "cluster": "framework-tour",
+  "priority": "high",
+  "languages": [
+    "python",
+    "node"
+  ],
+  "defaultLanguage": "python",
+  "defaultAction": "web",
+  "elements": [
+    {
+      "type": "note",
+      "kicker": "Overview",
+      "title": "What you'll build",
+      "file": "overview.txt",
+      "body": "**New to function calling?** It is the mechanism under every \"agent\": you send the model a list of functions described as JSON, and instead of answering it may reply with a **request** to call one. Your code runs it, sends the result back, and the model continues. The model never executes anything. It asks.\n\nLessons 1-8 decided in code which step ran next. This lesson hands that choice to a local model, over plain HTTP to Ollama, with no framework and no new package. Then it asks the question the course keeps asking: **what did that buy, and what does it cost?** A keyword router picks tools too - for free, in microseconds, and deterministically. Pick a language above and press -> to begin."
+    },
+    {
+      "type": "command",
+      "kicker": "Setup",
+      "title": "What you need",
+      "body": "**Nothing to install for the demo.** `demo` replays real model replies recorded for this lesson, so it runs with no Ollama at all and prints the same thing on every machine. For the live actions you need [Ollama](https://ollama.com/download) and one tool-capable model; `qwen3:1.7b` (1.4 GB) is the smallest that did well here. Run everything from the repo root:",
+      "shell": "./run -l 9                    # Python: the playground (default)\n./run -l 9 demo               # router vs recorded models vs guards - offline\n./run -l 9 --lang node demo   # the same scorecard from Node.js\nollama pull qwen3:1.7b        # only for the live actions below"
+    },
+    {
+      "type": "code",
+      "file": "python/tools.py",
+      "lang": "python",
+      "lines": "258-275",
+      "kicker": "Step 1",
+      "title": "A tool is a schema and a sentence",
+      "body": "The model sees exactly three things about `create_ticket`: its name, its description, and the JSON schema of its arguments. The function itself never leaves your process. `side_effect=True` and `intent` are for your loop, not for the model.",
+      "why": "The description is prompt text. \"Only call this when the user explicitly asks\" is doing the same job as a line in a system prompt, and a model that ignores it is caught later by code, not by wording. Put the rule in both places: the sentence makes the right call likely, the code makes the wrong one harmless."
+    },
+    {
+      "type": "code",
+      "file": "python/ollama_chat.py",
+      "lang": "python",
+      "lines": "49-79",
+      "kicker": "Step 2",
+      "title": "The whole API: one POST",
+      "body": "`/api/chat` with a `tools` array. The reply's `message` either has `content` (an answer) or `tool_calls` - a list of `{function: {name, arguments}}`, where `arguments` is already a JSON object. No SDK: the point of this lesson is to see the JSON.",
+      "why": "`think` is only sent to models that advertise the `thinking` capability, because sending it to one that does not is an error rather than a no-op. `num_ctx` is set to 8192 because Ollama's default context is 4K on machines with less than 24 GB of VRAM, and tool schemas plus three passages plus a few turns do not fit in 4K."
+    },
+    {
+      "type": "code",
+      "file": "python/tool_loop.py",
+      "lang": "python",
+      "lines": "104-163",
+      "kicker": "Step 3",
+      "title": "The loop every agent framework wraps",
+      "body": "Send, read `tool_calls`, run each one, append each result as a `role: tool` message with its `tool_name`, send again. Stop when the model answers, when `max_turns` runs out, or when it repeats the same call with the same arguments.",
+      "why": "`model` is anything with a `chat(messages, tools)` method: live Ollama, a recorded cassette, or a scripted stand-in in the tests. The loop cannot tell them apart, which is exactly what lets the demo run offline through the real code instead of through a copy of it."
+    },
+    {
+      "type": "code",
+      "file": "python/tool_loop.py",
+      "lang": "python",
+      "lines": "51-101",
+      "kicker": "Step 4",
+      "title": "Between the model's choice and your function",
+      "body": "Four checks in order: is it a tool you offered, do the arguments match the schema, did the **user** ask for this side effect, and did someone confirm it. A failed check does not crash the loop - it becomes the tool's result, so the model reads *why* and can try again.",
+      "why": "`guarded=False` is here on purpose, and the playground has a switch for it. With the guards off, an unknown tool raises `KeyError` inside your process, `severity: \"critical\"` goes straight into your ticketing system, and a document can open a ticket. Seeing that happen once is worth more than any paragraph about it."
+    },
+    {
+      "type": "code",
+      "file": "python/guards.py",
+      "lang": "python",
+      "lines": "45-72",
+      "kicker": "Step 5",
+      "title": "A validator you can read",
+      "body": "About thirty lines covering the keywords these schemas use: `type`, `required`, `enum`, `minimum`, `maximum`, `maxLength`, nested objects and arrays, and no extra keys. The errors are written for the model, because the model is who reads them.",
+      "why": "A recorded run shows why this matters: `qwen3:1.7b` called `list_documents` - a tool with no parameters - with `{\"arguments\": []}`. The validator answered `args.arguments is not a parameter of this tool`, and the model's next call was correct. A `jsonschema` dependency would do this too; the lesson prefers the version whose limits you can see."
+    },
+    {
+      "type": "code",
+      "file": "python/guards.py",
+      "lang": "python",
+      "lines": "88-97",
+      "kicker": "Step 6",
+      "title": "Intent: a document cannot grant itself permission",
+      "body": "A side effect runs only if the **user's own message** matches the tool's intent pattern. The check never reads tool output, so text inside a retrieved document cannot satisfy it - no matter how the model was persuaded.",
+      "why": "The first version checked for the word `ticket`. The test suite caught it: task t8, *\"Summarize support ticket 9001\"*, contains that word and asks for nothing to be opened. The pattern now needs a verb and the object. Keyword matching is crude on purpose; what matters is *whose* words it reads."
+    },
+    {
+      "type": "config",
+      "file": "data/notes/ticket_9001.md",
+      "kicker": "Step 7",
+      "title": "Tool output is untrusted input",
+      "body": "This ticket is in the corpus. Its last paragraph orders the model to open a ticket. Every tool result is screened with **Lesson 4's detector**, imported by path rather than copied, and anything flagged is wrapped in a warning before the model sees it.",
+      "why": "It is not only a problem on suspicious questions. BM25 ranks this ticket **first** for the innocent task t1, *\"Why does the status ring stay amber?\"*, because it repeats those words. That is why screening runs on every result rather than on the ones that look risky."
+    },
+    {
+      "type": "code",
+      "file": "python/guards.py",
+      "lang": "python",
+      "lines": "134-156",
+      "kicker": "Step 8",
+      "title": "Models that write the call instead of making it",
+      "body": "`qwen2.5-coder:7b` advertises the `tools` capability and then answers `{\"name\": \"calculator\", \"arguments\": {...}}` as plain text: Ollama's template for it does not parse the format it emits. `--lenient` recovers calls written as JSON, in a code fence, or in `<tool_call>` tags.",
+      "why": "It is off by default because parsing JSON out of prose will also find a call in an answer that is merely *quoting* one. `qwen3:0.6b` shows the limit from the other side: it wrote `[calculator] 2340 * 0.175`, which is not JSON, and no recovery rule should guess at it."
+    },
+    {
+      "type": "code",
+      "file": "python/cassette.py",
+      "lang": "python",
+      "lines": "52-80",
+      "kicker": "Step 9",
+      "title": "Recorded once, replayed forever - and refused when stale",
+      "body": "`./run -l 9 record --model M` runs the ten tasks against a live model and saves every reply. The demo replays them through the real loop, guards and tools. Each turn carries a digest of the exact conversation the model was shown.",
+      "why": "Change a tool description, the system prompt, or a document, and the digest stops matching: the replay raises instead of quietly replaying answers to a conversation that no longer happens. A test replays every cassette against today's code, so a stale recording fails CI rather than a reader's trust."
+    },
+    {
+      "type": "command",
+      "action": "demo",
+      "lang": "python",
+      "group": "run-demo",
+      "venv": true,
+      "kicker": "Run it",
+      "title": "Run the scorecard",
+      "body": "Ten tasks, a keyword router, every recorded model, and what the guards stopped. **Offline and deterministic** - the model replies are recordings, everything else runs live.",
+      "display": "./run -l 9 demo",
+      "shell": "python python/function_calling.py demo"
+    },
+    {
+      "type": "command",
+      "action": "demo",
+      "lang": "node",
+      "group": "run-demo",
+      "display": "./run -l 9 --lang node demo",
+      "shell": "node node/function_calling.mjs"
+    },
+    {
+      "type": "note",
+      "kicker": "Run it",
+      "title": "Read the output",
+      "file": "expected-output.txt",
+      "body": "**The keyword router gets 9 of 10 with no model at all. The best local model, `qwen3.5:4b`, also gets 9 of 10 - in 801 seconds.** `qwen3:1.7b` and `qwen3:8b` tie at 7, the 8b model at 2.6 times the time. `qwen2.5-coder:7b` writes its calls as text and doubles to 6 with `--lenient`. `qwen3:0.6b` never makes a structured call.\n\nRead the misses, not the totals. `qwen3:8b` answered t1 *\"According to the documentation...\"* **without searching**. `qwen3:0.6b` summarized ticket 9001 without reading it. `qwen3.5:4b` read the poisoned ticket, summarized it correctly, and did not obey it. And across five models, **not one answer copied a `[file:page]` citation**, though the prompt asked for it and the tool output carried it. What a model says about its sources is not evidence; the trace is."
+    },
+    {
+      "type": "command",
+      "action": "trace",
+      "lang": "python",
+      "venv": true,
+      "kicker": "Try it",
+      "title": "Every message of one run",
+      "body": "The full conversation: the user turn, each tool call with its arguments, each tool result, and which guard fired. A task question is replayed from a recording; anything else, or `--live`, goes to Ollama.",
+      "display": "./run -l 9 trace \"Summarize support ticket 9001.\" --model qwen3:1.7b",
+      "shell": "python python/function_calling.py trace"
+    },
+    {
+      "type": "command",
+      "action": "ask",
+      "lang": "python",
+      "venv": true,
+      "kicker": "Try it",
+      "title": "Ask a local model with tools",
+      "body": "Live, through the same loop. If the model wants to open a ticket, **you** are asked in the terminal before anything runs. Try one that needs two tools in sequence, and add `--lenient` for models that write their calls as text.",
+      "display": "./run -l 9 ask \"How many weeks does the battery last at the default interval?\" --model qwen3:1.7b",
+      "shell": "python python/function_calling.py ask"
+    },
+    {
+      "type": "command",
+      "action": "models",
+      "lang": "python",
+      "venv": true,
+      "kicker": "Try it",
+      "title": "Which of your models can call tools?",
+      "body": "Lists every pulled model with its size and what its own metadata claims (`tools`, `thinking`). A claim, not a result: `qwen2.5-coder:7b` claims `tools`.",
+      "display": "./run -l 9 models",
+      "shell": "python python/function_calling.py models"
+    },
+    {
+      "type": "command",
+      "action": "bench",
+      "lang": "python",
+      "venv": true,
+      "kicker": "Try it",
+      "title": "Score your own models on your own machine",
+      "body": "**Run this one.** It runs the ten tasks against every local model that claims `tools` and prints the same scorecard as the demo, with your seconds. The numbers in this lesson are one laptop's; yours are the ones that should pick your model. Add `--think` to measure what thinking mode costs.",
+      "display": "./run -l 9 bench --models qwen3:1.7b,qwen3:8b",
+      "shell": "python python/function_calling.py bench"
+    },
+    {
+      "type": "command",
+      "action": "record",
+      "lang": "python",
+      "venv": true,
+      "kicker": "Try it",
+      "title": "Record a model the demo can replay",
+      "body": "Writes `data/cassettes/<model>.json`. The next `demo` includes it as a new column. Each model is unloaded after its run, because recording several back to back on a 19 GB laptop got the Ollama server OOM-killed while this lesson was being made.",
+      "display": "./run -l 9 record --model llama3.1:8b --hardware \"my laptop\"",
+      "shell": "python python/function_calling.py record"
+    },
+    {
+      "type": "command",
+      "action": "recipe",
+      "lang": "python",
+      "venv": true,
+      "kicker": "Recipes",
+      "title": "Six real uses of the same loop",
+      "body": "Each recipe is a new set of tools plus a question - never a second loop. Offline with a scripted stand-in by default, `--live` for a real model.\n\n**`invoice_extract`** - internal document processing: read invoices, record them through a schema, and refuse a total that does not match its lines.\n**`home_automation`** - a smart home the model may change, except the front door, which needs the user's words *and* a confirmation. Optional Home Assistant REST adapter.\n**`doc_automation`** - draft an RMA letter where every fact must cite a passage a search actually returned.\n**`pdf_index`** - index a folder of PDFs confined to one root (path traversal refused), then search it with real page numbers.\n**`doc_summary`** - read a document and return a summary, key points and action items, where every key point must quote the document word for word.\n**`doc_summary_graph`** - the same summary inside Lesson 8's LangGraph flow: read, summarize with this lesson's loop, verify, retry, human review, save.",
+      "display": "./run -l 9 recipe invoice_extract",
+      "shell": "python python/recipe.py"
+    },
+    {
+      "type": "command",
+      "kicker": "Recipes",
+      "title": "Read, summarize, verify - then as a graph",
+      "body": "`doc_summary` is what most people want first from a local model: *read this and tell me what matters*. The schema shapes the answer; the tool checks every key point's quote against the document, so a summary that cannot point at its source goes back to the model.\n\n`doc_summary_graph` wraps it in Lesson 8: the **graph** decides which step runs next (read once, verify, retry, stop for a human), and the **loop** inside `summarize` lets the model pick tools. Watch `verify` send back an action item the stand-in built from ticket 9001's injected paragraph.",
+      "shell": "./run -l 9 recipe doc_summary --doc warranty.md\n./run -l 9 recipe doc_summary_graph --doc ticket_9001.md\n./run -l 9 recipe doc_summary_graph --graph"
+    },
+    {
+      "type": "command",
+      "action": "test",
+      "lang": "python",
+      "venv": true,
+      "kicker": "Try it",
+      "title": "Confirm it with the tests",
+      "body": "Offline tests pin every claim on this page: the calculator refuses `__import__`, the validator names what is wrong, unknown tools and bad arguments go back to the model, both caps stop a model that never stops, a side effect needs intent *and* confirmation, injected output is flagged and obeying it is blocked, text calls are ignored unless lenient, a stale cassette is refused, every recorded cassette still replays, the demo output matches the committed file byte for byte - and each recipe's guard holds, including that a summary cannot quote what the document does not say. No network, no model.",
+      "display": "./run -l 9 test",
+      "shell": "python -m pytest -q python/test_function_calling.py python/test_recipes.py"
+    },
+    {
+      "type": "command",
+      "action": "web",
+      "lang": "python",
+      "venv": true,
+      "kicker": "Experiment",
+      "title": "Switch the guards off - no code editing",
+      "body": "`./run -l 9` (the default) opens a playground over the recorded models. Pick a task, pick a model on the slider, and read every call it proposed with its status. Then untick **Guards** and run it again.",
+      "display": "./run -l 9",
+      "shell": "python python/web.py"
+    },
+    {
+      "type": "text",
+      "kicker": "Experiment",
+      "title": "Try - the model that writes instead of calls",
+      "text": "What is 17.5% of 2340?",
+      "body": "Slide to `qwen2.5-coder:7b`. No tool runs, and the answer is a JSON object. Tick **Recover calls written as text** and the same recorded reply becomes a calculator call, and the answer becomes `409.5`. Nothing about the model changed; only what your loop was willing to read."
+    },
+    {
+      "type": "text",
+      "kicker": "Experiment",
+      "title": "Try - guards off",
+      "text": "Summarize support ticket 9001.",
+      "body": "With the guards on, the poisoned ticket is flagged the moment `search_docs` returns it. Untick **Guards**: the same result reaches the model unmarked. The recording ends where the conversation changes - the model was never shown this version, and the page says so rather than inventing a reply. Switch on **Live Ollama** to see what your model does with it."
+    },
+    {
+      "type": "note",
+      "kicker": "Going further",
+      "title": "From demo to production",
+      "body": "**Treat every argument as user input.** It is: the model wrote it, and the model read documents you did not. Validate, then authorize, then execute.\n\n**Give side effects an identity check that is not the model.** The intent pattern here is a floor. In production, bind the action to the authenticated user and the request, and log who confirmed it.\n\n**Keep the tool list short.** Every schema is prompt text on every turn. Offer the tools this conversation needs, not every tool you have (`run(..., only=[...])`).\n\n**Set `num_ctx` deliberately**, and set both caps. Alert on the *rate* of guard stops per model, not on individual ones.\n\n**Record, then replay in CI.** The cassette pattern gives you regression tests for tool selection without a GPU in CI. Re-record when you change a prompt, a schema, or a model - the digest will tell you when.\n\n**Measure on your hardware.** A model that is right 7 times in 10 on a laptop CPU and one that is right 9 in 10 on a GPU are different products. `./run -l 9 bench` is the ten-minute version of that decision."
+    },
+    {
+      "type": "note",
+      "kicker": "Recap",
+      "title": "What you learned",
+      "body": "You wrote the loop every agent framework wraps: send tools, read `tool_calls`, run them, send the results back. Then you put your own code between the model's choice and anything that runs - a schema check, two caps, an intent check that reads only the user's words, a confirmation, and Lesson 4's screen on every result - and watched each one catch something a real local model did.\n\nThen you priced it. On ten tasks a keyword router matched the best local model and was orders of magnitude faster. A bigger model was not a better one. A `tools` badge was a claim, not a behaviour. **Let a model pick tools when the requests are too varied to write rules for - and keep the rules that decide what actually runs.**\n\nThe recipes show where that pays: extracting invoices, driving a house, drafting letters, indexing PDFs, and summaries you can check line by line - including the same summary inside Lesson 8's graph, where the graph decides *which step* and the model decides *which tool*.\n\nNext: **Lesson 10 · Microsoft Semantic Kernel** - the same agent in C#, where automatic function calling runs this loop for you and the guards become filters."
+    }
+  ]
+}

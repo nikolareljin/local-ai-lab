@@ -176,7 +176,8 @@ Only needed if you set `RAG_PROVIDER` to something other than `claude`. Copy `.e
 - **macOS:** `brew install ollama` (or [download](https://ollama.com/download))
 - **Windows:** [installer](https://ollama.com/download)
 ```bash
-ollama pull llama3.1            # chat / function calling
+ollama pull llama3.1            # chat (the course default, OLLAMA_MODEL=llama3.1:8b)
+ollama pull qwen3:1.7b          # function calling, Lesson 9 (qwen3:4b / qwen3:8b if you have the RAM)
 ollama pull nomic-embed-text   # embeddings (RAG_RETRIEVER=embeddings)
 ```
 
@@ -197,7 +198,7 @@ ollama pull nomic-embed-text   # embeddings (RAG_RETRIEVER=embeddings)
 | **6 · Repo-aware assistant** | Python ✓ · Node ◑ · C# ◑ | base only | §2 |
 | **7 · LangChain** | Python ✓ · Node ✓ | `langchain-core`, `langchain-text-splitters` | `pip install -r lessons/07-langchain-rag/requirements.txt` |
 | **8 · LangGraph** | Python ✓ · Node ✓ | `langgraph` (brings `langchain-core` with it) | `pip install -r lessons/08-langgraph/requirements.txt` |
-| **9 · Ollama + Function Calling** | Python · Node ◔ | Ollama + a tool-capable model | §4 (Ollama) + `ollama pull llama3.1` |
+| **9 · Ollama + Function Calling** | Python ✓ · Node ✓ | none for `demo`; Ollama + a tool-capable model for live runs | §4 (Ollama) + `ollama pull qwen3:1.7b` |
 | **10 · Semantic Kernel** | **C#/.NET** | .NET 8 SDK + SK NuGet | §1 (.NET) + `dotnet add package Microsoft.SemanticKernel` |
 | **11 · AWS Bedrock Agents** | Python | AWS CLI + boto3 | [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) + `pip install boto3` + `aws configure` |
 | **12 · Google ADK** | Python | `google-adk` + Gemini key | `pip install google-adk` + §4 (Gemini) |

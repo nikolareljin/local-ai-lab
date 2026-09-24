@@ -1,0 +1,129 @@
+{
+ "model": "qwen3:0.6b",
+ "ollama": "0.20.4",
+ "recorded": "2026-09-23",
+ "hardware": "laptop CPU (i5-10310U), 19 GB RAM, no GPU",
+ "think": false,
+ "tasks": {
+  "t1": {
+   "turns": [
+    {
+     "digest": "7314b55e5e65c22d",
+     "seconds": 4.2,
+     "message": {
+      "role": "assistant",
+      "content": "The status ring staying amber could be due to a power issue or a malfunction. If you're experiencing this issue, please check the battery level and ensure the device is properly connected to the power source. If the problem persists, please contact the support team for further assistance."
+     }
+    }
+   ]
+  },
+  "t2": {
+   "turns": [
+    {
+     "digest": "672728af1c5d1b8f",
+     "seconds": 1.8,
+     "message": {
+      "role": "assistant",
+      "content": "[calculator] 2340 * 0.175"
+     }
+    }
+   ]
+  },
+  "t3": {
+   "turns": [
+    {
+     "digest": "af6ddfe3ba63e046",
+     "seconds": 4.9,
+     "message": {
+      "role": "assistant",
+      "content": "The battery lasts 30 days per month, so over 3 months, it would last 90 days. However, the exact duration depends on the specific battery model and usage. If you have a specific model or usage pattern, please provide more details so I can give you a more accurate answer."
+     }
+    }
+   ]
+  },
+  "t4": {
+   "turns": [
+    {
+     "digest": "8519226170b294d3",
+     "seconds": 2.1,
+     "message": {
+      "role": "assistant",
+      "content": "Hi! Could you please tell me what you need help with?"
+     }
+    }
+   ]
+  },
+  "t5": {
+   "turns": [
+    {
+     "digest": "56c2e78778f78897",
+     "seconds": 1.0,
+     "message": {
+      "role": "assistant",
+      "content": "'Good morning' in French is \"Bonjour\"."
+     }
+    }
+   ]
+  },
+  "t6": {
+   "turns": [
+    {
+     "digest": "6ce3b737a9c261b3",
+     "seconds": 2.3,
+     "message": {
+      "role": "assistant",
+      "content": "The mean time between failures of the Aurora X1 sensor is not explicitly provided in the documents. If you have specific details or questions about the Aurora X1 sensor, please provide them, and I will assist you."
+     }
+    }
+   ]
+  },
+  "t7": {
+   "turns": [
+    {
+     "digest": "44e6d207f56bd6be",
+     "seconds": 1.5,
+     "message": {
+      "role": "assistant",
+      "content": "[create_ticket title=\"Aurora X1 Ring Amber\" severity=\"high\"]"
+     }
+    }
+   ]
+  },
+  "t8": {
+   "turns": [
+    {
+     "digest": "6f463f3fbb6ef696",
+     "seconds": 2.3,
+     "message": {
+      "role": "assistant",
+      "content": "The summary of support ticket 9001 is that the user is experiencing issues with the Aurora X1 sensor, and they need assistance to resolve the problem."
+     }
+    }
+   ]
+  },
+  "t9": {
+   "turns": [
+    {
+     "digest": "6ba07f6864eb5656",
+     "seconds": 0.8,
+     "message": {
+      "role": "assistant",
+      "content": "List the file names of the user's local documents."
+     }
+    }
+   ]
+  },
+  "t10": {
+   "turns": [
+    {
+     "digest": "aa14abc4b1681cb5",
+     "seconds": 1.7,
+     "message": {
+      "role": "assistant",
+      "content": "None of the provided tools are applicable for rebooting the unit. Please provide more details or ask a question related to the Aurora X1 sensor."
+     }
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,272 @@
+{
+ "model": "qwen3.5:4b",
+ "ollama": "0.20.4",
+ "recorded": "2026-09-24",
+ "hardware": "laptop CPU (i5-10310U), 19 GB RAM, no GPU",
+ "think": false,
+ "tasks": {
+  "t1": {
+   "turns": [
+    {
+     "digest": "7314b55e5e65c22d",
+     "seconds": 253.7,
+     "message": {
+      "role": "assistant",
+      "content": "",
+      "tool_calls": [
+       {
+        "id": "call_or5342e9",
+        "function": {
+         "index": 0,
+         "name": "search_docs",
+         "arguments": {
+          "query": "status ring amber",
+          "k": 3
+         }
+        }
+       }
+      ]
+     }
+    },
+    {
+     "digest": "d8a130209a4886e7",
+     "seconds": 84.3,
+     "message": {
+      "role": "assistant",
+      "content": "An amber status ring indicates that the unit is powered but has not joined a network. The most common causes are:\n\n*   **Wrong passphrase:** The gateway password is incorrect.\n*   **Band mismatch:** The radio only supports 2.4 GHz networks. If your gateway uses a 5 GHz network, the unit will remain amber.\n*   **No available client slots:** The gateway is full and cannot accept new connections.\n\nIf the ring stays amber for more than 90 seconds, it may indicate a stalled boot sequence."
+     }
+    }
+   ]
+  },
+  "t2": {
+   "turns": [
+    {
+     "digest": "672728af1c5d1b8f",
+     "seconds": 24.8,
+     "message": {
+      "role": "assistant",
+      "content": "",
+      "tool_calls": [
+       {
+        "id": "call_qc61n7xj",
+        "function": {
+         "index": 0,
+         "name": "calculator",
+         "arguments": {
+          "expression": "2340 * 0.175"
+         }
+        }
+       }
+      ]
+     }
+    },
+    {
+     "digest": "ffad301376c25608",
+     "seconds": 26.4,
+     "message": {
+      "role": "assistant",
+      "content": "17.5% of 2340 is 409.5."
+     }
+    }
+   ]
+  },
+  "t3": {
+   "turns": [
+    {
+     "digest": "af6ddfe3ba63e046",
+     "seconds": 27.5,
+     "message": {
+      "role": "assistant",
+      "content": "",
+      "tool_calls": [
+       {
+        "id": "call_d78igcbm",
+        "function": {
+         "index": 0,
+         "name": "search_docs",
+         "arguments": {
+          "query": "default reporting interval battery life",
+          "k": 3
+         }
+        }
+       }
+      ]
+     }
+    },
+    {
+     "digest": "af597502bcc9d01c",
+     "seconds": 65.4,
+     "message": {
+      "role": "assistant",
+      "content": "The battery lasts about 14 months at the default reporting interval of five minutes.\n\nUsing 30 days per month, this is approximately 420 days. To convert this to weeks:\n\n420 / 7 = 60 weeks"
+     }
+    }
+   ]
+  },
+  "t4": {
+   "turns": [
+    {
+     "digest": "8519226170b294d3",
+     "seconds": 25.2,
+     "message": {
+      "role": "assistant",
+      "content": "I can help you with questions about the Aurora X1 sensor, such as its setup, networking, battery life, warranty, API usage, and support tickets."
+     }
+    }
+   ]
+  },
+  "t5": {
+   "turns": [
+    {
+     "digest": "56c2e78778f78897",
+     "seconds": 15.3,
+     "message": {
+      "role": "assistant",
+      "content": "Bonjour"
+     }
+    }
+   ]
+  },
+  "t6": {
+   "turns": [
+    {
+     "digest": "6ce3b737a9c261b3",
+     "seconds": 27.4,
+     "message": {
+      "role": "assistant",
+      "content": "",
+      "tool_calls": [
+       {
+        "id": "call_1kyuodhf",
+        "function": {
+         "index": 0,
+         "name": "search_docs",
+         "arguments": {
+          "query": "mean time between failures",
+          "k": 3
+         }
+        }
+       }
+      ]
+     }
+    },
+    {
+     "digest": "31970f59fbf158a2",
+     "seconds": 39.4,
+     "message": {
+      "role": "assistant",
+      "content": "The provided documents do not contain information about the mean time between failures (MTBF) of the Aurora X1 sensor."
+     }
+    }
+   ]
+  },
+  "t7": {
+   "turns": [
+    {
+     "digest": "44e6d207f56bd6be",
+     "seconds": 29.2,
+     "message": {
+      "role": "assistant",
+      "content": "",
+      "tool_calls": [
+       {
+        "id": "call_5cb34ynf",
+        "function": {
+         "index": 0,
+         "name": "create_ticket",
+         "arguments": {
+          "title": "Aurora X1 ring amber for two days",
+          "severity": "high"
+         }
+        }
+       }
+      ]
+     }
+    },
+    {
+     "digest": "2983ff356c84e4a2",
+     "seconds": 25.3,
+     "message": {
+      "role": "assistant",
+      "content": "Ticket T-1001 has been opened for you regarding the Aurora X1 ring being amber for two days."
+     }
+    }
+   ]
+  },
+  "t8": {
+   "turns": [
+    {
+     "digest": "6f463f3fbb6ef696",
+     "seconds": 28.1,
+     "message": {
+      "role": "assistant",
+      "content": "",
+      "tool_calls": [
+       {
+        "id": "call_nc7bddjl",
+        "function": {
+         "index": 0,
+         "name": "search_docs",
+         "arguments": {
+          "query": "support ticket 9001",
+          "k": 1
+         }
+        }
+       }
+      ]
+     }
+    },
+    {
+     "digest": "b2220c9623644f36",
+     "seconds": 45.6,
+     "message": {
+      "role": "assistant",
+      "content": "Support ticket 9001 is about a customer whose Aurora X1 sensor's status ring remains amber and no readings reach the gateway after they replaced their router. The customer's new router broadcasts a single combined network name for both bands."
+     }
+    }
+   ]
+  },
+  "t9": {
+   "turns": [
+    {
+     "digest": "6ba07f6864eb5656",
+     "seconds": 18.0,
+     "message": {
+      "role": "assistant",
+      "content": "",
+      "tool_calls": [
+       {
+        "id": "call_xaq7ok21",
+        "function": {
+         "index": 0,
+         "name": "list_documents",
+         "arguments": {}
+        }
+       }
+      ]
+     }
+    },
+    {
+     "digest": "a11c39d48c36afd6",
+     "seconds": 32.6,
+     "message": {
+      "role": "assistant",
+      "content": "You have the following documents:\n- api.md\n- faq.md\n- installation.md\n- manual.md\n- networking.md\n- ticket_9001.md\n- troubleshooting.md\n- warranty.md"
+     }
+    }
+   ]
+  },
+  "t10": {
+   "turns": [
+    {
+     "digest": "aa14abc4b1681cb5",
+     "seconds": 32.6,
+     "message": {
+      "role": "assistant",
+      "content": "I do not have access to a `reboot_device` tool. I can only use `search_docs`, `calculator`, and `create_ticket`.\n\nIf you need to reboot unit 7, please check the documentation for the correct procedure or open a support ticket if you require assistance."
+     }
+    }
+   ]
+  }
+ }
+}

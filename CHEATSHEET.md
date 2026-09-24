@@ -28,6 +28,9 @@ local LLMs; BitNet.cpp for ultra-light 1-bit models that run on CPU / older mach
 | Chat in terminal | `ollama run llama3.3` |
 | List / remove | `ollama list` · `ollama rm <model>` |
 | Use the API | `curl http://localhost:11434/api/generate -d '{"model":"llama3.3","prompt":"hi"}'` |
+| Chat with tools (Lesson 9) | `POST /api/chat` with `"tools": [{"type":"function","function":{"name","description","parameters"}}]`; read `message.tool_calls` |
+| Which models call tools | `./run -l 9 models` (what they claim) · `./run -l 9 bench` (what they do) |
+| Context for tools | set `num_ctx` (or `OLLAMA_CONTEXT_LENGTH`) - the default is 4K under 24 GB VRAM |
 | GPU / tuning | `OLLAMA_NUM_GPU`, `OLLAMA_HOST`, `OLLAMA_KEEP_ALIVE` env vars |
 
 *Pick-and-run a model from a simple UI with [ai-runner](https://github.com/nikolareljin/ai-runner).*

@@ -6,6 +6,29 @@ All notable changes to this project are documented here. This project follows
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-09-24
+
+### Added
+- **Lesson 9 · Ollama + Function Calling** - a new working lesson in **Python and Node.js** that
+  installs nothing. The tool-call loop by hand over Ollama's `/api/chat`, four tools over Lesson 7's
+  corpus (one a side effect), and the guards between a model's choice and your code: unknown and
+  unoffered tools, schema validation, turn and repeat caps, an intent check that reads only the
+  user's message, confirmation, and Lesson 4's screening on every tool result. The demo replays real
+  replies recorded from local models (cassettes with a per-turn digest, so a stale recording is
+  refused) against a keyword router, and Node reproduces it byte for byte. Six recipes reuse the
+  loop: invoice extraction, home automation (optional Home Assistant adapter), document drafting,
+  PDF indexing, document summaries whose every point quotes the source, and the same summary as a
+  Lesson 8 LangGraph flow with verify, retry and human review. `bench` scores your own models.
+
+### Changed
+- **Lesson 9 leaves `roadmap/`** - `roadmap/LESSON9-ollama.md` is gone and every link to it points
+  at `lessons/09-ollama-function-calling/`; the site nav, index card, PDF menus ("Lessons 1-9",
+  "Roadmap 10-15"), README, SYLLABUS and `./run -h` list it as live.
+- **Tool-calling model advice** - INSTALL, CHEATSHEET and Troubleshooting pointed at `llama3.1`,
+  `qwen2.5` and `mistral-nemo` for function calling; they now point at `qwen3` and at
+  `./run -l 9 bench`, and Troubleshooting covers calls written as text, CPU timeouts, an
+  OOM-killed Ollama service and a context window too small for the tools.
+
 ## [0.12.0] - 2026-09-24
 
 ### Added
