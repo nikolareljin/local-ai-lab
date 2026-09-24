@@ -88,9 +88,18 @@ export OLLAMA_URL=http://localhost:11434</code></pre>
       <tr><th>Use</th><th>Model</th><th>Pull</th></tr>
       <tr><td>Chat / Q&amp;A (recommended)</td><td><code>llama3.1:8b</code></td><td><code>ollama pull llama3.1:8b</code></td></tr>
       <tr><td>Smaller / faster</td><td><code>qwen2.5:7b</code>, <code>llama3.2:1b</code></td><td><code>ollama pull qwen2.5:7b</code></td></tr>
-      <tr><td>Tool / function calling (Lesson 9)</td><td><code>llama3.1</code>, <code>qwen2.5</code>, <code>mistral-nemo</code></td><td><code>ollama pull llama3.1</code></td></tr>
+      <tr><td>Tool / function calling (Lesson 9)</td><td><code>qwen3:1.7b</code>, <code>qwen3:4b</code>, <code>qwen3:8b</code>, <code>llama3.1:8b</code> - check with <code>./run -l 9 bench</code></td><td><code>ollama pull qwen3:1.7b</code></td></tr>
       <tr><td>Embeddings (<code>RAG_RETRIEVER=embeddings</code>)</td><td><code>nomic-embed-text</code></td><td><code>ollama pull nomic-embed-text</code></td></tr>
     </table>
+
+    <h3 id="tool-calling">Tool calling (Lesson 9)</h3>
+    <ul>
+      <li><b>The answer is a JSON object like <code>{"name": "calculator", ...}</code> and no tool ran.</b> The model wrote the call as text instead of emitting <code>tool_calls</code> (seen with <code>qwen2.5-coder:7b</code>). Add <code>--lenient</code>, or use a model that calls tools natively: <code>./run -l 9 bench</code> shows which.</li>
+      <li><b>An error that the model does not support thinking.</b> <code>think</code> was sent to a model without the <code>thinking</code> capability. The lesson's client checks <code>/api/show</code> first; your own code should too.</li>
+      <li><b><code>no reply within 600s</code>.</b> A large model on a CPU, often while something else uses the CPU. Try a smaller model (<code>qwen3:1.7b</code>) or close other heavy processes.</li>
+      <li><b>The Ollama service restarts mid-run</b> (<code>journalctl -u ollama</code> shows <code>oom-kill</code>). Two models were resident at once: Ollama keeps a model loaded for 5 minutes. Unload with <code>curl localhost:11434/api/generate -d '{"model":"NAME","keep_alive":0}'</code>; <code>./run -l 9 record</code> does this after each model.</li>
+      <li><b>The model "forgets" its tools in a long conversation.</b> The prompt outgrew the context window (4K by default under 24 GB VRAM). Set <code>num_ctx</code> or <code>OLLAMA_CONTEXT_LENGTH</code>.</li>
+    </ul>
 
     <h2 id="claude">Claude Code (default, no API key)</h2>
     <p>Uses your existing Claude Code CLI login, so there's nothing to configure.</p>

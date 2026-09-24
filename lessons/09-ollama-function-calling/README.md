@@ -72,7 +72,8 @@ model continues, now knowing the result. Three things are worth holding onto:
 - **Tool output is untrusted** - Lesson 4's detector on every result, not just suspicious ones
 - **Calls written as text** - the models that advertise `tools` and then do not use them
 - **Choosing a model** - measured on one laptop, with the command to measure it on yours
-- **Four recipes** - invoice extraction, home automation, document drafting, PDF indexing
+- **Six recipes** - invoice extraction, home automation, document drafting, PDF indexing,
+  document summaries you can check, and the same summary as a LangGraph flow
 
 > **The one idea:** the model chooses; your code decides. Everything the model proposes is input,
 > and everything that runs went through a check you can read.

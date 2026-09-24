@@ -2,7 +2,7 @@
   "title": "Ollama + Function Calling",
   "slug": "ollama-function-calling",
   "status": "working",
-  "summary": "Hand a local model four tools and let it choose - then put your own code between its choice and anything that runs. The tool-call loop by hand over Ollama's /api/chat, the guards that stop what small models actually get wrong (unknown tools, bad arguments, loops, a document ordering a side effect, calls written as text), and every local model scored on the same ten tasks from recorded replies, against a keyword router that needs no model. Four applied recipes reuse the same loop. Python and Node.js; installs nothing.",
+  "summary": "Hand a local model four tools and let it choose - then put your own code between its choice and anything that runs. The tool-call loop by hand over Ollama's /api/chat, the guards that stop what small models actually get wrong (unknown tools, bad arguments, loops, a document ordering a side effect, calls written as text), and every local model scored on the same ten tasks from recorded replies, against a keyword router that needs no model. Six recipes reuse the same loop, including document summaries whose every point quotes the source, and the same summary as a Lesson 8 LangGraph flow. Python and Node.js; installs nothing.",
   "cluster": "framework-tour",
   "priority": "high",
   "languages": [

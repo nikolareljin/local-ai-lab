@@ -131,8 +131,9 @@ evidence; and decide when a graph is worth its dependency - including the case w
 corpus, one of them a side effect - with the guards that sit between a model's choice and your
 code: schema validation, turn and repeat caps, an intent check that reads only the user's message,
 confirmation, and Lesson 4's screening on every tool result. Every local model is scored on the
-same ten tasks from recorded replies, against a keyword router that needs no model. Four applied
-recipes reuse the loop: invoice extraction, home automation, document drafting, PDF indexing.
+same ten tasks from recorded replies, against a keyword router that needs no model. Six recipes
+reuse the loop: invoice extraction, home automation, document drafting, PDF indexing, document
+summaries whose every point quotes the source, and that summary as a Lesson 8 LangGraph flow.
 **You'll be able to:** describe a function as a JSON schema a model will call correctly; write the
 loop and its stop conditions; reject bad arguments back to the model instead of crashing; keep a
 document from triggering a side effect; recover calls from models that write them as text; and
