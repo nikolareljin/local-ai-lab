@@ -11,6 +11,12 @@
   ],
   "defaultLanguage": "python",
   "defaultAction": "web",
+  "supplementalPdfs": [
+    {
+      "file": "LESSON9-SLIDES.pdf",
+      "label": "Download slide deck"
+    }
+  ],
   "elements": [
     {
       "type": "note",

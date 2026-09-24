@@ -518,6 +518,12 @@ def render_html(number, ldir, lesson, lang=None, assets_href="/assets", media_ba
         lang_init = ("try{document.documentElement.dataset.lang="
                      "localStorage.getItem('localrag-lang')||'python'}"
                      "catch(e){document.documentElement.dataset.lang='python'}")
+    extra_downloads = "".join(
+        f'<a class="lesson-pdf-download" href="{html.escape(nav_base + "pdf/" + item["file"], quote=True)}" '
+        f'download="{html.escape(item["file"], quote=True)}" type="application/pdf">'
+        f'<span aria-hidden="true">↓</span> {_esc(item["label"])}</a>'
+        for item in lesson.get("supplementalPdfs", [])
+    )
     out = (template
            .replace("{{LANG_INIT}}", lang_init)
            .replace("{{ASSETS}}", assets_href)
@@ -525,6 +531,7 @@ def render_html(number, ldir, lesson, lang=None, assets_href="/assets", media_ba
            .replace("{{HOME}}", html.escape(nav_base + "index.html", quote=True))
            .replace("{{ABOUT}}", html.escape(nav_base + "about.html", quote=True))
            .replace("{{PDF}}", html.escape(nav_base + f"pdf/LESSON{number}.pdf", quote=True))
+           .replace("{{EXTRA_DOWNLOADS}}", extra_downloads)
            .replace("{{NUMBER}}", str(number))
            .replace("{{TITLE}}", _esc(lesson.get("title", "")))
            .replace("{{SUMMARY}}", _inline(lesson.get("summary", "")))
