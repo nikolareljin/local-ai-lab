@@ -39,7 +39,7 @@ function signature(name, args) {
 
 /** Run one proposed call. Returns {name, args, status, result, flags}. status is
  *  `ok`, `tool error`, or the guard that stopped it. */
-export async function execute(toolbox, call, userText, { guarded, confirm }) {
+export async function execute(toolbox, call, userText, { guarded, confirm, offered = null }) {
   const fn = field(call, "function", {});
   const name = toName(field(fn, "name", ""));
   const args = coerceArguments(field(fn, "arguments", null));
@@ -47,9 +47,11 @@ export async function execute(toolbox, call, userText, { guarded, confirm }) {
   const out = { name, args, status: "ok", flags: [] };
 
   if (guarded) {
-    if (tool === null) {
+    // A tool you did not offer this turn is unknown, even if the toolbox has it:
+    // `only` is a permission, not just a shorter menu.
+    if (tool === null || (offered !== null && !offered.includes(name))) {
       out.status = "unknown tool";
-      const known = [...toolbox.tools.keys()].join(", ");
+      const known = (offered ?? [...toolbox.tools.keys()]).join(", ");
       out.result = `error: there is no tool named ${repr(name)}. Available: ${known}.`;
       return out;
     }
@@ -132,7 +134,7 @@ export async function run(model, question, toolbox, {
           result: `error: identical call already made in turn ${seen.get(sig)}; use that result and answer.`,
         };
       } else {
-        step = await execute(toolbox, call, question, { guarded, confirm });
+        step = await execute(toolbox, call, question, { guarded, confirm, offered: names });
         if (!seen.has(sig)) seen.set(sig, turn);
       }
       Object.assign(step, { turn, recovered });
