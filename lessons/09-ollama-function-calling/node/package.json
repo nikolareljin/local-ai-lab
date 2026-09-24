@@ -1,0 +1,13 @@
+{
+  "name": "lesson09-ollama-function-calling",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Lesson 9 - Ollama + function calling, Node.js port",
+  "scripts": {
+    "start": "node function_calling.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
