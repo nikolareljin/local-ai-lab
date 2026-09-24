@@ -50,7 +50,7 @@ def execute(toolbox, call: dict, user_text: str, *, guarded: bool,
     what the playground's "guards off" switch shows you.
     """
     fn = call.get("function", {})
-    name = fn.get("name", "")
+    name = str(fn.get("name") or "")
     args = guards.coerce_arguments(fn.get("arguments"))
     tool = toolbox.get(name)
     out = {"name": name, "args": args, "status": "ok", "flags": []}
@@ -123,7 +123,7 @@ def run(model, question: str, toolbox, *, max_turns: int = 5, guarded: bool = Tr
 
         for call in proposed:
             fn = call.get("function", {})
-            name = fn.get("name", "")
+            name = str(fn.get("name") or "")
             sig = _signature(name, guards.coerce_arguments(fn.get("arguments")))
             if guarded and sig in seen:
                 step = {"name": name, "args": call["function"].get("arguments"),

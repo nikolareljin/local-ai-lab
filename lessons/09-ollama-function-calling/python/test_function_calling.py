@@ -60,7 +60,7 @@ def call(name, **args):
     ("2340 * 0.175", "409.5"),
     ("(14 * 30) / 7", "60"),
     ("2^10", "1024"),
-    ("1,000 + 1", "1001"),
+    ("1e-7 + 1", "1"),
 ])
 def test_calculator_does_arithmetic(expr, want):
     assert calculate(expr).endswith(f"= {want}")
@@ -73,6 +73,8 @@ def test_calculator_does_arithmetic(expr, want):
     "1/0",
     "x + 1",
     "1e308 * 10",
+    "2,5 * 2",       # a decimal comma or a thousands separator? refuse, do not guess
+    "(-8) ** 0.5",   # complex
 ])
 def test_calculator_refuses_anything_but_arithmetic(expr):
     assert calculate(expr).startswith("error:")
@@ -286,3 +288,23 @@ def test_demo_output_matches_the_committed_file():
     out = subprocess.run([sys.executable, str(HERE / "function_calling.py"), "demo"],
                          capture_output=True, text=True, cwd=LESSON, check=True).stdout
     assert out == (LESSON / "expected-output.txt").read_text(encoding="utf-8")
+
+
+def test_a_call_with_no_name_is_an_unknown_tool(box_factory):
+    model = Scripted([{"function": {"name": None, "arguments": {}}}], "ok")
+    r = tool_loop.run(model, "q", box_factory())
+    assert r["calls"][0]["status"] == "unknown tool"
+
+
+def test_demo_runs_with_no_cassettes(monkeypatch, capsys):
+    monkeypatch.setattr(fc, "recorded_models", lambda: [])
+    assert fc.cmd_demo(None) == 0
+    assert "router" in capsys.readouterr().out
+
+
+def test_ask_human_treats_closed_stdin_as_no(monkeypatch):
+    def closed(prompt):
+        raise EOFError
+
+    monkeypatch.setattr("builtins.input", closed)
+    assert fc.ask_human("create_ticket", {}) is False

@@ -63,7 +63,10 @@ def policy_confirm(name: str, args: dict) -> bool:
 
 
 def ask_human(name: str, args: dict) -> bool:
-    answer = input(f"\n  The model wants to run {name}({args}). Allow? [y/N] ")
+    try:
+        answer = input(f"\n  The model wants to run {name}({args}). Allow? [y/N] ")
+    except EOFError:  # no terminal to ask: that is a no
+        return False
     return answer.strip().lower() in ("y", "yes")
 
 
@@ -110,7 +113,7 @@ def replay_all(tape: dict, tasks: List[dict], retriever, *, max_turns: int,
 def print_scorecard(names: List[str], runs: Dict[str, Dict[str, Optional[dict]]],
                     tasks: List[dict],
                     lenient: Optional[Dict[str, Dict[str, Optional[dict]]]] = None) -> None:
-    width = max(12, *(len(n) for n in names))
+    width = max([12] + [len(n) for n in names])
     print(f"  {'':24}" + "".join(f"{n:>{width + 2}}" for n in names))
 
     def row(label: str, fn) -> None:
@@ -179,7 +182,7 @@ def cmd_demo(_args) -> int:
     for tp in tapes:
         print(f"   {tp['model']:<18} recorded {tp['recorded']} on Ollama {tp['ollama']}, "
               f"{tp['hardware']}")
-    width = max(12, *(len(n) for n in names))
+    width = max([12] + [len(n) for n in names])
     print("\n   " + f"{'':6}" + "".join(f"{n:>{width + 2}}" for n in names))
     for t in tasks:
         print("   " + f"{t['id']:<6}" + "".join(f"{cell(runs[n][t['id']]):>{width + 2}}"
@@ -234,9 +237,13 @@ def cmd_demo(_args) -> int:
     print("   The order came from a document. The intent guard reads only the user's message,")
     print("   which asked for a summary, so no confirmation was ever requested.")
 
+    print("\nSummary")
+    if not names:
+        print(f"   router {right}/{len(tasks)}; no recorded models - "
+              "run ./run -l 9 record --model <name>.")
+        return 0
     best = max(names, key=lambda n: sum(bool(s and s["right"]) for s in runs[n].values()))
     got = sum(bool(s and s["right"]) for s in runs[best].values())
-    print("\nSummary")
     print(f"   router {right}/{len(tasks)}; best recorded model {best} {got}/{len(tasks)};"
           f" guards stopped {stopped} call{'s' if stopped != 1 else ''} across"
           f" {len(names)} models.")

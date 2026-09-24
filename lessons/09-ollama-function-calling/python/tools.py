@@ -83,8 +83,12 @@ def _eval(node: ast.AST) -> float:
 
 
 def calculate(expression: str) -> str:
-    """Evaluate plain arithmetic. Names, calls and attributes are refused."""
-    text = expression.replace("^", "**").replace(",", "").strip()
+    """Evaluate plain arithmetic. Names, calls and attributes are refused.
+
+    Commas are not stripped: "2,5" is a decimal in half the world and a
+    thousands separator in the other half, so it is refused rather than guessed.
+    """
+    text = expression.replace("^", "**").strip()
     if len(text) > 200:
         return "error: expression longer than 200 characters"
     try:
@@ -93,12 +97,14 @@ def calculate(expression: str) -> str:
         return "error: division by zero"
     except (SyntaxError, ValueError, TypeError, OverflowError) as exc:
         return f"error: {exc}"
+    if isinstance(value, complex):  # (-8) ** 0.5
+        return "error: result is not a real number"
     if isinstance(value, float) and not math.isfinite(value):
         return "error: result is not a finite number"
-    if isinstance(value, float) and value.is_integer():
-        value = int(value)
     if isinstance(value, float):
         value = round(value, 6)
+        if value.is_integer():
+            value = int(value)
     return f"{expression} = {value}"
 
 
