@@ -6,29 +6,9 @@ All notable changes to this project are documented here. This project follows
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-09-24
+
 ### Added
-- **Lesson test suites now run in CI** - `pyproject.toml` pins `testpaths` to `tests/`, so
-  `pytest -q` covered the engine and the action contract and nothing under `lessons/`: every
-  lesson's own suite, 102 tests across six lessons, ran only when somebody typed `./run -l N test`.
-  `tools/run_lesson_tests.py` runs each lesson in its **own process** - six lessons ship a
-  `python/web.py` and their tests import it by bare name, so one pytest session resolves
-  `import web` by `sys.path` order and six of Lesson 7's playground tests fail against Lesson 8's
-  module. `ci.yml` also installs every `lessons/*/requirements.txt` first, so Lessons 7 and 8
-  exercise LangChain and LangGraph instead of skipping the tests that cover them. No change to
-  `ci-helpers` was needed; `test_command` was already an arbitrary shell string.
-- **`tools/check_docs.py` and a `Docs` workflow** - `ci.yml` ignores `docs/**` and `**/*.md`, so a
-  docs-only change ran **no checks at all**; that is how a broken relative link, a stale generated
-  table and a PDF menu labelled with the wrong lesson range each reached `main`. The new check
-  asserts that every relative Markdown link resolves, the README downloads table is current,
-  `lessons/CURRICULUM.md` matches the registry, and every working lesson has a published page. It is
-  standard library only, and its `pull_request` trigger is deliberately **not** filtered by base
-  branch, so a stacked pull request no longer reports zero checks.
-- **Roadmap outlines for Lessons 13-15** - `AI-assisted testing`, `AI code review & issue detection`
-  and `Documentation from sprint changes`. Cluster 4 was the only cluster with no files at all: the
-  three lessons existed as one line each in `SYLLABUS.md` and as three dead rows in the README. They
-  now have outlines in the same shape as Lessons 9-12, are picked up automatically by the PDF and
-  README-table generators, and are linked from the syllabus, the roadmap index and the site's PDF
-  menu. Lesson 12 no longer claims the course ends with it.
 - **Lesson 8 · A Stateful Agent with LangGraph** - a new working lesson in **Python and Node.js**,
   graduating the roadmap outline into `lessons/08-langgraph/`. It turns the linear RAG pipeline into
   a corrective agent that grades its own retrieval, rewrites the query and searches again - and then
@@ -59,6 +39,30 @@ All notable changes to this project are documented here. This project follows
   live `tracing_is_enabled()` value.
 - **New `./run -l 8` actions** - `trace`, `chat`, `review`, `spread`, `ask`, `graph` and `measure`,
   alongside the standard `demo`, `test` and `web`.
+- **Lesson test suites now run in CI** - `pyproject.toml` pins `testpaths` to `tests/`, so
+  `pytest -q` covered the engine and the action contract and nothing under `lessons/`: every
+  lesson's own suite, 102 tests across six lessons, ran only when somebody typed `./run -l N test`.
+  `tools/run_lesson_tests.py` runs each lesson in its **own process** - six lessons ship a
+  `python/web.py` and their tests import it by bare name, so one pytest session resolves
+  `import web` by `sys.path` order and six of Lesson 7's playground tests fail against Lesson 8's
+  module. `ci.yml` also installs every `lessons/*/requirements.txt` first, so Lessons 7 and 8
+  exercise LangChain and LangGraph instead of skipping the tests that cover them. No change to
+  `ci-helpers` was needed; `test_command` was already an arbitrary shell string.
+- **`tools/check_docs.py` and a `Docs` workflow** - `ci.yml` ignores `docs/**` and `**/*.md`, so a
+  docs-only change ran **no checks at all**; that is how a broken relative link, a stale generated
+  table and a PDF menu labelled with the wrong lesson range each reached `main`. The new check
+  asserts that every relative Markdown link resolves, the README downloads table is current,
+  `lessons/CURRICULUM.md` matches the registry, and every working lesson has a published page. It is
+  standard library only, and its `pull_request` trigger is deliberately **not** filtered by base
+  branch, so a stacked pull request no longer reports zero checks.
+- **Roadmap outlines for Lessons 13-15** - `AI-assisted testing`, `AI code review & issue detection`
+  and `Documentation from sprint changes`. Cluster 4 was the only cluster with no files at all: the
+  three lessons existed as one line each in `SYLLABUS.md` and as three dead rows in the README. They
+  now have outlines in the same shape as Lessons 9-12, are picked up automatically by the PDF and
+  README-table generators, and are linked from the syllabus, the roadmap index and the site's PDF
+  menu. Lesson 12 no longer claims the course ends with it.
+- **Downloadable lesson PDFs** - every lesson page, generated or hand-authored, has a "Download
+  lesson PDF" button pointing at `docs/pdf/LESSON<n>.pdf`, and tests check both kinds of page offer it.
 
 ### Changed
 - **Lesson 8 leaves `roadmap/`** and its cross-links move with it: Lesson 7's "next lesson" and
@@ -69,7 +73,9 @@ All notable changes to this project are documented here. This project follows
   explicitly refuses (`langchain-community`, `faiss-cpu`). All twelve rows corrected.
 - **Site navigation** - every static page gains Lesson 8, and `docs/lesson-1-rag.html` and
   `docs/lesson-2-mcp.html` gain Lesson 7 as well, which they had been missing.
-- **`./run -h`** covers lessons 1 through 8 and lists Lesson 8's extra actions.
+- **`./run -h`** covers lessons 1 through 8 and lists Lesson 8's extra actions. `./run -l 8 chat`,
+  listed there and in the Lesson 8 README, had no command in `lesson.json` and failed with "No 'chat'
+  command"; it now runs.
 
 ### Security
 - **Node lessons 1-2 dependencies** - `multer` 2.2.0 -> 2.4.0 in `node/lesson-1` (floor raised to
