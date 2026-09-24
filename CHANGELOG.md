@@ -29,6 +29,16 @@ All notable changes to this project are documented here. This project follows
   now have outlines in the same shape as Lessons 9-12, are picked up automatically by the PDF and
   README-table generators, and are linked from the syllabus, the roadmap index and the site's PDF
   menu. Lesson 12 no longer claims the course ends with it.
+- **Lesson 9 · Ollama + Function Calling** - a new working lesson in **Python and Node.js** that
+  installs nothing. The tool-call loop by hand over Ollama's `/api/chat`, four tools over Lesson 7's
+  corpus (one a side effect), and the guards between a model's choice and your code: unknown and
+  unoffered tools, schema validation, turn and repeat caps, an intent check that reads only the
+  user's message, confirmation, and Lesson 4's screening on every tool result. The demo replays real
+  replies recorded from local models (cassettes with a per-turn digest, so a stale recording is
+  refused) against a keyword router, and Node reproduces it byte for byte. Six recipes reuse the
+  loop: invoice extraction, home automation (optional Home Assistant adapter), document drafting,
+  PDF indexing, document summaries whose every point quotes the source, and the same summary as a
+  Lesson 8 LangGraph flow with verify, retry and human review. `bench` scores your own models.
 - **Lesson 8 · A Stateful Agent with LangGraph** - a new working lesson in **Python and Node.js**,
   graduating the roadmap outline into `lessons/08-langgraph/`. It turns the linear RAG pipeline into
   a corrective agent that grades its own retrieval, rewrites the query and searches again - and then
@@ -61,6 +71,9 @@ All notable changes to this project are documented here. This project follows
   alongside the standard `demo`, `test` and `web`.
 
 ### Changed
+- **Lesson 9 leaves `roadmap/`** - `roadmap/LESSON9-ollama.md` is gone and every link to it points
+  at `lessons/09-ollama-function-calling/`; the site nav, index card, PDF menus ("Lessons 1-9",
+  "Roadmap 10-15"), README, SYLLABUS and `./run -h` list it as live.
 - **Lesson 8 leaves `roadmap/`** and its cross-links move with it: Lesson 7's "next lesson" and
   recap teaser, Lesson 9's chain, `roadmap/README.md`, `SYLLABUS.md`, the README curriculum table and
   the generated curriculum and downloads tables.

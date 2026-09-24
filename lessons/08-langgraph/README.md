@@ -11,7 +11,7 @@
 > **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
 > **Time:** ~60-75 min · **Prerequisites:** Lessons 1 and 7 (Lesson 2 helpful) · full objectives in [SYLLABUS.md](../../SYLLABUS.md)
 >
-> **Lessons:** [1 · RAG](../../LESSON1.md) → [2 · MCP](../../LESSON2.md) → [3 · Hybrid retrieval](../03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../05-rag-evaluation-regression-testing/README.md) → [6 · Repo assistant](../06-repo-aware-assistant/README.md) → [7 · LangChain](../07-langchain-rag/README.md) → **8 · LangGraph (you are here)** → 9 · Ollama tools → 10 · Semantic Kernel → 11 · Bedrock Agents → 12 · Google ADK → ... → 15 · Docs from changes
+> **Lessons:** [1 · RAG](../../LESSON1.md) → [2 · MCP](../../LESSON2.md) → [3 · Hybrid retrieval](../03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../05-rag-evaluation-regression-testing/README.md) → [6 · Repo assistant](../06-repo-aware-assistant/README.md) → [7 · LangChain](../07-langchain-rag/README.md) → **8 · LangGraph (you are here)** → [9 · Ollama tools](../09-ollama-function-calling/README.md) → 10 · Semantic Kernel → 11 · Bedrock Agents → 12 · Google ADK → ... → 15 · Docs from changes
 >
 > **Status: working demo.** Runnable in **Python and Node.js**. The second lesson that is
 > **not** dependency-free - and, like Lesson 7, the dependency is part of the argument.
@@ -680,7 +680,7 @@ irreversible action, the pause row is not optional. There is no cheap way to wri
 inspectable, human-gated control flow yourself, and every team that tries writes a worse LangGraph.
 
 **Where did tool routing go?** The roadmap outline for this lesson promised it. It moved to
-**[Lesson 9 · Ollama + function calling](../../roadmap/LESSON9-ollama.md)**, which is the tool-calling
+**[Lesson 9 · Ollama + function calling](../09-ollama-function-calling/README.md)**, which is the tool-calling
 lesson, and where letting a *model* choose which tool to call can be taught on its own terms instead
 of as a footnote to control flow. `CHEATSHEET.md` already draws that line. This lesson is about
 deciding **whether to run a step again**; Lesson 9 is about deciding **which step to run**.
@@ -763,7 +763,7 @@ Microsoft's answer to this whole problem is **Semantic Kernel**, and it gets
 
 ## Next lesson
 
-[**Lesson 9 · Ollama + Function Calling →**](../../roadmap/LESSON9-ollama.md) - stop routing tools
+[**Lesson 9 · Ollama + Function Calling →**](../09-ollama-function-calling/README.md) - stop routing tools
 yourself and let a local model decide when to call them, fully offline.
 
 ---

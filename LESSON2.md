@@ -246,7 +246,7 @@ retriever, reachable from any MCP host.
 | `claude mcp add` | registers it so Claude Code can call it |
 
 > **The through-line:** `search_docs` is the same capability you'll rebuild in every later lesson -
-> as an [Ollama function call](./roadmap/LESSON9-ollama.md), a [Semantic Kernel plugin](./roadmap/LESSON10-semantic-kernel.md), a
+> as an [Ollama function call](./lessons/09-ollama-function-calling/README.md), a [Semantic Kernel plugin](./roadmap/LESSON10-semantic-kernel.md), a
 > [Bedrock action group](./roadmap/LESSON11-bedrock.md), and a [Google ADK tool](./roadmap/LESSON12-google-adk.md). Master the primitive
 > once; the frameworks are just wrappers.
 

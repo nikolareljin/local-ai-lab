@@ -103,7 +103,7 @@ abstain instead of guess; produce a plan-before-edit; and extend it to your repo
 ### Cluster 3 · Framework tour
 
 > Each rebuilds the *same* document agent on a major framework and compares the trade-offs against your
-> from-scratch version. **Lessons 7-8 are live**; outlines for 9-12 exist under [`roadmap/`](./roadmap/).
+> from-scratch version. **Lessons 7-9 are live**; outlines for 10-12 exist under [`roadmap/`](./roadmap/).
 
 #### Lesson 7 - Rebuild RAG with LangChain · ✅ live · Python · Node · ≈ 45-60 min
 **Build:** the Lesson 1 pipeline rebuilt on LangChain over the same corpus with the same system
@@ -126,8 +126,18 @@ against a `thread_id` and resume it; pause before a destructive action and hand 
 evidence; and decide when a graph is worth its dependency - including the case where it is not.
 **Assumes:** Lessons 1 and 7 (Lesson 2 helpful). The second lesson that installs a package.
 
-#### Lesson 9 - Ollama + function calling · 🚧 planned · Python · [outline](./roadmap/LESSON9-ollama.md)
-Give a local model real tools it can call - 100% offline.
+#### Lesson 9 - Ollama + function calling · ✅ live · Python · Node · ≈ 60-75 min · [README](./lessons/09-ollama-function-calling/README.md)
+**Build:** the tool-call loop by hand over Ollama's `/api/chat` - four tools over the Lesson 7
+corpus, one of them a side effect - with the guards that sit between a model's choice and your
+code: schema validation, turn and repeat caps, an intent check that reads only the user's message,
+confirmation, and Lesson 4's screening on every tool result. Every local model is scored on the
+same ten tasks from recorded replies, against a keyword router that needs no model. Four applied
+recipes reuse the loop: invoice extraction, home automation, document drafting, PDF indexing.
+**You'll be able to:** describe a function as a JSON schema a model will call correctly; write the
+loop and its stop conditions; reject bad arguments back to the model instead of crashing; keep a
+document from triggering a side effect; recover calls from models that write them as text; and
+pick a local model for tool use from measurements on your own hardware.
+**Assumes:** Lesson 1 (Lessons 2, 4 and 8 helpful). Installs nothing.
 
 #### Lesson 10 - Microsoft Semantic Kernel · 🚧 planned · C# / .NET · [outline](./roadmap/LESSON10-semantic-kernel.md)
 Rebuild the agent in C# with SK plugins and automatic function calling.
@@ -165,7 +175,7 @@ Read down the **Requires** column to see what to finish first.
 | 6 · Repo-aware assistant | 1 | 3 |
 | 7 · LangChain | 1 | 3 |
 | 8 · LangGraph | 1 | 2, 7 |
-| 9 · Ollama + function calling | 1 | 2 |
+| 9 · Ollama + function calling | 1 | 2, 4, 8 |
 | 10 · Semantic Kernel | 1 | 9 |
 | 11 · Bedrock Agents | 1 | 8, 9 |
 | 12 · Google ADK | 1 | 9 |

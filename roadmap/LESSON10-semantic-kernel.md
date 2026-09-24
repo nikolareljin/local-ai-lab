@@ -7,7 +7,7 @@
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 >
-> **Lessons:** [1 · RAG](../LESSON1.md) → [2 · MCP](../LESSON2.md) → [3 · Hybrid retrieval](../lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../lessons/05-rag-evaluation-regression-testing/README.md) → [6 · Repo assistant](../lessons/06-repo-aware-assistant/README.md) → [7 · LangChain](../lessons/07-langchain-rag/README.md) → [8 · LangGraph](../lessons/08-langgraph/README.md) → [9 · Ollama tools](./LESSON9-ollama.md) → **10 · Semantic Kernel (you are here)** → [11 · Bedrock Agents](./LESSON11-bedrock.md) → [12 · Google ADK](./LESSON12-google-adk.md) → [13 · AI-assisted testing](./LESSON13-ai-assisted-testing.md) → [14 · AI code review](./LESSON14-ai-code-review.md) → [15 · Docs from changes](./LESSON15-docs-from-changes.md)
+> **Lessons:** [1 · RAG](../LESSON1.md) → [2 · MCP](../LESSON2.md) → [3 · Hybrid retrieval](../lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../lessons/05-rag-evaluation-regression-testing/README.md) → [6 · Repo assistant](../lessons/06-repo-aware-assistant/README.md) → [7 · LangChain](../lessons/07-langchain-rag/README.md) → [8 · LangGraph](../lessons/08-langgraph/README.md) → [9 · Ollama tools](../lessons/09-ollama-function-calling/README.md) → **10 · Semantic Kernel (you are here)** → [11 · Bedrock Agents](./LESSON11-bedrock.md) → [12 · Google ADK](./LESSON12-google-adk.md) → [13 · AI-assisted testing](./LESSON13-ai-assisted-testing.md) → [14 · AI code review](./LESSON14-ai-code-review.md) → [15 · Docs from changes](./LESSON15-docs-from-changes.md)
 >
 > **Status: planned.** Outline below; full published slideshow lesson + step-by-step coming later. This is the course's **first C# / .NET lesson**, and it **runs locally** (against Ollama or a local OpenAI-compatible endpoint). ⭐ the repo to follow along.
 
@@ -20,7 +20,7 @@ the **.NET / C#** world (with Python and Java ports). In this lesson you rebuild
 in C#, learning SK's model: a **Kernel**, **plugins** (your functions), and **automatic function
 calling**.
 
-If you've done [Lesson 9](./LESSON9-ollama.md), you'll recognize the shape - SK's plugins are function
+If you've done [Lesson 9](../lessons/09-ollama-function-calling/README.md), you'll recognize the shape - SK's plugins are function
 calling with batteries included and strong typing.
 
 ## What you'll learn
@@ -67,14 +67,14 @@ var answer = await kernel.InvokePromptAsync(
 
 | Concept | From |
 |---------|------|
-| a search tool the model can call | [Lesson 9](./LESSON9-ollama.md) |
+| a search tool the model can call | [Lesson 9](../lessons/09-ollama-function-calling/README.md) |
 | grounding + citations | [Lesson 1](../LESSON1.md) |
 | **plugins, kernel, auto function calling in C#** | **Lesson 10 (this one)** |
 
 ## Prerequisites
 
 .NET 8 SDK; a local model endpoint (Ollama's OpenAI-compatible API, or LM Studio). Concepts from
-[Lesson 9](./LESSON9-ollama.md) help but aren't required.
+[Lesson 9](../lessons/09-ollama-function-calling/README.md) help but aren't required.
 
 ## Next lesson
 

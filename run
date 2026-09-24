@@ -21,7 +21,7 @@ Usage:
   ./run -l <N> [--lang python|node|csharp] [action] [args]
   ./run list                                  # list all lessons
 
-Two ways into any lesson, 1 through 8:
+Two ways into any lesson, 1 through 9:
 
   TRAINING - read the lesson, click through the steps
     ./run -l <N> lesson       open the lesson in a browser, served locally (no GitHub Pages)
@@ -38,6 +38,8 @@ Lesson-specific extras:
   -l 7   LangChain     ask "question" [--native] [--arm bm25|embed]
   -l 8   LangGraph     trace · chat · review · spread · ask "question" · graph · measure
                        [--llm-grade] [--llm-rewrite] [--llm] [--provider NAME]
+  -l 9   Ollama tools  trace "question" · ask "question" · bench · record · models · recipe NAME
+                       [--model M] [--think] [--lenient] [--live]
 
 Examples:
   ./run -l 1 lesson                           # read Lesson 1 locally, click through it

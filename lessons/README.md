@@ -41,15 +41,15 @@ A lesson is two things, and the actions say which is which.
 
 | action | what it must do | applies to |
 |--------|-----------------|------------|
-| `lesson` | serve the lesson's page locally so it reads exactly as it does on the course site, offline | every lesson, 1-7 |
+| `lesson` | serve the lesson's page locally so it reads exactly as it does on the course site, offline | every lesson, 1-9 |
 
 **Running** - run the code and tinker with it:
 
 | action | what it must do | applies to |
 |--------|-----------------|------------|
-| `demo` | print what the lesson does and exit; **no model, no network** | every lesson, 1-7 |
+| `demo` | print what the lesson does and exit; **no model, no network** | every lesson, 1-9 |
 | `demo` output | committed as `expected-output.txt` and diffed by the lesson's test, so the printed run cannot drift | config-driven lessons (3+) |
-| `test` | the lesson's offline test | every lesson, 1-7 |
+| `test` | the lesson's offline test | every lesson, 1-9 |
 | `web` | the interactive playground, and the default action | where the lesson has one |
 
 A new lesson is not finished until `lesson`, `demo` and `test` all work. `lesson` comes
