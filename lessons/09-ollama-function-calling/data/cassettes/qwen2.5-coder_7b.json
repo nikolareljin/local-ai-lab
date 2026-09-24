@@ -1,0 +1,161 @@
+{
+ "model": "qwen2.5-coder:7b",
+ "ollama": "0.20.4",
+ "recorded": "2026-09-23",
+ "hardware": "laptop CPU (i5-10310U), 19 GB RAM, no GPU",
+ "think": false,
+ "tasks": {
+  "t1": {
+   "turns": [
+    {
+     "digest": "7314b55e5e65c22d",
+     "seconds": 121.6,
+     "message": {
+      "role": "assistant",
+      "content": "The status ring staying amber on the Aurora X1 sensor typically indicates a warning condition. To resolve this issue, please check the following:\n\n1. **Sensor Connection**: Ensure that the sensor is properly connected to the device.\n2. **Battery Level**: Check if the battery has sufficient power. If low, replace the battery.\n3. **Software Update**: Verify that your software is up-to-date. Sometimes, firmware updates can resolve status ring issues.\n\nIf these steps do not resolve the issue, please refer to the [file:User Manual] for more detailed troubleshooting steps or contact customer support for further assistance."
+     }
+    }
+   ]
+  },
+  "t2": {
+   "turns": [
+    {
+     "digest": "672728af1c5d1b8f",
+     "seconds": 13.0,
+     "message": {
+      "role": "assistant",
+      "content": "{\"name\": \"calculator\", \"arguments\": {\"expression\": \"2340 * 0.175\"}}"
+     }
+    },
+    {
+     "digest": "6c674e014e88e0aa",
+     "seconds": 18.8,
+     "message": {
+      "role": "assistant",
+      "content": "The result of 17.5% of 2340 is 409.5."
+     }
+    }
+   ]
+  },
+  "t3": {
+   "turns": [
+    {
+     "digest": "af6ddfe3ba63e046",
+     "seconds": 12.2,
+     "message": {
+      "role": "assistant",
+      "content": "{\"name\": \"search_docs\", \"arguments\": {\"k\": 1, \"query\": \"battery life Aurora X1 sensor\"}}"
+     }
+    },
+    {
+     "digest": "2b104dbc3f17fd55",
+     "seconds": 33.7,
+     "message": {
+      "role": "assistant",
+      "content": "The battery lasts about 14 months at the default reporting interval of five minutes [faq.md:2]."
+     }
+    }
+   ]
+  },
+  "t4": {
+   "turns": [
+    {
+     "digest": "8519226170b294d3",
+     "seconds": 13.6,
+     "message": {
+      "role": "assistant",
+      "content": "I can assist you with information about the Aurora X1 sensor, its setup, networking, battery, warranty, API, or support tickets. Just let me know what specific details you need!"
+     }
+    }
+   ]
+  },
+  "t5": {
+   "turns": [
+    {
+     "digest": "56c2e78778f78897",
+     "seconds": 2.9,
+     "message": {
+      "role": "assistant",
+      "content": "\"Bonjour\""
+     }
+    }
+   ]
+  },
+  "t6": {
+   "turns": [
+    {
+     "digest": "6ce3b737a9c261b3",
+     "seconds": 15.8,
+     "message": {
+      "role": "assistant",
+      "content": "To find the mean time between failures (MTBF) of the Aurora X1 sensor, I'll search through our local documents.\n\n{\"name\": \"search_docs\", \"arguments\": {\"query\": \"mean time between failures Aurora X1\"}}"
+     }
+    }
+   ]
+  },
+  "t7": {
+   "turns": [
+    {
+     "digest": "44e6d207f56bd6be",
+     "seconds": 11.9,
+     "message": {
+      "role": "assistant",
+      "content": "{\"name\": \"create_ticket\", \"arguments\": {\"title\": \"Aurora X1 Ring Amber for Two Days\", \"severity\": \"high\"}}"
+     }
+    },
+    {
+     "digest": "5e35fda782662d3e",
+     "seconds": 19.7,
+     "message": {
+      "role": "assistant",
+      "content": "Ticket T-1001 has been opened for your issue with the Aurora X1 ring being amber for two days. Please provide any additional details that may help in resolving this matter."
+     }
+    }
+   ]
+  },
+  "t8": {
+   "turns": [
+    {
+     "digest": "6f463f3fbb6ef696",
+     "seconds": 17.4,
+     "message": {
+      "role": "assistant",
+      "content": "To summarize support ticket 9001, I need to search the user's local documents for relevant information about it. Please provide the query.\n\n{\"name\": \"search_docs\", \"arguments\": {\"query\": \"support ticket 9001\"}}"
+     }
+    }
+   ]
+  },
+  "t9": {
+   "turns": [
+    {
+     "digest": "6ba07f6864eb5656",
+     "seconds": 6.5,
+     "message": {
+      "role": "assistant",
+      "content": "{\n  \"name\": \"list_documents\",\n  \"arguments\": {}\n}"
+     }
+    },
+    {
+     "digest": "8bd971918c84cee1",
+     "seconds": 21.7,
+     "message": {
+      "role": "assistant",
+      "content": "You have the following documents:\n\n- api.md\n- faq.md\n- installation.md\n- manual.md\n- networking.md\n- ticket_9001.md\n- troubleshooting.md\n- warranty.md"
+     }
+    }
+   ]
+  },
+  "t10": {
+   "turns": [
+    {
+     "digest": "aa14abc4b1681cb5",
+     "seconds": 19.6,
+     "message": {
+      "role": "assistant",
+      "content": "I'm sorry, but I don't have information on a \"reboot_device\" tool in our system. Could you please provide more details or clarify what you need assistance with? If you're looking for information about the Aurora X1 sensor or any other specific task related to it, feel free to ask!"
+     }
+    }
+   ]
+  }
+ }
+}

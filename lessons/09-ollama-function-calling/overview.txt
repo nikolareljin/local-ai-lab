@@ -1,0 +1,23 @@
+   Lesson 8's graph decided every step in code. Here the model decides.
+
+      you ──▶ messages + tool schemas ──▶ ┌─────────────────────────┐
+                                          │  local model (Ollama)   │
+              ┌──────────────────────────▶│  POST /api/chat         │
+              │                           └────────────┬────────────┘
+              │                     text, no tool_calls │ tool_calls: [{name, arguments}]
+              │                    ┌────────────────────┴─────────────────┐
+              │                    ▼                                      ▼
+              │             ┌─────────────┐                  ┌──────────────────────────┐
+              │             │   answer    │                  │  guards  (your code)     │
+              │             └─────────────┘                  │   known tool?            │
+              │                                              │   args match schema?     │
+              │                                              │   side effect: did the   │
+              │                                              │     USER ask? confirmed? │
+              │                                              └────────────┬─────────────┘
+              │                                                           ▼
+              │   role: "tool"  (screened for injected orders) ┌─────────────────────┐
+              └────────────────────────────────────────────────│  run the function   │
+                        until max_turns, or a repeated call    └─────────────────────┘
+
+   The model never runs anything. It asks. Every arrow into "run the function"
+   passes through code you wrote, and that is the whole lesson.
