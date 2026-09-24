@@ -30,7 +30,7 @@
       "type": "code",
       "file": "python/tools.py",
       "lang": "python",
-      "lines": "170-187",
+      "lines": "258-275",
       "kicker": "Step 1",
       "title": "A tool is a schema and a sentence",
       "body": "The model sees exactly three things about `create_ticket`: its name, its description, and the JSON schema of its arguments. The function itself never leaves your process. `side_effect=True` and `intent` are for your loop, not for the model.",
@@ -40,7 +40,7 @@
       "type": "code",
       "file": "python/ollama_chat.py",
       "lang": "python",
-      "lines": "49-72",
+      "lines": "49-75",
       "kicker": "Step 2",
       "title": "The whole API: one POST",
       "body": "`/api/chat` with a `tools` array. The reply's `message` either has `content` (an answer) or `tool_calls` - a list of `{function: {name, arguments}}`, where `arguments` is already a JSON object. No SDK: the point of this lesson is to see the JSON.",
@@ -50,7 +50,7 @@
       "type": "code",
       "file": "python/tool_loop.py",
       "lang": "python",
-      "lines": "95-151",
+      "lines": "97-154",
       "kicker": "Step 3",
       "title": "The loop every agent framework wraps",
       "body": "Send, read `tool_calls`, run each one, append each result as a `role: tool` message with its `tool_name`, send again. Stop when the model answers, when `max_turns` runs out, or when it repeats the same call with the same arguments.",
@@ -60,7 +60,7 @@
       "type": "code",
       "file": "python/tool_loop.py",
       "lang": "python",
-      "lines": "44-93",
+      "lines": "44-94",
       "kicker": "Step 4",
       "title": "Between the model's choice and your function",
       "body": "Four checks in order: is it a tool you offered, do the arguments match the schema, did the **user** ask for this side effect, and did someone confirm it. A failed check does not crash the loop - it becomes the tool's result, so the model reads *why* and can try again.",
@@ -70,7 +70,7 @@
       "type": "code",
       "file": "python/guards.py",
       "lang": "python",
-      "lines": "41-69",
+      "lines": "41-68",
       "kicker": "Step 5",
       "title": "A validator you can read",
       "body": "About thirty lines covering the keywords these schemas use: `type`, `required`, `enum`, `minimum`, `maximum`, `maxLength`, nested objects and arrays, and no extra keys. The errors are written for the model, because the model is who reads them.",
@@ -80,7 +80,7 @@
       "type": "code",
       "file": "python/guards.py",
       "lang": "python",
-      "lines": "84-94",
+      "lines": "84-93",
       "kicker": "Step 6",
       "title": "Intent: a document cannot grant itself permission",
       "body": "A side effect runs only if the **user's own message** matches the tool's intent pattern. The check never reads tool output, so text inside a retrieved document cannot satisfy it - no matter how the model was persuaded.",
@@ -108,7 +108,7 @@
       "type": "code",
       "file": "python/cassette.py",
       "lang": "python",
-      "lines": "52-81",
+      "lines": "52-80",
       "kicker": "Step 9",
       "title": "Recorded once, replayed forever - and refused when stale",
       "body": "`./run -l 9 record --model M` runs the ten tasks against a live model and saves every reply. The demo replays them through the real loop, guards and tools. Each turn carries a digest of the exact conversation the model was shown.",
@@ -139,7 +139,7 @@
       "kicker": "Run it",
       "title": "Read the output",
       "file": "expected-output.txt",
-      "body": "RESULTS_BODY"
+      "body": "**The keyword router gets 9 of 10 with no model at all. The best local model, `qwen3.5:4b`, also gets 9 of 10 - in 801 seconds.** `qwen3:1.7b` and `qwen3:8b` tie at 7, the 8b model at 2.6 times the time. `qwen2.5-coder:7b` writes its calls as text and doubles to 6 with `--lenient`. `qwen3:0.6b` never makes a structured call.\n\nRead the misses, not the totals. `qwen3:8b` answered t1 *\"According to the documentation...\"* **without searching**. `qwen3:0.6b` summarized ticket 9001 without reading it. `qwen3.5:4b` read the poisoned ticket, summarized it correctly, and did not obey it. And across five models, **not one answer copied a `[file:page]` citation**, though the prompt asked for it and the tool output carried it. What a model says about its sources is not evidence; the trace is."
     },
     {
       "type": "command",
@@ -260,7 +260,7 @@
       "type": "note",
       "kicker": "Recap",
       "title": "What you learned",
-      "body": "RECAP_BODY"
+      "body": "You wrote the loop every agent framework wraps: send tools, read `tool_calls`, run them, send the results back. Then you put your own code between the model's choice and anything that runs - a schema check, two caps, an intent check that reads only the user's words, a confirmation, and Lesson 4's screen on every result - and watched each one catch something a real local model did.\n\nThen you priced it. On ten tasks a keyword router matched the best local model and was orders of magnitude faster. A bigger model was not a better one. A `tools` badge was a claim, not a behaviour. **Let a model pick tools when the requests are too varied to write rules for - and keep the rules that decide what actually runs.**\n\nThe recipes show where that pays: extracting invoices, driving a house, drafting letters, indexing PDFs, and summaries you can check line by line - including the same summary inside Lesson 8's graph, where the graph decides *which step* and the model decides *which tool*.\n\nNext: **Lesson 10 · Microsoft Semantic Kernel** - the same agent in C#, where automatic function calling runs this loop for you and the guards become filters."
     }
   ]
 }

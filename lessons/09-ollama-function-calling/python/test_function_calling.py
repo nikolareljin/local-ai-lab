@@ -317,3 +317,21 @@ def test_a_tool_that_was_not_offered_is_unknown(box_factory):
                       only=["search_docs"])
     assert r["calls"][0]["status"] == "unknown tool" and box.outbox == []
     assert "Available: search_docs." in r["calls"][0]["result"]
+
+
+def test_every_slide_excerpt_is_one_whole_definition():
+    """lesson.json quotes code by line range, and ranges drift when code moves."""
+    import json
+
+    for el in json.loads((LESSON / "lesson.json").read_text(encoding="utf-8"))["elements"]:
+        if not el.get("lines"):
+            continue
+        first, last = map(int, el["lines"].split("-"))
+        lines = (LESSON / el["file"]).read_text(encoding="utf-8").splitlines()
+        head = lines[first - 1]
+        indent = len(head) - len(head.lstrip())
+        assert head.strip().startswith(("def ", "class ", "Tool(")), (el["kicker"], head)
+        after = lines[last] if last < len(lines) else ""
+        # the line after the excerpt is blank, or no deeper than the excerpt's first line
+        deeper = len(after) - len(after.lstrip()) > indent
+        assert not after.strip() or not deeper, (el["kicker"], after)

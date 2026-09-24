@@ -243,13 +243,38 @@ def test_uncited_search_cannot_be_cited(tmp_path):
 # --- pdf_index ------------------------------------------------------------------------
 
 
+HANDBOOK = "aurora-field-handbook.pdf"
+BULLETIN = "aurora-service-bulletin-07.pdf"
+
+
+def fixture_pages(name):
+    """Page number -> whitespace-normalised text, read back from the fixture PDF."""
+    return {p["page_number"]: " ".join(p["text"].split())
+            for p in extract_pages(pdf_index.PDF_ROOT / name)}
+
+
+def test_pdf_fixtures_are_the_default_root():
+    assert pdf_index.PDF_ROOT == pdf_index.DATA_DIR / "pdfs"
+    assert sorted(p.name for p in pdf_index.PDF_ROOT.glob("*.pdf")) == [HANDBOOK, BULLETIN]
+    assert sorted(fixture_pages(HANDBOOK)) == [1, 2, 3]
+    assert sorted(fixture_pages(BULLETIN)) == [1, 2]
+
+
 def test_pdf_main_answers_with_a_real_page(capsys):
     assert pdf_index.main([]) == 0
     out = capsys.readouterr().out
-    assert "outside the allowed folder" in out and "[LESSON1.pdf:11]" in out
-    pages = {p["page_number"]: p["text"] for p in
-             extract_pages(pdf_index.PDF_ROOT / "LESSON1.pdf")}
-    assert "MCP servers" in pages[11]
+    assert "outside the allowed folder" in out and f"[{HANDBOOK}:3]" in out
+    assert "rest at room temperature for two hours" in fixture_pages(HANDBOOK)[3]
+    assert "two hours" in out.split("answer:")[1]
+
+
+def test_pdf_main_root_flag(tmp_path, capsys):
+    assert pdf_index.main(["--root", str(tmp_path / "missing")]) == 2
+    capsys.readouterr()
+    shutil.copy(pdf_index.PDF_ROOT / BULLETIN, tmp_path / BULLETIN)
+    assert pdf_index.main(["--root", str(tmp_path)]) == 0
+    out = capsys.readouterr().out
+    assert "Indexed 1 PDF(s), 2 page(s)" in out and str(tmp_path) not in out
 
 
 @pytest.fixture()
@@ -258,8 +283,8 @@ def jail(tmp_path):
     root, outside = tmp_path / "root", tmp_path / "outside"
     (root / "sub").mkdir(parents=True)
     outside.mkdir()
-    shutil.copy(pdf_index.PDF_ROOT / "LESSON10.pdf", root / "sub" / "LESSON10.pdf")
-    shutil.copy(pdf_index.PDF_ROOT / "LESSON9.pdf", outside / "secret.pdf")
+    shutil.copy(pdf_index.PDF_ROOT / BULLETIN, root / "sub" / BULLETIN)
+    shutil.copy(pdf_index.PDF_ROOT / HANDBOOK, outside / "secret.pdf")
     (root / "escape").symlink_to(outside, target_is_directory=True)
     (root / "sub" / "secret.pdf").symlink_to(outside / "secret.pdf")
     return pdf_index.PdfIndex(root=root), outside
@@ -285,19 +310,18 @@ def test_index_folder_skips_files_symlinked_out(jail):
 
 
 def test_pdf_tools_before_and_after_indexing():
-    index = pdf_index.PdfIndex(limit=1)
+    index = pdf_index.PdfIndex(limit=1)  # the limit keeps the first name: the handbook
     assert index.search_docs("anything").startswith("error: nothing is indexed")
     assert index.index_folder("missing").startswith("error: 'missing' is not a folder")
-    assert index.index_folder(".").startswith("Indexed 1 PDF(s)")
-    assert index.list_documents() == "CHEATSHEET.pdf (6 pages)"
-    hits = index.search_docs("MCP tool design", 2).split("\n\n")
-    pages = {p["page_number"]: p["text"] for p in
-             extract_pages(pdf_index.PDF_ROOT / "CHEATSHEET.pdf")}
-    for hit in hits:
-        m = pdf_index._HIT.match(hit)
-        page = int(m.group(1).split(":")[1].rstrip("]"))
-        assert m.group(1).startswith("[CHEATSHEET.pdf:") and page in pages
-        assert " ".join(m.group(2).split())[:40] in " ".join(pages[page].split())
+    assert index.index_folder(".").startswith("Indexed 1 PDF(s), 3 page(s)")
+    assert index.list_documents() == f"{HANDBOOK} (3 pages)"
+    pages = fixture_pages(HANDBOOK)
+    for query, want in (("mounting metal surface", 1), ("ninety days calibration", 2),
+                        ("cold storage rest", 3)):
+        top = index.search_docs(query, 3).split("\n\n")[0]
+        m = pdf_index._HIT.match(top)
+        assert m.group(1) == f"[{HANDBOOK}:{want}]"
+        assert " ".join(m.group(2).split())[:40] in pages[want]
 
 
 # --- doc_summary ----------------------------------------------------------------------
