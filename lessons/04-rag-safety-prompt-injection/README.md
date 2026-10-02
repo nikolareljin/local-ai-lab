@@ -11,7 +11,7 @@
 > **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
 > **Time:** ~30-45 min · **Prerequisites:** Lesson 1 (Lesson 3 helpful) · full objectives in [SYLLABUS.md](../../SYLLABUS.md)
 >
-> **Lessons:** [1 · RAG](../../LESSON1.md) → [2 · MCP](../../LESSON2.md) → [3 · Hybrid retrieval](../03-hybrid-retrieval-reranking/README.md) → **4 · RAG safety (you are here)** → 5 · RAG evaluation → 6 · Repo assistant → 7 · LangChain → ... → 15 · Docs from changes
+> **Lessons:** [1 · RAG](../../LESSON1.md) → [2 · MCP](../../LESSON2.md) → [3 · Hybrid retrieval](../03-hybrid-retrieval-reranking/README.md) → **4 · RAG safety (you are here)** → 5 · RAG evaluation → 6 · Repo assistant → 7 · LangChain → ... → 16 · Docs from changes
 >
 > **Status: working demo.** Runnable in **Python, Node.js, and C# / .NET** - same algorithm, three
 > languages, identical output. Runs 100% offline, no model required. See *From demo to production* at

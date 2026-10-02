@@ -1,0 +1,16 @@
+   Lesson 9's model chose an action. Here the model only answers; your code decides.
+
+   ticket text --> 4 typed questions --> a probability per option --> policy --> action
+                   queue    (choice)     billing 0.91  technical 0.03 ...       escalate?
+                   urgency  (score)      none low medium high critical          page on-call?
+                   refund   (noul)       P(yes) 0.97                            draft refund?
+                   human    (noul)       P(yes) 0.12                            human triage?
+                                                                                auto-route
+
+   Four engines, one API (POST /v1/systemone), one scorecard:
+     keywords            rules, no model
+     LLM writes JSON     a local chat model writes the answers as text
+     Jev-like adapter    a local model answers one letter per question (simulated)
+     TypeSafe Jev        the real model, hosted, with your API key
+
+   30 labelled fake tickets. Accuracy, typed answers, Brier score, wrong pages.

@@ -7,6 +7,21 @@ All notable changes to this project are documented here. This project follows
 ## [Unreleased]
 
 ### Added
+- **Lesson 10 · Jev and System One models** (special lesson, Python, Node.js and C#). A model that
+  answers typed questions with a probability per option. TypeSafe's Jev through its official SDKs
+  (`typesafe-sdk` pinned with hashes, `@typesafe-ai/sdk` pinned with provenance), and a loopback-only
+  Jev-like adapter over Ollama, labelled simulated: there is no local Jev. Four engines (keyword rules,
+  an LLM writing JSON, the adapter on qwen3:1.7b and qwen3.5:4b) scored on 30 labelled fake support
+  tickets for accuracy, typed answers, Brier score and wrong pages; two more labelled datasets
+  (reviews, server alerts). A policy turns probabilities into actions. Recorded replies make the demo
+  offline and byte-identical in all three languages. Lesson PDF and a slide deck
+  (`docs/pdf/LESSON10-SLIDES.pdf`, built by `lessons/10-jev-system-one/slides/build.py`).
+- Roadmap: five planned lessons listed in `roadmap/README.md` (MongoDB vector search, LoRA,
+  constrained decoding, observability, local speech and vision) and a planned AI developer tools PDF.
+
+### Changed
+- Roadmap lessons 10-15 are now 11-16 (Semantic Kernel is Lesson 11). Files, links, breadcrumbs,
+  tables, the home page and the PDFs follow.
 - **SEO metadata on every published page.** `tools/seo.py` writes one block per page: meta
   description and keywords, canonical URL, Open Graph and Twitter card tags, and JSON-LD (`Course`
   on the home page, `LearningResource` per lesson). Lesson pages take their text from a new `seo`

@@ -1,0 +1,15 @@
+{"id": "I-3001", "text": "CPU 97% for 15 min on api-8 (eu-west). p95 latency 4.2 s. Error rate 0.1%.", "labels": {"severity": "high", "owner": "platform", "customer_facing": "yes"}, "trap": ""}
+{"id": "I-3002", "text": "Disk 81% on logs-8. Growth 1%/day.", "labels": {"severity": "low", "owner": "platform", "customer_facing": "no"}, "trap": ""}
+{"id": "I-3003", "text": "Certificate for status.example.com expires in 6 days.", "labels": {"severity": "medium", "owner": "platform", "customer_facing": "yes"}, "trap": ""}
+{"id": "I-3004", "text": "Payment provider webhook failures 38/40 in last 10 min. Checkout returning 'pending'.", "labels": {"severity": "critical", "owner": "payments", "customer_facing": "yes"}, "trap": ""}
+{"id": "I-3005", "text": "Nightly backup job finished 40 min late. All snapshots verified.", "labels": {"severity": "low", "owner": "data", "customer_facing": "no"}, "trap": ""}
+{"id": "I-3006", "text": "Replica lag 900 s on db-8. Reads may be stale for reports.", "labels": {"severity": "medium", "owner": "data", "customer_facing": "yes"}, "trap": ""}
+{"id": "I-3007", "text": "Login failures spiked 30x from 192.0.2.5, 4,000 attempts against 900 accounts.", "labels": {"severity": "high", "owner": "security", "customer_facing": "yes"}, "trap": "credential stuffing"}
+{"id": "I-3008", "text": "Health check flapping on worker-8; queue depth normal; no customer errors.", "labels": {"severity": "low", "owner": "platform", "customer_facing": "no"}, "trap": "noisy but harmless"}
+{"id": "I-3009", "text": "Search index rebuild failed; queries served from yesterday's index.", "labels": {"severity": "medium", "owner": "data", "customer_facing": "yes"}, "trap": ""}
+{"id": "I-3010", "text": "5xx rate 22% on all endpoints in eu-west after deploy 2026.10.02-3.", "labels": {"severity": "critical", "owner": "platform", "customer_facing": "yes"}, "trap": ""}
+{"id": "I-3011", "text": "Invoice PDF generation queue at 0 workers. 1,200 invoices waiting. Month-end in 2 days.", "labels": {"severity": "high", "owner": "payments", "customer_facing": "yes"}, "trap": ""}
+{"id": "I-3012", "text": "Admin API key used from a new country for the first time; 3 calls, all reads.", "labels": {"severity": "medium", "owner": "security", "customer_facing": "no"}, "trap": ""}
+{"id": "I-3013", "text": "Memory leak suspected in export-service: RSS +200 MB/hour, restarts every 6 h.", "labels": {"severity": "medium", "owner": "platform", "customer_facing": "no"}, "trap": ""}
+{"id": "I-3014", "text": "S3-compatible bucket 'customer-uploads' policy changed to public-read 4 minutes ago.", "labels": {"severity": "critical", "owner": "security", "customer_facing": "yes"}, "trap": "a config change that is a breach"}
+{"id": "I-3015", "text": "Test alert from on-call rotation setup. Please acknowledge.", "labels": {"severity": "low", "owner": "platform", "customer_facing": "no"}, "trap": "not a real incident"}

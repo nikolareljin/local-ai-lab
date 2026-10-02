@@ -1,0 +1,6 @@
+# The optional official-SDK venv (./run -l 10 install-sdk) and Node/.NET build output.
+.venv-sdk/
+node/node_modules/
+dotnet/bin/
+dotnet/obj/
+slides/deck.filled.html

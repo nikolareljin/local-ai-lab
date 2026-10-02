@@ -1,13 +1,13 @@
-# Lesson 11 · AWS Bedrock Agents
+# Lesson 12 · AWS Bedrock Agents
 
-**PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON11.pdf) · **Install (Linux · macOS · Windows):** [guide](../INSTALL.md) · [PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)
+**PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON12.pdf) · **Install (Linux · macOS · Windows):** [guide](../INSTALL.md) · [PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)
 
 > **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** - a hands-on course for building local AI.
 >
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 >
-> **Lessons:** [1 · RAG](../LESSON1.md) → [2 · MCP](../LESSON2.md) → [3 · Hybrid retrieval](../lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../lessons/05-rag-evaluation-regression-testing/README.md) → [6 · Repo assistant](../lessons/06-repo-aware-assistant/README.md) → [7 · LangChain](../lessons/07-langchain-rag/README.md) → [8 · LangGraph](../lessons/08-langgraph/README.md) → [9 · Ollama tools](../lessons/09-ollama-function-calling/README.md) → [10 · Semantic Kernel](./LESSON10-semantic-kernel.md) → **11 · Bedrock Agents (you are here)** → [12 · Google ADK](./LESSON12-google-adk.md) → [13 · AI-assisted testing](./LESSON13-ai-assisted-testing.md) → [14 · AI code review](./LESSON14-ai-code-review.md) → [15 · Docs from changes](./LESSON15-docs-from-changes.md)
+> **Lessons:** [1 · RAG](../LESSON1.md) → [2 · MCP](../LESSON2.md) → [3 · Hybrid retrieval](../lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../lessons/05-rag-evaluation-regression-testing/README.md) → [6 · Repo assistant](../lessons/06-repo-aware-assistant/README.md) → [7 · LangChain](../lessons/07-langchain-rag/README.md) → [8 · LangGraph](../lessons/08-langgraph/README.md) → [9 · Ollama tools](../lessons/09-ollama-function-calling/README.md) → [10 · Jev / System One](../lessons/10-jev-system-one/README.md) → [11 · Semantic Kernel](./LESSON11-semantic-kernel.md) → **12 · Bedrock Agents (you are here)** → [13 · Google ADK](./LESSON13-google-adk.md) → [14 · AI-assisted testing](./LESSON14-ai-assisted-testing.md) → [15 · AI code review](./LESSON15-ai-code-review.md) → [16 · Docs from changes](./LESSON16-docs-from-changes.md)
 >
 > **Status: planned.** Outline below; full published slideshow lesson + step-by-step coming later.
 > This is a **managed cloud** lesson - you build and drive it from a **local** dev environment (AWS
@@ -67,7 +67,7 @@ An AWS account with Bedrock model access, the AWS CLI configured locally, and `b
 
 ## Next lesson
 
-[**Lesson 12 · Google AI Development Kit →**](./LESSON12-google-adk.md)
+[**Lesson 13 · Google AI Development Kit →**](./LESSON13-google-adk.md)
 
 ---
 

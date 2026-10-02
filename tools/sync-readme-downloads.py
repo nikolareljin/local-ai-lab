@@ -110,6 +110,7 @@ def _render(lessons: list[dict]) -> str:
         labels = {
             "CHEATSHEET.pdf": "AI-for-developers cheat-sheet",
             "INSTALL.pdf": "Install guide (Linux · macOS · Windows)",
+            "LESSON10-SLIDES.pdf": "Lesson 10 · Jev and System One models slide deck",
             "LESSON9-SLIDES.pdf": "Lesson 9 · Ollama + Function Calling slide deck",
             "The_Magic_Turtle_Astronaut.pdf": "Sample document used in Lesson 1's *try it yourself*",
         }

@@ -199,9 +199,10 @@ ollama pull nomic-embed-text   # embeddings (RAG_RETRIEVER=embeddings)
 | **7 · LangChain** | Python ✓ · Node ✓ | `langchain-core`, `langchain-text-splitters` | `pip install -r lessons/07-langchain-rag/requirements.txt` |
 | **8 · LangGraph** | Python ✓ · Node ✓ | `langgraph` (brings `langchain-core` with it) | `pip install -r lessons/08-langgraph/requirements.txt` |
 | **9 · Ollama + Function Calling** | Python ✓ · Node ✓ | none for `demo`; Ollama + a tool-capable model for live runs | §4 (Ollama) + `ollama pull qwen3:1.7b` |
-| **10 · Semantic Kernel** | **C#/.NET** | .NET 8 SDK + SK NuGet | §1 (.NET) + `dotnet add package Microsoft.SemanticKernel` |
-| **11 · AWS Bedrock Agents** | Python | AWS CLI + boto3 | [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) + `pip install boto3` + `aws configure` |
-| **12 · Google ADK** | Python | `google-adk` + Gemini key | `pip install google-adk` + §4 (Gemini) |
+| **10 · Jev and System One models** | Python ✓ · Node ✓ · C# ✓ | none for `demo`; Ollama + `qwen3:1.7b` for the local adapter; optional `typesafe-sdk` (hash-pinned) + a TypeSafe key for the real Jev | §4 (Ollama) + `./run -l 10 install-sdk` |
+| **11 · Semantic Kernel** | **C#/.NET** | .NET 8 SDK + SK NuGet | §1 (.NET) + `dotnet add package Microsoft.SemanticKernel` |
+| **12 · AWS Bedrock Agents** | Python | AWS CLI + boto3 | [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) + `pip install boto3` + `aws configure` |
+| **13 · Google ADK** | Python | `google-adk` + Gemini key | `pip install google-adk` + §4 (Gemini) |
 
 Lessons 7 and 8 are the only two that install anything beyond the base requirements, and in both
 cases the dependency is what the lesson is arguing about. Both still run, and both still print their
