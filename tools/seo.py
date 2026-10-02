@@ -210,6 +210,9 @@ def problems() -> list[str]:
             hint = "./run -l N build" if page["kind"] == "lesson" and name not in STATIC else \
                 "python3 tools/seo.py --write"
             found.append(f"docs/{name}: SEO block missing or stale - run: {hint}")
+        title = re.search(r"<title>(.*?)</title>", text, re.S)
+        if not title or html.unescape(title.group(1)) != page["title"]:
+            found.append(f"docs/{name}: <title> does not match the og:title in tools/seo.py")
         if text.count('name="description"') != 1:
             found.append(f"docs/{name}: expected exactly one meta description")
     for name, want in (("sitemap.xml", sitemap()), ("robots.txt", robots())):
