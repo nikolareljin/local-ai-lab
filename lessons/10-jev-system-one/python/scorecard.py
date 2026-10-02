@@ -39,7 +39,7 @@ def brier(question: dict, answer: dict | None, truth: str) -> float:
         probs = {label: 1.0 / len(labels) for label in labels}
     else:
         probs = answer["probs"]
-    return sum((probs[label] - (1.0 if label == truth else 0.0)) ** 2 for label in labels)
+    return systemone.fsum((probs[label] - (1.0 if label == truth else 0.0)) ** 2 for label in labels)
 
 
 def score(questions: dict, records: list[dict], runs: dict, *, page: float = policy.PAGE) -> dict:

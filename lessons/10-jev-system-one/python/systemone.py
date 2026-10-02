@@ -37,6 +37,20 @@ SYSTEM_ONE_PATH = "/v1/systemone"
 TYPESAFE_URL = "https://api.typesafe.ai"
 
 
+def fsum(values) -> float:
+    """sum() as Python 3.12+ does it (Neumaier compensation), on every Python version.
+
+    The demo's output is byte-compared with the Node and C# ports, which do the same.
+    """
+    total = comp = 0.0
+    for v in values:
+        v = float(v)
+        t = total + v
+        comp += (total - t) + v if abs(total) >= abs(v) else (v - t) + total
+        total = t
+    return total + comp
+
+
 def options(question: dict) -> list[str]:
     """The labels a question can be answered with, in order."""
     kind = question["type"]
@@ -123,7 +137,7 @@ def read_answers(questions: dict, response: dict) -> tuple[dict, list[str]]:
                 raw = {labels[int(k)]: v for k, v in raw.items()
                        if isinstance(k, str) and k.isascii() and k.isdigit() and int(k) < len(labels)}
             numeric = all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in raw.values())
-            if set(raw) != set(labels) or not numeric or abs(sum(raw.values()) - 1.0) > 0.01:
+            if set(raw) != set(labels) or not numeric or abs(fsum(raw.values()) - 1.0) > 0.01:
                 problems.append(f"{name}: probabilities must cover {labels} and sum to 1")
                 continue
             probs = {label: float(raw[label]) for label in labels}
