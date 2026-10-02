@@ -3,6 +3,10 @@
   "slug": "langgraph",
   "status": "working",
   "summary": "Turn the linear RAG pipeline into an agent that grades its own retrieval, rewrites its query and retries - then price the graph honestly against the same loop written as sixty-three lines of `while`. Three arms over Lesson 7's corpus: the chain fixes 4 of 8, the loop fixes 8 of 8 and correctly refuses the ninth, and the graph matches the loop exactly. Everything LangGraph costs buys checkpoints, interrupts and an inspectable topology - not better answers. Python and Node.js.",
+  "seo": {
+    "description": "Build a stateful LangGraph agent that grades its retrieval, rewrites the query and retries, then compare it with a plain loop. Python, Node.js.",
+    "keywords": ["LangGraph", "AI agent", "agentic RAG", "state machine", "LangGraph tutorial"]
+  },
   "cluster": "framework-tour",
   "priority": "high",
   "languages": [

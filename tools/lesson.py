@@ -537,13 +537,24 @@ def render_html(number, ldir, lesson, lang=None, assets_href="/assets", media_ba
            .replace("{{SUMMARY}}", _inline(lesson.get("summary", "")))
            .replace("{{LANGSEL}}", _langsel_html(langs))
            .replace("{{LANGSEL_COMPACT}}", _langsel_html(langs, compact=True))
-           .replace("{{SLIDES}}", slides))
+           .replace("{{SLIDES}}", slides)
+           .replace("{{SEO}}", _seo_block(number, lesson, ldir)))
     # Inject the "generated" banner into the OUTPUT only - keeping it out of the
     # template itself, which contributors are meant to edit.
     banner = ("<!-- GENERATED FILE - do not edit by hand. Built by tools/lesson.py "
               "(`./run -l N build`) from lessons/NN-slug/lesson.json; edit the lesson.json "
               "or tools/templates/lesson-preview.html instead. -->")
     return out.replace("<!doctype html>", "<!doctype html>\n" + banner, 1)
+
+
+def _seo_block(number, lesson, ldir):
+    """The page's SEO block from tools/seo.py, the one place the meta tags are written."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import seo
+    slug = lesson.get("slug") or re.sub(r"^\d+-", "", Path(ldir).name)
+    name = f"lesson-{number}-{slug}.html"
+    page = seo.lesson_pages().get(name)
+    return seo.head_for(name, page) if page else ""
 
 
 def free_port():

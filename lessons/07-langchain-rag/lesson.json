@@ -3,6 +3,10 @@
   "slug": "langchain-rag",
   "status": "working",
   "summary": "Rebuild the Lesson 1 RAG pipeline on LangChain over the same corpus with the same system prompt, watch where the two disagree, and price the swap: which hand-rolled file each component replaced, how many lines you still maintain, and how many packages moved into your dependency tree. Python and Node.js, with the three escape hatches - a chat model, an embeddings adapter and a retriever - you still have to write yourself.",
+  "seo": {
+    "description": "Rebuild a hand-written RAG pipeline on LangChain over the same corpus, compare the answers and price the swap. Python and Node.js, local.",
+    "keywords": ["LangChain", "LangChain RAG", "LCEL", "RAG framework", "LangChain tutorial"]
+  },
   "cluster": "framework-tour",
   "priority": "high",
   "languages": [

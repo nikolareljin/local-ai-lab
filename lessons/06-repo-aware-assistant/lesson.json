@@ -3,6 +3,10 @@
   "slug": "repo-aware-assistant",
   "status": "working",
   "summary": "Ground an assistant in one codebase: index README, source, tests and scripts into passages that carry their own citations, answer questions only from those lines (always cited, and \"not found\" when the answer isn't in the repo), and turn a change request into a plan-before-edit that touches no files - offline, polyglot, byte-identical in Python, Node and .NET.",
+  "seo": {
+    "description": "Build a repo-aware AI assistant that answers only from your codebase, with line citations and an honest not-found. Python, Node.js and C#.",
+    "keywords": ["code assistant", "repository RAG", "codebase Q&A", "citations", "developer tools"]
+  },
   "cluster": "rag-depth",
   "priority": "high",
   "languages": [
