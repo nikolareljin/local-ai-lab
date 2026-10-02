@@ -300,7 +300,7 @@ def test_the_unanswerable_question_terminates_without_a_rewriter(setup):
 # --------------------------------------------------------------- the graph
 @needs_langgraph
 def test_graph_and_loop_are_indistinguishable(setup):
-    """The keystone. If this fails, the scorecard is void."""
+    """The central test. If this fails, the scorecard is void."""
     import graph_agent
     q, retriever, grader, rw = setup
     graph = graph_agent.build_graph(grader=grader, rewriter=rw, top_k=q["top_k"],

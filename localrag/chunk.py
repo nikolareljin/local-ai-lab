@@ -1,7 +1,7 @@
 """Split extracted pages into overlapping chunks.
 
-Roughly mirrors document-tracker's chunk_text: target size with overlap, and
-break on a sentence/word boundary near the limit instead of mid-word. Each chunk
+Target size with overlap, breaking on a sentence/word boundary near the limit
+instead of mid-word. Each chunk
 keeps its source + page so answers can cite where they came from.
 """
 
