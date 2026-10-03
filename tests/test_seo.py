@@ -71,20 +71,22 @@ def test_write_refuses_a_page_without_a_title(site):
 
 
 def test_title_on_the_same_line_as_head_still_gets_a_block():
-    out = seo._with_block("about.html", "<head><title>x</title></head>", "  <!-- seo -->\n  <!-- /seo -->\n")
+    block = "  <!-- seo -->\n  <!-- /seo -->\n"
+    out = seo._with_block("about.html", "<head><title>x</title></head>", block)
     assert "<!-- seo -->" in out
 
 
 @pytest.mark.parametrize("break_it,message", [
-    (lambda d, l: (d / "lesson-3-toy.html").write_text("<html><head><title>x</title></head></html>"),
+    (lambda docs, lessons: (docs / "lesson-3-toy.html").write_text(
+        "<html><head><title>x</title></head></html>"),
      "SEO block missing or stale"),
-    (lambda d, l: (d / "sitemap.xml").unlink(), "sitemap.xml is stale"),
-    (lambda d, l: (d / "assets" / "og-image.png").unlink(), "share image"),
-    (lambda d, l: _edit_lesson(l, description="x" * 161), "161 chars"),
-    (lambda d, l: _edit_lesson(l, keywords=[]), "no keywords"),
-    (lambda d, l: _append(d / "about.html", '<link rel="canonical" href="x" />'),
+    (lambda docs, lessons: (docs / "sitemap.xml").unlink(), "sitemap.xml is stale"),
+    (lambda docs, lessons: (docs / "assets" / "og-image.png").unlink(), "share image"),
+    (lambda docs, lessons: _edit_lesson(lessons, description="x" * 161), "161 chars"),
+    (lambda docs, lessons: _edit_lesson(lessons, keywords=[]), "no keywords"),
+    (lambda docs, lessons: _append(docs / "about.html", '<link rel="canonical" href="x" />'),
      'one rel="canonical"'),
-    (lambda d, l: _append(d / "about.html", '<meta property="og:title" content="x" />'),
+    (lambda docs, lessons: _append(docs / "about.html", '<meta property="og:title" content="x" />'),
      'one property="og:title"'),
 ])
 def test_each_check_fails_on_its_defect(site, break_it, message):
