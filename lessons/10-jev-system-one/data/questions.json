@@ -1,0 +1,92 @@
+{
+  "insurance": {
+    "line": {
+      "type": "choice",
+      "instructions": "Which line of insurance is this call about?",
+      "criteria": {
+        "auto": "Cars and other vehicles: accidents, theft, glass, breakdown",
+        "home": "House and contents: water, fire, storm, burglary",
+        "health": "Medical and dental treatment and invoices",
+        "travel": "Trips: luggage, cancellations, trouble abroad",
+        "life": "Life policies: death claims, beneficiaries"
+      }
+    },
+    "intent": {
+      "type": "choice",
+      "instructions": "What does the caller want from this call?",
+      "criteria": {
+        "new_claim": "Reports a loss or sends in a bill to be paid",
+        "claim_status": "Asks where an existing claim stands",
+        "coverage_question": "Asks whether or how something is covered, without claiming yet",
+        "complaint": "Complains about price, service or a decision",
+        "cancel_policy": "Wants to end the policy"
+      }
+    },
+    "severity": {
+      "type": "score",
+      "instructions": "How serious is the damage, loss or harm described in this call, judged by what happened and not by the caller's tone?",
+      "criteria": [
+        "none",
+        "minor",
+        "moderate",
+        "major",
+        "catastrophic"
+      ]
+    },
+    "emergency": {
+      "type": "noul",
+      "instructions": "Does someone need help right now?",
+      "criteria": {
+        "true": "A person is injured, in danger, stranded or unsafe at this moment",
+        "false": "Nobody needs immediate help"
+      }
+    },
+    "fraud_signals": {
+      "type": "noul",
+      "instructions": "Does the caller's story have warning signs of a dishonest claim?",
+      "criteria": {
+        "true": "For example: no report or receipts, a very new policy, repeated similar losses, pressure for fast cash, payment to someone else",
+        "false": "The story is consistent and documented, or there is no claim at all"
+      }
+    },
+    "needs_adjuster": {
+      "type": "noul",
+      "instructions": "Does a human claims adjuster need to assess this?",
+      "criteria": {
+        "true": "A large, complex or disputed loss that someone must inspect or review",
+        "false": "Small and documented, or no claim to assess"
+      }
+    }
+  },
+  "media": {
+    "topic": {
+      "type": "choice",
+      "instructions": "What is this call to the newspaper about?",
+      "criteria": {
+        "delivery": "The printed paper: late, missing, wet, address change, holiday pause",
+        "billing": "Charges, prices, payment methods, discounts",
+        "digital_access": "The app or website: login, paywall, devices",
+        "cancel": "Ending the subscription",
+        "editorial": "What the paper printed: errors, opinions, the crossword",
+        "advertising": "Placing an advert or notice"
+      }
+    },
+    "churn_risk": {
+      "type": "score",
+      "instructions": "How likely is this subscriber to leave soon, judged by what they say they will do and not by how loudly they say it?",
+      "criteria": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "wants_refund": {
+      "type": "noul",
+      "instructions": "Does the caller ask for money back or a credit?",
+      "criteria": {
+        "true": "Asks for a refund, a credit or the difference back",
+        "false": "Does not ask for money back"
+      }
+    }
+  }
+}

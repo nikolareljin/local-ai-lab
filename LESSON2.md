@@ -10,7 +10,7 @@
 > **Source:** https://github.com/nikolareljin/local-ai-lab · the working server is [`mcp_server.py`](./mcp_server.py)
 > **Time:** ~30-45 min · **Prerequisites:** Lesson 1 · full objectives in [SYLLABUS.md](./SYLLABUS.md)
 >
-> **Lessons:** [1 · RAG](./LESSON1.md) → **2 · MCP (you are here)** → [3 · Hybrid retrieval](./lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](./lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](./lessons/05-rag-evaluation-regression-testing/README.md) → 6 · Repo assistant → 7 · LangChain → ... → 15 · Docs from changes
+> **Lessons:** [1 · RAG](./LESSON1.md) → **2 · MCP (you are here)** → [3 · Hybrid retrieval](./lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](./lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](./lessons/05-rag-evaluation-regression-testing/README.md) → 6 · Repo assistant → 7 · LangChain → ... → 16 · Docs from changes
 >
 > **Status: complete & working.** Runnable code: [`mcp_server.py`](./mcp_server.py), tested by
 > [`tests/test_mcp.py`](./tests/test_mcp.py). Runs 100% locally.
@@ -246,8 +246,8 @@ retriever, reachable from any MCP host.
 | `claude mcp add` | registers it so Claude Code can call it |
 
 > **The through-line:** `search_docs` is the same capability you'll rebuild in every later lesson -
-> as an [Ollama function call](./lessons/09-ollama-function-calling/README.md), a [Semantic Kernel plugin](./roadmap/LESSON10-semantic-kernel.md), a
-> [Bedrock action group](./roadmap/LESSON11-bedrock.md), and a [Google ADK tool](./roadmap/LESSON12-google-adk.md). Master the primitive
+> as an [Ollama function call](./lessons/09-ollama-function-calling/README.md), a [Semantic Kernel plugin](./roadmap/LESSON11-semantic-kernel.md), a
+> [Bedrock action group](./roadmap/LESSON12-bedrock.md), and a [Google ADK tool](./roadmap/LESSON13-google-adk.md). Master the primitive
 > once; the frameworks are just wrappers.
 
 ## Exercises

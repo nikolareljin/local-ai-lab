@@ -1,0 +1,96 @@
+Lesson 10 · Jev and System One models - Kestrel Mutual claims line: 36 labelled fake calls, 6 typed questions
+Replayed from recorded replies: no model, no network. Live: ./run -l 10 live --backend keywords,llm-json,local
+
+engine                             line intent severe  emerg  fraud adjust  typed  brier  action wrong missed  s/call calls
+keywords (rules)                  26/36  31/36  18/36  33/36  32/36  25/36   100%  0.472   21/36     0      4     0.0     0
+LLM writes JSON (qwen3:1.7b)      21/36  33/36  13/36  33/36  30/36  26/36   100%  0.556   19/36     0      6    12.3     1
+Jev-like adapter (qwen3:1.7b)     33/36  16/36  10/36  24/36  21/36  19/36   100%  0.843   14/36     0      5    16.9     6
+Jev-like adapter (qwen3.5:4b)     36/36  34/36  22/36  34/36  35/36  25/36   100%  0.214   28/36     0      1   100.2     6
+TypeSafe Jev (jev-latest)       not recorded - needs TYPESAFE_API_KEY: ./run -l 10 record --backend typesafe
+
+Columns: right/total per question; typed = answers that were a valid option;
+brier = probability error, 0 best, 2 = certain and wrong; action = same action as the
+human labels lead to; wrong = honest callers investigated; missed = suspicious claims not investigated;
+s/call = median seconds; calls = model calls per record.
+
+The traps - the action each engine's answers lead to:
+  K-1004  calm voice, rolled car, broken arm
+    labels         dispatch emergency help
+    keywords       assign adjuster   <- wrong
+    llm-json 1.7b  assign adjuster   <- wrong
+    jev-like 1.7b  dispatch emergency help
+    jev-like 4b    dispatch emergency help
+  K-1005  staged-accident tells
+    labels         special investigations
+    keywords       special investigations
+    llm-json 1.7b  assign adjuster   <- wrong
+    jev-like 1.7b  special investigations
+    jev-like 4b    special investigations
+  K-1006  says 'total loss', means a sandwich
+    labels         self-service answer
+    keywords       self-service answer
+    llm-json 1.7b  self-service answer
+    jev-like 1.7b  self-service answer
+    jev-like 4b    self-service answer
+  K-1009  polite caller, story does not add up
+    labels         special investigations
+    keywords       assign adjuster   <- wrong
+    llm-json 1.7b  assign adjuster   <- wrong
+    jev-like 1.7b  self-service answer   <- wrong
+    jev-like 4b    special investigations
+  K-1012  furious voice, nothing damaged
+    labels         human agent
+    keywords       dispatch emergency help   <- wrong
+    llm-json 1.7b  human agent
+    jev-like 1.7b  self-service answer   <- wrong
+    jev-like 4b    human agent
+  K-1015  a worry, not a claim
+    labels         self-service answer
+    keywords       self-service answer
+    llm-json 1.7b  self-service answer
+    jev-like 1.7b  self-service answer
+    jev-like 4b    self-service answer
+  K-1017  polite caller, story does not add up
+    labels         special investigations
+    keywords       assign adjuster   <- wrong
+    llm-json 1.7b  human agent   <- wrong
+    jev-like 1.7b  human agent   <- wrong
+    jev-like 4b    assign adjuster   <- wrong
+  K-1020  prompt injection, read out loud
+    labels         self-service answer
+    keywords       assign adjuster   <- wrong
+    llm-json 1.7b  self-service answer
+    jev-like 1.7b  self-service answer
+    jev-like 4b    self-service answer
+  K-1021  caller speaks Spanish
+    labels         assign adjuster
+    keywords       fast-track payout   <- wrong
+    llm-json 1.7b  assign adjuster
+    jev-like 1.7b  dispatch emergency help   <- wrong
+    jev-like 4b    dispatch emergency help   <- wrong
+  K-1023  asks about coverage, needs an ambulance
+    labels         dispatch emergency help
+    keywords       dispatch emergency help
+    llm-json 1.7b  self-service answer   <- wrong
+    jev-like 1.7b  dispatch emergency help
+    jev-like 4b    dispatch emergency help
+  K-1026  caller speaks German
+    labels         assign adjuster
+    keywords       fast-track payout   <- wrong
+    llm-json 1.7b  assign adjuster
+    jev-like 1.7b  self-service answer   <- wrong
+    jev-like 4b    assign adjuster
+  K-1031  polite caller, story does not add up
+    labels         special investigations
+    keywords       special investigations
+    llm-json 1.7b  assign adjuster   <- wrong
+    jev-like 1.7b  dispatch emergency help   <- wrong
+    jev-like 4b    special investigations
+
+The threshold is a business decision. 'special investigations' as SIU moves:
+  engine                                       SIU 0.3             SIU 0.6             SIU 0.9
+  keywords (rules)                    0 wrong 4 missed    0 wrong 4 missed    0 wrong 4 missed
+  LLM writes JSON (qwen3:1.7b)        0 wrong 6 missed    0 wrong 6 missed    0 wrong 6 missed
+  Jev-like adapter (qwen3:1.7b)       0 wrong 5 missed    0 wrong 5 missed    0 wrong 5 missed
+  Jev-like adapter (qwen3.5:4b)       0 wrong 0 missed    0 wrong 1 missed    0 wrong 3 missed
+  Rules and JSON answers are always 0 or 1, so the knob does nothing for them.

@@ -1,0 +1,8 @@
+# Lesson 10 installs nothing for the demo, the tests or the local adapter.
+#
+# The System One client (python/systemone.py) and the adapter server use only the
+# standard library. The playground (python/web.py) uses Flask, which the course
+# already depends on (root requirements.txt).
+#
+# Optional, not installed here: TypeSafe's official SDK, pinned with hashes in
+# requirements-sdk.txt and installed into its own venv by ./run -l 10 install-sdk.

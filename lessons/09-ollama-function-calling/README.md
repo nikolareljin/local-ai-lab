@@ -11,7 +11,7 @@
 > **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
 > **Time:** ~60-75 min · **Prerequisites:** Lesson 1 (Lessons 2, 4 and 8 helpful) · full objectives in [SYLLABUS.md](../../SYLLABUS.md)
 >
-> **Lessons:** [1 · RAG](../../LESSON1.md) → [2 · MCP](../../LESSON2.md) → [3 · Hybrid retrieval](../03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../05-rag-evaluation-regression-testing/README.md) → [6 · Repo assistant](../06-repo-aware-assistant/README.md) → [7 · LangChain](../07-langchain-rag/README.md) → [8 · LangGraph](../08-langgraph/README.md) → **9 · Ollama tools (you are here)** → [10 · Semantic Kernel](../../roadmap/LESSON10-semantic-kernel.md) → [11 · Bedrock Agents](../../roadmap/LESSON11-bedrock.md) → [12 · Google ADK](../../roadmap/LESSON12-google-adk.md) → [13 · AI-assisted testing](../../roadmap/LESSON13-ai-assisted-testing.md) → [14 · AI code review](../../roadmap/LESSON14-ai-code-review.md) → [15 · Docs from changes](../../roadmap/LESSON15-docs-from-changes.md)
+> **Lessons:** [1 · RAG](../../LESSON1.md) → [2 · MCP](../../LESSON2.md) → [3 · Hybrid retrieval](../03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../05-rag-evaluation-regression-testing/README.md) → [6 · Repo assistant](../06-repo-aware-assistant/README.md) → [7 · LangChain](../07-langchain-rag/README.md) → [8 · LangGraph](../08-langgraph/README.md) → **9 · Ollama tools (you are here)** → [10 · Jev / System One](../10-jev-system-one/README.md) → [11 · Semantic Kernel](../../roadmap/LESSON11-semantic-kernel.md) → [12 · Bedrock Agents](../../roadmap/LESSON12-bedrock.md) → [13 · Google ADK](../../roadmap/LESSON13-google-adk.md) → [14 · AI-assisted testing](../../roadmap/LESSON14-ai-assisted-testing.md) → [15 · AI code review](../../roadmap/LESSON15-ai-code-review.md) → [16 · Docs from changes](../../roadmap/LESSON16-docs-from-changes.md)
 >
 > **Status: working demo.** Runnable in **Python and Node.js**. **Installs nothing** - the demo runs
 > with no model at all; the live actions need Ollama and one tool-capable model.
@@ -576,7 +576,7 @@ The official clients are thin wrappers over the same endpoint - `pip install oll
 `npm install ollama` - and are worth using once you know what they send. This lesson does not, for
 the same reason Lesson 1 did not start with LangChain.
 
-There is no C# port here. **[Lesson 10](../../roadmap/LESSON10-semantic-kernel.md)** is Semantic
+There is no C# port here. **[Lesson 11](../../roadmap/LESSON11-semantic-kernel.md)** is Semantic
 Kernel, whose *automatic function calling* is this loop with the guards moved into filters - read it
 with this lesson open.
 
@@ -599,7 +599,7 @@ with this lesson open.
   the right-tools score drops. Cassettes make that possible without a GPU in CI.
 - **Trace it.** Each tool call is a natural span. [Lesson 8 Concept 7](../08-langgraph/README.md)
   covers what to use and what leaves the machine.
-- **Frameworks next.** Lessons 10-12 rebuild this on Semantic Kernel, Bedrock Agents and Google ADK.
+- **Frameworks next.** Lessons 11-13 rebuild this on Semantic Kernel, Bedrock Agents and Google ADK.
   Look for where each one puts the guards.
 
 ## Exercises
@@ -634,9 +634,11 @@ with this lesson open.
 
 ## Next lesson
 
-[**Lesson 10 · Microsoft Semantic Kernel (C#) →**](../../roadmap/LESSON10-semantic-kernel.md) - the
-same agent in .NET, where automatic function calling runs this loop for you and the guards become
-filters.
+[**Lesson 10 · Jev and System One models →**](../10-jev-system-one/README.md) - here a model
+chose which tool to call. Lesson 10 asks a model only typed questions and gets back a probability
+for every option, so the decision stays in your code. Then
+[Lesson 11 · Microsoft Semantic Kernel (C#)](../../roadmap/LESSON11-semantic-kernel.md) rebuilds
+this lesson's agent in .NET.
 
 ---
 

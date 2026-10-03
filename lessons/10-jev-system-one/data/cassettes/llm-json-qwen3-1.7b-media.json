@@ -1,0 +1,154 @@
+{
+ "engine": "llm-json",
+ "model": "qwen3:1.7b",
+ "dataset": "media",
+ "recorded": "2026-10-03",
+ "hardware": "Intel Core i5-10310U, 8 threads, 19 GB RAM, no GPU",
+ "prompt_version": "cb8d454a5c06",
+ "calls": {
+  "M-2001": {
+   "digest": "d17258731001552e",
+   "text": "{\n  \"topic\": \"subscriber services\",\n  \"churn_risk\": \"medium\",\n  \"wants_refund\": \"yes\"\n}",
+   "seconds": 7.4,
+   "calls": 1
+  },
+  "M-2002": {
+   "digest": "2ed510375c3e8443",
+   "text": "{\n  \"topic\": \"delivery\",\n  \"churn_risk\": \"medium\",\n  \"wants_refund\": \"yes\"\n}",
+   "seconds": 7.31,
+   "calls": 1
+  },
+  "M-2003": {
+   "digest": "27d3394f5ddd3aea",
+   "text": "{\n  \"topic\": \"delivery\",\n  \"churn_risk\": \"medium\",\n  \"wants_refund\": \"no\"\n}",
+   "seconds": 10.5,
+   "calls": 1
+  },
+  "M-2004": {
+   "digest": "839a2203727de363",
+   "text": "{\n  \"topic\": \"cancel\",\n  \"churn_risk\": \"medium\",\n  \"wants_refund\": \"yes\"\n}",
+   "seconds": 9.05,
+   "calls": 1
+  },
+  "M-2005": {
+   "digest": "b5c5d96ffc86664c",
+   "text": "{\n  \"topic\": \"billing\",\n  \"churn_risk\": \"medium\",\n  \"wants_refund\": \"yes\"\n}",
+   "seconds": 6.92,
+   "calls": 1
+  },
+  "M-2006": {
+   "digest": "a38fa73dc9a6280f",
+   "text": "{\n  \"topic\": \"digital_access\",\n  \"churn_risk\": \"medium\",\n  \"wants_refund\": \"no\"\n}",
+   "seconds": 7.34,
+   "calls": 1
+  },
+  "M-2007": {
+   "digest": "a4a9f60a61c51cd6",
+   "text": "{\n  \"topic\": \"digital_access\",\n  \"churn_risk\": \"high\",\n  \"wants_refund\": \"yes\"\n}",
+   "seconds": 7.18,
+   "calls": 1
+  },
+  "M-2008": {
+   "digest": "1f44a913afb9cdcf",
+   "text": "{\n  \"topic\": \"cancel\",\n  \"churn_risk\": \"low\",\n  \"wants_refund\": \"no\"\n}",
+   "seconds": 7.32,
+   "calls": 1
+  },
+  "M-2009": {
+   "digest": "c8447d09d79bae65",
+   "text": "{\n  \"topic\": \"delivery\",\n  \"churn_risk\": \"medium\",\n  \"wants_refund\": \"no\"\n}",
+   "seconds": 6.35,
+   "calls": 1
+  },
+  "M-2010": {
+   "digest": "692c25c20169cd28",
+   "text": "{\n  \"topic\": \"cancel\",\n  \"churn_risk\": \"medium\",\n  \"wants_refund\": \"no\"\n}",
+   "seconds": 6.2,
+   "calls": 1
+  },
+  "M-2011": {
+   "digest": "0b7675df5d0e633e",
+   "text": "{\n  \"topic\": \"cancel\",\n  \"churn_risk\": \"high\",\n  \"wants_refund\": \"yes\"\n}",
+   "seconds": 7.09,
+   "calls": 1
+  },
+  "M-2012": {
+   "digest": "4654f5e97ec641ca",
+   "text": "{\n  \"topic\": \"editorial\",\n  \"churn_risk\": \"medium\",\n  \"wants_refund\": \"no\"\n}",
+   "seconds": 8.04,
+   "calls": 1
+  },
+  "M-2013": {
+   "digest": "7e45d7867d292af1",
+   "text": "{\n  \"topic\": \"editorial\",\n  \"churn_risk\": \"medium\",\n  \"wants_refund\": \"no\"\n}",
+   "seconds": 8.3,
+   "calls": 1
+  },
+  "M-2014": {
+   "digest": "a9cd9ae698246788",
+   "text": "{\n  \"topic\": \"cancel\",\n  \"churn_risk\": \"medium\",\n  \"wants_refund\": \"yes\"\n}",
+   "seconds": 7.44,
+   "calls": 1
+  },
+  "M-2015": {
+   "digest": "246d80406f5d4356",
+   "text": "{\n  \"topic\": \"advertising\",\n  \"churn_risk\": \"low\",\n  \"wants_refund\": \"no\"\n}",
+   "seconds": 6.57,
+   "calls": 1
+  },
+  "M-2016": {
+   "digest": "c999ca6faeb59105",
+   "text": "{\n  \"topic\": \"advertising\",\n  \"churn_risk\": \"medium\",\n  \"wants_refund\": \"no\"\n}",
+   "seconds": 6.5,
+   "calls": 1
+  },
+  "M-2017": {
+   "digest": "07cbe785ff403dde",
+   "text": "{\n  \"topic\": \"billing\",\n  \"churn_risk\": \"medium\",\n  \"wants_refund\": \"yes\"\n}",
+   "seconds": 6.54,
+   "calls": 1
+  },
+  "M-2018": {
+   "digest": "6621fe56fe220269",
+   "text": "{\n  \"topic\": \"cancel\",\n  \"churn_risk\": \"high\",\n  \"wants_refund\": \"yes\"\n}",
+   "seconds": 6.49,
+   "calls": 1
+  },
+  "M-2019": {
+   "digest": "133f947f65f3031f",
+   "text": "{\n  \"topic\": \"billing\",\n  \"churn_risk\": \"medium\",\n  \"wants_refund\": \"yes\"\n}",
+   "seconds": 6.43,
+   "calls": 1
+  },
+  "M-2020": {
+   "digest": "cc4df64682a12421",
+   "text": "{\n  \"topic\": \"billing\",\n  \"churn_risk\": \"high\",\n  \"wants_refund\": \"no\"\n}",
+   "seconds": 7.34,
+   "calls": 1
+  },
+  "M-2021": {
+   "digest": "cf1ba4b6cded52bf",
+   "text": "{\n  \"topic\": \"billing\",\n  \"churn_risk\": \"medium\",\n  \"wants_refund\": \"yes\"\n}",
+   "seconds": 6.41,
+   "calls": 1
+  },
+  "M-2022": {
+   "digest": "adad36dc956d11e3",
+   "text": "{\n  \"topic\": \"cancel\",\n  \"churn_risk\": \"high\",\n  \"wants_refund\": \"yes\"\n}",
+   "seconds": 6.73,
+   "calls": 1
+  },
+  "M-2023": {
+   "digest": "95d284c7cb60ce30",
+   "text": "{\n  \"topic\": \"digital_access\",\n  \"churn_risk\": \"medium\",\n  \"wants_refund\": \"no\"\n}",
+   "seconds": 6.32,
+   "calls": 1
+  },
+  "M-2024": {
+   "digest": "b27f7d31d4246b24",
+   "text": "{\n  \"topic\": \"digital_access\",\n  \"churn_risk\": \"medium\",\n  \"wants_refund\": \"no\"\n}",
+   "seconds": 6.69,
+   "calls": 1
+  }
+ }
+}

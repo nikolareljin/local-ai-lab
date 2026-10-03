@@ -1,13 +1,13 @@
-# Lesson 12 · Google AI Development Kit (ADK)
+# Lesson 13 · Google AI Development Kit (ADK)
 
-**PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON12.pdf) · **Install (Linux · macOS · Windows):** [guide](../INSTALL.md) · [PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)
+**PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON13.pdf) · **Install (Linux · macOS · Windows):** [guide](../INSTALL.md) · [PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)
 
 > **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** - a hands-on course for building local AI.
 >
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 >
-> **Lessons:** [1 · RAG](../LESSON1.md) → [2 · MCP](../LESSON2.md) → [3 · Hybrid retrieval](../lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../lessons/05-rag-evaluation-regression-testing/README.md) → [6 · Repo assistant](../lessons/06-repo-aware-assistant/README.md) → [7 · LangChain](../lessons/07-langchain-rag/README.md) → [8 · LangGraph](../lessons/08-langgraph/README.md) → [9 · Ollama tools](../lessons/09-ollama-function-calling/README.md) → [10 · Semantic Kernel](./LESSON10-semantic-kernel.md) → [11 · Bedrock Agents](./LESSON11-bedrock.md) → **12 · Google ADK (you are here)** → [13 · AI-assisted testing](./LESSON13-ai-assisted-testing.md) → [14 · AI code review](./LESSON14-ai-code-review.md) → [15 · Docs from changes](./LESSON15-docs-from-changes.md)
+> **Lessons:** [1 · RAG](../LESSON1.md) → [2 · MCP](../LESSON2.md) → [3 · Hybrid retrieval](../lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../lessons/05-rag-evaluation-regression-testing/README.md) → [6 · Repo assistant](../lessons/06-repo-aware-assistant/README.md) → [7 · LangChain](../lessons/07-langchain-rag/README.md) → [8 · LangGraph](../lessons/08-langgraph/README.md) → [9 · Ollama tools](../lessons/09-ollama-function-calling/README.md) → [10 · Jev / System One](../lessons/10-jev-system-one/README.md) → [11 · Semantic Kernel](./LESSON11-semantic-kernel.md) → [12 · Bedrock Agents](./LESSON12-bedrock.md) → **13 · Google ADK (you are here)** → [14 · AI-assisted testing](./LESSON14-ai-assisted-testing.md) → [15 · AI code review](./LESSON15-ai-code-review.md) → [16 · Docs from changes](./LESSON16-docs-from-changes.md)
 >
 > **Status: planned.** Outline below; full published slideshow lesson + step-by-step coming later.
 > ADK **runs locally** (`adk run` / `adk web`) against Gemini. ⭐ the repo to follow along.
@@ -61,8 +61,8 @@ root_agent = Agent(
 |---------|------|
 | `search_docs` retriever tool | [Lesson 1](../LESSON1.md) |
 | function/tool calling | [Lesson 9](../lessons/09-ollama-function-calling/README.md) |
-| agent frameworks compared | [Lessons 7](../lessons/07-langchain-rag/README.md), [8](../lessons/08-langgraph/README.md), [10](./LESSON10-semantic-kernel.md) |
-| **ADK agents, tools, runners, eval** | **Lesson 12 (this one)** |
+| agent frameworks compared | [Lessons 7](../lessons/07-langchain-rag/README.md), [8](../lessons/08-langgraph/README.md), [11](./LESSON11-semantic-kernel.md) |
+| **ADK agents, tools, runners, eval** | **Lesson 13 (this one)** |
 
 ## Prerequisites
 
@@ -79,7 +79,7 @@ The last three lessons stop building agents and start pointing them at your own 
 
 ## Next lesson
 
-[**Lesson 13 · AI-Assisted Testing →**](./LESSON13-ai-assisted-testing.md) - generate tests from a
+[**Lesson 14 · AI-Assisted Testing →**](./LESSON14-ai-assisted-testing.md) - generate tests from a
 change, run them, and let the failure guide the fix.
 
 ---

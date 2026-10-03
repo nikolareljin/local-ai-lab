@@ -1,13 +1,13 @@
-# Lesson 14 · AI Code Review & Issue Detection
+# Lesson 15 · AI Code Review & Issue Detection
 
-**PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON14.pdf) · **Install (Linux · macOS · Windows):** [guide](../INSTALL.md) · [PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)
+**PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON15.pdf) · **Install (Linux · macOS · Windows):** [guide](../INSTALL.md) · [PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)
 
 > **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** - a hands-on course for building local AI.
 >
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 >
-> **Lessons:** [1 · RAG](../LESSON1.md) → [2 · MCP](../LESSON2.md) → [3 · Hybrid retrieval](../lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../lessons/05-rag-evaluation-regression-testing/README.md) → [6 · Repo assistant](../lessons/06-repo-aware-assistant/README.md) → [7 · LangChain](../lessons/07-langchain-rag/README.md) → [8 · LangGraph](../lessons/08-langgraph/README.md) → [9 · Ollama tools](../lessons/09-ollama-function-calling/README.md) → [10 · Semantic Kernel](./LESSON10-semantic-kernel.md) → [11 · Bedrock Agents](./LESSON11-bedrock.md) → [12 · Google ADK](./LESSON12-google-adk.md) → [13 · AI-assisted testing](./LESSON13-ai-assisted-testing.md) → **14 · AI code review (you are here)** → [15 · Docs from changes](./LESSON15-docs-from-changes.md)
+> **Lessons:** [1 · RAG](../LESSON1.md) → [2 · MCP](../LESSON2.md) → [3 · Hybrid retrieval](../lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../lessons/05-rag-evaluation-regression-testing/README.md) → [6 · Repo assistant](../lessons/06-repo-aware-assistant/README.md) → [7 · LangChain](../lessons/07-langchain-rag/README.md) → [8 · LangGraph](../lessons/08-langgraph/README.md) → [9 · Ollama tools](../lessons/09-ollama-function-calling/README.md) → [10 · Jev / System One](../lessons/10-jev-system-one/README.md) → [11 · Semantic Kernel](./LESSON11-semantic-kernel.md) → [12 · Bedrock Agents](./LESSON12-bedrock.md) → [13 · Google ADK](./LESSON13-google-adk.md) → [14 · AI-assisted testing](./LESSON14-ai-assisted-testing.md) → **15 · AI code review (you are here)** → [16 · Docs from changes](./LESSON16-docs-from-changes.md)
 >
 > **Status: planned.** Outline below; full step-by-step coming later. ⭐ the repo to follow along.
 
@@ -43,7 +43,7 @@ out which one you built is to seed known bugs and count what came back.
 | a pull request is **untrusted input** | [Lesson 4](../lessons/04-rag-safety-prompt-injection/README.md) |
 | repo-aware retrieval with citations | [Lesson 6](../lessons/06-repo-aware-assistant/README.md) |
 | a grade step that can reject its own input | [Lesson 8](../lessons/08-langgraph/README.md) |
-| **precision, and how to measure it** | **Lesson 14 (this one)** |
+| **precision, and how to measure it** | **Lesson 15 (this one)** |
 
 > **Worth saying out loud:** a diff is text written by someone else, and you are about to feed it to a
 > model with tools. Everything Lesson 4 said about poisoned documents applies here, with the added
@@ -56,7 +56,7 @@ repo-aware half. Language-agnostic - the subject is the review, not the syntax.
 
 ## Next lesson
 
-[**Lesson 15 · Documentation from Sprint Changes →**](./LESSON15-docs-from-changes.md)
+[**Lesson 16 · Documentation from Sprint Changes →**](./LESSON16-docs-from-changes.md)
 
 ---
 

@@ -1,0 +1,21 @@
+{
+ "insurance": {
+  "title": "Kestrel Mutual claims line",
+  "short": {
+   "line": "line",
+   "intent": "intent",
+   "severity": "severe",
+   "emergency": "emerg",
+   "fraud_signals": "fraud",
+   "needs_adjuster": "adjust"
+  }
+ },
+ "media": {
+  "title": "The Harbour Ledger subscriber line",
+  "short": {
+   "topic": "topic",
+   "churn_risk": "churn",
+   "wants_refund": "refund"
+  }
+ }
+}

@@ -11,7 +11,7 @@
 > **Author:** [Nik Reljin](https://www.linkedin.com/in/nikolareljin)
 > **Time:** ~45-60 min · **Prerequisites:** Lesson 1 (Lesson 3 helpful) · full objectives in [SYLLABUS.md](../../SYLLABUS.md)
 >
-> **Lessons:** [1 · RAG](../../LESSON1.md) → [2 · MCP](../../LESSON2.md) → [3 · Hybrid retrieval](../03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../05-rag-evaluation-regression-testing/README.md) → [6 · Repo assistant](../06-repo-aware-assistant/README.md) → **7 · LangChain (you are here)** → 8 · LangGraph → ... → 15 · Docs from changes
+> **Lessons:** [1 · RAG](../../LESSON1.md) → [2 · MCP](../../LESSON2.md) → [3 · Hybrid retrieval](../03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../05-rag-evaluation-regression-testing/README.md) → [6 · Repo assistant](../06-repo-aware-assistant/README.md) → **7 · LangChain (you are here)** → 8 · LangGraph → ... → 16 · Docs from changes
 >
 > **Status: working demo.** Runnable in **Python and Node.js**. This is the one lesson that is
 > **not** dependency-free, and that is the measurement - see *Why this lesson installs something* below.
@@ -48,7 +48,7 @@ replaces, because you wrote the equivalent.
 > **Why no C# in this lesson?** LangChain has no official .NET SDK - NuGet's `LangChain` 0.17.1 is an
 > unofficial community port, still pre-1.0. Rebuilding on it would teach you a third party's reading
 > of LangChain rather than LangChain itself. **.NET is not being skipped**: Microsoft's answer to this
-> problem is **Semantic Kernel**, and it gets its own lesson - **Lesson 10** - rather than a footnote
+> problem is **Semantic Kernel**, and it gets its own lesson - **Lesson 11** - rather than a footnote
 > here.
 
 ---
@@ -380,7 +380,7 @@ number this lesson exists to show you.
 There is no C# port because there is no official LangChain for .NET, as the primer at the top said.
 NuGet has `LangChain` 0.17.1, a community port, still pre-1.0, and rebuilding on it would teach you a
 third party's reading of LangChain rather than LangChain. **.NET is not being skipped** - Microsoft's
-answer to this problem is **Semantic Kernel**, and it gets a lesson of its own, **Lesson 10**, where
+answer to this problem is **Semantic Kernel**, and it gets a lesson of its own, **Lesson 11**, where
 it can be taught on its own terms instead of as a LangChain impersonation.
 
 ---

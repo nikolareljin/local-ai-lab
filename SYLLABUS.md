@@ -8,7 +8,7 @@ it's worth the dependency.
 The live lessons run **100% locally** (no Docker). Lessons 1-6 ship in **Python, Node.js, and
 C# / .NET** with byte-identical output; Lesson 7 is Python and Node, because LangChain has no
 official .NET SDK. A few
-roadmap framework tours (Lessons 11-12, AWS Bedrock and Google ADK) reach out to cloud services.
+roadmap framework tours (Lessons 12-13, AWS Bedrock and Google ADK) reach out to cloud services.
 
 - **Course site:** https://nikolareljin.github.io/local-ai-lab/
 - **Curriculum table (status at a glance):** [README](./README.md#curriculum)
@@ -30,11 +30,11 @@ Lessons are grouped into four clusters that build on each other:
 |---------|---------|--------------|
 | **1 · Foundation** | 1-2 | nothing → a working, cited RAG app you expose as a tool |
 | **2 · RAG depth** | 3-6 | "it works" → it's *better*, *safe*, and *measurable* |
-| **3 · Framework tour** | 7-12 | hand-rolled → the same app rebuilt on the major frameworks, compared honestly |
-| **4 · Applied dev workflows** | 13-15 | building AI → using AI in your everyday engineering loop |
+| **3 · Framework tour** | 7-13 | hand-rolled → the same app rebuilt on the major frameworks, compared honestly |
+| **4 · Applied dev workflows** | 14-16 | building AI → using AI in your everyday engineering loop |
 
-**Lessons 1-7 are live and runnable today.** Lessons 8-15 are on the roadmap; the remaining
-framework-tour outlines (8-12) already exist under [`roadmap/`](./roadmap/).
+**Lessons 1-10 are live and runnable today.** Lesson 10 is a special lesson inside the framework
+tour. Lessons 11-16 are on the roadmap, with outlines under [`roadmap/`](./roadmap/).
 
 ## Course prerequisites
 
@@ -103,7 +103,7 @@ abstain instead of guess; produce a plan-before-edit; and extend it to your repo
 ### Cluster 3 · Framework tour
 
 > Each rebuilds the *same* document agent on a major framework and compares the trade-offs against your
-> from-scratch version. **Lessons 7-9 are live**; outlines for 10-12 exist under [`roadmap/`](./roadmap/).
+> from-scratch version. **Lessons 7-10 are live**; outlines for 11-13 exist under [`roadmap/`](./roadmap/).
 
 #### Lesson 7 - Rebuild RAG with LangChain · ✅ live · Python · Node · ≈ 45-60 min
 **Build:** the Lesson 1 pipeline rebuilt on LangChain over the same corpus with the same system
@@ -140,24 +140,36 @@ document from triggering a side effect; recover calls from models that write the
 pick a local model for tool use from measurements on your own hardware.
 **Assumes:** Lesson 1 (Lessons 2, 4 and 8 helpful). Installs nothing.
 
-#### Lesson 10 - Microsoft Semantic Kernel · 🚧 planned · C# / .NET · [outline](./roadmap/LESSON10-semantic-kernel.md)
+#### Lesson 10 - Jev and System One models · ✅ live · special · Python · Node · C# · ≈ 75 min · [README](./lessons/10-jev-system-one/README.md)
+**Build:** one real call to TypeSafe's hosted Jev, then four decision engines behind one API -
+keyword rules, a local LLM asked to write JSON, a local Jev-like adapter that answers typed questions
+with letter probabilities through Ollama, and Jev itself - scored on fake call-center transcripts: 36
+calls to an insurer's claims line (line, intent, severity, emergency, fraud signals, adjuster) and 24
+to a newspaper's subscriber line, plus a policy that turns the probabilities into actions.
+**You'll be able to:** say what a System One model returns and how it differs from an LLM; call the
+System One API by hand and through the pinned official SDK; make a local model imitate the format and
+name what the imitation lacks; keep decisions in a policy with thresholds; and score engines on
+calibration (Brier score) and business cost, not only accuracy.
+**Assumes:** Lesson 1 (Lessons 4, 5 and 9 helpful). The demo installs nothing.
+
+#### Lesson 11 - Microsoft Semantic Kernel · 🚧 planned · C# / .NET · [outline](./roadmap/LESSON11-semantic-kernel.md)
 Rebuild the agent in C# with SK plugins and automatic function calling.
 
-#### Lesson 11 - AWS Bedrock Agents · 🚧 planned · cloud (driven locally) · [outline](./roadmap/LESSON11-bedrock.md)
+#### Lesson 12 - AWS Bedrock Agents · 🚧 planned · cloud (driven locally) · [outline](./roadmap/LESSON12-bedrock.md)
 Map your primitives onto a managed cloud agent: knowledge bases + action groups.
 
-#### Lesson 12 - Google AI Development Kit (ADK) · 🚧 planned · Python · [outline](./roadmap/LESSON12-google-adk.md)
+#### Lesson 13 - Google AI Development Kit (ADK) · 🚧 planned · Python · [outline](./roadmap/LESSON13-google-adk.md)
 Build and run a Gemini agent locally with Google's open-source ADK.
 
 ### Cluster 4 · Applied dev workflows
 
-#### Lesson 13 - AI-assisted testing · 🚧 planned · Python · Node · .NET · [outline](./roadmap/LESSON13-ai-assisted-testing.md)
+#### Lesson 14 - AI-assisted testing · 🚧 planned · Python · Node · .NET · [outline](./roadmap/LESSON14-ai-assisted-testing.md)
 Generate, run, and review tests, and let failures guide the fix.
 
-#### Lesson 14 - AI code review & issue detection · 🚧 planned · language-agnostic · [outline](./roadmap/LESSON14-ai-code-review.md)
+#### Lesson 15 - AI code review & issue detection · 🚧 planned · language-agnostic · [outline](./roadmap/LESSON15-ai-code-review.md)
 Use AI to catch the serious issues in review - real bugs, security, risky changes.
 
-#### Lesson 15 - Documentation from sprint changes · 🚧 planned · language-agnostic · [outline](./roadmap/LESSON15-docs-from-changes.md)
+#### Lesson 16 - Documentation from sprint changes · 🚧 planned · language-agnostic · [outline](./roadmap/LESSON16-docs-from-changes.md)
 Generate release notes and docs straight from a sprint's commits and pull requests.
 
 ---
@@ -177,10 +189,11 @@ Read down the **Requires** column to see what to finish first.
 | 7 · LangChain | 1 | 3 |
 | 8 · LangGraph | 1 | 2, 7 |
 | 9 · Ollama + function calling | 1 | 2, 4, 8 |
-| 10 · Semantic Kernel | 1 | 9 |
-| 11 · Bedrock Agents | 1 | 8, 9 |
-| 12 · Google ADK | 1 | 9 |
-| 13-15 · Applied workflows | 1 | - |
+| 10 · Jev and System One models | 1 | 4, 5, 9 |
+| 11 · Semantic Kernel | 1 | 9 |
+| 12 · Bedrock Agents | 1 | 8, 9 |
+| 13 · Google ADK | 1 | 9 |
+| 14-16 · Applied workflows | 1 | - |
 
 **Lesson 1 is the spine of the whole course** - its retriever and provider abstraction are reused,
 in one form or another, by every lesson after it.

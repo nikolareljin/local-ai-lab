@@ -1,0 +1,1114 @@
+{
+ "engine": "local",
+ "model": "qwen3:1.7b",
+ "dataset": "media",
+ "recorded": "2026-10-03",
+ "hardware": "Intel Core i5-10310U, 8 threads, 19 GB RAM, no GPU",
+ "prompt_version": "aa9e70749b3d",
+ "calls": {
+  "M-2001": {
+   "digest": "d17258731001552e",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "topic": {
+      "type": "choice",
+      "choice": "delivery",
+      "probabilities": {
+       "delivery": 1.0,
+       "billing": 0.0,
+       "digital_access": 0.0,
+       "cancel": 0.0,
+       "editorial": 0.0,
+       "advertising": 0.0
+      },
+      "confidence": 1.0
+     },
+     "churn_risk": {
+      "type": "score",
+      "score": 1.7232,
+      "legend": {
+       "0": "low",
+       "1": "medium",
+       "2": "high"
+      },
+      "probabilities": {
+       "0": 0.1158,
+       "1": 0.0452,
+       "2": 0.839
+      },
+      "confidence": 0.839
+     },
+     "wants_refund": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 3
+    }
+   },
+   "seconds": 9.78,
+   "calls": 3
+  },
+  "M-2002": {
+   "digest": "2ed510375c3e8443",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "topic": {
+      "type": "choice",
+      "choice": "delivery",
+      "probabilities": {
+       "delivery": 1.0,
+       "billing": 0.0,
+       "digital_access": 0.0,
+       "cancel": 0.0,
+       "editorial": 0.0,
+       "advertising": 0.0
+      },
+      "confidence": 1.0
+     },
+     "churn_risk": {
+      "type": "score",
+      "score": 1.4318,
+      "legend": {
+       "0": "low",
+       "1": "medium",
+       "2": "high"
+      },
+      "probabilities": {
+       "0": 0.0002,
+       "1": 0.5678,
+       "2": 0.432
+      },
+      "confidence": 0.5678
+     },
+     "wants_refund": {
+      "type": "noul",
+      "noul": 1.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 3
+    }
+   },
+   "seconds": 8.23,
+   "calls": 3
+  },
+  "M-2003": {
+   "digest": "27d3394f5ddd3aea",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "topic": {
+      "type": "choice",
+      "choice": "editorial",
+      "probabilities": {
+       "delivery": 0.1222,
+       "billing": 0.0001,
+       "digital_access": 0.0,
+       "cancel": 0.0,
+       "editorial": 0.8777,
+       "advertising": 0.0
+      },
+      "confidence": 0.8777
+     },
+     "churn_risk": {
+      "type": "score",
+      "score": 1.8716,
+      "legend": {
+       "0": "low",
+       "1": "medium",
+       "2": "high"
+      },
+      "probabilities": {
+       "0": 0.027,
+       "1": 0.0744,
+       "2": 0.8986
+      },
+      "confidence": 0.8986
+     },
+     "wants_refund": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 3
+    }
+   },
+   "seconds": 9.3,
+   "calls": 3
+  },
+  "M-2004": {
+   "digest": "839a2203727de363",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "topic": {
+      "type": "choice",
+      "choice": "cancel",
+      "probabilities": {
+       "delivery": 0.0,
+       "billing": 0.0,
+       "digital_access": 0.0,
+       "cancel": 1.0,
+       "editorial": 0.0,
+       "advertising": 0.0
+      },
+      "confidence": 1.0
+     },
+     "churn_risk": {
+      "type": "score",
+      "score": 1.9987,
+      "legend": {
+       "0": "low",
+       "1": "medium",
+       "2": "high"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 0.0013,
+       "2": 0.9987
+      },
+      "confidence": 0.9987
+     },
+     "wants_refund": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 3
+    }
+   },
+   "seconds": 9.92,
+   "calls": 3
+  },
+  "M-2005": {
+   "digest": "b5c5d96ffc86664c",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "topic": {
+      "type": "choice",
+      "choice": "billing",
+      "probabilities": {
+       "delivery": 0.0,
+       "billing": 1.0,
+       "digital_access": 0.0,
+       "cancel": 0.0,
+       "editorial": 0.0,
+       "advertising": 0.0
+      },
+      "confidence": 1.0
+     },
+     "churn_risk": {
+      "type": "score",
+      "score": 1.9025,
+      "legend": {
+       "0": "low",
+       "1": "medium",
+       "2": "high"
+      },
+      "probabilities": {
+       "0": 0.0004,
+       "1": 0.0967,
+       "2": 0.9029
+      },
+      "confidence": 0.9029
+     },
+     "wants_refund": {
+      "type": "noul",
+      "noul": 1.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 3
+    }
+   },
+   "seconds": 9.62,
+   "calls": 3
+  },
+  "M-2006": {
+   "digest": "a38fa73dc9a6280f",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "topic": {
+      "type": "choice",
+      "choice": "digital_access",
+      "probabilities": {
+       "delivery": 0.0,
+       "billing": 0.0,
+       "digital_access": 1.0,
+       "cancel": 0.0,
+       "editorial": 0.0,
+       "advertising": 0.0
+      },
+      "confidence": 1.0
+     },
+     "churn_risk": {
+      "type": "score",
+      "score": 0.001,
+      "legend": {
+       "0": "low",
+       "1": "medium",
+       "2": "high"
+      },
+      "probabilities": {
+       "0": 0.9995,
+       "1": 0.0,
+       "2": 0.0005
+      },
+      "confidence": 0.9995
+     },
+     "wants_refund": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 3
+    }
+   },
+   "seconds": 8.29,
+   "calls": 3
+  },
+  "M-2007": {
+   "digest": "a4a9f60a61c51cd6",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "topic": {
+      "type": "choice",
+      "choice": "digital_access",
+      "probabilities": {
+       "delivery": 0.0,
+       "billing": 0.0,
+       "digital_access": 1.0,
+       "cancel": 0.0,
+       "editorial": 0.0,
+       "advertising": 0.0
+      },
+      "confidence": 1.0
+     },
+     "churn_risk": {
+      "type": "score",
+      "score": 2.0,
+      "legend": {
+       "0": "low",
+       "1": "medium",
+       "2": "high"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 0.0,
+       "2": 1.0
+      },
+      "confidence": 1.0
+     },
+     "wants_refund": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 3
+    }
+   },
+   "seconds": 8.32,
+   "calls": 3
+  },
+  "M-2008": {
+   "digest": "1f44a913afb9cdcf",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "topic": {
+      "type": "choice",
+      "choice": "cancel",
+      "probabilities": {
+       "delivery": 0.0,
+       "billing": 0.0,
+       "digital_access": 0.0,
+       "cancel": 1.0,
+       "editorial": 0.0,
+       "advertising": 0.0
+      },
+      "confidence": 1.0
+     },
+     "churn_risk": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "low",
+       "1": "medium",
+       "2": "high"
+      },
+      "probabilities": {
+       "0": 0.0001,
+       "1": 0.9999,
+       "2": 0.0001
+      },
+      "confidence": 0.9999
+     },
+     "wants_refund": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 3
+    }
+   },
+   "seconds": 9.18,
+   "calls": 3
+  },
+  "M-2009": {
+   "digest": "c8447d09d79bae65",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "topic": {
+      "type": "choice",
+      "choice": "delivery",
+      "probabilities": {
+       "delivery": 1.0,
+       "billing": 0.0,
+       "digital_access": 0.0,
+       "cancel": 0.0,
+       "editorial": 0.0,
+       "advertising": 0.0
+      },
+      "confidence": 1.0
+     },
+     "churn_risk": {
+      "type": "score",
+      "score": 1.9344,
+      "legend": {
+       "0": "low",
+       "1": "medium",
+       "2": "high"
+      },
+      "probabilities": {
+       "0": 0.0001,
+       "1": 0.0654,
+       "2": 0.9345
+      },
+      "confidence": 0.9345
+     },
+     "wants_refund": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 3
+    }
+   },
+   "seconds": 8.23,
+   "calls": 3
+  },
+  "M-2010": {
+   "digest": "692c25c20169cd28",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "topic": {
+      "type": "choice",
+      "choice": "delivery",
+      "probabilities": {
+       "delivery": 1.0,
+       "billing": 0.0,
+       "digital_access": 0.0,
+       "cancel": 0.0,
+       "editorial": 0.0,
+       "advertising": 0.0
+      },
+      "confidence": 1.0
+     },
+     "churn_risk": {
+      "type": "score",
+      "score": 1.8462,
+      "legend": {
+       "0": "low",
+       "1": "medium",
+       "2": "high"
+      },
+      "probabilities": {
+       "0": 0.0005,
+       "1": 0.1528,
+       "2": 0.8467
+      },
+      "confidence": 0.8467
+     },
+     "wants_refund": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 3
+    }
+   },
+   "seconds": 7.75,
+   "calls": 3
+  },
+  "M-2011": {
+   "digest": "0b7675df5d0e633e",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "topic": {
+      "type": "choice",
+      "choice": "billing",
+      "probabilities": {
+       "delivery": 0.0,
+       "billing": 1.0,
+       "digital_access": 0.0,
+       "cancel": 0.0,
+       "editorial": 0.0,
+       "advertising": 0.0
+      },
+      "confidence": 1.0
+     },
+     "churn_risk": {
+      "type": "score",
+      "score": 2.0,
+      "legend": {
+       "0": "low",
+       "1": "medium",
+       "2": "high"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 0.0,
+       "2": 1.0
+      },
+      "confidence": 1.0
+     },
+     "wants_refund": {
+      "type": "noul",
+      "noul": 1.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 3
+    }
+   },
+   "seconds": 10.04,
+   "calls": 3
+  },
+  "M-2012": {
+   "digest": "4654f5e97ec641ca",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "topic": {
+      "type": "choice",
+      "choice": "editorial",
+      "probabilities": {
+       "delivery": 0.0,
+       "billing": 0.0,
+       "digital_access": 0.0,
+       "cancel": 0.0,
+       "editorial": 1.0,
+       "advertising": 0.0
+      },
+      "confidence": 1.0
+     },
+     "churn_risk": {
+      "type": "score",
+      "score": 1.02,
+      "legend": {
+       "0": "low",
+       "1": "medium",
+       "2": "high"
+      },
+      "probabilities": {
+       "0": 0.0055,
+       "1": 0.969,
+       "2": 0.0255
+      },
+      "confidence": 0.969
+     },
+     "wants_refund": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 3
+    }
+   },
+   "seconds": 9.58,
+   "calls": 3
+  },
+  "M-2013": {
+   "digest": "7e45d7867d292af1",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "topic": {
+      "type": "choice",
+      "choice": "editorial",
+      "probabilities": {
+       "delivery": 0.0,
+       "billing": 0.0,
+       "digital_access": 0.0,
+       "cancel": 0.0,
+       "editorial": 1.0,
+       "advertising": 0.0
+      },
+      "confidence": 1.0
+     },
+     "churn_risk": {
+      "type": "score",
+      "score": 2.0,
+      "legend": {
+       "0": "low",
+       "1": "medium",
+       "2": "high"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 0.0,
+       "2": 1.0
+      },
+      "confidence": 1.0
+     },
+     "wants_refund": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 3
+    }
+   },
+   "seconds": 9.0,
+   "calls": 3
+  },
+  "M-2014": {
+   "digest": "a9cd9ae698246788",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "topic": {
+      "type": "choice",
+      "choice": "editorial",
+      "probabilities": {
+       "delivery": 0.0,
+       "billing": 0.0,
+       "digital_access": 0.0,
+       "cancel": 0.0,
+       "editorial": 1.0,
+       "advertising": 0.0
+      },
+      "confidence": 1.0
+     },
+     "churn_risk": {
+      "type": "score",
+      "score": 1.0001,
+      "legend": {
+       "0": "low",
+       "1": "medium",
+       "2": "high"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 0.9999,
+       "2": 0.0001
+      },
+      "confidence": 0.9999
+     },
+     "wants_refund": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 3
+    }
+   },
+   "seconds": 9.36,
+   "calls": 3
+  },
+  "M-2015": {
+   "digest": "246d80406f5d4356",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "topic": {
+      "type": "choice",
+      "choice": "advertising",
+      "probabilities": {
+       "delivery": 0.0,
+       "billing": 0.0,
+       "digital_access": 0.0,
+       "cancel": 0.0,
+       "editorial": 0.0,
+       "advertising": 1.0
+      },
+      "confidence": 1.0
+     },
+     "churn_risk": {
+      "type": "score",
+      "score": 1.0023,
+      "legend": {
+       "0": "low",
+       "1": "medium",
+       "2": "high"
+      },
+      "probabilities": {
+       "0": 0.0003,
+       "1": 0.997,
+       "2": 0.0027
+      },
+      "confidence": 0.997
+     },
+     "wants_refund": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 3
+    }
+   },
+   "seconds": 8.01,
+   "calls": 3
+  },
+  "M-2016": {
+   "digest": "c999ca6faeb59105",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "topic": {
+      "type": "choice",
+      "choice": "advertising",
+      "probabilities": {
+       "delivery": 0.0,
+       "billing": 0.0,
+       "digital_access": 0.0,
+       "cancel": 0.0,
+       "editorial": 0.0,
+       "advertising": 1.0
+      },
+      "confidence": 1.0
+     },
+     "churn_risk": {
+      "type": "score",
+      "score": 1.2562,
+      "legend": {
+       "0": "low",
+       "1": "medium",
+       "2": "high"
+      },
+      "probabilities": {
+       "0": 0.0001,
+       "1": 0.7437,
+       "2": 0.2563
+      },
+      "confidence": 0.7437
+     },
+     "wants_refund": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 3
+    }
+   },
+   "seconds": 7.89,
+   "calls": 3
+  },
+  "M-2017": {
+   "digest": "07cbe785ff403dde",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "topic": {
+      "type": "choice",
+      "choice": "delivery",
+      "probabilities": {
+       "delivery": 1.0,
+       "billing": 0.0,
+       "digital_access": 0.0,
+       "cancel": 0.0,
+       "editorial": 0.0,
+       "advertising": 0.0
+      },
+      "confidence": 1.0
+     },
+     "churn_risk": {
+      "type": "score",
+      "score": 1.4876,
+      "legend": {
+       "0": "low",
+       "1": "medium",
+       "2": "high"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 0.5123,
+       "2": 0.4876
+      },
+      "confidence": 0.5123
+     },
+     "wants_refund": {
+      "type": "noul",
+      "noul": 0.0211
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 3
+    }
+   },
+   "seconds": 8.25,
+   "calls": 3
+  },
+  "M-2018": {
+   "digest": "6621fe56fe220269",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "topic": {
+      "type": "choice",
+      "choice": "cancel",
+      "probabilities": {
+       "delivery": 0.0,
+       "billing": 0.0,
+       "digital_access": 0.0,
+       "cancel": 1.0,
+       "editorial": 0.0,
+       "advertising": 0.0
+      },
+      "confidence": 1.0
+     },
+     "churn_risk": {
+      "type": "score",
+      "score": 1.0216,
+      "legend": {
+       "0": "low",
+       "1": "medium",
+       "2": "high"
+      },
+      "probabilities": {
+       "0": 0.0001,
+       "1": 0.9783,
+       "2": 0.0216
+      },
+      "confidence": 0.9783
+     },
+     "wants_refund": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 3
+    }
+   },
+   "seconds": 8.01,
+   "calls": 3
+  },
+  "M-2019": {
+   "digest": "133f947f65f3031f",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "topic": {
+      "type": "choice",
+      "choice": "billing",
+      "probabilities": {
+       "delivery": 0.0,
+       "billing": 1.0,
+       "digital_access": 0.0,
+       "cancel": 0.0,
+       "editorial": 0.0,
+       "advertising": 0.0
+      },
+      "confidence": 1.0
+     },
+     "churn_risk": {
+      "type": "score",
+      "score": 1.0059,
+      "legend": {
+       "0": "low",
+       "1": "medium",
+       "2": "high"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 0.9941,
+       "2": 0.0059
+      },
+      "confidence": 0.9941
+     },
+     "wants_refund": {
+      "type": "noul",
+      "noul": 1.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 3
+    }
+   },
+   "seconds": 8.36,
+   "calls": 3
+  },
+  "M-2020": {
+   "digest": "cc4df64682a12421",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "topic": {
+      "type": "choice",
+      "choice": "editorial",
+      "probabilities": {
+       "delivery": 0.0,
+       "billing": 0.0,
+       "digital_access": 0.0,
+       "cancel": 0.0,
+       "editorial": 1.0,
+       "advertising": 0.0
+      },
+      "confidence": 1.0
+     },
+     "churn_risk": {
+      "type": "score",
+      "score": 2.0,
+      "legend": {
+       "0": "low",
+       "1": "medium",
+       "2": "high"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 0.0,
+       "2": 1.0
+      },
+      "confidence": 1.0
+     },
+     "wants_refund": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 3
+    }
+   },
+   "seconds": 9.21,
+   "calls": 3
+  },
+  "M-2021": {
+   "digest": "cf1ba4b6cded52bf",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "topic": {
+      "type": "choice",
+      "choice": "billing",
+      "probabilities": {
+       "delivery": 0.0,
+       "billing": 1.0,
+       "digital_access": 0.0,
+       "cancel": 0.0,
+       "editorial": 0.0,
+       "advertising": 0.0
+      },
+      "confidence": 1.0
+     },
+     "churn_risk": {
+      "type": "score",
+      "score": 1.9752,
+      "legend": {
+       "0": "low",
+       "1": "medium",
+       "2": "high"
+      },
+      "probabilities": {
+       "0": 0.0003,
+       "1": 0.0242,
+       "2": 0.9755
+      },
+      "confidence": 0.9755
+     },
+     "wants_refund": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 3
+    }
+   },
+   "seconds": 7.91,
+   "calls": 3
+  },
+  "M-2022": {
+   "digest": "adad36dc956d11e3",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "topic": {
+      "type": "choice",
+      "choice": "cancel",
+      "probabilities": {
+       "delivery": 0.0,
+       "billing": 0.0,
+       "digital_access": 0.0,
+       "cancel": 1.0,
+       "editorial": 0.0,
+       "advertising": 0.0
+      },
+      "confidence": 1.0
+     },
+     "churn_risk": {
+      "type": "score",
+      "score": 1.0056,
+      "legend": {
+       "0": "low",
+       "1": "medium",
+       "2": "high"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 0.9944,
+       "2": 0.0056
+      },
+      "confidence": 0.9944
+     },
+     "wants_refund": {
+      "type": "noul",
+      "noul": 1.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 3
+    }
+   },
+   "seconds": 8.48,
+   "calls": 3
+  },
+  "M-2023": {
+   "digest": "95d284c7cb60ce30",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "topic": {
+      "type": "choice",
+      "choice": "digital_access",
+      "probabilities": {
+       "delivery": 0.0,
+       "billing": 0.0,
+       "digital_access": 1.0,
+       "cancel": 0.0,
+       "editorial": 0.0,
+       "advertising": 0.0
+      },
+      "confidence": 1.0
+     },
+     "churn_risk": {
+      "type": "score",
+      "score": 1.34,
+      "legend": {
+       "0": "low",
+       "1": "medium",
+       "2": "high"
+      },
+      "probabilities": {
+       "0": 0.0001,
+       "1": 0.6597,
+       "2": 0.3401
+      },
+      "confidence": 0.6597
+     },
+     "wants_refund": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 3
+    }
+   },
+   "seconds": 7.57,
+   "calls": 3
+  },
+  "M-2024": {
+   "digest": "b27f7d31d4246b24",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "topic": {
+      "type": "choice",
+      "choice": "digital_access",
+      "probabilities": {
+       "delivery": 0.0,
+       "billing": 0.0,
+       "digital_access": 1.0,
+       "cancel": 0.0,
+       "editorial": 0.0,
+       "advertising": 0.0
+      },
+      "confidence": 1.0
+     },
+     "churn_risk": {
+      "type": "score",
+      "score": 1.1987,
+      "legend": {
+       "0": "low",
+       "1": "medium",
+       "2": "high"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 0.8013,
+       "2": 0.1987
+      },
+      "confidence": 0.8013
+     },
+     "wants_refund": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 3
+    }
+   },
+   "seconds": 8.59,
+   "calls": 3
+  }
+ }
+}

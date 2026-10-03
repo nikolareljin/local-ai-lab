@@ -1,13 +1,13 @@
-# Lesson 15 · Documentation from Sprint Changes
+# Lesson 16 · Documentation from Sprint Changes
 
-**PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON15.pdf) · **Install (Linux · macOS · Windows):** [guide](../INSTALL.md) · [PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)
+**PDF:** [this lesson](https://nikolareljin.github.io/local-ai-lab/pdf/LESSON16.pdf) · **Install (Linux · macOS · Windows):** [guide](../INSTALL.md) · [PDF](https://nikolareljin.github.io/local-ai-lab/pdf/INSTALL.pdf)
 
 > **Part of [local-ai-lab](https://nikolareljin.github.io/local-ai-lab/)** - a hands-on course for building local AI.
 >
 > **Course home:** https://nikolareljin.github.io/local-ai-lab/
 > **Source:** https://github.com/nikolareljin/local-ai-lab
 >
-> **Lessons:** [1 · RAG](../LESSON1.md) → [2 · MCP](../LESSON2.md) → [3 · Hybrid retrieval](../lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../lessons/05-rag-evaluation-regression-testing/README.md) → [6 · Repo assistant](../lessons/06-repo-aware-assistant/README.md) → [7 · LangChain](../lessons/07-langchain-rag/README.md) → [8 · LangGraph](../lessons/08-langgraph/README.md) → [9 · Ollama tools](../lessons/09-ollama-function-calling/README.md) → [10 · Semantic Kernel](./LESSON10-semantic-kernel.md) → [11 · Bedrock Agents](./LESSON11-bedrock.md) → [12 · Google ADK](./LESSON12-google-adk.md) → [13 · AI-assisted testing](./LESSON13-ai-assisted-testing.md) → [14 · AI code review](./LESSON14-ai-code-review.md) → **15 · Docs from changes (you are here)**
+> **Lessons:** [1 · RAG](../LESSON1.md) → [2 · MCP](../LESSON2.md) → [3 · Hybrid retrieval](../lessons/03-hybrid-retrieval-reranking/README.md) → [4 · RAG safety](../lessons/04-rag-safety-prompt-injection/README.md) → [5 · RAG evaluation](../lessons/05-rag-evaluation-regression-testing/README.md) → [6 · Repo assistant](../lessons/06-repo-aware-assistant/README.md) → [7 · LangChain](../lessons/07-langchain-rag/README.md) → [8 · LangGraph](../lessons/08-langgraph/README.md) → [9 · Ollama tools](../lessons/09-ollama-function-calling/README.md) → [10 · Jev / System One](../lessons/10-jev-system-one/README.md) → [11 · Semantic Kernel](./LESSON11-semantic-kernel.md) → [12 · Bedrock Agents](./LESSON12-bedrock.md) → [13 · Google ADK](./LESSON13-google-adk.md) → [14 · AI-assisted testing](./LESSON14-ai-assisted-testing.md) → [15 · AI code review](./LESSON15-ai-code-review.md) → **16 · Docs from changes (you are here)**
 >
 > **Status: planned.** Outline below; full step-by-step coming later. ⭐ the repo to follow along.
 
@@ -44,7 +44,7 @@ user-visible changes, and saying so is the correct output rather than a failure.
 | grounded answers with citations | [Lesson 1](../LESSON1.md) |
 | repo-aware retrieval | [Lesson 6](../lessons/06-repo-aware-assistant/README.md) |
 | "is the output any good?" as a tracked number | [Lesson 5](../lessons/05-rag-evaluation-regression-testing/README.md) |
-| **refusing to describe what did not change** | **Lesson 15 (this one)** |
+| **refusing to describe what did not change** | **Lesson 16 (this one)** |
 
 > **The worked example is this repository.** `CHANGELOG.md` and `.github/workflows/release.yml`
 > already turn a changelog section into a tagged release - so the last thing the course does is
@@ -57,7 +57,7 @@ input is your version control, not your source.
 
 ## The end of the course
 
-That is Lesson 15, and the end of the curriculum. Go back to the [syllabus](../SYLLABUS.md) for the
+That is Lesson 16, and the end of the curriculum. Go back to the [syllabus](../SYLLABUS.md) for the
 whole arc - or pick the one thing here you would actually use, and point it at your own repository.
 The last exercise in every lesson has been the same one.
 
