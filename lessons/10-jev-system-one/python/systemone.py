@@ -25,6 +25,7 @@ import hashlib
 import ipaddress
 import json
 import math
+import os
 import socket
 import time
 import urllib.error
@@ -50,6 +51,22 @@ def fsum(values) -> float:
         comp += (total - t) + v if abs(total) >= abs(v) else (v - t) + total
         total = t
     return total + comp
+
+
+def load_typesafe_env(env_file) -> None:
+    """Read TYPESAFE_* lines from the repo's .env, without overriding the environment.
+
+    Only those keys: the rest of .env configures other lessons (a different
+    OLLAMA_MODEL, for one) and must not leak into this one.
+    """
+    try:
+        lines = open(env_file, encoding="utf-8").read().splitlines()
+    except OSError:
+        return
+    for line in lines:
+        key, sep, value = line.strip().partition("=")
+        if sep and key.startswith("TYPESAFE_") and value.strip() and key not in os.environ:
+            os.environ[key] = value.strip().strip('"').strip("'")
 
 
 def options(question: dict) -> list[str]:

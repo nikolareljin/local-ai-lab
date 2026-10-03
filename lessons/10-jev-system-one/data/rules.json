@@ -1,0 +1,293 @@
+{
+ "insurance": {
+  "line": [
+   [
+    "life",
+    [
+     "life policy",
+     "life insurance",
+     "beneficiary",
+     "passed away",
+     "died"
+    ]
+   ],
+   [
+    "travel",
+    [
+     "flight",
+     "luggage",
+     "suitcase",
+     "trip",
+     "holiday",
+     "airport",
+     "abroad"
+    ]
+   ],
+   [
+    "health",
+    [
+     "doctor",
+     "dentist",
+     "hospital",
+     "clinic",
+     "surgery",
+     "medical",
+     "invoice"
+    ]
+   ],
+   [
+    "home",
+    [
+     "house",
+     "roof",
+     "kitchen",
+     "pipe",
+     "burgl",
+     "fence",
+     "garage",
+     "fire"
+    ]
+   ],
+   [
+    "auto",
+    [
+     ""
+    ]
+   ]
+  ],
+  "intent": [
+   [
+    "cancel_policy",
+    [
+     "cancel"
+    ]
+   ],
+   [
+    "complaint",
+    [
+     "complain",
+     "outrageous",
+     "unacceptable",
+     "ombudsman"
+    ]
+   ],
+   [
+    "claim_status",
+    [
+     "claim number",
+     "any news",
+     "what stage",
+     "status"
+    ]
+   ],
+   [
+    "coverage_question",
+    [
+     "does my policy cover",
+     "is that covered",
+     "am i covered",
+     "question"
+    ]
+   ],
+   [
+    "new_claim",
+    [
+     ""
+    ]
+   ]
+  ],
+  "severity": [
+   [
+    "catastrophic",
+    [
+     "total loss",
+     "destroyed",
+     "passed away",
+     "died",
+     "fire"
+    ]
+   ],
+   [
+    "major",
+    [
+     "stolen",
+     "hospital",
+     "broken",
+     "crash"
+    ]
+   ],
+   [
+    "moderate",
+    [
+     "damage",
+     "leak",
+     "smashed"
+    ]
+   ],
+   [
+    "none",
+    [
+     "question",
+     "cancel",
+     "complain"
+    ]
+   ],
+   [
+    "minor",
+    [
+     ""
+    ]
+   ]
+  ],
+  "emergency": [
+   [
+    "yes",
+    [
+     "right now",
+     "urgent",
+     "emergency",
+     "bleeding",
+     "ambulance",
+     "stranded"
+    ]
+   ],
+   [
+    "no",
+    [
+     ""
+    ]
+   ]
+  ],
+  "fraud_signals": [
+   [
+    "yes",
+    [
+     "no receipt",
+     "no police",
+     "cash"
+    ]
+   ],
+   [
+    "no",
+    [
+     ""
+    ]
+   ]
+  ],
+  "needs_adjuster": [
+   [
+    "yes",
+    [
+     "stolen",
+     "fire",
+     "crash",
+     "hospital",
+     "burgl",
+     "passed away"
+    ]
+   ],
+   [
+    "no",
+    [
+     ""
+    ]
+   ]
+  ]
+ },
+ "media": {
+  "topic": [
+   [
+    "cancel",
+    [
+     "cancel"
+    ]
+   ],
+   [
+    "billing",
+    [
+     "charge",
+     "refund",
+     "price",
+     "payment",
+     "card",
+     "discount"
+    ]
+   ],
+   [
+    "digital_access",
+    [
+     "app",
+     "login",
+     "log in",
+     "password",
+     "paywall",
+     "website"
+    ]
+   ],
+   [
+    "editorial",
+    [
+     "article",
+     "column",
+     "crossword",
+     "correction",
+     "editor"
+    ]
+   ],
+   [
+    "advertising",
+    [
+     "advert",
+     "notice",
+     "rates"
+    ]
+   ],
+   [
+    "delivery",
+    [
+     ""
+    ]
+   ]
+  ],
+  "churn_risk": [
+   [
+    "high",
+    [
+     "cancel",
+     "leaving",
+     "competition"
+    ]
+   ],
+   [
+    "medium",
+    [
+     "again",
+     "every single",
+     "disappointed"
+    ]
+   ],
+   [
+    "low",
+    [
+     ""
+    ]
+   ]
+  ],
+  "wants_refund": [
+   [
+    "yes",
+    [
+     "refund",
+     "money back",
+     "credit"
+    ]
+   ],
+   [
+    "no",
+    [
+     ""
+    ]
+   ]
+  ]
+ }
+}

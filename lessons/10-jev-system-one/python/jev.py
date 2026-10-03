@@ -1,17 +1,22 @@
-"""Lesson 10 - Jev and System One models vs a local LLM, on fake support tickets.
+"""Lesson 10 - Jev and System One models vs a local LLM, on two fake call centers.
 
+    python python/jev.py check                     # is this machine ready? (python/check.py)
+    python python/jev.py hello                     # ONE real call to TypeSafe's Jev
+    python python/jev.py race                      # one question: chat model vs one-token answer
     python python/jev.py demo                      # recorded replies; no model, no network
-    python python/jev.py ask "My card was charged twice"   # one ticket, live
-    python python/jev.py live --backend local      # score a backend now
+    python python/jev.py ask "Caller: my car was stolen"   # one call, live
+    python python/jev.py live --backend keywords,llm-json,local   # score engines now
     python python/jev.py record --backend local    # re-record what demo replays
     python python/jev.py serve                     # the Jev-like adapter on 127.0.0.1
+
+Datasets (--dataset): insurance (default), media.
 
 Backends:
   keywords   rules, no model
   llm-json   a local chat model asked to write JSON (Ollama)
-  local      the Jev-like adapter, in process (Ollama, one call per question)
-  typesafe   any System One server: TypeSafe's Jev by default, or the adapter
-             when TYPESAFE_BASE_URL=http://127.0.0.1:8765
+  local      the Jev-like adapter, in process (Ollama, one call per question) - simulated
+  typesafe   TypeSafe's Jev over the internet (TYPESAFE_API_KEY), or any System One
+             server on this machine when TYPESAFE_BASE_URL=http://127.0.0.1:8765
 """
 
 from __future__ import annotations
@@ -22,6 +27,7 @@ import json
 import os
 import platform
 import sys
+import textwrap
 import time
 from pathlib import Path
 
@@ -46,9 +52,13 @@ RECORDED_MODELS = [
 ]
 
 
-def cassette_name(backend: str, model: str, dataset: str = "tickets") -> str:
-    """jev-like-qwen3-1.7b.json for the tickets; other datasets add their name."""
-    suffix = "" if dataset == "tickets" else f"-{dataset}"
+DATASETS = json.loads((DATA / "datasets.json").read_text(encoding="utf-8"))
+DEFAULT_DATASET = "insurance"
+
+
+def cassette_name(backend: str, model: str, dataset: str = DEFAULT_DATASET) -> str:
+    """jev-like-qwen3-1.7b-insurance.json: engine, model and dataset."""
+    suffix = f"-{dataset}"
     if backend == "typesafe":
         return f"typesafe-jev{suffix}.json"
     prefix = {"llm-json": "llm-json", "local": "jev-like"}[backend]
@@ -60,9 +70,6 @@ PROMPT_VERSIONS = {"local": local_adapter.PROMPT_VERSION, "llm-json": engines.PR
                    "typesafe": None}
 
 
-RECORDED = [(backend, cassette_name(backend, model)) for backend, model in RECORDED_MODELS]
-
-
 def load_dataset(name: str) -> tuple[dict, list[dict]]:
     questions = json.loads((DATA / "questions.json").read_text(encoding="utf-8"))[name]
     lines = (DATA / f"{name}.jsonl").read_text(encoding="utf-8").splitlines()
@@ -70,11 +77,11 @@ def load_dataset(name: str) -> tuple[dict, list[dict]]:
 
 
 # --------------------------------------------------------------------------- one backend, one record
-def run_live(backend: str, body: dict, model: str) -> dict:
+def run_live(backend: str, body: dict, model: str, dataset: str = DEFAULT_DATASET) -> dict:
     """Ask one backend about one record. Returns what a cassette stores."""
     started = time.monotonic()
     if backend == "keywords":
-        return {"response": engines.keywords_response(body), "seconds": 0.0, "calls": 0}
+        return {"response": engines.keywords_response(body, dataset), "seconds": 0.0, "calls": 0}
     if backend == "llm-json":
         text = engines.llm_json_text(body, model, OLLAMA_URL)
         return {"text": text, "seconds": time.monotonic() - started, "calls": 1}
@@ -143,7 +150,7 @@ def record(backend: str, dataset: str, model: str, hardware: str, limit: int = 0
     calls = {}
     for i, rec in enumerate(records, 1):
         body = systemone.build_request(rec["text"], questions, wire_model)
-        stored = run_live(backend, body, model)
+        stored = run_live(backend, body, model, dataset)
         stored["seconds"] = round(stored["seconds"], 2)
         calls[rec["id"]] = {"digest": systemone.digest(body), **stored}
         print(f"  {i:>2}/{len(records)} {rec['id']}  {stored['seconds']:.1f}s", flush=True)
@@ -179,31 +186,34 @@ def short_name(backend: str, tape: dict | None) -> str:
 
 def fmt_row(label: str, s: dict, questions: dict) -> str:
     cells = [f"{s['correct'][q]:>2}/{s['n']}" for q in questions]
-    return (f"{label:<34}" + "".join(f"{c:>8}" for c in cells)
+    return (f"{label:<32}" + "".join(f"{c:>7}" for c in cells)
             + f"{s['typed'] * 100 // s['asked']:>6}%{s['brier']:>7.3f}"
-            + f"{s['actions']:>5}/{s['n']}{s['wrong_pages']:>6}{s['missed_pages']:>7}"
+            + f"{s['actions']:>5}/{s['n']}{s['wrong']:>6}{s['missed']:>7}"
             + f"{s['seconds']:>8.1f}{s['calls']:>6}")
 
 
-def header(questions: dict) -> str:
-    short = {"queue": "queue", "urgency": "urgency", "refund_request": "refund",
-             "needs_human": "human"}
-    cols = "".join(f"{short.get(q, q[:7]):>8}" for q in questions)
-    return (f"{'engine':<34}{cols}{'typed':>7}{'brier':>7}{'action':>8}{'wrong':>6}"
-            f"{'missed':>7}{'s/item':>8}{'calls':>6}")
+def header(questions: dict, dataset: str) -> str:
+    short = DATASETS[dataset]["short"]
+    cols = "".join(f"{short[q]:>7}" for q in questions)
+    return (f"{'engine':<32}{cols}{'typed':>7}{'brier':>7}{'action':>8}{'wrong':>6}"
+            f"{'missed':>7}{'s/call':>8}{'calls':>6}")
 
 
-def demo(dataset: str = "tickets", out=None) -> int:
+def demo(dataset: str = DEFAULT_DATASET, out=None) -> int:
     out = out or sys.stdout
     questions, records = load_dataset(dataset)
+    pol = policy.POLICIES[dataset]
+    meta = DATASETS[dataset]
     p = lambda line="": print(line, file=out)  # noqa: E731
-    p(f"Lesson 10 · Jev and System One models - {len(records)} labelled fake {dataset}, "
-      f"{len(questions)} typed questions")
-    p("Replayed from recorded replies: no model, no network. Live: ./run -l 10 live --backend local")
+    p(f"Lesson 10 · Jev and System One models - {meta['title']}: {len(records)} labelled fake "
+      f"calls, {len(questions)} typed questions")
+    p("Replayed from recorded replies: no model, no network. "
+      "Live: ./run -l 10 live --backend keywords,llm-json,local")
     p()
-    p(header(questions))
-    rows = [("keywords", None, {r["id"]: to_run(questions, run_live("keywords", systemone.build_request(
-        r["text"], questions), "")) for r in records})]
+    p(header(questions, dataset))
+    rows = [("keywords", None, {r["id"]: to_run(questions, run_live(
+        "keywords", systemone.build_request(r["text"], questions), "", dataset))
+        for r in records})]
     missing = []
     for backend, model in RECORDED_MODELS:
         file = cassette_name(backend, model, dataset)
@@ -213,45 +223,42 @@ def demo(dataset: str = "tickets", out=None) -> int:
             continue
         rows.append((backend, tape, {r["id"]: to_run(questions, tape["calls"][r["id"]])
                                      for r in records}))
-    scores = {}
     for backend, tape, runs in rows:
-        scores[backend] = scorecard.score(questions, records, runs)
-        p(fmt_row(label_for(backend, tape), scores[backend], questions))
+        p(fmt_row(label_for(backend, tape), scorecard.score(questions, records, runs, pol),
+                  questions))
     for backend, model in missing:
         hint = ("needs TYPESAFE_API_KEY: ./run -l 10 record --backend typesafe"
-                if backend == "typesafe" else f"./run -l 10 record --backend {backend}")
-        hint = hint if backend == "typesafe" else f"{hint} --model {model}"
-        p(f"{label_for(backend, None, model):<34}not recorded - {hint}")
+                if backend == "typesafe" else
+                f"./run -l 10 record --backend {backend} --model {model}")
+        hint += "" if dataset == DEFAULT_DATASET else f" --dataset {dataset}"
+        p(f"{label_for(backend, None, model):<32}not recorded - {hint}")
     p()
-    p("accuracy = right/total per question; typed = answers that were a valid option;")
-    p("brier = probability error, 0 best, 2 = certain and wrong; action = policy matches the")
-    p("labels' action; wrong/missed = pages to on-call; s/item = median seconds; calls = model calls.")
+    p("Columns: right/total per question; typed = answers that were a valid option;")
+    p("brier = probability error, 0 best, 2 = certain and wrong; action = same action as the")
+    p(f"human labels lead to; wrong = {pol.wrong}; missed = {pol.missed};")
+    p("s/call = median seconds; calls = model calls per record.")
 
-    if "queue" in questions:
-        p()
-        p("Where they disagree - the traps (label -> each engine's queue / urgency):")
-        traps = [r for r in records if r["trap"]][:8]
-        for r in traps:
-            p(f"  {r['id']}  {r['trap']}")
-            p(f"    {'labels':<14} {r['labels']['queue']:<13} {r['labels']['urgency']}")
-            for backend, tape, runs in rows:
-                a = runs[r["id"]]["answers"]
-                q = a.get("queue", {}).get("pick", "-")
-                u = a.get("urgency", {}).get("pick", "-")
-                conf = a.get("queue", {}).get("confidence")
-                note = f"  ({conf:.2f})" if conf is not None and backend != "keywords" else ""
-                p(f"    {short_name(backend, tape):<14} {q:<13} {u}{note}")
-
-        p()
-        p("The threshold is a business decision. Pages to on-call as PAGE moves:")
-        p(f"  {'engine':<34}" + "".join(f"{'PAGE ' + format(t, '.1f'):>20}" for t in (0.5, 0.7, 0.9)))
+    p()
+    p("The traps - the action each engine's answers lead to:")
+    for r in [r for r in records if r["trap"]]:
+        want = pol.decide(scorecard.gold_answers(questions, r["labels"]))
+        p(f"  {r['id']}  {r['trap']}")
+        p(f"    {'labels':<14} {want}")
         for backend, tape, runs in rows:
-            cells = []
-            for t in (0.5, 0.7, 0.9):
-                s = scorecard.score(questions, records, runs, page=t)
-                cells.append(f"{s['wrong_pages']} wrong {s['missed_pages']} missed")
-            p(f"  {label_for(backend, tape):<34}" + "".join(f"{c:>20}" for c in cells))
-        p("  Rules and JSON answers are always 0 or 1, so the knob does nothing for them.")
+            got = pol.decide(runs[r["id"]]["answers"])
+            p(f"    {short_name(backend, tape):<14} {got}{'' if got == want else '   <- wrong'}")
+
+    name = pol.knob.upper()
+    p()
+    p(f"The threshold is a business decision. '{pol.watch}' as {name} moves:")
+    p(f"  {'engine':<32}" + "".join(f"{name + ' ' + format(t, '.1f'):>20}" for t in pol.values))
+    for backend, tape, runs in rows:
+        cells = []
+        for t in pol.values:
+            s = scorecard.score(questions, records, runs, pol, knob=t)
+            cells.append(f"{s['wrong']} wrong {s['missed']} missed")
+        p(f"  {label_for(backend, tape):<32}" + "".join(f"{c:>20}" for c in cells))
+    p("  Rules and JSON answers are always 0 or 1, so the knob does nothing for them.")
     return 0
 
 
@@ -278,7 +285,7 @@ def live(backends: list[str], dataset: str, model: str, limit: int, out=None) ->
         try:
             for rec in records:
                 body = systemone.build_request(rec["text"], questions, wire_model)
-                runs[rec["id"]] = to_run(questions, run_live(backend, body, model))
+                runs[rec["id"]] = to_run(questions, run_live(backend, body, model, dataset))
                 bad = runs[rec["id"]]["problems"]
                 print(f"  {rec['id']}  {runs[rec['id']]['seconds']:.1f}s"
                       + (f"  invalid: {', '.join(bad)}" if bad else ""), file=out, flush=True)
@@ -286,11 +293,12 @@ def live(backends: list[str], dataset: str, model: str, limit: int, out=None) ->
             rows.append((label, None, str(err) or type(err).__name__))
             print(f"  skipped: {err}", file=out, flush=True)
             continue
-        rows.append((label, scorecard.score(questions, records, runs), ""))
+        rows.append((label, scorecard.score(questions, records, runs, policy.POLICIES[dataset]),
+                     ""))
     print(file=out)
-    print(header(questions), file=out)
+    print(header(questions, dataset), file=out)
     for label, score, why in rows:
-        print(fmt_row(label, score, questions) if score else f"{label:<34}not run - {why}",
+        print(fmt_row(label, score, questions) if score else f"{label:<32}not run - {why}",
               file=out)
     return 0 if any(score for _l, score, _w in rows) else 1
 
@@ -303,25 +311,197 @@ def parse_backends(text: str) -> list[str]:
     return names
 
 
-def ask(text: str, backend: str, model: str, out=None) -> int:
-    out = out or sys.stdout
-    questions, _ = load_dataset("tickets")
-    wire_model = model if backend != "typesafe" else os.environ.get("TYPESAFE_DEFAULT_MODEL",
-                                                                    "jev-latest")
-    body = systemone.build_request(text, questions, wire_model)
-    run = to_run(questions, run_live(backend, body, model))
-    print(f"{label_for(backend, None, wire_model)}  {run['seconds']:.1f}s, "
-          f"{run['calls']} model call(s)", file=out)
+def print_answers(questions: dict, run: dict, out) -> None:
     for name, q in questions.items():
         a = run["answers"].get(name)
         if a is None:
             print(f"  {name:<15} (no valid answer)", file=out)
             continue
-        probs = "  ".join(f"{k} {v:.2f}" for k, v in a["probs"].items())
-        print(f"  {name:<15} {a['pick']:<13} {probs}", file=out)
+        print(f"  {name:<15} {a['pick']}", file=out)
+        print("      " + "  ".join(f"{k} {v:.2f}" for k, v in a["probs"].items()), file=out)
     for problem in run["problems"]:
         print(f"  ! {problem}", file=out)
-    print(f"  -> action: {policy.decide(run['answers'])}", file=out)
+
+
+def ask(text: str, backend: str, model: str, dataset: str = DEFAULT_DATASET, out=None) -> int:
+    out = out or sys.stdout
+    questions, _ = load_dataset(dataset)
+    wire_model = model if backend != "typesafe" else os.environ.get("TYPESAFE_DEFAULT_MODEL",
+                                                                    "jev-latest")
+    body = systemone.build_request(text, questions, wire_model)
+    run = to_run(questions, run_live(backend, body, model, dataset))
+    print(f"{label_for(backend, None, wire_model)}  {run['seconds']:.1f}s, "
+          f"{run['calls']} model call(s)", file=out)
+    print_answers(questions, run, out)
+    print(f"  -> action: {policy.POLICIES[dataset].decide(run['answers'])}", file=out)
+    return 0
+
+
+# --------------------------------------------------------------------------- race
+RACE_CALL = ("Caller: A pipe has burst upstairs, water is coming through the kitchen ceiling "
+             "and the light fitting is sparking. My mother is in there, she's 84.")
+RACE_QUESTION = "emergency"  # one yes/no question: "Does someone need help right now?"
+
+
+def race_rows(text: str, model: str) -> list[dict]:
+    """Ask one yes/no question two ways (three with a TypeSafe key) and time each.
+
+    Each row: {"engine", "answer", "seconds", "tokens"} plus, for the two local runs,
+    Ollama's own counters: "read_tokens", "read_seconds" (taking in the prompt) and
+    "write_seconds" (producing the answer). The first row is the chat model, the second
+    the one-token adapter. Raises RuntimeError/OSError if Ollama is not there.
+    """
+    question = load_dataset(DEFAULT_DATASET)[0][RACE_QUESTION]
+    ask_text = question["instructions"]
+    # warm-up, not timed: loading the model into memory is not what is being compared
+    engines.chat([{"role": "user", "content": "Say ok."}], model, OLLAMA_URL, num_predict=1)
+    chat = engines.chat([{"role": "user", "content":
+                          f"{text}\n\n{ask_text} Answer yes or no, then say why in one "
+                          f"sentence."}], model, OLLAMA_URL)
+    rows = [{"engine": f"Ollama chat ({model})", **chat,
+             "answer": chat["text"].replace("\n", " ")}]
+    stats: dict = {}
+    started = time.monotonic()
+    answer = local_adapter.answer_one(text, question, model, OLLAMA_URL, stats=stats)
+    rows.append({"engine": f"Jev-like adapter ({model}, simulated)",
+                 "answer": f"P(yes) = {answer['noul']:.2f}",
+                 "seconds": time.monotonic() - started,
+                 "read_tokens": 0, "read_seconds": 0.0, "write_seconds": 0.0, **stats,
+                 "tokens": 1})
+    url = os.environ.get("TYPESAFE_BASE_URL", systemone.TYPESAFE_URL)
+    key = os.environ.get("TYPESAFE_API_KEY", "")
+    if key and not systemone.is_loopback(url):
+        body = systemone.build_request(text, {RACE_QUESTION: question},
+                                       os.environ.get("TYPESAFE_DEFAULT_MODEL", "jev-latest"))
+        try:
+            response, seconds = systemone.post(url, body, key)
+            got, _ = systemone.read_answers({RACE_QUESTION: question}, response)
+            usage = response.get("usage") or {}
+            rows.append({"engine": "TypeSafe Jev (real, over the internet)",
+                         "answer": f"P(yes) = {got[RACE_QUESTION]['probs']['yes']:.2f}",
+                         "seconds": seconds, "tokens": usage.get("output_tokens") or 0,
+                         "read_tokens": usage.get("input_tokens") or 0})
+        except (RuntimeError, ValueError, KeyError) as err:
+            rows.append({"engine": "TypeSafe Jev (real)", "answer": f"did not answer: {err}",
+                         "seconds": 0.0, "tokens": 0})
+    return rows
+
+
+def race_summary(rows: list[dict]) -> list[str]:
+    """What the two local runs show, in plain sentences."""
+    slow, fast = rows[0], rows[1]
+    lines = []
+    if fast["seconds"] > 0:
+        lines.append(f"Total: {slow['seconds']:.2f}s vs {fast['seconds']:.2f}s - the one-token "
+                     f"answer is {slow['seconds'] / fast['seconds']:.1f}x faster here.")
+    lines.append(f"Writing the answer: {slow['tokens']} tokens took {slow['write_seconds']:.2f}s; "
+                 f"1 token took {fast['write_seconds']:.2f}s.")
+    lines.append(f"Reading the prompt: {slow['read_seconds']:.2f}s ({slow['read_tokens']} tokens) "
+                 f"vs {fast['read_seconds']:.2f}s ({fast['read_tokens']} tokens).")
+    lines.append("The adapter's prompt also lists the options, so it reads more.")
+    return lines
+
+
+def race(text: str, model: str, out=None) -> int:
+    """The same yes/no question, asked two ways of the same local model, timed.
+
+    A chat model writes its answer token by token; the Jev-like adapter lets it write
+    one token and reads the probability off it. With a TypeSafe key, the real Jev runs too.
+    """
+    out = out or sys.stdout
+    p = lambda line="": print(line, file=out)  # noqa: E731
+    for i, line in enumerate(textwrap.wrap(text, 88)):
+        p(f"{'Call:' if i == 0 else '':<11}{line}")
+    p(f"Question:  {load_dataset(DEFAULT_DATASET)[0][RACE_QUESTION]['instructions']}")
+    p()
+    try:
+        rows = race_rows(text, model)
+    except (RuntimeError, OSError, ValueError) as err:
+        p(f"Ollama did not answer: {err}")
+        p("Run ./run -l 10 check to see what is missing.")
+        return 1
+    p(f"{'engine':<40}{'answer':<32}{'read':>7}{'write':>7}{'total':>7}{'tokens':>8}")
+    for row in rows:
+        read = f"{row['read_seconds']:.2f}s" if "read_seconds" in row else "-"
+        write = f"{row['write_seconds']:.2f}s" if "write_seconds" in row else "-"
+        answer = row["answer"] if len(row["answer"]) <= 30 else row["answer"][:27] + "..."
+        p(f"{row['engine']:<40}{answer:<32}{read:>7}{write:>7}"
+          f"{row['seconds']:>6.2f}s{row['tokens']:>8}")
+    p()
+    p("What the chat model wrote:")
+    for line in textwrap.wrap(rows[0]["answer"], 96):
+        p(f"  {line}")
+    p()
+    for line in race_summary(rows):
+        p(line)
+    p("That is for ONE question. The adapter needs one model call per question; the real Jev")
+    p("answers up to 64 in a single request.")
+    if not os.environ.get("TYPESAFE_API_KEY"):
+        p("Add the real Jev to this table: export TYPESAFE_API_KEY=...")
+        p("(create a key at https://console.typesafe.ai/keys)")
+    return 0
+
+
+# --------------------------------------------------------------------------- hello
+HELLO_CALL = "K-1004"  # the calm caller in the upside-down car
+
+
+def hello(model: str, out=None) -> int:
+    """ONE real request to TypeSafe's Jev, shown in full: request, response, decision.
+
+    Without TYPESAFE_API_KEY it explains how to get one and sends the same request
+    to the local Jev-like adapter instead, so the lesson never stops here.
+    """
+    out = out or sys.stdout
+    p = lambda line="": print(line, file=out)  # noqa: E731
+    questions, records = load_dataset(DEFAULT_DATASET)
+    rec = next(r for r in records if r["id"] == HELLO_CALL)
+    url = os.environ.get("TYPESAFE_BASE_URL", systemone.TYPESAFE_URL)
+    key = os.environ.get("TYPESAFE_API_KEY", "")
+    real = bool(key) or systemone.is_loopback(url)
+    p(f"One call to the {DATASETS[DEFAULT_DATASET]['title']} ({rec['id']}, fake):")
+    p()
+    for line in rec["text"].splitlines():
+        p(f"    {line}")
+    p()
+    if real:
+        wire_model = os.environ.get("TYPESAFE_DEFAULT_MODEL", "jev-latest")
+        where = "this machine" if systemone.is_loopback(url) else "TypeSafe"
+        p(f"Sending it to {url} ({where}). "
+          + ("" if systemone.is_loopback(url) else "The text leaves this machine; it is fake."))
+        backend, label = "typesafe", f"POST {url}{systemone.SYSTEM_ONE_PATH}"
+    else:
+        wire_model = model
+        p("TYPESAFE_API_KEY is not set, so this is NOT the real Jev.")
+        p("  1. Log in or create an account: https://console.typesafe.ai/playground")
+        p("  2. Create an API key:           https://console.typesafe.ai/keys")
+        p("  3. export TYPESAFE_API_KEY=...  and run ./run -l 10 hello again")
+        p(f"Meanwhile: the same request to the local Jev-like adapter ({model}, simulated).")
+        backend, label = "local", f"local adapter, {len(questions)} Ollama calls"
+    body = systemone.build_request(rec["text"], questions, wire_model)
+    p()
+    p(f"Request, abridged ({label}): model, state, and {len(questions)} typed questions")
+    shown = {"model": body["model"], "state": body["state"][:60] + "...",
+             "questions": {name: {"type": q["type"], "instructions": q["instructions"]}
+                           for name, q in questions.items()}}
+    p(json.dumps(shown, indent=2, ensure_ascii=False))
+    try:
+        stored = run_live(backend, body, model, DEFAULT_DATASET)
+    except (RuntimeError, OSError, ValueError) as err:
+        p()
+        p(f"Could not get an answer: {err}")
+        p("Run ./run -l 10 check to see what is missing.")
+        return 1
+    run = to_run(questions, stored)
+    p()
+    p(f"Response in {run['seconds']:.2f}s, {run['calls']} model call(s)"
+      + (f", usage {json.dumps(stored['response'].get('usage'))}" if real else "") + ":")
+    print_answers(questions, run, out)
+    p()
+    action = policy.POLICIES[DEFAULT_DATASET].decide(run["answers"])
+    p(f"The policy (python/policy.py) turns that into: {action}")
+    p("No text was generated and nothing was parsed: every answer is one of your options,")
+    p("with a probability your code can compare against a threshold.")
     return 0
 
 
@@ -329,7 +509,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Lesson 10: Jev and System One models")
     sub = ap.add_subparsers(dest="command")
     d = sub.add_parser("demo")
-    d.add_argument("--dataset", default="tickets", choices=["tickets", "reviews", "incidents"])
+    d.add_argument("--dataset", default=DEFAULT_DATASET, choices=list(DATASETS))
     for name in ("live", "record"):
         sp = sub.add_parser(name)
         if name == "live":
@@ -337,7 +517,7 @@ def main(argv=None) -> int:
                             help="one or more, comma-separated: " + ",".join(BACKENDS))
         else:
             sp.add_argument("--backend", required=True, choices=BACKENDS)
-        sp.add_argument("--dataset", default="tickets", choices=["tickets", "reviews", "incidents"])
+        sp.add_argument("--dataset", default=DEFAULT_DATASET, choices=list(DATASETS))
         sp.add_argument("--model", default=LOCAL_MODEL)
         sp.add_argument("--limit", type=int, default=0)
         sp.add_argument("--hardware", default=f"{platform.machine()} {os.cpu_count()} threads")
@@ -345,13 +525,28 @@ def main(argv=None) -> int:
     a.add_argument("text")
     a.add_argument("--backend", default="local", choices=BACKENDS)
     a.add_argument("--model", default=LOCAL_MODEL)
+    a.add_argument("--dataset", default=DEFAULT_DATASET, choices=list(DATASETS))
+    h = sub.add_parser("hello")
+    h.add_argument("--model", default=LOCAL_MODEL)
+    sub.add_parser("check")
+    r = sub.add_parser("race")
+    r.add_argument("text", nargs="?", default=RACE_CALL)
+    r.add_argument("--model", default=LOCAL_MODEL)
     s = sub.add_parser("serve")
     s.add_argument("--port", type=int, default=8765)
     s.add_argument("--model", default=LOCAL_MODEL)
     args = ap.parse_args(argv)
+    systemone.load_typesafe_env(LESSON.parents[1] / ".env")
 
     if args.command in (None, "demo"):
-        return demo(getattr(args, "dataset", "tickets"))
+        return demo(getattr(args, "dataset", DEFAULT_DATASET))
+    if args.command == "hello":
+        return hello(args.model)
+    if args.command == "race":
+        return race(args.text, args.model)
+    if args.command == "check":
+        import check
+        return check.main()
     if args.command == "live":
         return live(args.backend, args.dataset, args.model, args.limit)
     if args.command == "record":
@@ -361,7 +556,7 @@ def main(argv=None) -> int:
         print(f"wrote {path.relative_to(LESSON)}")
         return 0
     if args.command == "ask":
-        return ask(args.text, args.backend, args.model)
+        return ask(args.text, args.backend, args.model, args.dataset)
     local_adapter.serve(args.port, args.model, OLLAMA_URL)
     return 0
 

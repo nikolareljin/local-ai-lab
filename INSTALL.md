@@ -199,7 +199,7 @@ ollama pull nomic-embed-text   # embeddings (RAG_RETRIEVER=embeddings)
 | **7 · LangChain** | Python ✓ · Node ✓ | `langchain-core`, `langchain-text-splitters` | `pip install -r lessons/07-langchain-rag/requirements.txt` |
 | **8 · LangGraph** | Python ✓ · Node ✓ | `langgraph` (brings `langchain-core` with it) | `pip install -r lessons/08-langgraph/requirements.txt` |
 | **9 · Ollama + Function Calling** | Python ✓ · Node ✓ | none for `demo`; Ollama + a tool-capable model for live runs | §4 (Ollama) + `ollama pull qwen3:1.7b` |
-| **10 · Jev and System One models** | Python ✓ · Node ✓ · C# ✓ | none for `demo`; Ollama + `qwen3:1.7b` for the local adapter; optional `typesafe-sdk` (hash-pinned) + a TypeSafe key for the real Jev | §4 (Ollama) + `./run -l 10 install-sdk` |
+| **10 · Jev and System One models** | Python ✓ · Node ✓ · C# ✓ | none for `demo`; Ollama + `qwen3:1.7b` for the local session; a [TypeSafe key](https://console.typesafe.ai/keys) for the one real call; optional `typesafe-sdk` (hash-pinned) | §4 (Ollama) + `./run -l 10 check` |
 | **11 · Semantic Kernel** | **C#/.NET** | .NET 8 SDK + SK NuGet | §1 (.NET) + `dotnet add package Microsoft.SemanticKernel` |
 | **12 · AWS Bedrock Agents** | Python | AWS CLI + boto3 | [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) + `pip install boto3` + `aws configure` |
 | **13 · Google ADK** | Python | `google-adk` + Gemini key | `pip install google-adk` + §4 (Gemini) |

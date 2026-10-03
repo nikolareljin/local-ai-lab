@@ -1,7 +1,7 @@
-"""Lesson 10 - the two engines Jev is compared against.
+"""Lesson 10 - the two engines a System One model is compared against.
 
   keywords   a rule list, no model. Lesson 9's router idea: free, instant, and
-             right whenever the customer uses the expected word.
+             right whenever the caller uses the expected word.
   llm-json   the usual way to make an LLM decide: ask a chat model to *write*
              JSON with the answers, then parse what it wrote. No probabilities,
              and nothing guarantees the text is JSON or the values are options.
@@ -17,38 +17,20 @@ import hashlib
 import inspect
 import json
 import re
+import time
 import urllib.request
+from pathlib import Path
 
 import systemone
 
 # --------------------------------------------------------------------------- keywords
-# First matching rule wins, per question. Lower-case substring match. Written from
-# the question criteria in data/questions.json, in English, before looking at any
-# ticket - the way a rule list is written on day one. Tuning it on these 30 tickets
-# would score well here and prove nothing.
-RULES = {
-    "queue": [
-        ("trust_safety", ["security", "hacked", "phishing", "breach", "leak", "abuse", "fraud"]),
-        ("billing", ["charge", "invoice", "refund", "payment", "billing", "card"]),
-        ("account", ["log in", "login", "2fa", "password", "account", "admin", "permission"]),
-        ("sales", ["price", "pricing", "discount", "quote", "licence", "license", "upgrade"]),
-        ("technical", [""]),  # the default queue
-    ],
-    "urgency": [
-        ("critical", ["emergency", "outage", "all customers", "data loss"]),
-        ("high", ["urgent", "asap", "down", "immediately", "now!"]),
-        ("low", ["question", "how do i", "not urgent", "when you can"]),
-        ("medium", [""]),
-    ],
-    "refund_request": [
-        ("yes", ["refund", "money back", "chargeback"]),
-        ("no", [""]),
-    ],
-    "needs_human": [
-        ("yes", ["lawyer", "legal", "gdpr", "security", "emergency", "outage"]),
-        ("no", [""]),
-    ],
-}
+# data/rules.json: per dataset and question, an ordered list of [label, [words]].
+# The first rule with a word in the transcript wins; the last rule is the default.
+# Written from the question criteria in data/questions.json, in English, before
+# reading any call - the way a rule list is written on day one. Tuning it on these
+# calls would score well here and prove nothing.
+RULES = json.loads((Path(__file__).resolve().parents[1] / "data" / "rules.json")
+                   .read_text(encoding="utf-8"))
 
 
 def _rule_pick(text: str, rules: list) -> str:
@@ -59,12 +41,13 @@ def _rule_pick(text: str, rules: list) -> str:
     return rules[-1][0]
 
 
-def keywords_response(body: dict) -> dict:
-    """Answer the ticket questions by keyword. Unknown questions get the first option."""
+def keywords_response(body: dict, dataset: str = "insurance") -> dict:
+    """Answer by keyword. A question with no rules gets its first option."""
+    rules = RULES[dataset]
     answers = {}
     for name, q in body["questions"].items():
         labels = systemone.options(q)
-        pick = _rule_pick(body["state"], RULES[name]) if name in RULES else labels[0]
+        pick = _rule_pick(str(body["state"]), rules[name]) if name in rules else labels[0]
         answers[name] = certain(q, pick)
     return {"model": "keywords", "answers": answers, "usage": {}}
 
@@ -91,8 +74,9 @@ def llm_json_prompt(body: dict) -> list[dict]:
         allowed = " | ".join(systemone.options(q))
         fields.append(f'  "{name}": {allowed}   ({q["instructions"]})')
     return [
-        {"role": "system", "content": "You triage support tickets. Reply with JSON only."},
-        {"role": "user", "content": "Ticket:\n" + str(body["state"]) + "\n\n"
+        {"role": "system", "content": "You fill in a form about a call to a call center. "
+                                      "Reply with JSON only."},
+        {"role": "user", "content": "Call transcript:\n" + str(body["state"]) + "\n\n"
                                     "Return a JSON object with these fields:\n" + "\n".join(fields)},
     ]
 
@@ -132,6 +116,23 @@ def llm_json_text(body: dict, model: str, url: str, keep_alive="5m") -> str:
                                  {"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=300) as resp:
         return json.load(resp)["message"]["content"]
+
+
+def chat(messages: list[dict], model: str, url: str, num_predict: int = 120) -> dict:
+    """One plain chat turn: the text, total seconds, and Ollama's read/write counters."""
+    body = {"model": model, "messages": messages, "stream": False, "think": False,
+            "keep_alive": "5m", "options": {"temperature": 0, "seed": 10,
+                                            "num_predict": num_predict}}
+    req = urllib.request.Request(url.rstrip("/") + "/api/chat", json.dumps(body).encode(),
+                                 {"Content-Type": "application/json"})
+    started = time.monotonic()
+    with urllib.request.urlopen(req, timeout=300) as resp:
+        reply = json.load(resp)
+    return {"text": reply["message"]["content"].strip(), "seconds": time.monotonic() - started,
+            "read_tokens": reply.get("prompt_eval_count", 0),
+            "read_seconds": reply.get("prompt_eval_duration", 0) / 1e9,
+            "tokens": reply.get("eval_count", 0),
+            "write_seconds": reply.get("eval_duration", 0) / 1e9}
 
 
 # A change to the prompt makes recordings of this engine stale (see jev.load_cassette).

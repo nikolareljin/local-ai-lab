@@ -7,7 +7,7 @@ The same code, two destinations. Only the environment changes:
                                    (start it first: ./run -l 10 serve)
 
     ./run -l 10 install-sdk     # once: the pinned SDK into lessons/10-*/.venv-sdk
-    ./run -l 10 sdk "I was charged twice, please refund one"
+    ./run -l 10 sdk "Caller: someone dented my parked car, I have a photo"
 """
 
 from __future__ import annotations
@@ -38,8 +38,12 @@ def main() -> int:
     ensure_sdk_python()
     from typesafe_sdk import Choice, Noul, Score, TypeSafeClient
 
-    text = " ".join(sys.argv[1:]) or "I was charged twice for my Pro plan. Please refund one."
+    text = " ".join(sys.argv[1:]) or (
+        "Caller: My camera fell into the sea on the first day. No receipt, I paid cash. "
+        "The same thing happened on my last two trips.")
     import systemone  # the same destination rule as python/systemone.post
+
+    systemone.load_typesafe_env(LESSON.parents[1] / ".env")
 
     url = os.environ.get("TYPESAFE_BASE_URL", systemone.TYPESAFE_URL)
     try:
@@ -52,28 +56,28 @@ def main() -> int:
     # --- the whole integration -------------------------------------------------
     client = TypeSafeClient()  # reads TYPESAFE_API_KEY and TYPESAFE_BASE_URL
     result = client.system_one(text, {
-        "queue": Choice(
-            instructions="Which team queue should handle this support ticket?",
-            criteria={"billing": "Charges, invoices, refunds",
-                      "technical": "Bugs, outages, errors",
-                      "account": "Login, users, account changes",
-                      "sales": "Pricing, upgrades, quotes",
-                      "trust_safety": "Security, takeover, data exposure, abuse"}),
-        "urgency": Score(instructions="How urgent is it for the business?",
-                         criteria=["none", "low", "medium", "high", "critical"]),
-        "refund_request": Noul(instructions="Does the customer ask for money back?"),
+        "intent": Choice(
+            instructions="What does the caller want from this call?",
+            criteria={"new_claim": "Reports a loss or sends in a bill to be paid",
+                      "claim_status": "Asks where an existing claim stands",
+                      "coverage_question": "Asks whether something is covered",
+                      "complaint": "Complains about price, service or a decision",
+                      "cancel_policy": "Wants to end the policy"}),
+        "severity": Score(instructions="How serious is the damage, loss or harm described?",
+                          criteria=["none", "minor", "moderate", "major", "catastrophic"]),
+        "fraud_signals": Noul(instructions="Does the story have warning signs of a dishonest claim?"),
     })
-    queue = result.choices["queue"]
-    urgency = result.scores["urgency"]
-    refund = result.nouls["refund_request"]
+    intent = result.choices["intent"]
+    severity = result.scores["severity"]
+    fraud = result.nouls["fraud_signals"]
     # -----------------------------------------------------------------------------
 
-    print(f"model    {result.model}")
-    print(f"queue    {queue.choice}  (confidence {queue.confidence:.2f})")
-    print("         " + "  ".join(f"{k} {v:.2f}" for k, v in queue.probabilities.items()))
-    level = max(urgency.probabilities, key=urgency.probabilities.get)
-    print(f"urgency  {urgency.legend[level]}  (score {urgency.score:.2f} of 0-4)")
-    print(f"refund   P(yes) = {refund.noul:.2f}")
+    print(f"model     {result.model}")
+    print(f"intent    {intent.choice}  (confidence {intent.confidence:.2f})")
+    print("          " + "  ".join(f"{k} {v:.2f}" for k, v in intent.probabilities.items()))
+    level = max(severity.probabilities, key=severity.probabilities.get)
+    print(f"severity  {severity.legend[level]}  (score {severity.score:.2f} of 0-4)")
+    print(f"fraud     P(yes) = {fraud.noul:.2f}")
     return 0
 
 

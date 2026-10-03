@@ -140,12 +140,12 @@ document from triggering a side effect; recover calls from models that write the
 pick a local model for tool use from measurements on your own hardware.
 **Assumes:** Lesson 1 (Lessons 2, 4 and 8 helpful). Installs nothing.
 
-#### Lesson 10 - Jev and System One models · ✅ live · special · Python · Node · C# · ≈ 60 min · [README](./lessons/10-jev-system-one/README.md)
-**Build:** four decision engines behind one API - keyword rules, a local LLM asked to write JSON, a
-local Jev-like adapter that answers typed questions with letter probabilities through Ollama, and
-TypeSafe's hosted Jev through its official SDK - scored on 30 labelled fake support tickets, plus a
-policy that turns the probabilities into actions. Two more labelled datasets (reviews, server alerts)
-for practice.
+#### Lesson 10 - Jev and System One models · ✅ live · special · Python · Node · C# · ≈ 75 min · [README](./lessons/10-jev-system-one/README.md)
+**Build:** one real call to TypeSafe's hosted Jev, then four decision engines behind one API -
+keyword rules, a local LLM asked to write JSON, a local Jev-like adapter that answers typed questions
+with letter probabilities through Ollama, and Jev itself - scored on fake call-center transcripts: 36
+calls to an insurer's claims line (line, intent, severity, emergency, fraud signals, adjuster) and 24
+to a newspaper's subscriber line, plus a policy that turns the probabilities into actions.
 **You'll be able to:** say what a System One model returns and how it differs from an LLM; call the
 System One API by hand and through the pinned official SDK; make a local model imitate the format and
 name what the imitation lacks; keep decisions in a policy with thresholds; and score engines on

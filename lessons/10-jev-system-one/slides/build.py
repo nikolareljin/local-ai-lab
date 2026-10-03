@@ -25,62 +25,97 @@ ROOT = LESSON.parents[1]
 sys.path.insert(0, str(LESSON / "python"))
 
 import jev  # noqa: E402
+import policy  # noqa: E402
 import scorecard  # noqa: E402
+import systemone  # noqa: E402
 
 OUT = ROOT / "docs" / "pdf" / "LESSON10-SLIDES.pdf"
 
 
-def rows() -> list[tuple[str, dict, dict, dict | None]]:
-    questions, records = jev.load_dataset("tickets")
-    import systemone
+DATASET = jev.DEFAULT_DATASET
+POL = policy.POLICIES[DATASET]
+
+
+def rows():
+    """[(label, backend, tape, runs)], questions, records - the demo's rows, in its order."""
+    questions, records = jev.load_dataset(DATASET)
     out = [("keywords", None, {r["id"]: jev.to_run(questions, jev.run_live(
-        "keywords", systemone.build_request(r["text"], questions), "")) for r in records})]
-    for backend, file in jev.RECORDED:
-        tape = jev.load_cassette(file, questions, records, "tickets")
+        "keywords", systemone.build_request(r["text"], questions), "", DATASET))
+        for r in records})]
+    for backend, model in jev.RECORDED_MODELS:
+        tape = jev.load_cassette(jev.cassette_name(backend, model, DATASET),
+                                 questions, records, DATASET)
         if tape:
             out.append((backend, tape, {r["id"]: jev.to_run(questions, tape["calls"][r["id"]])
                                         for r in records}))
-    return [(jev.label_for(b, t), runs, questions, t) for b, t, runs in out], records
+    return [(jev.label_for(b, t), b, t, runs) for b, t, runs in out], questions, records
 
 
-def scoreboard() -> str:
-    table, records = rows()
+def scoreboard(table, questions, records) -> str:
     lines = []
-    for label, runs, questions, tape in table:
-        s = scorecard.score(questions, records, runs)
+    for label, _backend, _tape, runs in table:
+        s = scorecard.score(questions, records, runs, POL)
         n = s["n"]
         lines.append(
             f"<tr><td>{html.escape(label)}</td>"
             + "".join(f"<td>{s['correct'][q]}/{n}</td>" for q in questions)
             + f"<td>{s['typed'] * 100 // s['asked']}%</td><td>{s['brier']:.3f}</td>"
-            f"<td>{s['actions']}/{n}</td><td>{s['wrong_pages']} / {s['missed_pages']}</td>"
+            f"<td>{s['actions']}/{n}</td><td>{s['wrong']} / {s['missed']}</td>"
             f"<td>{s['seconds']:.1f}s</td></tr>")
     return "\n".join(lines)
 
 
-def knob() -> str:
-    table, records = rows()
+def knob(table, questions, records) -> str:
     lines = []
-    for label, runs, questions, _tape in table:
+    for label, _backend, _tape, runs in table:
         cells = []
-        for t in (0.5, 0.7, 0.9):
-            s = scorecard.score(questions, records, runs, page=t)
-            cells.append(f"<td>{s['wrong_pages']} wrong · {s['missed_pages']} missed</td>")
+        for t in POL.values:
+            s = scorecard.score(questions, records, runs, POL, knob=t)
+            cells.append(f"<td>{s['wrong']} wrong · {s['missed']} missed</td>")
         lines.append(f"<tr><td>{html.escape(label)}</td>{''.join(cells)}</tr>")
     return "\n".join(lines)
 
 
-def hardware() -> str:
-    _table, _records = rows()
-    tapes = [t for _l, _r, _q, t in _table if t]
-    return html.escape(tapes[0]["hardware"]) if tapes else "-"
+def side_by_side(table, questions) -> dict:
+    """What the LLM wrote and what the best adapter answered for the hello call, as recorded."""
+    out = {"LLM_MODEL": "-", "LLM_REPLY": "(not recorded)", "JEV_MODEL": "-",
+           "JEV_REPLY": "(not recorded)"}
+    for _label, backend, tape, runs in table:
+        if tape is None:
+            continue
+        call = tape["calls"][jev.HELLO_CALL]
+        if backend == "llm-json":
+            text = call["text"].strip()
+            out["LLM_MODEL"] = tape["model"]
+            out["LLM_REPLY"] = html.escape(text if len(text) <= 420 else text[:420] + " ...")
+        if backend == "local":  # the last adapter row wins: the bigger model
+            answers = runs[jev.HELLO_CALL]["answers"]
+            lines = []
+            for name in questions:
+                a = answers[name]
+                lines.append(f"{name:<15}{a['pick']:<13}{a['probs'][a['pick']]:.2f}")
+            lines.append(f"-> {POL.decide(answers)}")
+            out["JEV_MODEL"] = tape["model"]
+            out["JEV_REPLY"] = html.escape("\n".join(lines))
+    return out
 
 
 def fill() -> str:
+    table, questions, records = rows()
+    short = jev.DATASETS[DATASET]["short"]
+    tapes = [t for _l, _b, t, _r in table if t]
+    values = {
+        "SCOREBOARD": scoreboard(table, questions, records),
+        "KNOB": knob(table, questions, records),
+        "QCOLS": "".join(f"<th>{short[q]}</th>" for q in questions),
+        "KNOBCOLS": "".join(f"<th>{POL.knob.upper()} {v:.1f}</th>" for v in POL.values),
+        "HARDWARE": html.escape(tapes[0]["hardware"]) if tapes else "-",
+        **side_by_side(table, questions),
+    }
     text = (HERE / "deck.html").read_text(encoding="utf-8")
-    return (text.replace("{{SCOREBOARD}}", scoreboard())
-                .replace("{{KNOB}}", knob())
-                .replace("{{HARDWARE}}", hardware()))
+    for key, value in values.items():
+        text = text.replace("{{" + key + "}}", value)
+    return text
 
 
 def chromium() -> str:

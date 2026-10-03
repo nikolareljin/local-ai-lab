@@ -1,0 +1,226 @@
+{
+ "engine": "llm-json",
+ "model": "qwen3:1.7b",
+ "dataset": "insurance",
+ "recorded": "2026-10-03",
+ "hardware": "Intel Core i5-10310U, 8 threads, 19 GB RAM, no GPU",
+ "prompt_version": "cb8d454a5c06",
+ "calls": {
+  "K-1001": {
+   "digest": "af89ed8e210b90e7",
+   "text": "{\n  \"line\": \"auto\",\n  \"intent\": \"new_claim\",\n  \"severity\": \"minor\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 68.04,
+   "calls": 1
+  },
+  "K-1002": {
+   "digest": "e8526a4b26f6ecce",
+   "text": "{\n  \"line\": \"travel\",\n  \"intent\": \"new_claim\",\n  \"severity\": \"minor\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 99.07,
+   "calls": 1
+  },
+  "K-1003": {
+   "digest": "70d0b661379849e8",
+   "text": "{\n  \"line\": \"travel\",\n  \"intent\": \"new_claim\",\n  \"severity\": \"major\",\n  \"emergency\": \"yes\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 151.17,
+   "calls": 1
+  },
+  "K-1004": {
+   "digest": "ead563d14153698b",
+   "text": "{\n  \"line\": \"health\",\n  \"intent\": \"new_claim\",\n  \"severity\": \"major\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 194.48,
+   "calls": 1
+  },
+  "K-1005": {
+   "digest": "ef83178549a38543",
+   "text": "{\n  \"line\": \"auto\",\n  \"intent\": \"new_claim\",\n  \"severity\": \"minor\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 188.01,
+   "calls": 1
+  },
+  "K-1006": {
+   "digest": "ea52e2dacb01d508",
+   "text": "{\n  \"line\": \"home\",\n  \"intent\": \"coverage_question\",\n  \"severity\": \"minor\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"no\"\n}",
+   "seconds": 119.0,
+   "calls": 1
+  },
+  "K-1007": {
+   "digest": "4bb88e69efd36582",
+   "text": "{\n  \"line\": \"health\",\n  \"intent\": \"claim_status\",\n  \"severity\": \"minor\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"no\"\n}",
+   "seconds": 34.02,
+   "calls": 1
+  },
+  "K-1008": {
+   "digest": "44c8d715f87993c2",
+   "text": "{\n  \"line\": \"travel\",\n  \"intent\": \"new_claim\",\n  \"severity\": \"moderate\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 24.71,
+   "calls": 1
+  },
+  "K-1009": {
+   "digest": "e4bae5d905fbf435",
+   "text": "{\n  \"line\": \"travel\",\n  \"intent\": \"new_claim\",\n  \"severity\": \"minor\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 29.13,
+   "calls": 1
+  },
+  "K-1010": {
+   "digest": "561d594d57481c46",
+   "text": "{\n  \"line\": \"travel\",\n  \"intent\": \"new_claim\",\n  \"severity\": \"moderate\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 13.8,
+   "calls": 1
+  },
+  "K-1011": {
+   "digest": "582d8f491d89bbc2",
+   "text": "{\n  \"line\": \"travel\",\n  \"intent\": \"cancel_policy\",\n  \"severity\": \"minor\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"no\"\n}",
+   "seconds": 10.41,
+   "calls": 1
+  },
+  "K-1012": {
+   "digest": "d57e56b8728361c7",
+   "text": "{\n  \"line\": \"home\",\n  \"intent\": \"complaint\",\n  \"severity\": \"major\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 10.9,
+   "calls": 1
+  },
+  "K-1013": {
+   "digest": "ffaa26ef752ee096",
+   "text": "{\n  \"line\": \"home\",\n  \"intent\": \"new_claim\",\n  \"severity\": \"major\",\n  \"emergency\": \"yes\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 12.17,
+   "calls": 1
+  },
+  "K-1014": {
+   "digest": "ffbdceeaa769c9a4",
+   "text": "{\n  \"line\": \"home\",\n  \"intent\": \"new_claim\",\n  \"severity\": \"minor\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 10.13,
+   "calls": 1
+  },
+  "K-1015": {
+   "digest": "d5ab452126ba70f5",
+   "text": "{\n  \"line\": \"home\",\n  \"intent\": \"coverage_question\",\n  \"severity\": \"minor\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"no\"\n}",
+   "seconds": 10.29,
+   "calls": 1
+  },
+  "K-1016": {
+   "digest": "dc552616bb929324",
+   "text": "{\n  \"line\": \"travel\",\n  \"intent\": \"claim_status\",\n  \"severity\": \"major\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 12.13,
+   "calls": 1
+  },
+  "K-1017": {
+   "digest": "755014ede3087a7f",
+   "text": "{\n  \"line\": \"home\",\n  \"intent\": \"cancel_policy\",\n  \"severity\": \"minor\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"no\"\n}",
+   "seconds": 12.48,
+   "calls": 1
+  },
+  "K-1018": {
+   "digest": "33b3686c924d5f1c",
+   "text": "{\n  \"line\": \"travel\",\n  \"intent\": \"new_claim\",\n  \"severity\": \"minor\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 13.18,
+   "calls": 1
+  },
+  "K-1019": {
+   "digest": "11f12ee1382a06b5",
+   "text": "{\n  \"line\": \"travel\",\n  \"intent\": \"claim_status\",\n  \"severity\": \"minor\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"no\"\n}",
+   "seconds": 10.31,
+   "calls": 1
+  },
+  "K-1020": {
+   "digest": "1068b8a45f70b7ad",
+   "text": "{\n  \"line\": \"home\",\n  \"intent\": \"coverage_question\",\n  \"severity\": \"minor\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"no\"\n}",
+   "seconds": 11.44,
+   "calls": 1
+  },
+  "K-1021": {
+   "digest": "7e98a51b278a603f",
+   "text": "{\n  \"line\": \"health\",\n  \"intent\": \"new_claim\",\n  \"severity\": \"major\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 10.91,
+   "calls": 1
+  },
+  "K-1022": {
+   "digest": "27d6da26630ce867",
+   "text": "{\n  \"line\": \"health\",\n  \"intent\": \"new_claim\",\n  \"severity\": \"minor\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 10.13,
+   "calls": 1
+  },
+  "K-1023": {
+   "digest": "3f922a3fd0aec3cb",
+   "text": "{\n  \"line\": \"health\",\n  \"intent\": \"coverage_question\",\n  \"severity\": \"moderate\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"no\"\n}",
+   "seconds": 11.16,
+   "calls": 1
+  },
+  "K-1024": {
+   "digest": "ec63c5f9827bb94e",
+   "text": "{\n  \"line\": \"health\",\n  \"intent\": \"claim_status\",\n  \"severity\": \"minor\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"no\"\n}",
+   "seconds": 10.94,
+   "calls": 1
+  },
+  "K-1025": {
+   "digest": "f9df69f26cfc88b8",
+   "text": "{\n  \"line\": \"travel\",\n  \"intent\": \"new_claim\",\n  \"severity\": \"minor\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 11.24,
+   "calls": 1
+  },
+  "K-1026": {
+   "digest": "fa1bd5448ec3473e",
+   "text": "{\n  \"line\": \"health\",\n  \"intent\": \"new_claim\",\n  \"severity\": \"moderate\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 12.17,
+   "calls": 1
+  },
+  "K-1027": {
+   "digest": "4701f6c155393a34",
+   "text": "{\n  \"line\": \"health\",\n  \"intent\": \"complaint\",\n  \"severity\": \"moderate\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 13.44,
+   "calls": 1
+  },
+  "K-1028": {
+   "digest": "e796525e8df8c2e6",
+   "text": "{\n  \"line\": \"travel\",\n  \"intent\": \"new_claim\",\n  \"severity\": \"minor\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 11.8,
+   "calls": 1
+  },
+  "K-1029": {
+   "digest": "6314bebea6b4bf7f",
+   "text": "{\n  \"line\": \"travel\",\n  \"intent\": \"new_claim\",\n  \"severity\": \"major\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 13.19,
+   "calls": 1
+  },
+  "K-1030": {
+   "digest": "1a1e16122765dcc2",
+   "text": "{\n  \"line\": \"travel\",\n  \"intent\": \"cancel_policy\",\n  \"severity\": \"minor\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 13.49,
+   "calls": 1
+  },
+  "K-1031": {
+   "digest": "d6656c9a5af4351f",
+   "text": "{\n  \"line\": \"travel\",\n  \"intent\": \"new_claim\",\n  \"severity\": \"major\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 12.0,
+   "calls": 1
+  },
+  "K-1032": {
+   "digest": "00f9fc2af3353387",
+   "text": "{\n  \"line\": \"travel\",\n  \"intent\": \"coverage_question\",\n  \"severity\": \"minor\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"no\"\n}",
+   "seconds": 14.69,
+   "calls": 1
+  },
+  "K-1033": {
+   "digest": "8c8c53adccf347ef",
+   "text": "{\n  \"line\": \"life\",\n  \"intent\": \"new_claim\",\n  \"severity\": \"major\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 11.68,
+   "calls": 1
+  },
+  "K-1034": {
+   "digest": "0c2a7a01326e194e",
+   "text": "{\n  \"line\": \"life\",\n  \"intent\": \"coverage_question\",\n  \"severity\": \"minor\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"no\"\n}",
+   "seconds": 11.22,
+   "calls": 1
+  },
+  "K-1035": {
+   "digest": "e88f0495b3fd7cd3",
+   "text": "{\n  \"line\": \"life\",\n  \"intent\": \"new_claim\",\n  \"severity\": \"moderate\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 13.43,
+   "calls": 1
+  },
+  "K-1036": {
+   "digest": "82bc41414e9c6990",
+   "text": "{\n  \"line\": \"life\",\n  \"intent\": \"cancel_policy\",\n  \"severity\": \"minor\",\n  \"emergency\": \"no\",\n  \"fraud_signals\": \"no\",\n  \"needs_adjuster\": \"yes\"\n}",
+   "seconds": 12.77,
+   "calls": 1
+  }
+ }
+}

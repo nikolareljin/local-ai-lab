@@ -1,71 +1,96 @@
-Lesson 10 · Jev and System One models - 30 labelled fake tickets, 4 typed questions
-Replayed from recorded replies: no model, no network. Live: ./run -l 10 live --backend local
+Lesson 10 · Jev and System One models - Kestrel Mutual claims line: 36 labelled fake calls, 6 typed questions
+Replayed from recorded replies: no model, no network. Live: ./run -l 10 live --backend keywords,llm-json,local
 
-engine                               queue urgency  refund   human  typed  brier  action wrong missed  s/item calls
-keywords (rules)                     20/30   12/30   25/30   25/30   100%  0.633   15/30     5      3     0.0     0
-LLM writes JSON (qwen3:1.7b)         18/30   14/30   28/30   10/30   100%  0.833   11/30     3      1     8.5     1
-Jev-like adapter (qwen3:1.7b)        23/30    8/30   27/30   23/30   100%  0.619   20/30     4      1    17.4     4
-Jev-like adapter (qwen3.5:4b)        27/30   10/30   29/30   24/30   100%  0.381   25/30     1      1    61.9     4
-TypeSafe Jev (jev-latest)         not recorded - needs TYPESAFE_API_KEY: ./run -l 10 record --backend typesafe
+engine                             line intent severe  emerg  fraud adjust  typed  brier  action wrong missed  s/call calls
+keywords (rules)                  26/36  31/36  18/36  33/36  32/36  26/36   100%  0.463   21/36     0      4     0.0     0
+LLM writes JSON (qwen3:1.7b)      21/36  33/36  13/36  33/36  30/36  25/36   100%  0.565   19/36     0      6    12.3     1
+Jev-like adapter (qwen3:1.7b)     33/36  16/36  10/36  24/36  21/36  20/36   100%  0.834   14/36     0      5    16.9     6
+Jev-like adapter (qwen3.5:4b)     36/36  34/36  22/36  34/36  35/36  24/36   100%  0.219   28/36     0      1   100.2     6
+TypeSafe Jev (jev-latest)       not recorded - needs TYPESAFE_API_KEY: ./run -l 10 record --backend typesafe
 
-accuracy = right/total per question; typed = answers that were a valid option;
-brier = probability error, 0 best, 2 = certain and wrong; action = policy matches the
-labels' action; wrong/missed = pages to on-call; s/item = median seconds; calls = model calls.
+Columns: right/total per question; typed = answers that were a valid option;
+brier = probability error, 0 best, 2 = certain and wrong; action = same action as the
+human labels lead to; wrong = honest callers investigated; missed = suspicious claims not investigated;
+s/call = median seconds; calls = model calls per record.
 
-Where they disagree - the traps (label -> each engine's queue / urgency):
-  T-1004  says 'refund' but does not ask for one
-    labels         billing       low
-    keywords       billing       medium
-    llm-json 1.7b  sales         low  (1.00)
-    jev-like 1.7b  billing       high  (1.00)
-    jev-like 4b    billing       high  (0.72)
-  T-1005  chargeback threat
-    labels         billing       high
-    keywords       billing       medium
-    llm-json 1.7b  account       high  (1.00)
-    jev-like 1.7b  billing       high  (1.00)
-    jev-like 4b    billing       high  (0.98)
-  T-1009  sarcasm
-    labels         technical     high
-    keywords       technical     high
-    llm-json 1.7b  technical     high  (1.00)
-    jev-like 1.7b  technical     high  (0.98)
-    jev-like 4b    technical     high  (0.84)
-  T-1011  a bug that is really a data leak
-    labels         trust_safety  critical
-    keywords       technical     high
-    llm-json 1.7b  technical     medium  (1.00)
-    jev-like 1.7b  technical     low  (1.00)
-    jev-like 4b    technical     high  (0.95)
-  T-1013  legal request
-    labels         account       medium
-    keywords       account       medium
-    llm-json 1.7b  account       high  (1.00)
-    jev-like 1.7b  trust_safety  high  (0.92)
-    jev-like 4b    account       high  (0.96)
-  T-1015  account takeover, not an account question
-    labels         trust_safety  critical
-    keywords       account       high
-    llm-json 1.7b  account       high  (1.00)
-    jev-like 1.7b  trust_safety  high  (1.00)
-    jev-like 4b    trust_safety  critical  (0.98)
-  T-1020  phishing report
-    labels         trust_safety  high
-    keywords       account       medium
-    llm-json 1.7b  trust_safety  high  (1.00)
-    jev-like 1.7b  trust_safety  high  (1.00)
-    jev-like 4b    trust_safety  high  (0.99)
-  T-1021  prompt injection (Lesson 4)
-    labels         technical     low
-    keywords       billing       medium
-    llm-json 1.7b  account       critical  (1.00)
-    jev-like 1.7b  billing       critical  (1.00)
-    jev-like 4b    technical     none  (0.68)
+The traps - the action each engine's answers lead to:
+  K-1004  calm voice, rolled car, broken arm
+    labels         dispatch emergency help
+    keywords       assign adjuster   <- wrong
+    llm-json 1.7b  assign adjuster   <- wrong
+    jev-like 1.7b  dispatch emergency help
+    jev-like 4b    dispatch emergency help
+  K-1005  staged-accident tells
+    labels         special investigations
+    keywords       special investigations
+    llm-json 1.7b  assign adjuster   <- wrong
+    jev-like 1.7b  special investigations
+    jev-like 4b    special investigations
+  K-1006  says 'total loss', means a sandwich
+    labels         self-service answer
+    keywords       self-service answer
+    llm-json 1.7b  self-service answer
+    jev-like 1.7b  self-service answer
+    jev-like 4b    self-service answer
+  K-1009  polite caller, story does not add up
+    labels         special investigations
+    keywords       assign adjuster   <- wrong
+    llm-json 1.7b  assign adjuster   <- wrong
+    jev-like 1.7b  self-service answer   <- wrong
+    jev-like 4b    special investigations
+  K-1012  furious voice, nothing damaged
+    labels         human agent
+    keywords       dispatch emergency help   <- wrong
+    llm-json 1.7b  human agent
+    jev-like 1.7b  self-service answer   <- wrong
+    jev-like 4b    human agent
+  K-1015  a worry, not a claim
+    labels         self-service answer
+    keywords       self-service answer
+    llm-json 1.7b  self-service answer
+    jev-like 1.7b  self-service answer
+    jev-like 4b    self-service answer
+  K-1017  polite caller, story does not add up
+    labels         special investigations
+    keywords       assign adjuster   <- wrong
+    llm-json 1.7b  human agent   <- wrong
+    jev-like 1.7b  human agent   <- wrong
+    jev-like 4b    assign adjuster   <- wrong
+  K-1020  prompt injection, read out loud
+    labels         self-service answer
+    keywords       assign adjuster   <- wrong
+    llm-json 1.7b  self-service answer
+    jev-like 1.7b  self-service answer
+    jev-like 4b    self-service answer
+  K-1021  caller speaks Spanish
+    labels         assign adjuster
+    keywords       fast-track payout   <- wrong
+    llm-json 1.7b  assign adjuster
+    jev-like 1.7b  dispatch emergency help   <- wrong
+    jev-like 4b    dispatch emergency help   <- wrong
+  K-1023  asks about coverage, needs an ambulance
+    labels         dispatch emergency help
+    keywords       dispatch emergency help
+    llm-json 1.7b  self-service answer   <- wrong
+    jev-like 1.7b  dispatch emergency help
+    jev-like 4b    dispatch emergency help
+  K-1026  caller speaks German
+    labels         assign adjuster
+    keywords       fast-track payout   <- wrong
+    llm-json 1.7b  assign adjuster
+    jev-like 1.7b  self-service answer   <- wrong
+    jev-like 4b    assign adjuster
+  K-1031  polite caller, story does not add up
+    labels         special investigations
+    keywords       special investigations
+    llm-json 1.7b  assign adjuster   <- wrong
+    jev-like 1.7b  dispatch emergency help   <- wrong
+    jev-like 4b    special investigations
 
-The threshold is a business decision. Pages to on-call as PAGE moves:
-  engine                                        PAGE 0.5            PAGE 0.7            PAGE 0.9
-  keywords (rules)                      5 wrong 3 missed    5 wrong 3 missed    5 wrong 3 missed
-  LLM writes JSON (qwen3:1.7b)          3 wrong 1 missed    3 wrong 1 missed    3 wrong 1 missed
-  Jev-like adapter (qwen3:1.7b)         4 wrong 1 missed    4 wrong 1 missed    4 wrong 1 missed
-  Jev-like adapter (qwen3.5:4b)         3 wrong 1 missed    1 wrong 1 missed    1 wrong 2 missed
+The threshold is a business decision. 'special investigations' as SIU moves:
+  engine                                       SIU 0.3             SIU 0.6             SIU 0.9
+  keywords (rules)                    0 wrong 4 missed    0 wrong 4 missed    0 wrong 4 missed
+  LLM writes JSON (qwen3:1.7b)        0 wrong 6 missed    0 wrong 6 missed    0 wrong 6 missed
+  Jev-like adapter (qwen3:1.7b)       0 wrong 5 missed    0 wrong 5 missed    0 wrong 5 missed
+  Jev-like adapter (qwen3.5:4b)       0 wrong 0 missed    0 wrong 1 missed    0 wrong 3 missed
   Rules and JSON answers are always 0 or 1, so the knob does nothing for them.

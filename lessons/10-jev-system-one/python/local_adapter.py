@@ -105,7 +105,16 @@ def _chat(url: str, body: dict) -> dict:
         return json.load(resp)
 
 
-def ollama_first_token(messages: list[dict], model: str, url: str, keep_alive) -> list[dict]:
+def timing(reply: dict) -> dict:
+    """Ollama's own counters for one reply: tokens read and written, and the seconds each took."""
+    return {"read_tokens": reply.get("prompt_eval_count", 0),
+            "read_seconds": reply.get("prompt_eval_duration", 0) / 1e9,
+            "tokens": reply.get("eval_count", 0),
+            "write_seconds": reply.get("eval_duration", 0) / 1e9}
+
+
+def ollama_first_token(messages: list[dict], model: str, url: str, keep_alive,
+                       stats: dict | None = None) -> list[dict]:
     body = {"model": model, "messages": messages, "stream": False, "think": False,
             "logprobs": True, "top_logprobs": 20, "keep_alive": keep_alive,
             "options": {"temperature": 0, "num_predict": 1, "seed": 10}}
@@ -116,15 +125,18 @@ def ollama_first_token(messages: list[dict], model: str, url: str, keep_alive) -
             raise
         body.pop("think")  # a model with no thinking switch rejects the flag
         reply = _chat(url, body)
+    if stats is not None:
+        stats.update(timing(reply))
     logprobs = reply.get("logprobs") or []
     if not logprobs:
         raise RuntimeError(f"{model} returned no logprobs; Ollama 0.12.11 or newer is needed")
     return logprobs[0].get("top_logprobs", [])
 
 
-def answer_one(state, question: dict, model: str, url: str, keep_alive="5m") -> dict:
+def answer_one(state, question: dict, model: str, url: str, keep_alive="5m",
+               stats: dict | None = None) -> dict:
     labels = systemone.options(question)
-    top = ollama_first_token(prompt_for(state, question), model, url, keep_alive)
+    top = ollama_first_token(prompt_for(state, question), model, url, keep_alive, stats)
     probs = letter_probabilities(top, len(labels))
     confidence = round(max(probs), 4)
     if question["type"] == "noul":

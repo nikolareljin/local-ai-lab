@@ -1,16 +1,18 @@
-   Lesson 9's model chose an action. Here the model only answers; your code decides.
+   A call center makes the same few decisions thousands of times a day.
+   A System One model answers them as probabilities; your code decides.
 
-   ticket text --> 4 typed questions --> a probability per option --> policy --> action
-                   queue    (choice)     billing 0.91  technical 0.03 ...       escalate?
-                   urgency  (score)      none low medium high critical          page on-call?
-                   refund   (noul)       P(yes) 0.97                            draft refund?
-                   human    (noul)       P(yes) 0.12                            human triage?
-                                                                                auto-route
+   call transcript --> 6 typed questions --> a probability per option --> policy --> action
+                       line      (choice)    auto 0.94  home 0.03 ...             dispatch help
+                       intent    (choice)    new_claim 0.88 ...                   investigations
+                       severity  (score)     none minor moderate major catastr.   assign adjuster
+                       emergency (noul)      P(yes) 0.97                          fast-track payout
+                       fraud     (noul)      P(yes) 0.08                          self-service
+                       adjuster  (noul)      P(yes) 0.91                          human agent
 
-   Four engines, one API (POST /v1/systemone), one scorecard:
+   Step 1: ONE real call to TypeSafe's Jev (needs an API key; falls back if you have none).
+   Step 2: everything else on your machine, one API (POST /v1/systemone), one scorecard:
      keywords            rules, no model
-     LLM writes JSON     a local chat model writes the answers as text
-     Jev-like adapter    a local model answers one letter per question (simulated)
-     TypeSafe Jev        the real model, hosted, with your API key
+     LLM writes JSON     a local chat model (Ollama) fills in the form as text
+     Jev-like adapter    the same local model, one letter per question (simulated Jev)
 
-   30 labelled fake tickets. Accuracy, typed answers, Brier score, wrong pages.
+   Two fake call centers: an insurer's claims line (36 calls), a newspaper's subscriber line (24).

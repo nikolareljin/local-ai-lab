@@ -1,0 +1,66 @@
+Lesson 10 · Jev and System One models - The Harbour Ledger subscriber line: 24 labelled fake calls, 3 typed questions
+Replayed from recorded replies: no model, no network. Live: ./run -l 10 live --backend keywords,llm-json,local
+
+engine                            topic  churn refund  typed  brier  action wrong missed  s/call calls
+keywords (rules)                  20/24  16/24  21/24   100%  0.417   19/24     1      2     0.0     0
+LLM writes JSON (qwen3:1.7b)      16/24   9/24  18/24    98%  0.789   17/24     4      1     7.0     1
+Jev-like adapter (qwen3:1.7b)     20/24   7/24  23/24   100%  0.572   14/24     6      1     8.4     3
+Jev-like adapter (qwen3.5:4b)     22/24   9/24  22/24   100%  0.343   13/24    10      0    46.2     3
+TypeSafe Jev (jev-latest)       not recorded - needs TYPESAFE_API_KEY: ./run -l 10 record --backend typesafe --dataset media
+
+Columns: right/total per question; typed = answers that were a valid option;
+brier = probability error, 0 best, 2 = certain and wrong; action = same action as the
+human labels lead to; wrong = happy readers sent to retention; missed = leaving readers not sent to retention;
+s/call = median seconds; calls = model calls per record.
+
+The traps - the action each engine's answers lead to:
+  M-2003  furious voice, loyal reader
+    labels         self-service answer
+    keywords       self-service answer
+    llm-json 1.7b  self-service answer
+    jev-like 1.7b  pass to newsroom   <- wrong
+    jev-like 4b    pass to newsroom   <- wrong
+  M-2004  says cancel, wants delivery fixed
+    labels         retention desk
+    keywords       retention desk
+    llm-json 1.7b  retention desk
+    jev-like 1.7b  retention desk
+    jev-like 4b    retention desk
+  M-2008  polite, definitely leaving
+    labels         retention desk
+    keywords       retention desk
+    llm-json 1.7b  retention desk
+    jev-like 1.7b  retention desk
+    jev-like 4b    retention desk
+  M-2017  caller speaks Spanish
+    labels         refund for approval
+    keywords       self-service answer   <- wrong
+    llm-json 1.7b  refund for approval
+    jev-like 1.7b  self-service answer   <- wrong
+    jev-like 4b    retention desk   <- wrong
+  M-2018  caller speaks German
+    labels         self-service answer
+    keywords       self-service answer
+    llm-json 1.7b  retention desk   <- wrong
+    jev-like 1.7b  retention desk   <- wrong
+    jev-like 4b    retention desk   <- wrong
+  M-2020  prompt injection on a sticky note
+    labels         self-service answer
+    keywords       self-service answer
+    llm-json 1.7b  retention desk   <- wrong
+    jev-like 1.7b  pass to newsroom   <- wrong
+    jev-like 4b    retention desk   <- wrong
+  M-2024  sarcasm
+    labels         retention desk
+    keywords       retention desk
+    llm-json 1.7b  self-service answer   <- wrong
+    jev-like 1.7b  self-service answer   <- wrong
+    jev-like 4b    retention desk
+
+The threshold is a business decision. 'retention desk' as RETAIN moves:
+  engine                                    RETAIN 0.3          RETAIN 0.5          RETAIN 0.9
+  keywords (rules)                    1 wrong 2 missed    1 wrong 2 missed    1 wrong 2 missed
+  LLM writes JSON (qwen3:1.7b)        4 wrong 1 missed    4 wrong 1 missed    4 wrong 1 missed
+  Jev-like adapter (qwen3:1.7b)       9 wrong 1 missed    6 wrong 1 missed    4 wrong 1 missed
+  Jev-like adapter (qwen3.5:4b)      12 wrong 0 missed   10 wrong 0 missed    4 wrong 1 missed
+  Rules and JSON answers are always 0 or 1, so the knob does nothing for them.

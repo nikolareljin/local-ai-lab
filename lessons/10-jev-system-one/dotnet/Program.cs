@@ -1,9 +1,9 @@
-// Lesson 10 - Jev and System One models vs a local LLM, on fake support tickets.
+// Lesson 10 - Jev and System One models vs a local LLM, on two fake call centers.
 // C# port of python/jev.py: `demo` prints byte for byte what Python prints, and
-// `ask` sends one ticket to a System One server, like `jev.py ask --backend typesafe`.
+// `ask` sends one call to a System One server, like `jev.py ask --backend typesafe`.
 //
-//     dotnet run --project dotnet -c Release --nologo [-- demo] [-- --dataset reviews]
-//     dotnet run --project dotnet -c Release --nologo -- ask "My card was charged twice"
+//     dotnet run --project dotnet -c Release --nologo [-- demo] [-- --dataset media]
+//     dotnet run --project dotnet -c Release --nologo -- ask "Caller: my car was stolen"
 
 using System.Text;
 using System.Text.Json.Nodes;
@@ -57,17 +57,17 @@ static class Jev
         ("typesafe", "jev-latest"),
     };
 
-    static string CassetteName(string backend, string model, string dataset = "tickets")
-    {
-        var suffix = dataset == "tickets" ? "" : $"-{dataset}";
-        return backend == "typesafe"
-            ? $"typesafe-jev{suffix}.json"
-            : $"{(backend == "llm-json" ? "llm-json" : "jev-like")}-{model.Replace(':', '-').Replace('/', '-')}{suffix}.json";
-    }
+    const string DefaultDataset = "insurance";
 
-    const double Page = 0.7, Refund = 0.8, Confident = 0.6; // policy.py
+    /// <summary>jev-like-qwen3-1.7b-insurance.json: engine, model and dataset.</summary>
+    static string CassetteName(string backend, string model, string dataset = DefaultDataset) => backend == "typesafe"
+        ? $"typesafe-jev-{dataset}.json"
+        : $"{(backend == "llm-json" ? "llm-json" : "jev-like")}-{model.Replace(':', '-').Replace('/', '-')}-{dataset}.json";
 
     static string Read(string path) => File.ReadAllText(path, new UTF8Encoding(false));
+
+    // Per dataset: title and the short column name of each question.
+    static readonly Dict Datasets = (Dict)Py.Loads(Read(Path.Combine(Data, "datasets.json")))!;
 
     static (Dict Questions, List<Dict> Records) LoadDataset(string name)
     {
@@ -80,34 +80,16 @@ static class Jev
     static string S(Dict d, string key) => (string)d[key]!;
 
     // ----------------------------------------------------------------------- engines.py
-    // First matching rule wins, per question. Lower-case substring match.
-    static readonly Dictionary<string, (string Label, string[] Words)[]> Rules = new()
-    {
-        ["queue"] = new[]
-        {
-            ("trust_safety", new[] { "security", "hacked", "phishing", "breach", "leak", "abuse", "fraud" }),
-            ("billing", new[] { "charge", "invoice", "refund", "payment", "billing", "card" }),
-            ("account", new[] { "log in", "login", "2fa", "password", "account", "admin", "permission" }),
-            ("sales", new[] { "price", "pricing", "discount", "quote", "licence", "license", "upgrade" }),
-            ("technical", new[] { "" }),
-        },
-        ["urgency"] = new[]
-        {
-            ("critical", new[] { "emergency", "outage", "all customers", "data loss" }),
-            ("high", new[] { "urgent", "asap", "down", "immediately", "now!" }),
-            ("low", new[] { "question", "how do i", "not urgent", "when you can" }),
-            ("medium", new[] { "" }),
-        },
-        ["refund_request"] = new[] { ("yes", new[] { "refund", "money back", "chargeback" }), ("no", new[] { "" }) },
-        ["needs_human"] = new[] { ("yes", new[] { "lawyer", "legal", "gdpr", "security", "emergency", "outage" }), ("no", new[] { "" }) },
-    };
+    // data/rules.json: per dataset and question, an ordered list of [label, [words]].
+    // The first rule with a word in the transcript wins; the last rule is the default.
+    static readonly Dict Rules = (Dict)Py.Loads(Read(Path.Combine(Data, "rules.json")))!;
 
-    static string RulePick(string text, (string Label, string[] Words)[] rules)
+    static string RulePick(string text, List<object?> rules)
     {
         var low = Py.Lower(text);
-        foreach (var (label, words) in rules)
-            if (words.Any(w => low.Contains(w, StringComparison.Ordinal))) return label;
-        return rules[^1].Label;
+        foreach (var rule in rules.Cast<List<object?>>())
+            if (((List<object?>)rule[1]!).Any(w => low.Contains((string)w!, StringComparison.Ordinal))) return (string)rule[0]!;
+        return (string)((List<object?>)rules[^1]!)[0]!;
     }
 
     /// <summary>A System One answer that puts all probability on one label.</summary>
@@ -125,13 +107,16 @@ static class Jev
                           ["legend"] = legend, ["probabilities"] = probs };
     }
 
-    static Dict KeywordsResponse(Dict body)
+    /// <summary>Answer by keyword. A question with no rules gets its first option.</summary>
+    static Dict KeywordsResponse(Dict body, string dataset = DefaultDataset)
     {
+        var rules = (Dict)Rules[dataset]!;
+        var state = body["state"] as string ?? Py.Repr(body["state"]);
         var answers = new Dict();
         foreach (var (name, value) in ((Dict)body["questions"]!).Items)
         {
             var q = (Dict)value!;
-            var pick = Rules.TryGetValue(name, out var rules) ? RulePick(S(body, "state"), rules) : SystemOne.Options(q)[0];
+            var pick = rules.Has(name) ? RulePick(state, (List<object?>)rules[name]!) : SystemOne.Options(q)[0];
             answers[name] = Certain(q, pick);
         }
         return new Dict { ["model"] = "keywords", ["answers"] = answers, ["usage"] = new Dict() };
@@ -170,20 +155,56 @@ static class Jev
     }
 
     // ----------------------------------------------------------------------- policy.py
-    static string Decide(Dictionary<string, Answer> answers, double page = Page, double refund = Refund, double confident = Confident)
+    // The model answers questions; this code decides. The thresholds are the knobs.
+    const double Emergency = 0.5;  // P(someone needs help right now) to dispatch assistance
+    const double Siu = 0.6;        // P(fraud signals) to send a claim to the Special Investigations Unit
+    const double FastTrack = 0.8;  // P(no fraud signals) needed to pay a small claim without a human
+    const double Confident = 0.6;  // below this confidence in the caller's intent, a person takes the call
+    const double Retain = 0.5;     // P(high churn risk) to hand the call to the retention desk
+    const double Refund = 0.8;     // P(wants money back) to draft a refund for approval
+
+    static double Prob(Dictionary<string, Answer> answers, string name, string label, double fallback = 0.0) =>
+        answers.TryGetValue(name, out var a) ? a.Prob(label, fallback) : fallback;
+
+    /// <summary>One action per insurance call, from the answers to the six questions.</summary>
+    static string Decide(Dictionary<string, Answer> answers, double siu = Siu)
     {
-        if (!answers.TryGetValue("queue", out var queue)) return "human triage"; // no usable answer: never guess
-        double P(string name, string label, double fallback) =>
-            answers.TryGetValue(name, out var a) ? a.Prob(label, fallback) : fallback;
-        double pUrgent = P("urgency", "high", 0.0) + P("urgency", "critical", 0.0);
-        double pRefund = P("refund_request", "yes", 0.0);
-        double pHuman = P("needs_human", "yes", 1.0);
-        if (queue.Prob("trust_safety", 0.0) >= 0.5) return "escalate: trust & safety";
-        if (pUrgent >= page && queue.Pick == "technical") return "page on-call";
-        if (pRefund >= refund && queue.Pick == "billing") return "draft refund for approval";
-        if (pHuman >= 0.5 || queue.Confidence < confident) return "human triage";
-        return "auto-route";
+        answers.TryGetValue("intent", out var intent);
+        if (Prob(answers, "emergency", "yes") >= Emergency) return "dispatch emergency help"; // first, whatever else
+        if (intent is null || intent.Confidence < Confident) return "human agent"; // never guess
+        if (intent.Pick is "complaint" or "cancel_policy") return "human agent";
+        if (intent.Pick is "claim_status" or "coverage_question") return "self-service answer";
+        // a new claim
+        double pFraud = Prob(answers, "fraud_signals", "yes", 1.0);
+        if (pFraud >= siu) return "special investigations";
+        bool small = Prob(answers, "severity", "none") + Prob(answers, "severity", "minor") >= 0.5;
+        if (small && Prob(answers, "needs_adjuster", "yes", 1.0) < 0.5 && 1 - pFraud >= FastTrack) return "fast-track payout";
+        return "assign adjuster";
     }
+
+    /// <summary>One action per newspaper call.</summary>
+    static string DecideMedia(Dictionary<string, Answer> answers, double retain = Retain)
+    {
+        if (!answers.TryGetValue("topic", out var topic)) return "human agent";
+        if (topic.Pick == "editorial") return "pass to newsroom";
+        if (topic.Pick == "advertising") return "pass to ad sales";
+        if (topic.Pick == "cancel" || Prob(answers, "churn_risk", "high", 1.0) >= retain) return "retention desk";
+        if (Prob(answers, "wants_refund", "yes", 1.0) >= Refund) return "refund for approval";
+        return "self-service answer";
+    }
+
+    /// <summary>What the scorecard needs to know about each policy. Decide takes the answers and
+    /// an optional value for the threshold the demo sweeps (Knob); Watch is the action it controls.</summary>
+    sealed record Policy(Func<Dictionary<string, Answer>, double?, string> Decide, string Knob, double[] Values,
+                         string Watch, string Wrong, string Missed);
+
+    static readonly Dictionary<string, Policy> Policies = new()
+    {
+        ["insurance"] = new((a, knob) => Decide(a, knob ?? Siu), "siu", new[] { 0.3, 0.6, 0.9 }, "special investigations",
+                            "honest callers investigated", "suspicious claims not investigated"),
+        ["media"] = new((a, knob) => DecideMedia(a, knob ?? Retain), "retain", new[] { 0.3, 0.5, 0.9 }, "retention desk",
+                        "happy readers sent to retention", "leaving readers not sent to retention"),
+    };
 
     // ----------------------------------------------------------------------- scorecard.py
     static Dictionary<string, Answer> GoldAnswers(Dict questions, Dict labels)
@@ -210,9 +231,10 @@ static class Jev
     }
 
     sealed record Score(int N, Dictionary<string, int> Correct, int Typed, int Asked, double Brier,
-                        int Actions, int WrongPages, int MissedPages, double Seconds, long Calls);
+                        int Actions, int Wrong, int Missed, double Seconds, long Calls);
 
-    static Score ScoreRuns(Dict questions, List<Dict> records, Dictionary<string, Run> runs, double page = Page)
+    /// <summary>`knob` overrides the policy's main threshold, for the engine and the labels alike.</summary>
+    static Score ScoreRuns(Dict questions, List<Dict> records, Dictionary<string, Run> runs, Policy pol, double? knob = null)
     {
         int n = records.Count;
         var correct = questions.Keys.ToDictionary(k => k, _ => 0);
@@ -230,14 +252,11 @@ static class Jev
                 if (a is not null && a.Pick == S(labels, name)) correct[name]++;
                 brierSum += Brier((Dict)qv!, a, S(labels, name));
             }
-            if (questions.Has("queue"))
-            {
-                var got = Decide(run.Answers, page);
-                var want = Decide(GoldAnswers(questions, labels), page);
-                if (got == want) actions++;
-                if (got == "page on-call" && want != "page on-call") wrong++;
-                if (want == "page on-call" && got != "page on-call") missed++;
-            }
+            var got = pol.Decide(run.Answers, knob);
+            var want = pol.Decide(GoldAnswers(questions, labels), knob);
+            if (got == want) actions++;
+            if (got == pol.Watch && want != pol.Watch) wrong++;
+            if (want == pol.Watch && got != pol.Watch) missed++;
             seconds.Add(run.Seconds);
         }
         return new Score(n, correct, typed, n * questions.Count, brierSum / (n * questions.Count), actions, wrong, missed,
@@ -307,34 +326,36 @@ static class Jev
     static string FmtRow(string label, Score s, Dict questions)
     {
         var cells = questions.Keys.Select(q => $"{Py.Rjust(I(s.Correct[q]), 2)}/{s.N}");
-        return Py.Ljust(label, 34) + string.Concat(cells.Select(c => Py.Rjust(c, 8)))
+        return Py.Ljust(label, 32) + string.Concat(cells.Select(c => Py.Rjust(c, 7)))
             + Py.Rjust(I(s.Typed * 100L / s.Asked), 6) + "%" + Py.Rjust(Py.Fixed(s.Brier, 3), 7)
-            + Py.Rjust(I(s.Actions), 5) + $"/{s.N}" + Py.Rjust(I(s.WrongPages), 6) + Py.Rjust(I(s.MissedPages), 7)
+            + Py.Rjust(I(s.Actions), 5) + $"/{s.N}" + Py.Rjust(I(s.Wrong), 6) + Py.Rjust(I(s.Missed), 7)
             + Py.Rjust(Py.Fixed(s.Seconds, 1), 8) + Py.Rjust(I(s.Calls), 6);
     }
 
-    static string Header(Dict questions)
+    static string Header(Dict questions, string dataset)
     {
-        var shortNames = new Dictionary<string, string>
-            { ["queue"] = "queue", ["urgency"] = "urgency", ["refund_request"] = "refund", ["needs_human"] = "human" };
-        var cols = string.Concat(questions.Keys.Select(q =>
-            Py.Rjust(shortNames.TryGetValue(q, out var sn) ? sn : string.Concat(q.EnumerateRunes().Take(7)), 8)));
-        return Py.Ljust("engine", 34) + cols + Py.Rjust("typed", 7) + Py.Rjust("brier", 7) + Py.Rjust("action", 8)
-            + Py.Rjust("wrong", 6) + Py.Rjust("missed", 7) + Py.Rjust("s/item", 8) + Py.Rjust("calls", 6);
+        var shortNames = (Dict)((Dict)Datasets[dataset]!)["short"]!;
+        var cols = string.Concat(questions.Keys.Select(q => Py.Rjust(S(shortNames, q), 7)));
+        return Py.Ljust("engine", 32) + cols + Py.Rjust("typed", 7) + Py.Rjust("brier", 7) + Py.Rjust("action", 8)
+            + Py.Rjust("wrong", 6) + Py.Rjust("missed", 7) + Py.Rjust("s/call", 8) + Py.Rjust("calls", 6);
     }
 
     static int Demo(string dataset, TextWriter output)
     {
         var (questions, records) = LoadDataset(dataset);
+        var pol = Policies[dataset];
+        var meta = (Dict)Datasets[dataset]!;
         void P(string line = "") => output.WriteLine(line);
-        P($"Lesson 10 · Jev and System One models - {records.Count} labelled fake {dataset}, {questions.Count} typed questions");
-        P("Replayed from recorded replies: no model, no network. Live: ./run -l 10 live --backend local");
+        P($"Lesson 10 \u00b7 Jev and System One models - {S(meta, "title")}: {records.Count} labelled fake "
+          + $"calls, {questions.Count} typed questions");
+        P("Replayed from recorded replies: no model, no network. "
+          + "Live: ./run -l 10 live --backend keywords,llm-json,local");
         P();
-        P(Header(questions));
+        P(Header(questions, dataset));
         var keywordRuns = new Dictionary<string, Run>();
         foreach (var r in records)
         {
-            var response = KeywordsResponse(SystemOne.BuildRequest(r["text"], questions));
+            var response = KeywordsResponse(SystemOne.BuildRequest(r["text"], questions), dataset);
             keywordRuns[S(r, "id")] = ToRun(questions, new Dict { ["response"] = response, ["seconds"] = 0.0, ["calls"] = 0L });
         }
         var rows = new List<(string Backend, Dict? Tape, Dictionary<string, Run> Runs)> { ("keywords", null, keywordRuns) };
@@ -351,58 +372,55 @@ static class Jev
             rows.Add((backend, tape, records.ToDictionary(r => S(r, "id"), r => ToRun(questions, (Dict)calls[S(r, "id")]!))));
         }
         foreach (var (backend, tape, runs) in rows)
-            P(FmtRow(LabelFor(backend, tape), ScoreRuns(questions, records, runs), questions));
+            P(FmtRow(LabelFor(backend, tape), ScoreRuns(questions, records, runs, pol), questions));
         foreach (var (backend, model) in missing)
         {
             var hint = backend == "typesafe" ? "needs TYPESAFE_API_KEY: ./run -l 10 record --backend typesafe"
                 : $"./run -l 10 record --backend {backend} --model {model}";
-            P($"{Py.Ljust(LabelFor(backend, null, model), 34)}not recorded - {hint}");
+            hint += dataset == DefaultDataset ? "" : $" --dataset {dataset}";
+            P($"{Py.Ljust(LabelFor(backend, null, model), 32)}not recorded - {hint}");
         }
         P();
-        P("accuracy = right/total per question; typed = answers that were a valid option;");
-        P("brier = probability error, 0 best, 2 = certain and wrong; action = policy matches the");
-        P("labels' action; wrong/missed = pages to on-call; s/item = median seconds; calls = model calls.");
+        P("Columns: right/total per question; typed = answers that were a valid option;");
+        P("brier = probability error, 0 best, 2 = certain and wrong; action = same action as the");
+        P($"human labels lead to; wrong = {pol.Wrong}; missed = {pol.Missed};");
+        P("s/call = median seconds; calls = model calls per record.");
 
-        if (questions.Has("queue"))
+        P();
+        P("The traps - the action each engine's answers lead to:");
+        foreach (var r in records.Where(rec => Py.Truthy(rec["trap"])))
         {
-            P();
-            P("Where they disagree - the traps (label -> each engine's queue / urgency):");
-            foreach (var r in records.Where(rec => Py.Truthy(rec["trap"])).Take(8))
-            {
-                var labels = (Dict)r["labels"]!;
-                P($"  {S(r, "id")}  {S(r, "trap")}");
-                P($"    {Py.Ljust("labels", 14)} {Py.Ljust(S(labels, "queue"), 13)} {S(labels, "urgency")}");
-                foreach (var (backend, tape, runs) in rows)
-                {
-                    var a = runs[S(r, "id")].Answers;
-                    var q = a.TryGetValue("queue", out var qa) ? qa.Pick : "-";
-                    var u = a.TryGetValue("urgency", out var ua) ? ua.Pick : "-";
-                    var note = qa is not null && backend != "keywords" ? $"  ({Py.Fixed(qa.Confidence, 2)})" : "";
-                    P($"    {Py.Ljust(ShortName(backend, tape), 14)} {Py.Ljust(q, 13)} {u}{note}");
-                }
-            }
-            P();
-            P("The threshold is a business decision. Pages to on-call as PAGE moves:");
-            double[] ts = { 0.5, 0.7, 0.9 };
-            P($"  {Py.Ljust("engine", 34)}" + string.Concat(ts.Select(t => Py.Rjust("PAGE " + Py.Fixed(t, 1), 20))));
+            var want = pol.Decide(GoldAnswers(questions, (Dict)r["labels"]!), null);
+            P($"  {S(r, "id")}  {S(r, "trap")}");
+            P($"    {Py.Ljust("labels", 14)} {want}");
             foreach (var (backend, tape, runs) in rows)
             {
-                var cells = ts.Select(t =>
-                {
-                    var s = ScoreRuns(questions, records, runs, t);
-                    return $"{s.WrongPages} wrong {s.MissedPages} missed";
-                });
-                P($"  {Py.Ljust(LabelFor(backend, tape), 34)}" + string.Concat(cells.Select(c => Py.Rjust(c, 20))));
+                var got = pol.Decide(runs[S(r, "id")].Answers, null);
+                P($"    {Py.Ljust(ShortName(backend, tape), 14)} {got}{(got == want ? "" : "   <- wrong")}");
             }
-            P("  Rules and JSON answers are always 0 or 1, so the knob does nothing for them.");
         }
+
+        var name = pol.Knob.ToUpperInvariant();
+        P();
+        P($"The threshold is a business decision. '{pol.Watch}' as {name} moves:");
+        P($"  {Py.Ljust("engine", 32)}" + string.Concat(pol.Values.Select(t => Py.Rjust($"{name} {Py.Fixed(t, 1)}", 20))));
+        foreach (var (backend, tape, runs) in rows)
+        {
+            var cells = pol.Values.Select(t =>
+            {
+                var s = ScoreRuns(questions, records, runs, pol, t);
+                return $"{s.Wrong} wrong {s.Missed} missed";
+            });
+            P($"  {Py.Ljust(LabelFor(backend, tape), 32)}" + string.Concat(cells.Select(c => Py.Rjust(c, 20))));
+        }
+        P("  Rules and JSON answers are always 0 or 1, so the knob does nothing for them.");
         return 0;
     }
 
-    /// <summary>One ticket to a System One server: TypeSafe's Jev, or the adapter on loopback.</summary>
-    static async Task<int> Ask(string text, TextWriter output)
+    /// <summary>One call to a System One server: TypeSafe's Jev, or the adapter on loopback.</summary>
+    static async Task<int> Ask(string text, string dataset, TextWriter output)
     {
-        var (questions, _) = LoadDataset("tickets");
+        var (questions, _) = LoadDataset(dataset);
         var model = Environment.GetEnvironmentVariable("TYPESAFE_DEFAULT_MODEL") is { Length: > 0 } m ? m : "jev-latest";
         var url = Environment.GetEnvironmentVariable("TYPESAFE_BASE_URL") ?? SystemOne.TypeSafeUrl;
         var key = Environment.GetEnvironmentVariable("TYPESAFE_API_KEY") ?? "";
@@ -429,35 +447,41 @@ static class Jev
                 continue;
             }
             var probs = string.Join("  ", a.Probs.Select(kv => $"{kv.Key} {Py.Fixed(kv.Value, 2)}"));
-            output.WriteLine($"  {Py.Ljust(name, 15)} {Py.Ljust(a.Pick, 13)} {probs}");
+            output.WriteLine($"  {Py.Ljust(name, 15)} {a.Pick}");
+            output.WriteLine($"      {probs}");
         }
         foreach (var problem in run.Problems) output.WriteLine($"  ! {problem}");
-        output.WriteLine($"  -> action: {Decide(run.Answers)}");
+        output.WriteLine($"  -> action: {Policies[dataset].Decide(run.Answers, null)}");
         return 0;
     }
 
     public static async Task<int> Cli(string[] args, TextWriter output, TextWriter errors)
     {
-        const string usage = "usage: Lesson10Jev [demo] [--dataset {tickets,reviews,incidents}] | ask TEXT";
+        var names = Datasets.Keys;
+        var usage = $"usage: Lesson10Jev [demo] [--dataset {{{string.Join(",", names)}}}] | ask TEXT [--dataset ...]";
         // .NET 8 `dotnet run` forwards --nologo (and a literal "--") to the program; drop them.
         var rest = args.Where(a => a is not ("--nologo" or "--")).ToList();
-        if (rest.Count > 0 && rest[0] == "ask")
-        {
-            if (rest.Count != 2) throw new Exit(2, usage + "\nerror: ask takes exactly one TEXT argument");
-            return await Ask(rest[1], output);
-        }
-        if (rest.Count > 0 && rest[0] == "demo") rest.RemoveAt(0);
-        var dataset = "tickets";
+        bool ask = rest.Count > 0 && rest[0] == "ask";
+        if (rest.Count > 0 && rest[0] is "ask" or "demo") rest.RemoveAt(0);
+        var dataset = DefaultDataset;
+        string? text = null;
         for (int i = 0; i < rest.Count; i++)
         {
             string? v;
             if (rest[i] == "--dataset") v = i + 1 < rest.Count ? rest[++i] : null;
             else if (rest[i].StartsWith("--dataset=", StringComparison.Ordinal)) v = rest[i][10..];
+            else if (ask && text is null && !rest[i].StartsWith("--", StringComparison.Ordinal))
+            {
+                text = rest[i];
+                continue;
+            }
             else throw new Exit(2, $"{usage}\nerror: unrecognized arguments: {rest[i]}");
-            if (v is not ("tickets" or "reviews" or "incidents"))
+            if (v is null || !names.Contains(v))
                 throw new Exit(2, $"{usage}\nerror: argument --dataset: invalid choice: {Py.Repr(v ?? "")}");
             dataset = v;
         }
-        return Demo(dataset, output);
+        if (!ask) return Demo(dataset, output);
+        if (text is null) throw new Exit(2, usage + "\nerror: ask takes exactly one TEXT argument");
+        return await Ask(text, dataset, output);
     }
 }

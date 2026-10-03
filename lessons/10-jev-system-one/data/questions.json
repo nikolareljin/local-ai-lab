@@ -1,79 +1,92 @@
 {
-  "tickets": {
-    "queue": {
+  "insurance": {
+    "line": {
       "type": "choice",
-      "instructions": "Which team queue should handle this support ticket?",
+      "instructions": "Which line of insurance is this call about?",
       "criteria": {
-        "billing": "Charges, invoices, refunds, credits, payment methods",
-        "technical": "Bugs, outages, errors, performance, how to use a feature",
-        "account": "Login, 2FA, users and permissions, account changes or deletion",
-        "sales": "Pricing, upgrades, quotes, discounts, licences",
-        "trust_safety": "Security incidents, account takeover, data exposure, abuse, phishing"
+        "auto": "Cars and other vehicles: accidents, theft, glass, breakdown",
+        "home": "House and contents: water, fire, storm, burglary",
+        "health": "Medical and dental treatment and invoices",
+        "travel": "Trips: luggage, cancellations, trouble abroad",
+        "life": "Life policies: death claims, beneficiaries"
       }
     },
-    "urgency": {
-      "type": "score",
-      "instructions": "How urgent is this ticket for the business, judged by its impact and not by the words the customer uses?",
-      "criteria": ["none", "low", "medium", "high", "critical"]
-    },
-    "refund_request": {
-      "type": "noul",
-      "instructions": "Does the customer ask for money back (a refund, chargeback or credit)?",
-      "criteria": {
-        "true": "Asks for a refund, a credit or money back",
-        "false": "Does not ask for money back, even if the word refund appears"
-      }
-    },
-    "needs_human": {
-      "type": "noul",
-      "instructions": "Should a person handle this ticket instead of an automated reply?",
-      "criteria": {
-        "true": "Legal, security, outage affecting many users, threats, or a decision a person must make",
-        "false": "A routine question or request an automated reply can handle"
-      }
-    }
-  },
-  "reviews": {
-    "sentiment": {
+    "intent": {
       "type": "choice",
-      "instructions": "What is the overall sentiment of this product review?",
+      "instructions": "What does the caller want from this call?",
       "criteria": {
-        "positive": "The reviewer is happy overall",
-        "mixed": "Neither clearly happy nor unhappy",
-        "negative": "The reviewer is unhappy overall"
+        "new_claim": "Reports a loss or sends in a bill to be paid",
+        "claim_status": "Asks where an existing claim stands",
+        "coverage_question": "Asks whether or how something is covered, without claiming yet",
+        "complaint": "Complains about price, service or a decision",
+        "cancel_policy": "Wants to end the policy"
       }
     },
-    "refund_request": {
-      "type": "noul",
-      "instructions": "Does the reviewer ask for money back?",
-      "criteria": {"true": "Asks for a refund or money back", "false": "Does not ask for money back"}
-    },
-    "mentions_bug": {
-      "type": "noul",
-      "instructions": "Does the review describe a software defect?",
-      "criteria": {"true": "Describes a crash, error or broken behaviour", "false": "No defect described"}
-    }
-  },
-  "incidents": {
     "severity": {
       "type": "score",
-      "instructions": "How severe is this alert?",
-      "criteria": ["low", "medium", "high", "critical"]
+      "instructions": "How serious is the damage, loss or harm described in this call, judged by what happened and not by the caller's tone?",
+      "criteria": [
+        "none",
+        "minor",
+        "moderate",
+        "major",
+        "catastrophic"
+      ]
     },
-    "owner": {
-      "type": "choice",
-      "instructions": "Which team owns this alert?",
+    "emergency": {
+      "type": "noul",
+      "instructions": "Does someone need help right now?",
       "criteria": {
-        "platform": "Servers, deploys, latency, certificates, capacity",
-        "data": "Databases, backups, replicas, search indexes",
-        "payments": "Payment providers, invoices, checkout",
-        "security": "Access, credentials, exposure, suspicious activity"
+        "true": "A person is injured, in danger, stranded or unsafe at this moment",
+        "false": "Nobody needs immediate help"
       }
     },
-    "customer_facing": {
+    "fraud_signals": {
       "type": "noul",
-      "instructions": "Do customers notice this now or within a day?",
-      "criteria": {"true": "Customers see errors, delays, stale data or exposure", "false": "Internal only"}
+      "instructions": "Does the caller's story have warning signs of a dishonest claim?",
+      "criteria": {
+        "true": "For example: no report or receipts, a very new policy, repeated similar losses, pressure for fast cash, payment to someone else",
+        "false": "The story is consistent and documented, or there is no claim at all"
+      }
+    },
+    "needs_adjuster": {
+      "type": "noul",
+      "instructions": "Does a human claims adjuster need to assess this?",
+      "criteria": {
+        "true": "A large, complex or disputed loss that someone must inspect or review",
+        "false": "Small and documented, or no claim to assess"
+      }
+    }
+  },
+  "media": {
+    "topic": {
+      "type": "choice",
+      "instructions": "What is this call to the newspaper about?",
+      "criteria": {
+        "delivery": "The printed paper: late, missing, wet, address change, holiday pause",
+        "billing": "Charges, prices, payment methods, discounts",
+        "digital_access": "The app or website: login, paywall, devices",
+        "cancel": "Ending the subscription",
+        "editorial": "What the paper printed: errors, opinions, the crossword",
+        "advertising": "Placing an advert or notice"
+      }
+    },
+    "churn_risk": {
+      "type": "score",
+      "instructions": "How likely is this subscriber to leave soon, judged by what they say they will do and not by how loudly they say it?",
+      "criteria": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "wants_refund": {
+      "type": "noul",
+      "instructions": "Does the caller ask for money back or a credit?",
+      "criteria": {
+        "true": "Asks for a refund, a credit or the difference back",
+        "false": "Does not ask for money back"
+      }
     }
   }
 }
