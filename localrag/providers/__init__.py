@@ -1,8 +1,8 @@
 """Pluggable AI providers behind one small interface.
 
-Inspired by netwise-ai's AiProvider abstraction: every provider exposes the same
-``chat`` method, and embedding-capable ones also expose ``embed``. The factory
-picks an implementation by name so the rest of the app never branches on provider.
+Every provider exposes the same ``chat`` method, and embedding-capable ones
+also expose ``embed``. The factory picks an implementation by name so the rest
+of the app never branches on provider.
 """
 
 from __future__ import annotations
