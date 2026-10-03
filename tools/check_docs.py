@@ -15,6 +15,9 @@ Checks, in order of how often they have actually broken:
   4. lesson pages     every `status: working` lesson has a published page under
                       `docs/`, every published page has a lesson behind it, and the
                       hand-authored Lesson 1-2 pages are still there
+  5. SEO metadata     every page has the description, canonical, Open Graph and
+                      JSON-LD block from `tools/seo.py`; sitemap.xml is current; no
+                      two pages share a description
 
 Run it locally the same way CI does:
 
@@ -169,11 +172,20 @@ def check_published_pages() -> list[str]:
     return problems
 
 
+def check_seo() -> list[str]:
+    """Every page's meta tags, JSON-LD and sitemap.xml match tools/seo.py."""
+    if str(ROOT / "tools") not in sys.path:
+        sys.path.insert(0, str(ROOT / "tools"))
+    import seo
+    return seo.problems()
+
+
 CHECKS = (
     ("relative links", check_links),
     ("README downloads table", check_readme_table),
     ("generated curriculum", check_curriculum),
     ("published lesson pages", check_published_pages),
+    ("SEO metadata", check_seo),
 )
 
 

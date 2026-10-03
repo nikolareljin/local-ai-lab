@@ -3,6 +3,10 @@
   "slug": "rag-evaluation-regression-testing",
   "status": "working",
   "summary": "\"Seems good\" is not a metric. Score a RAG pipeline against a golden set on retrieval recall@k, groundedness and answer correctness, gate on the numbers, and catch a regression a candidate tweak slips in - offline, polyglot, identical results in Python, Node and .NET.",
+  "seo": {
+    "description": "Evaluate RAG with numbers: recall@k, groundedness and answer correctness on a golden set, with a regression gate. Python, Node.js and C#.",
+    "keywords": ["RAG evaluation", "LLM evaluation", "recall@k", "groundedness", "regression testing"]
+  },
   "cluster": "rag-depth",
   "priority": "high",
   "languages": ["python", "node", "csharp"],

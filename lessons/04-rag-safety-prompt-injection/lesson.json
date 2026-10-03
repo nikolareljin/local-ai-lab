@@ -3,6 +3,10 @@
   "slug": "rag-safety-prompt-injection",
   "status": "working",
   "summary": "Retrieved documents are untrusted input. Watch a poisoned document hijack a naive RAG pipeline, then defend it with quarantine, isolation and an output filter - offline, polyglot, identical results in Python, Node and .NET.",
+  "seo": {
+    "description": "Defend a RAG pipeline against prompt injection from poisoned documents: quarantine, isolation and output filters, offline in Python, Node.js, C#.",
+    "keywords": ["prompt injection", "RAG security", "LLM safety", "indirect prompt injection", "guardrails"]
+  },
   "cluster": "rag-depth",
   "priority": "high",
   "languages": ["python", "node", "csharp"],

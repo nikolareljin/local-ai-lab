@@ -6,6 +6,17 @@ All notable changes to this project are documented here. This project follows
 
 ## [Unreleased]
 
+### Added
+- **SEO metadata on every published page.** `tools/seo.py` writes one block per page: meta
+  description and keywords, canonical URL, Open Graph and Twitter card tags with a 1200x630 share
+  image (`docs/assets/og-image.png`), and JSON-LD (`Course` on the home page, `LearningResource` per
+  lesson). Lesson pages take their text from a new `seo` object in `lesson.json`; `./run -l N build`
+  adds the block, `python3 tools/seo.py --write` updates the hand-authored pages and
+  `docs/sitemap.xml`. `tools/check_docs.py` fails on a missing or stale block, a description over
+  160 characters or shared by two pages, a `<title>` that differs from its og:title, a second
+  description, canonical or og:title tag, or a missing share image. No `robots.txt`: a project site's
+  one is never read; submit the sitemap in Google Search Console.
+
 ## [0.13.0] - 2026-09-24
 
 ### Added

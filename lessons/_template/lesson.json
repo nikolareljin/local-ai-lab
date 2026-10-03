@@ -3,6 +3,10 @@
   "slug": "SLUG",
   "status": "planned",
   "summary": "One-line summary of the lesson.",
+  "seo": {
+    "description": "Search-result text for the lesson page, at most 160 characters (tools/seo.py checks it).",
+    "keywords": ["main topic", "second topic"]
+  },
   "cluster": "",
   "priority": "",
   "languages": ["python"],

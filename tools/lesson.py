@@ -518,10 +518,11 @@ def render_html(number, ldir, lesson, lang=None, assets_href="/assets", media_ba
         lang_init = ("try{document.documentElement.dataset.lang="
                      "localStorage.getItem('localrag-lang')||'python'}"
                      "catch(e){document.documentElement.dataset.lang='python'}")
+    # One indented line per extra PDF, and nothing at all when there are none.
     extra_downloads = "".join(
-        f'<a class="lesson-pdf-download" href="{html.escape(nav_base + "pdf/" + item["file"], quote=True)}" '
+        f'        <a class="lesson-pdf-download" href="{html.escape(nav_base + "pdf/" + item["file"], quote=True)}" '
         f'download="{html.escape(item["file"], quote=True)}" type="application/pdf">'
-        f'<span aria-hidden="true">↓</span> {_esc(item["label"])}</a>'
+        f'<span aria-hidden="true">↓</span> {_esc(item["label"])}</a>\n'
         for item in lesson.get("supplementalPdfs", [])
     )
     out = (template
@@ -537,13 +538,26 @@ def render_html(number, ldir, lesson, lang=None, assets_href="/assets", media_ba
            .replace("{{SUMMARY}}", _inline(lesson.get("summary", "")))
            .replace("{{LANGSEL}}", _langsel_html(langs))
            .replace("{{LANGSEL_COMPACT}}", _langsel_html(langs, compact=True))
-           .replace("{{SLIDES}}", slides))
+           .replace("{{SLIDES}}", slides)
+           .replace("{{SEO}}", _seo_block(number, lesson, ldir)))
     # Inject the "generated" banner into the OUTPUT only - keeping it out of the
     # template itself, which contributors are meant to edit.
     banner = ("<!-- GENERATED FILE - do not edit by hand. Built by tools/lesson.py "
               "(`./run -l N build`) from lessons/NN-slug/lesson.json; edit the lesson.json "
               "or tools/templates/lesson-preview.html instead. -->")
     return out.replace("<!doctype html>", "<!doctype html>\n" + banner, 1)
+
+
+def _seo_block(number, lesson, ldir):
+    """The page's SEO block from tools/seo.py, the one place the meta tags are written."""
+    tools = str(Path(__file__).resolve().parent)
+    if tools not in sys.path:
+        sys.path.insert(0, tools)
+    import seo
+    slug = lesson.get("slug") or re.sub(r"^\d+-", "", Path(ldir).name)
+    name = f"lesson-{number}-{slug}.html"
+    page = seo.lesson_pages().get(name)
+    return seo.head_for(name, page) if page else ""
 
 
 def free_port():

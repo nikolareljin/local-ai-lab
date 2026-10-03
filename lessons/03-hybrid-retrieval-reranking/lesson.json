@@ -3,6 +3,10 @@
   "slug": "hybrid-retrieval-reranking",
   "status": "working",
   "summary": "BM25 + a semantic stand-in, fused with RRF - offline, polyglot, identical rankings in Python, Node and .NET.",
+  "seo": {
+    "description": "Hybrid search for RAG: BM25 plus a semantic retriever fused with Reciprocal Rank Fusion, identical rankings in Python, Node.js and C#.",
+    "keywords": ["hybrid search", "BM25", "reciprocal rank fusion", "reranking", "RAG retrieval"]
+  },
   "cluster": "rag-depth",
   "priority": "high",
   "languages": ["python", "node", "csharp"],
