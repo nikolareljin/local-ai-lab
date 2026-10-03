@@ -1,8 +1,8 @@
 """Split extracted pages into overlapping chunks.
 
 Target size with overlap, breaking on a sentence/word boundary near the limit
-instead of mid-word. Each chunk
-keeps its source + page so answers can cite where they came from.
+instead of mid-word. Each chunk keeps its source + page so answers can cite
+where they came from.
 """
 
 from __future__ import annotations
