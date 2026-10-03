@@ -52,6 +52,7 @@ const PATTERNS = [
 
 /**
  * Split text.
+ * split(text, size) returns the pieces.
  */
 function split(text, size) {
   const out = `${text} { not a brace`;
@@ -74,6 +75,8 @@ var candidate = new Config("candidate", 1, true);
 
 static List<string> Tokenize(string text) =>
     Regex.Matches(text, "[a-z]+").Select(m => m.Value).ToList();
+
+foreach (var q in questions) Retrieve(q, corpus, 3);
 
 // --- Retrieval ---
 List<Doc> Retrieve(string query, List<Doc> corpus, int topK)
@@ -128,7 +131,7 @@ def test_javascript(tmp_path, symbol, first, last):
     shown = _resolve(tmp_path, "a.mjs", JS, symbol)
     assert (shown[0], shown[-1]) == (first, last)
     if symbol == "split":  # a brace inside a template string does not end the function
-        assert len(shown) == 7
+        assert len(shown) == 8  # and the mention of split( in the doc comment is not it
 
 
 @pytest.mark.parametrize("symbol, first, last", [

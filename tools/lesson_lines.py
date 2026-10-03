@@ -40,7 +40,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 LESSONS = ROOT / "lessons"
 RULE = re.compile(r"(#|//) ?-{20,}\s*$")  # a comment rule: "# ----------" closes a marker
-NOT_A_DECLARATION = ("return", "await", "if", "else", "throw", "new", "yield", "case")
+# A line that starts with one of these uses a name; it does not declare it.
+NOT_A_DECLARATION = ("return", "await", "if", "else", "throw", "new", "yield", "case", "for",
+                     "foreach", "while", "switch", "using", "lock", "catch", "do", "try", "*", "/*",
+                     "/**")
 
 
 class Unresolved(ValueError):
@@ -281,7 +284,8 @@ def expectations(lessons: Path = LESSONS) -> list[dict]:
         number = int(ldir.name.split("-")[0])
         for el in code_steps(ldir):
             shown = [line for line in engine.read_ref(ldir, el).splitlines() if line.strip()]
-            out.append({"page": f"lesson-{number}-{ldir.name.split('-', 1)[1]}.html",
+            slug = meta.get("slug") or ldir.name.split("-", 1)[1]  # as `build` names the page
+            out.append({"page": f"lesson-{number}-{slug}.html",
                         "lesson": number, "lang": el.get("lang"), "file": el["file"],
                         "symbol": el.get("symbol"), "lines": el["lines"],
                         "first": shown[0].strip(), "last": shown[-1].strip(),
