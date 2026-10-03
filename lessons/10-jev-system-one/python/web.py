@@ -32,7 +32,15 @@ from lesson_web import serve  # noqa: E402
 systemone.load_typesafe_env(ROOT / ".env")
 DATASET = jev.DEFAULT_DATASET
 QUESTIONS, RECORDS = jev.load_dataset(DATASET)
-BY_TEXT = {r["text"].strip(): r for r in RECORDS}
+
+
+def _key(text: str) -> str:
+    """A transcript without its whitespace. The form's query box is a single-line input,
+    and a browser drops the line breaks of a pasted or clicked transcript."""
+    return "".join(text.split())
+
+
+BY_TEXT = {_key(r["text"]): r for r in RECORDS}
 def _tape(backend: str, model: str):
     """A recording, or None when it is missing or stale: the page still opens without it."""
     try:
@@ -98,9 +106,12 @@ def race_blocks(query: str) -> dict:
 
 
 def search(query: str, values: dict) -> dict:
+    fallback = ""
+    rec = BY_TEXT.get(_key(query))
+    if rec:
+        query = rec["text"]  # the transcript as recorded, line breaks and all
     if values.get("race"):
         return race_blocks(query)
-    rec = BY_TEXT.get(query.strip())
     if values.get("typesafe"):
         model = os.environ.get("TYPESAFE_DEFAULT_MODEL", "jev-latest")
         body = systemone.build_request(query, QUESTIONS, model)
@@ -120,13 +131,14 @@ def search(query: str, values: dict) -> dict:
         label = f"Jev-like adapter ({jev.LOCAL_MODEL}, live, simulated)"
     else:
         backend, tape = TAPES[max(0, min(int(values["engine"]), len(TAPES) - 1))]
+        if backend != "keywords" and rec is None:
+            # Your own text has no recording: answer with the rules instead of an empty page.
+            fallback = (f"Recordings cover the {len(RECORDS)} example calls, so this text was "
+                        "answered by the keyword rules. Switch on Live to ask a model.")
+            backend, tape = "keywords", None
         if backend == "keywords":
             body = systemone.build_request(query, QUESTIONS)
             run = jev.to_run(QUESTIONS, jev.run_live("keywords", body, "", DATASET))
-        elif rec is None:
-            return {"arms": [], "blocks": [{"kind": "note", "text":
-                    f"Recordings cover the {len(RECORDS)} example calls. Pick one, use "
-                    "engine 0 (keywords), or switch on Live."}]}
         else:
             run = jev.to_run(QUESTIONS, tape["calls"][rec["id"]])
         label = jev.label_for(backend, tape)
@@ -156,6 +168,8 @@ def search(query: str, values: dict) -> dict:
                "columns": ["question", "option", "P"], "rows": rows}]
     for problem in run["problems"]:
         blocks.append({"kind": "note", "text": f"Invalid answer: {problem}"})
+    if fallback:
+        blocks.insert(0, {"kind": "note", "text": fallback})
     return {"arms": arms, "blocks": blocks}
 
 

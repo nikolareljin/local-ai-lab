@@ -658,10 +658,17 @@ def test_the_playground_reads_the_key_from_dotenv_and_survives_ollama_being_down
     base = {"engine": 0, "siu": 0.6, "fast_track": 0.8, "emergency": 0.5,
             "live": False, "typesafe": False, "race": False}
     assert web.search(RECORDS[0]["text"], base)["arms"]
+    # what a browser really sends: the single-line query box drops the line breaks
+    for engine in range(len(web.TAPES)):
+        flat = web.search(RECORDS[3]["text"].replace("\n", ""), {**base, "engine": engine})
+        assert len(flat["arms"]) == len(QUESTIONS), engine
+        assert any(i["l"] == "action from the human labels" for i in flat["blocks"][0]["items"])
     for toggle in ("live", "race"):
         note = web.search("Caller: hello", {**base, toggle: True})["blocks"][0]["text"]
         assert "./run -l 10 check" in note
-    assert web.search("x", {**base, "engine": 99})["blocks"]
+    own = web.search("Caller: my car is on fire", {**base, "engine": 99})
+    assert len(own["arms"]) == len(QUESTIONS)  # never an empty page for your own text
+    assert "keyword rules" in own["blocks"][0]["text"]
 
 
 def test_a_backslash_url_is_never_local():
