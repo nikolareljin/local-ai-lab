@@ -1,0 +1,2494 @@
+{
+ "engine": "local",
+ "model": "qwen3:1.7b",
+ "dataset": "insurance",
+ "recorded": "2026-10-03",
+ "hardware": "Intel Core i5-10310U, 8 threads, 19 GB RAM, no GPU",
+ "prompt_version": "aa9e70749b3d",
+ "calls": {
+  "K-1001": {
+   "digest": "af89ed8e210b90e7",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "auto",
+      "probabilities": {
+       "auto": 1.0,
+       "home": 0.0,
+       "health": 0.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "coverage_question",
+      "probabilities": {
+       "new_claim": 0.0054,
+       "claim_status": 0.0,
+       "coverage_question": 0.9946,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 0.9946
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 1.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 19.04,
+   "calls": 6
+  },
+  "K-1002": {
+   "digest": "e8526a4b26f6ecce",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "auto",
+      "probabilities": {
+       "auto": 1.0,
+       "home": 0.0,
+       "health": 0.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "coverage_question",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 0.0,
+       "coverage_question": 1.0,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 1.0
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 1.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.0076
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 16.21,
+   "calls": 6
+  },
+  "K-1003": {
+   "digest": "70d0b661379849e8",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "auto",
+      "probabilities": {
+       "auto": 1.0,
+       "home": 0.0,
+       "health": 0.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "coverage_question",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 0.0,
+       "coverage_question": 1.0,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 1.0
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0001,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 0.9999,
+       "2": 0.0001,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 0.9999
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 1.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 17.53,
+   "calls": 6
+  },
+  "K-1004": {
+   "digest": "ead563d14153698b",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "health",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 0.0,
+       "health": 1.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "coverage_question",
+      "probabilities": {
+       "new_claim": 0.0743,
+       "claim_status": 0.0002,
+       "coverage_question": 0.9254,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 0.9254
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 1.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.0001
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 18.43,
+   "calls": 6
+  },
+  "K-1005": {
+   "digest": "ef83178549a38543",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "auto",
+      "probabilities": {
+       "auto": 1.0,
+       "home": 0.0,
+       "health": 0.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "new_claim",
+      "probabilities": {
+       "new_claim": 0.8551,
+       "claim_status": 0.1447,
+       "coverage_question": 0.0002,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 0.8551
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 1.0
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 17.55,
+   "calls": 6
+  },
+  "K-1006": {
+   "digest": "ea52e2dacb01d508",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "auto",
+      "probabilities": {
+       "auto": 1.0,
+       "home": 0.0,
+       "health": 0.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "coverage_question",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 0.0,
+       "coverage_question": 1.0,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 1.0
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 1.0
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 18.19,
+   "calls": 6
+  },
+  "K-1007": {
+   "digest": "4bb88e69efd36582",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "auto",
+      "probabilities": {
+       "auto": 1.0,
+       "home": 0.0,
+       "health": 0.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "claim_status",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 1.0,
+       "coverage_question": 0.0,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 1.0
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.9999
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 16.15,
+   "calls": 6
+  },
+  "K-1008": {
+   "digest": "44c8d715f87993c2",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "auto",
+      "probabilities": {
+       "auto": 0.9896,
+       "home": 0.0104,
+       "health": 0.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 0.9896
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "claim_status",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 0.998,
+       "coverage_question": 0.002,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 0.998
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 1.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.9998
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 16.83,
+   "calls": 6
+  },
+  "K-1009": {
+   "digest": "e4bae5d905fbf435",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "auto",
+      "probabilities": {
+       "auto": 1.0,
+       "home": 0.0,
+       "health": 0.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "coverage_question",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 0.0,
+       "coverage_question": 1.0,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 1.0
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 0.0867
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.9675
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 17.67,
+   "calls": 6
+  },
+  "K-1010": {
+   "digest": "561d594d57481c46",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "auto",
+      "probabilities": {
+       "auto": 1.0,
+       "home": 0.0,
+       "health": 0.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "coverage_question",
+      "probabilities": {
+       "new_claim": 0.0042,
+       "claim_status": 0.0,
+       "coverage_question": 0.9958,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 0.9958
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 1.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.0002
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 16.94,
+   "calls": 6
+  },
+  "K-1011": {
+   "digest": "582d8f491d89bbc2",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "travel",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 0.0,
+       "health": 0.0,
+       "travel": 1.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "cancel_policy",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 0.0,
+       "coverage_question": 0.0001,
+       "complaint": 0.0,
+       "cancel_policy": 0.9999
+      },
+      "confidence": 0.9999
+     },
+     "severity": {
+      "type": "score",
+      "score": 0.0012,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.9988,
+       "1": 0.0012,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 0.9988
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 1.0
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 16.6,
+   "calls": 6
+  },
+  "K-1012": {
+   "digest": "d57e56b8728361c7",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "auto",
+      "probabilities": {
+       "auto": 1.0,
+       "home": 0.0,
+       "health": 0.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "coverage_question",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 0.0,
+       "coverage_question": 0.9982,
+       "complaint": 0.0018,
+       "cancel_policy": 0.0
+      },
+      "confidence": 0.9982
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 1.0
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 17.47,
+   "calls": 6
+  },
+  "K-1013": {
+   "digest": "ffaa26ef752ee096",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "home",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 1.0,
+       "health": 0.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "coverage_question",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 0.0,
+       "coverage_question": 1.0,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 1.0
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 1.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 17.14,
+   "calls": 6
+  },
+  "K-1014": {
+   "digest": "ffbdceeaa769c9a4",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "home",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 1.0,
+       "health": 0.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "coverage_question",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 0.0,
+       "coverage_question": 1.0,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 1.0
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.1613
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 16.61,
+   "calls": 6
+  },
+  "K-1015": {
+   "digest": "d5ab452126ba70f5",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "home",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 1.0,
+       "health": 0.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "coverage_question",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 0.0,
+       "coverage_question": 1.0,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 1.0
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 16.49,
+   "calls": 6
+  },
+  "K-1016": {
+   "digest": "dc552616bb929324",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "home",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 1.0,
+       "health": 0.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "new_claim",
+      "probabilities": {
+       "new_claim": 1.0,
+       "claim_status": 0.0,
+       "coverage_question": 0.0,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 1.0
+     },
+     "severity": {
+      "type": "score",
+      "score": 2.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 0.0,
+       "2": 1.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 1.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 16.6,
+   "calls": 6
+  },
+  "K-1017": {
+   "digest": "755014ede3087a7f",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "home",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 1.0,
+       "health": 0.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "cancel_policy",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 0.0,
+       "coverage_question": 0.0044,
+       "complaint": 0.0,
+       "cancel_policy": 0.9956
+      },
+      "confidence": 0.9956
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.9999
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 20.03,
+   "calls": 6
+  },
+  "K-1018": {
+   "digest": "33b3686c924d5f1c",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "home",
+      "probabilities": {
+       "auto": 0.0001,
+       "home": 0.9999,
+       "health": 0.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 0.9999
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "new_claim",
+      "probabilities": {
+       "new_claim": 1.0,
+       "claim_status": 0.0,
+       "coverage_question": 0.0,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 1.0
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 1.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.7779
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 16.72,
+   "calls": 6
+  },
+  "K-1019": {
+   "digest": "11f12ee1382a06b5",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "travel",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 0.0001,
+       "health": 0.0001,
+       "travel": 0.9996,
+       "life": 0.0002
+      },
+      "confidence": 0.9996
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "claim_status",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 1.0,
+       "coverage_question": 0.0,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 1.0
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.9999
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 16.88,
+   "calls": 6
+  },
+  "K-1020": {
+   "digest": "1068b8a45f70b7ad",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "home",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 1.0,
+       "health": 0.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "coverage_question",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 0.0,
+       "coverage_question": 1.0,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 1.0
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 17.82,
+   "calls": 6
+  },
+  "K-1021": {
+   "digest": "7e98a51b278a603f",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "home",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 1.0,
+       "health": 0.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "claim_status",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 0.9998,
+       "coverage_question": 0.0,
+       "complaint": 0.0002,
+       "cancel_policy": 0.0
+      },
+      "confidence": 0.9998
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 0.9794
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 16.07,
+   "calls": 6
+  },
+  "K-1022": {
+   "digest": "27d6da26630ce867",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "health",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 0.0,
+       "health": 1.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "claim_status",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 1.0,
+       "coverage_question": 0.0,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 1.0
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 15.92,
+   "calls": 6
+  },
+  "K-1023": {
+   "digest": "3f922a3fd0aec3cb",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "health",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 0.0,
+       "health": 1.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "coverage_question",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 0.0,
+       "coverage_question": 1.0,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 1.0
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 1.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 16.15,
+   "calls": 6
+  },
+  "K-1024": {
+   "digest": "ec63c5f9827bb94e",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "health",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 0.0,
+       "health": 1.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "claim_status",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 1.0,
+       "coverage_question": 0.0,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 1.0
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 1.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.0506
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 15.88,
+   "calls": 6
+  },
+  "K-1025": {
+   "digest": "f9df69f26cfc88b8",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "health",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 0.0,
+       "health": 1.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "new_claim",
+      "probabilities": {
+       "new_claim": 0.9664,
+       "claim_status": 0.0132,
+       "coverage_question": 0.0204,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 0.9664
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 17.45,
+   "calls": 6
+  },
+  "K-1026": {
+   "digest": "fa1bd5448ec3473e",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "health",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 0.0,
+       "health": 1.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "coverage_question",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 0.0,
+       "coverage_question": 1.0,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 1.0
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.4141
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 18.06,
+   "calls": 6
+  },
+  "K-1027": {
+   "digest": "4701f6c155393a34",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "health",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 0.0,
+       "health": 1.0,
+       "travel": 0.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "complaint",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 0.0,
+       "coverage_question": 0.0,
+       "complaint": 1.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 1.0
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 1.0
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 19.74,
+   "calls": 6
+  },
+  "K-1028": {
+   "digest": "e796525e8df8c2e6",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "travel",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 0.0,
+       "health": 0.0,
+       "travel": 1.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "complaint",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 0.0,
+       "coverage_question": 0.0,
+       "complaint": 1.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 1.0
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 0.0026
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.9918
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 18.06,
+   "calls": 6
+  },
+  "K-1029": {
+   "digest": "6314bebea6b4bf7f",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "travel",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 0.0,
+       "health": 0.0,
+       "travel": 1.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "new_claim",
+      "probabilities": {
+       "new_claim": 0.7581,
+       "claim_status": 0.0002,
+       "coverage_question": 0.2415,
+       "complaint": 0.0,
+       "cancel_policy": 0.0001
+      },
+      "confidence": 0.7581
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 1.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.5135
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 16.94,
+   "calls": 6
+  },
+  "K-1030": {
+   "digest": "1a1e16122765dcc2",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "travel",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 0.0,
+       "health": 0.0,
+       "travel": 1.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "complaint",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 0.0,
+       "coverage_question": 0.0,
+       "complaint": 1.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 1.0
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 1.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 15.37,
+   "calls": 6
+  },
+  "K-1031": {
+   "digest": "d6656c9a5af4351f",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "travel",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 0.0,
+       "health": 0.0,
+       "travel": 1.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "coverage_question",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 0.0,
+       "coverage_question": 1.0,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 1.0
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 1.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 1.0
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 16.82,
+   "calls": 6
+  },
+  "K-1032": {
+   "digest": "00f9fc2af3353387",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "travel",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 0.0,
+       "health": 0.0,
+       "travel": 1.0,
+       "life": 0.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "coverage_question",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 0.0,
+       "coverage_question": 1.0,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 1.0
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 1.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.9996
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 17.41,
+   "calls": 6
+  },
+  "K-1033": {
+   "digest": "8c8c53adccf347ef",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "life",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 0.0,
+       "health": 0.0,
+       "travel": 0.0,
+       "life": 1.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "coverage_question",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 0.0,
+       "coverage_question": 1.0,
+       "complaint": 0.0,
+       "cancel_policy": 0.0
+      },
+      "confidence": 1.0
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 1.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.9998
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 17.21,
+   "calls": 6
+  },
+  "K-1034": {
+   "digest": "0c2a7a01326e194e",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "life",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 0.0,
+       "health": 0.0,
+       "travel": 0.0,
+       "life": 1.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "cancel_policy",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 0.0,
+       "coverage_question": 0.0,
+       "complaint": 0.0,
+       "cancel_policy": 1.0
+      },
+      "confidence": 1.0
+     },
+     "severity": {
+      "type": "score",
+      "score": 0.0021,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.9979,
+       "1": 0.0021,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 0.9979
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 0.5473
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 15.62,
+   "calls": 6
+  },
+  "K-1035": {
+   "digest": "e88f0495b3fd7cd3",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "life",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 0.0,
+       "health": 0.0,
+       "travel": 0.2457,
+       "life": 0.7543
+      },
+      "confidence": 0.7543
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "cancel_policy",
+      "probabilities": {
+       "new_claim": 0.0378,
+       "claim_status": 0.0179,
+       "coverage_question": 0.2322,
+       "complaint": 0.0012,
+       "cancel_policy": 0.7109
+      },
+      "confidence": 0.7109
+     },
+     "severity": {
+      "type": "score",
+      "score": 1.0,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.0,
+       "1": 1.0,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 1.0
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 1.0
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 17.61,
+   "calls": 6
+  },
+  "K-1036": {
+   "digest": "82bc41414e9c6990",
+   "response": {
+    "model": "local-qwen3:1.7b",
+    "answers": {
+     "line": {
+      "type": "choice",
+      "choice": "life",
+      "probabilities": {
+       "auto": 0.0,
+       "home": 0.0,
+       "health": 0.0,
+       "travel": 0.0,
+       "life": 1.0
+      },
+      "confidence": 1.0
+     },
+     "intent": {
+      "type": "choice",
+      "choice": "cancel_policy",
+      "probabilities": {
+       "new_claim": 0.0,
+       "claim_status": 0.0,
+       "coverage_question": 0.0,
+       "complaint": 0.0,
+       "cancel_policy": 1.0
+      },
+      "confidence": 1.0
+     },
+     "severity": {
+      "type": "score",
+      "score": 0.999,
+      "legend": {
+       "0": "none",
+       "1": "minor",
+       "2": "moderate",
+       "3": "major",
+       "4": "catastrophic"
+      },
+      "probabilities": {
+       "0": 0.001,
+       "1": 0.999,
+       "2": 0.0,
+       "3": 0.0,
+       "4": 0.0
+      },
+      "confidence": 0.999
+     },
+     "emergency": {
+      "type": "noul",
+      "noul": 0.0
+     },
+     "fraud_signals": {
+      "type": "noul",
+      "noul": 1.0
+     },
+     "needs_adjuster": {
+      "type": "noul",
+      "noul": 0.0
+     }
+    },
+    "usage": {
+     "input_tokens": null,
+     "output_tokens": 6
+    }
+   },
+   "seconds": 15.78,
+   "calls": 6
+  }
+ }
+}

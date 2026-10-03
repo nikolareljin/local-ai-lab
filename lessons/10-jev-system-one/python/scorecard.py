@@ -10,7 +10,9 @@ Per engine, over every record:
              "every option equally likely". Lower is better.
   actions    the policy's action from the engine's answers, compared with the
              policy's action from the human labels
-  pages      wrong pages (woke someone for nothing) and missed pages
+  wrong /    the action the policy's main threshold controls (for insurance:
+  missed     "special investigations"), taken when it should not be, and not
+             taken when it should
 
 Accuracy says how often the top answer is right. Brier also says whether the
 engine *knew* when it was unsure - which is what a threshold in the policy needs.
@@ -42,13 +44,19 @@ def brier(question: dict, answer: dict | None, truth: str) -> float:
     return systemone.fsum((probs[label] - (1.0 if label == truth else 0.0)) ** 2 for label in labels)
 
 
-def score(questions: dict, records: list[dict], runs: dict, *, page: float = policy.PAGE) -> dict:
-    """`runs` maps record id -> {"answers": ..., "seconds": float, "calls": int}."""
+def score(questions: dict, records: list[dict], runs: dict, pol: policy.Policy,
+          knob: float | None = None) -> dict:
+    """`runs` maps record id -> {"answers": ..., "seconds": float, "calls": int}.
+
+    `knob` overrides the policy's main threshold, for the engine and for the labels
+    alike (the labels are certain, so it never changes their action).
+    """
+    kwargs = {} if knob is None else {pol.knob: knob}
     n = len(records)
     correct = {name: 0 for name in questions}
     typed = 0
     brier_sum = 0.0
-    actions_right = wrong_pages = missed_pages = 0
+    actions_right = wrong = missed = 0
     seconds = []
     for rec in records:
         run = runs[rec["id"]]
@@ -58,22 +66,21 @@ def score(questions: dict, records: list[dict], runs: dict, *, page: float = pol
             typed += a is not None
             correct[name] += a is not None and a["pick"] == rec["labels"][name]
             brier_sum += brier(q, a, rec["labels"][name])
-        if "queue" in questions:
-            got = policy.decide(answers, page=page)
-            want = policy.decide(gold_answers(questions, rec["labels"]), page=page)
-            actions_right += got == want
-            wrong_pages += got == "page on-call" and want != "page on-call"
-            missed_pages += want == "page on-call" and got != "page on-call"
+        got = pol.decide(answers, **kwargs)
+        want = pol.decide(gold_answers(questions, rec["labels"]), **kwargs)
+        actions_right += got == want
+        wrong += got == pol.watch and want != pol.watch
+        missed += want == pol.watch and got != pol.watch
         seconds.append(run["seconds"])
     return {
         "n": n,
         "correct": correct,
         "typed": typed,
         "asked": n * len(questions),
-        "brier": brier_sum / (n * len(questions)),
+        "brier": brier_sum / (n * len(questions)) if n else 0.0,
         "actions": actions_right,
-        "wrong_pages": wrong_pages,
-        "missed_pages": missed_pages,
+        "wrong": wrong,
+        "missed": missed,
         "seconds": statistics.median(seconds) if seconds else 0.0,
         "calls": runs[records[0]["id"]]["calls"] if records else 0,
     }

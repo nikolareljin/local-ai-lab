@@ -52,6 +52,24 @@ git clone https://github.com/nikolareljin/local-ai-lab.git
 cd local-ai-lab
 ```
 
+### 📥 Or let the setup script do it
+`setup.sh` (Linux, macOS) and `setup.ps1` (Windows) clone the repository, create the virtualenv,
+install `requirements.txt` and pull the local model if Ollama is installed:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nikolareljin/local-ai-lab/main/setup.sh | bash
+```
+```powershell
+irm https://raw.githubusercontent.com/nikolareljin/local-ai-lab/main/setup.ps1 | iex
+```
+
+Add `--with-system-packages` (`-WithSystemPackages`) to have it install Git and Python through
+your package manager; without it the script never runs `sudo`. `--dry-run` prints the commands
+only. The options are listed in the [README](./README.md#-install-in-one-line).
+
+On Ubuntu or Debian, [distrodeck](https://github.com/nikolareljin/distrodeck) or
+[NikOS](https://github.com/nikolareljin/nikos) set up the toolchains and Ollama in one go.
+
 ### Python 3.10+ (reference stack - recommended for everyone)
 - **Linux (Debian/Ubuntu):** `sudo apt install -y python3 python3-venv python3-pip`
 - **Linux (Fedora):** `sudo dnf install -y python3 python3-pip`
@@ -199,7 +217,7 @@ ollama pull nomic-embed-text   # embeddings (RAG_RETRIEVER=embeddings)
 | **7 · LangChain** | Python ✓ · Node ✓ | `langchain-core`, `langchain-text-splitters` | `pip install -r lessons/07-langchain-rag/requirements.txt` |
 | **8 · LangGraph** | Python ✓ · Node ✓ | `langgraph` (brings `langchain-core` with it) | `pip install -r lessons/08-langgraph/requirements.txt` |
 | **9 · Ollama + Function Calling** | Python ✓ · Node ✓ | none for `demo`; Ollama + a tool-capable model for live runs | §4 (Ollama) + `ollama pull qwen3:1.7b` |
-| **10 · Jev and System One models** | Python ✓ · Node ✓ · C# ✓ | none for `demo`; Ollama + `qwen3:1.7b` for the local adapter; optional `typesafe-sdk` (hash-pinned) + a TypeSafe key for the real Jev | §4 (Ollama) + `./run -l 10 install-sdk` |
+| **10 · Jev and System One models** | Python ✓ · Node ✓ · C# ✓ | none for `demo`; Ollama + `qwen3:1.7b` for the local session; a [TypeSafe key](https://console.typesafe.ai/keys) for the one real call; optional `typesafe-sdk` (hash-pinned) | §4 (Ollama) + `./run -l 10 check` |
 | **11 · Semantic Kernel** | **C#/.NET** | .NET 8 SDK + SK NuGet | §1 (.NET) + `dotnet add package Microsoft.SemanticKernel` |
 | **12 · AWS Bedrock Agents** | Python | AWS CLI + boto3 | [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) + `pip install boto3` + `aws configure` |
 | **13 · Google ADK** | Python | `google-adk` + Gemini key | `pip install google-adk` + §4 (Gemini) |

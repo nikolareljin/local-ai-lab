@@ -25,13 +25,14 @@ import hashlib
 import ipaddress
 import json
 import math
+import os
 import socket
 import time
 import urllib.error
 import urllib.request
 from urllib.parse import urlparse
 
-MAX_QUESTIONS = 64
+MAX_QUESTIONS = 64  # this lesson's own cap; TypeSafe documents a token limit, not a count
 MAX_CHOICES = 255
 SCORE_LEVELS = (2, 10)
 SYSTEM_ONE_PATH = "/v1/systemone"
@@ -50,6 +51,31 @@ def fsum(values) -> float:
         comp += (total - t) + v if abs(total) >= abs(v) else (v - t) + total
         total = t
     return total + comp
+
+
+def load_typesafe_env(env_file) -> None:
+    """Read TYPESAFE_* lines from the repo's .env, without overriding the environment.
+
+    Only those keys: the rest of .env configures other lessons (a different
+    OLLAMA_MODEL, for one) and must not leak into this one. Accepts the usual
+    spellings: `export KEY=value`, spaces around `=`, quotes, a trailing ` # comment`.
+    """
+    try:
+        text = open(env_file, encoding="utf-8-sig", errors="replace").read()
+    except OSError:
+        return
+    for line in text.splitlines():
+        key, sep, value = line.strip().removeprefix("export ").partition("=")
+        key, value = key.strip(), value.strip()
+        if not sep or not key.startswith("TYPESAFE_") or key in os.environ:
+            continue
+        if value[:1] in ("'", '"'):
+            end = value.find(value[0], 1)
+            value = value[1:end] if end > 0 else value[1:]
+        else:
+            value = value.split(" #", 1)[0].strip()
+        if value and "\0" not in value:
+            os.environ[key] = value
 
 
 def options(question: dict) -> list[str]:
@@ -169,6 +195,8 @@ def read_answers(questions: dict, response: dict) -> tuple[dict, list[str]]:
 # --------------------------------------------------------------------------- sending
 def is_loopback(url: str) -> bool:
     """An http(s) URL whose host is this machine."""
+    if "\\" in url:
+        return False  # parsers disagree on what a backslash means
     try:
         parsed = urlparse(url)
         host = parsed.hostname or ""
@@ -194,7 +222,7 @@ def post(base_url: str, body: dict, api_key: str = "", timeout: float = 120.0) -
     """POST one request; return (response, seconds).
 
     A key is only ever sent to TypeSafe or to this machine: anything else is refused,
-    so a typo in TYPESAFE_BASE_URL cannot hand the key (or the tickets) to a stranger.
+    so a typo in TYPESAFE_BASE_URL cannot hand the key (or the calls) to a stranger.
     """
     check_destination(base_url)
     req = urllib.request.Request(
