@@ -24,7 +24,7 @@ typed items (they may be intermingled):
 | `type` | fields | drives |
 |--------|--------|--------|
 | `command` | `action`, `lang?`, `shell`, `venv?`, `note?` | **running** - `./run -l N <action>` executes every command with that `action` (and matching/`null` `lang`), in order |
-| `code` | `file`, `lang?`, `note?`, `notes?` | show a code file (referenced, never pasted), syntax-highlighted; `notes` is a list of remarks shown **under** the snippet |
+| `code` | `file`, `lang?`, `lines?` + `symbol`, `note?`, `notes?` | show a code file (referenced, never pasted), syntax-highlighted; `notes` is a list of remarks shown **under** the snippet. `lines` (`"26-45"`) shows an excerpt and is **computed** from `symbol` by `python3 tools/lesson_lines.py --write`: never type it |
 | `config` | `file`, `note?`, `notes?` | show a config / data file (same note rules) |
 | `text` | `title?`, `text` \| `file` | copy/paste block (e.g. a prompt) |
 | `note` | `title?`, `text` \| `file` | instruction text |

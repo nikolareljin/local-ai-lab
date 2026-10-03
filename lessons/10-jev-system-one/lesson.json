@@ -147,7 +147,7 @@
       "title": "The official SDK - same code, two destinations",
       "body": "`TypeSafeClient()` reads `TYPESAFE_API_KEY` and `TYPESAFE_BASE_URL`. Leave the URL unset and it calls TypeSafe's Jev; set it to `http://127.0.0.1:8765` and the same code calls the local adapter. Python and Node.js have official SDKs. C# has none, so its tab shows the same request made with `HttpClient`.",
       "why": "Install it with `./run -l 10 install-sdk`: every file is checked against a sha256 in `requirements-sdk.txt`, into its own venv. On npm, `npm audit signatures` verifies the package was built from TypeSafe's GitHub repository. And `pip install qev` installs an unrelated project - not anything from TypeSafe.",
-      "symbol": "marker:",
+      "symbol": "marker:the whole integration",
       "group": "sdk"
     },
     {
@@ -155,14 +155,14 @@
       "file": "node/sdk_example.mjs",
       "lang": "node",
       "lines": "39-57",
-      "symbol": "marker:",
+      "symbol": "marker:the whole integration",
       "group": "sdk"
     },
     {
       "type": "code",
       "file": "dotnet/Program.cs",
       "lang": "csharp",
-      "lines": "457-492",
+      "lines": "457-491",
       "symbol": "Ask",
       "group": "sdk"
     },

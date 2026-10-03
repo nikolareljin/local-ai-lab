@@ -519,46 +519,19 @@ def test_labels_are_options_of_their_questions():
                 assert label in systemone.options(questions[name]), (rec["id"], name)
 
 
-def _symbol_range(path: Path, symbol: str) -> str:
-    """Where `symbol` lives in a source file, as lesson.json writes it: "start-end"."""
-    import ast
-    lines = path.read_text(encoding="utf-8").splitlines()
-    if symbol.startswith("marker:"):  # a block between two comment rules
-        i = next(k for k, line in enumerate(lines) if "--- the whole integration" in line)
-        j = next(k for k, line in enumerate(lines)
-                 if re.search(r"(#|//) -{20,}$", line) and k > i)
-        return f"{i + 1}-{j + 1}"
-    if path.suffix == ".py":
-        node = next(n for n in ast.walk(ast.parse("\n".join(lines)))
-                    if isinstance(n, ast.FunctionDef) and n.name == symbol)
-        return f"{node.lineno}-{node.end_lineno}"
-    signature = re.compile(r"\b" + re.escape(symbol) + r"\s*\(")
-    start = next(k for k, line in enumerate(lines)
-                 if signature.search(line) and not line.rstrip().endswith(";")
-                 and re.match(r"\s*(export |async |public |private |static |function )", line))
-    top = start  # the comment block above the signature belongs to the snippet
-    while top > 0 and re.match(r"\s*(///|//|/\*\*|\*)", lines[top - 1]):
-        top -= 1
-    depth, opened = 0, False
-    for k in range(start, len(lines)):  # JavaScript and C#: the matching closing brace
-        depth += lines[k].count("{") - lines[k].count("}")
-        opened = opened or "{" in lines[k]
-        if opened and depth == 0:
-            return f"{top + 1}-{k + 1}"
-    raise AssertionError(f"{symbol}: no closing brace in {path.name}")
-
-
 def test_lesson_code_steps_show_the_function_they_name():
     """Every code step names a `symbol`; its `lines` must be exactly that function.
 
-    The ranges are typed into lesson.json; an edit above one shifts the slide onto the
-    wrong code without failing anything else. On failure the message gives the new range.
+    An edit above a function shifts its slide onto the wrong code. The ranges are computed
+    by tools/lesson_lines.py (`--write` fixes them); this is the same check, for this lesson.
     """
+    sys.path.insert(0, str(HERE.parents[2] / "tools"))
+    import lesson_lines
     lesson = json.loads((HERE.parent / "lesson.json").read_text(encoding="utf-8"))
     steps = [el for el in lesson["elements"] if el.get("type") == "code"]
     assert steps
     for el in steps:
-        want = _symbol_range(HERE.parent / el["file"], el["symbol"])
+        want = lesson_lines.resolve(HERE.parent / el["file"], el["symbol"])
         assert el["lines"] == want, f"{el['file']} {el['symbol']}: lines should be {want}"
 
 

@@ -6,7 +6,23 @@ All notable changes to this project are documented here. This project follows
 
 ## [Unreleased]
 
+### Fixed
+- **Lesson pages showed the wrong lines of code.** Code steps cut their excerpt by a line range
+  typed into `lesson.json`; after the source files changed, Lessons 6, 7 and 8 showed fragments
+  that started mid-function (48 of 89 ranges were off, in Python, Node.js and C#). Every code step
+  now names a `symbol`, and `tools/lesson_lines.py --write` computes the range from it.
+  `tools/check_docs.py` fails on a stale range or a page that was not rebuilt, and the docs
+  workflow now runs when a lesson's source changes, not only its `lesson.json`.
+
+### Security
+- `fast-uri` 3.1.8 and `ip-address` 10.7.3 in the Lesson 2 Node.js port (lockfile only).
+- `DocumentFormat.OpenXml` 3.3.0 in the Lesson 1 and 2 C# ports: it brings `System.IO.Packaging`
+  8.0.1, which fixes GHSA-f32c-w444-8ppv and GHSA-qj66-m88j-hmgj.
+
 ### Added
+- **Browser tests for the published pages** (`e2e/`, Playwright): every code step is on its page,
+  complete, under the right language and only that one; every lesson page loads without errors
+  and its slider reaches every step.
 - **Lesson web forms show a spinner while a search runs.** In the Rankings panel and on the Search
   button, at once after Search, Enter or an example chip, with the elapsed seconds; replaced by the
   result (or the error). Searches fired by typing or a slider show it only after 200 ms, so fast

@@ -454,7 +454,6 @@ static class Jev
         return 0;
     }
 
-    /// <summary>One call to a System One server: TypeSafe's Jev, or the adapter on loopback.</summary>
     /// <summary>
     /// Ask a System One server about one call and print every probability and the action.
     ///

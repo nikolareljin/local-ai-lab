@@ -51,7 +51,7 @@
       "type": "code",
       "file": "python/repo_assistant.py",
       "lang": "python",
-      "lines": "58-96",
+      "lines": "79-130", "symbol": "chunk_file..build_index",
       "group": "index",
       "kicker": "Step 2",
       "title": "Index into passages that carry citations",
@@ -62,21 +62,21 @@
       "type": "code",
       "file": "node/repo_assistant.mjs",
       "lang": "node",
-      "lines": "64-91",
+      "lines": "93-119", "symbol": "makeChunk..buildIndex",
       "group": "index"
     },
     {
       "type": "code",
       "file": "dotnet/Program.cs",
       "lang": "csharp",
-      "lines": "55-86",
+      "lines": "109-156", "symbol": "BuildIndex..MakeChunk",
       "group": "index"
     },
     {
       "type": "code",
       "file": "python/repo_assistant.py",
       "lang": "python",
-      "lines": "103-114",
+      "lines": "138-148", "symbol": "retrieve",
       "group": "retrieve",
       "kicker": "Step 3",
       "title": "Retrieve the candidate passages",
@@ -87,21 +87,21 @@
       "type": "code",
       "file": "node/repo_assistant.mjs",
       "lang": "node",
-      "lines": "100-110",
+      "lines": "129-139", "symbol": "retrieve",
       "group": "retrieve"
     },
     {
       "type": "code",
       "file": "dotnet/Program.cs",
       "lang": "csharp",
-      "lines": "90-102",
+      "lines": "160-172", "symbol": "Retrieve",
       "group": "retrieve"
     },
     {
       "type": "code",
       "file": "python/repo_assistant.py",
       "lang": "python",
-      "lines": "116-132",
+      "lines": "152-166", "symbol": "answer",
       "group": "answer",
       "kicker": "Step 4",
       "title": "Answer only from the repo - or abstain",
@@ -112,21 +112,21 @@
       "type": "code",
       "file": "node/repo_assistant.mjs",
       "lang": "node",
-      "lines": "112-120",
+      "lines": "141-149", "symbol": "answer",
       "group": "answer"
     },
     {
       "type": "code",
       "file": "dotnet/Program.cs",
       "lang": "csharp",
-      "lines": "104-119",
+      "lines": "174-189", "symbol": "Answer",
       "group": "answer"
     },
     {
       "type": "code",
       "file": "python/repo_assistant.py",
       "lang": "python",
-      "lines": "134-157",
+      "lines": "177-191", "symbol": "plan",
       "group": "plan",
       "kicker": "Step 5",
       "title": "Plan before you edit - and edit nothing",
@@ -137,14 +137,14 @@
       "type": "code",
       "file": "node/repo_assistant.mjs",
       "lang": "node",
-      "lines": "122-140",
+      "lines": "157-169", "symbol": "plan",
       "group": "plan"
     },
     {
       "type": "code",
       "file": "dotnet/Program.cs",
       "lang": "csharp",
-      "lines": "121-138",
+      "lines": "191-208", "symbol": "Plan",
       "group": "plan"
     },
     {

@@ -112,7 +112,8 @@ Error E_2001 means internal storage is full. Delete old recordings to continue.<
             tf = d[<span class="hl-str">"tokens"</span>].count(t)
             score += idf * (tf * (k1 + <span class="hl-num">1</span>)) / (tf + k1 * (<span class="hl-num">1</span> - b + b * dl / avgdl))
         scores.append(score)
-    <span class="hl-kw">return</span> scores</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/hybrid_demo.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> bm25Scores(queryTokens, docs) {
+    <span class="hl-kw">return</span> scores</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/hybrid_demo.mjs</div><pre><code class='lang-js'><span class="hl-com">// --- Lexical arm: a compact BM25 (no external library) ----------------------</span>
+<span class="hl-kw">function</span> bm25Scores(queryTokens, docs) {
   <span class="hl-kw">const</span> n = docs.length;
   <span class="hl-kw">if</span> (n === <span class="hl-num">0</span>) <span class="hl-kw">return</span> []; <span class="hl-com">// empty corpus → no scores (avoid Infinity/NaN on avgdl)</span>
   <span class="hl-kw">const</span> avgdl = docs.reduce((s, d) =&gt; s + d.tokens.length, <span class="hl-num">0</span>) / n;
@@ -129,7 +130,8 @@ Error E_2001 means internal storage is full. Delete old recordings to continue.<
     }
     <span class="hl-kw">return</span> score;
   });
-}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>List&lt;<span class="hl-kw">double</span>&gt; Bm25Scores(List&lt;<span class="hl-kw">string</span>&gt; queryTokens, List&lt;Doc&gt; corpus)
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'><span class="hl-com">// --- Lexical arm: a compact BM25 (no external library) ----------------------</span>
+List&lt;<span class="hl-kw">double</span>&gt; Bm25Scores(List&lt;<span class="hl-kw">string</span>&gt; queryTokens, List&lt;Doc&gt; corpus)
 {
     <span class="hl-kw">int</span> n = corpus.Count;
     <span class="hl-kw">if</span> (n == <span class="hl-num">0</span>) <span class="hl-kw">return</span> <span class="hl-kw">new</span> List&lt;<span class="hl-kw">double</span>&gt;(); <span class="hl-com">// empty corpus → no scores (Average throws on empty)</span>
@@ -161,7 +163,8 @@ Error E_2001 means internal storage is full. Delete old recordings to continue.<
     <span class="hl-kw">for</span> d <span class="hl-kw">in</span> docs:
         toks = set(d[<span class="hl-str">"tokens"</span>])
         scores.append(len(q &amp; toks) / (len(q) <span class="hl-kw">or</span> <span class="hl-num">1</span>))
-    <span class="hl-kw">return</span> scores</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/hybrid_demo.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> semanticScores(queryTokens, docs) {
+    <span class="hl-kw">return</span> scores</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/hybrid_demo.mjs</div><pre><code class='lang-js'><span class="hl-com">// --- Semantic stand-in: synonym-expanded overlap (no model needed) ----------</span>
+<span class="hl-kw">function</span> semanticScores(queryTokens, docs) {
   <span class="hl-kw">const</span> q = <span class="hl-kw">new</span> Set(queryTokens);
   <span class="hl-kw">for</span> (<span class="hl-kw">const</span> t <span class="hl-kw">of</span> [...q]) <span class="hl-kw">for</span> (<span class="hl-kw">const</span> s <span class="hl-kw">of</span> SYNONYMS[t] ?? []) q.add(s);
   <span class="hl-kw">return</span> docs.map((d) =&gt; {
@@ -170,7 +173,8 @@ Error E_2001 means internal storage is full. Delete old recordings to continue.<
     <span class="hl-kw">for</span> (<span class="hl-kw">const</span> t <span class="hl-kw">of</span> q) <span class="hl-kw">if</span> (toks.has(t)) overlap++;
     <span class="hl-kw">return</span> overlap / (q.size || <span class="hl-num">1</span>);
   });
-}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>List&lt;<span class="hl-kw">double</span>&gt; SemanticScores(List&lt;<span class="hl-kw">string</span>&gt; queryTokens, List&lt;Doc&gt; corpus)
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'><span class="hl-com">// --- Semantic stand-in: synonym-expanded overlap (no model needed) ----------</span>
+List&lt;<span class="hl-kw">double</span>&gt; SemanticScores(List&lt;<span class="hl-kw">string</span>&gt; queryTokens, List&lt;Doc&gt; corpus)
 {
     <span class="hl-kw">var</span> q = <span class="hl-kw">new</span> HashSet&lt;<span class="hl-kw">string</span>&gt;(queryTokens);
     <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> t <span class="hl-kw">in</span> q.ToList())
@@ -196,7 +200,9 @@ Error E_2001 means internal storage is full. Delete old recordings to continue.<
     <span class="hl-kw">for</span> ranking <span class="hl-kw">in</span> rankings:
         <span class="hl-kw">for</span> pos, name <span class="hl-kw">in</span> enumerate(ranking):
             fused[name] = fused.get(name, <span class="hl-num">0.0</span>) + <span class="hl-num">1.0</span> / (rrf_k + pos + <span class="hl-num">1</span>)
-    <span class="hl-kw">return</span> [name <span class="hl-kw">for</span> name, _ <span class="hl-kw">in</span> sorted(fused.items(), key=<span class="hl-kw">lambda</span> kv: (-kv[<span class="hl-num">1</span>], kv[<span class="hl-num">0</span>]))]</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/hybrid_demo.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> rank(docs, scores) {
+    <span class="hl-kw">return</span> [name <span class="hl-kw">for</span> name, _ <span class="hl-kw">in</span> sorted(fused.items(), key=<span class="hl-kw">lambda</span> kv: (-kv[<span class="hl-num">1</span>], kv[<span class="hl-num">0</span>]))]</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/hybrid_demo.mjs</div><pre><code class='lang-js'><span class="hl-com">// Drop zero-score (unmatched) docs so an arm that finds nothing contributes</span>
+<span class="hl-com">// nothing to RRF. Deterministic: score desc, then name asc.</span>
+<span class="hl-kw">function</span> rank(docs, scores) {
   <span class="hl-kw">return</span> docs
     .map((d, i) =&gt; ({ name: d.name, score: scores[i] }))
     .filter((x) =&gt; x.score &gt; <span class="hl-num">0</span>)
@@ -212,7 +218,9 @@ Error E_2001 means internal storage is full. Delete old recordings to continue.<
   <span class="hl-kw">return</span> [...fused.entries()]
     .sort((a, b) =&gt; b[<span class="hl-num">1</span>] - a[<span class="hl-num">1</span>] || cmpOrdinal(a[<span class="hl-num">0</span>], b[<span class="hl-num">0</span>]))
     .map(([name]) =&gt; name);
-}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'><span class="hl-kw">static</span> List&lt;<span class="hl-kw">string</span>&gt; Rank(List&lt;Doc&gt; corpus, List&lt;<span class="hl-kw">double</span>&gt; scores) =&gt;
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'><span class="hl-com">// Drop zero-score (unmatched) docs so an arm that finds nothing contributes</span>
+<span class="hl-com">// nothing to RRF. Deterministic: score desc, then name asc.</span>
+<span class="hl-kw">static</span> List&lt;<span class="hl-kw">string</span>&gt; Rank(List&lt;Doc&gt; corpus, List&lt;<span class="hl-kw">double</span>&gt; scores) =&gt;
     corpus.Select((d, i) =&gt; (d.Name, Score: scores[i]))
         .Where(x =&gt; x.Score &gt; <span class="hl-num">0</span>)
         .OrderByDescending(x =&gt; x.Score)
