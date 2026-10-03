@@ -518,10 +518,11 @@ def render_html(number, ldir, lesson, lang=None, assets_href="/assets", media_ba
         lang_init = ("try{document.documentElement.dataset.lang="
                      "localStorage.getItem('localrag-lang')||'python'}"
                      "catch(e){document.documentElement.dataset.lang='python'}")
+    # One indented line per extra PDF, and nothing at all when there are none.
     extra_downloads = "".join(
-        f'<a class="lesson-pdf-download" href="{html.escape(nav_base + "pdf/" + item["file"], quote=True)}" '
+        f'        <a class="lesson-pdf-download" href="{html.escape(nav_base + "pdf/" + item["file"], quote=True)}" '
         f'download="{html.escape(item["file"], quote=True)}" type="application/pdf">'
-        f'<span aria-hidden="true">↓</span> {_esc(item["label"])}</a>'
+        f'<span aria-hidden="true">↓</span> {_esc(item["label"])}</a>\n'
         for item in lesson.get("supplementalPdfs", [])
     )
     out = (template
@@ -549,7 +550,9 @@ def render_html(number, ldir, lesson, lang=None, assets_href="/assets", media_ba
 
 def _seo_block(number, lesson, ldir):
     """The page's SEO block from tools/seo.py, the one place the meta tags are written."""
-    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    tools = str(Path(__file__).resolve().parent)
+    if tools not in sys.path:
+        sys.path.insert(0, tools)
     import seo
     slug = lesson.get("slug") or re.sub(r"^\d+-", "", Path(ldir).name)
     name = f"lesson-{number}-{slug}.html"

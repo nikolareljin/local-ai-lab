@@ -10,8 +10,13 @@ it rewritten in place by `--write`. Both call `head_for()`, so the two cannot dr
 Lesson pages take their text from the `seo` object in `lessons/NN-slug/lesson.json`
 (`description`, `keywords`). The hand-authored pages are described in `STATIC` below.
 
-    python3 tools/seo.py --write   # rewrite the static pages' blocks, sitemap.xml, robots.txt
+    python3 tools/seo.py --write   # rewrite the static pages' blocks and sitemap.xml
     python3 tools/seo.py --check   # exit 1 if anything is missing, stale or duplicated
+
+No robots.txt: this is a GitHub Pages *project* site, served under /local-ai-lab/,
+and crawlers only read robots.txt at the host root. Submit
+https://nikolareljin.github.io/local-ai-lab/sitemap.xml in Google Search Console
+instead.
 """
 
 from __future__ import annotations
@@ -26,7 +31,10 @@ ROOT = Path(__file__).resolve().parent.parent
 DOCS = ROOT / "docs"
 LESSONS = ROOT / "lessons"
 SITE = "https://nikolareljin.github.io/local-ai-lab/"
-IMAGE = SITE + "assets/hero-banner.png"
+# 1200x630: the size Open Graph and Twitter's large card display without cropping.
+IMAGE = SITE + "assets/og-image.png"
+IMAGE_SIZE = (1200, 630)
+IMAGE_ALT = "local-ai-lab: a hands-on course for building local, private AI"
 DESCRIPTION_MAX = 160
 BLOCK = re.compile(r"[ \t]*<!-- seo -->.*?<!-- /seo -->\n?", re.S)
 
@@ -126,8 +134,9 @@ def _json_ld(name: str, page: dict) -> dict:
                 "description": page["description"], "learningResourceType": "tutorial",
                 "educationalLevel": "intermediate", "isAccessibleForFree": True,
                 "inLanguage": "en", "image": IMAGE,
+                # schema.org has no programmingLanguage on LearningResource; say it in text.
                 "teaches": ", ".join(page["keywords"]),
-                "programmingLanguage": [LANG_NAMES.get(x, x) for x in page["languages"]],
+                "keywords": ", ".join(LANG_NAMES.get(x, x) for x in page["languages"]),
                 "position": page["number"], "isPartOf": course}
     return {"@context": "https://schema.org", "@type": "WebPage", "name": page["title"],
             "url": url, "description": page["description"], "isPartOf": course}
@@ -148,7 +157,6 @@ def head_for(name: str, page: dict | None = None) -> str:
         f'<meta name="description" content="{esc(page["description"])}" />',
         f'<meta name="keywords" content="{esc(keywords)}" />',
         '<meta name="author" content="Nik Reljin" />',
-        '<meta name="robots" content="index, follow" />',
         f'<link rel="canonical" href="{esc(url)}" />',
         '<meta property="og:site_name" content="local-ai-lab" />',
         f'<meta property="og:type" content="{og_type}" />',
@@ -156,10 +164,14 @@ def head_for(name: str, page: dict | None = None) -> str:
         f'<meta property="og:description" content="{esc(page["description"])}" />',
         f'<meta property="og:url" content="{esc(url)}" />',
         f'<meta property="og:image" content="{IMAGE}" />',
+        f'<meta property="og:image:width" content="{IMAGE_SIZE[0]}" />',
+        f'<meta property="og:image:height" content="{IMAGE_SIZE[1]}" />',
+        f'<meta property="og:image:alt" content="{esc(IMAGE_ALT)}" />',
         '<meta name="twitter:card" content="summary_large_image" />',
         f'<meta name="twitter:title" content="{esc(page["title"])}" />',
         f'<meta name="twitter:description" content="{esc(page["description"])}" />',
         f'<meta name="twitter:image" content="{IMAGE}" />',
+        f'<meta name="twitter:image:alt" content="{esc(IMAGE_ALT)}" />',
         f'<script type="application/ld+json">{ld}</script>',
         "<!-- /seo -->",
     ]
@@ -175,16 +187,15 @@ def sitemap() -> str:
             f"{urls}</urlset>\n")
 
 
-def robots() -> str:
-    return f"User-agent: *\nAllow: /\n\nSitemap: {SITE}sitemap.xml\n"
-
-
-def _with_block(text: str, block: str) -> str:
+def _with_block(name: str, text: str, block: str) -> str:
     """Replace the page's block, or insert it after <title> (dropping the old description)."""
     if BLOCK.search(text):
         return BLOCK.sub(lambda _m: block, text, count=1)
-    text = re.sub(r'[ \t]*<meta name="description"[^>]*>\n', "", text, count=1)
-    return re.sub(r"(</title>\n)", lambda m: m.group(1) + block, text, count=1)
+    text = re.sub(r'[ \t]*<meta name="description"[^>]*>\n?', "", text, count=1)
+    text, count = re.subn(r"(</title>[ \t]*)\n?", lambda m: m.group(1) + "\n" + block, text, count=1)
+    if count == 0:
+        raise SystemExit(f"docs/{name}: no </title> to put the SEO block after")
+    return text
 
 
 def problems() -> list[str]:
@@ -213,12 +224,14 @@ def problems() -> list[str]:
         title = re.search(r"<title>(.*?)</title>", text, re.S)
         if not title or html.unescape(title.group(1)) != page["title"]:
             found.append(f"docs/{name}: <title> does not match the og:title in tools/seo.py")
-        if text.count('name="description"') != 1:
-            found.append(f"docs/{name}: expected exactly one meta description")
-    for name, want in (("sitemap.xml", sitemap()), ("robots.txt", robots())):
-        path = DOCS / name
-        if not path.is_file() or path.read_text(encoding="utf-8") != want:
-            found.append(f"docs/{name} is stale - run: python3 tools/seo.py --write")
+        for tag in ('name="description"', 'rel="canonical"', 'property="og:title"'):
+            if text.count(tag) != 1:
+                found.append(f"docs/{name}: expected exactly one {tag} tag")
+    path = DOCS / "sitemap.xml"
+    if not path.is_file() or path.read_text(encoding="utf-8") != sitemap():
+        found.append("docs/sitemap.xml is stale - run: python3 tools/seo.py --write")
+    if not (DOCS / IMAGE.removeprefix(SITE)).is_file():
+        found.append(f"docs/{IMAGE.removeprefix(SITE)} is missing (the share image)")
     return found
 
 
@@ -226,9 +239,8 @@ def write() -> None:
     for name in STATIC:
         path = DOCS / name
         text = path.read_text(encoding="utf-8")
-        path.write_text(_with_block(text, head_for(name)), encoding="utf-8")
+        path.write_text(_with_block(name, text, head_for(name)), encoding="utf-8")
     (DOCS / "sitemap.xml").write_text(sitemap(), encoding="utf-8")
-    (DOCS / "robots.txt").write_text(robots(), encoding="utf-8")
 
 
 def main(argv: list[str]) -> int:
