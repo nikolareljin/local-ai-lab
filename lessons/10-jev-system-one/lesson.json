@@ -89,8 +89,26 @@
       "lines": "221-243",
       "kicker": "How it works",
       "title": "The whole API: one POST",
-      "body": "`POST /v1/systemone` with `{model, state, questions}` and a Bearer key. The standard library is enough; the official SDK does the same with retries and types.",
-      "why": "The function refuses any destination except `https://api.typesafe.ai` or a loopback address. A typo in `TYPESAFE_BASE_URL` cannot send your key - or your callers - to a stranger."
+      "body": "`POST /v1/systemone` with `{model, state, questions}` and a Bearer key. Python uses the standard library and C# uses `HttpClient`; in Node.js the official SDK is the client, so its tab shows the destination check that runs before the SDK is given a URL.",
+      "why": "The function refuses any destination except `https://api.typesafe.ai` or a loopback address. A typo in `TYPESAFE_BASE_URL` cannot send your key - or your callers - to a stranger.",
+      "symbol": "post",
+      "group": "post"
+    },
+    {
+      "type": "code",
+      "file": "node/sdk_example.mjs",
+      "lang": "node",
+      "lines": "29-48",
+      "symbol": "isLoopback",
+      "group": "post"
+    },
+    {
+      "type": "code",
+      "file": "dotnet/SystemOne.cs",
+      "lang": "csharp",
+      "lines": "220-248",
+      "symbol": "PostAsync",
+      "group": "post"
     },
     {
       "type": "code",
@@ -100,7 +118,25 @@
       "kicker": "How it works",
       "title": "Every answer becomes a label and a probability",
       "body": "`read_answers()` turns the three wire shapes into one: `{pick, probs, confidence}`, keyed by label. A noul's 0.93 becomes `{yes: 0.93, no: 0.07}`; a score's `{\"2\": 0.7}` becomes `{moderate: 0.7}`.",
-      "why": "Everything downstream - the policy, the scorecard, the playground - sees one shape, so it cannot tell TypeSafe's Jev from the local adapter or from the keyword rules. That is what makes the comparison fair."
+      "why": "Everything downstream - the policy, the scorecard, the playground - sees one shape, so it cannot tell TypeSafe's Jev from the local adapter or from the keyword rules. That is what makes the comparison fair.",
+      "symbol": "read_answers",
+      "group": "read-answers"
+    },
+    {
+      "type": "code",
+      "file": "node/jev.mjs",
+      "lang": "node",
+      "lines": "117-171",
+      "symbol": "readAnswers",
+      "group": "read-answers"
+    },
+    {
+      "type": "code",
+      "file": "dotnet/SystemOne.cs",
+      "lang": "csharp",
+      "lines": "95-169",
+      "symbol": "ReadAnswers",
+      "group": "read-answers"
     },
     {
       "type": "code",
@@ -109,8 +145,26 @@
       "lines": "56-73",
       "kicker": "How it works",
       "title": "The official SDK - same code, two destinations",
-      "body": "`TypeSafeClient()` reads `TYPESAFE_API_KEY` and `TYPESAFE_BASE_URL`. Leave the URL unset and it calls TypeSafe's Jev; set it to `http://127.0.0.1:8765` and the same code calls the local adapter. Node.js has the same in `node/sdk_example.mjs`.",
-      "why": "Install it with `./run -l 10 install-sdk`: every file is checked against a sha256 in `requirements-sdk.txt`, into its own venv. On npm, `npm audit signatures` verifies the package was built from TypeSafe's GitHub repository. And `pip install qev` installs an unrelated project - not anything from TypeSafe."
+      "body": "`TypeSafeClient()` reads `TYPESAFE_API_KEY` and `TYPESAFE_BASE_URL`. Leave the URL unset and it calls TypeSafe's Jev; set it to `http://127.0.0.1:8765` and the same code calls the local adapter. Python and Node.js have official SDKs. C# has none, so its tab shows the same request made with `HttpClient`.",
+      "why": "Install it with `./run -l 10 install-sdk`: every file is checked against a sha256 in `requirements-sdk.txt`, into its own venv. On npm, `npm audit signatures` verifies the package was built from TypeSafe's GitHub repository. And `pip install qev` installs an unrelated project - not anything from TypeSafe.",
+      "symbol": "marker:",
+      "group": "sdk"
+    },
+    {
+      "type": "code",
+      "file": "node/sdk_example.mjs",
+      "lang": "node",
+      "lines": "63-81",
+      "symbol": "marker:",
+      "group": "sdk"
+    },
+    {
+      "type": "code",
+      "file": "dotnet/Program.cs",
+      "lang": "csharp",
+      "lines": "424-461",
+      "symbol": "Ask",
+      "group": "sdk"
     },
     {
       "type": "code",
@@ -119,8 +173,9 @@
       "lines": "52-68",
       "kicker": "How it works",
       "title": "Making a local LLM answer like Jev",
-      "body": "Each question becomes a lettered multiple-choice prompt, with the transcript fenced as data and an instruction to ignore instructions inside it (Lesson 4). Two callers in the data read such instructions out loud.",
-      "why": "This is the simulated part. The adapter serves the same API, so the SDK works against it unchanged, but the model was never trained for this. It is a way to learn the idea locally, not a stand-in for Jev's quality."
+      "body": "Each question becomes a lettered multiple-choice prompt, with the transcript fenced as data and an instruction to ignore instructions inside it (Lesson 4). Two callers in the data read such instructions out loud. The adapter is written in Python only; Node.js and C# reach it over HTTP like any System One server.",
+      "why": "This is the simulated part. The adapter serves the same API, so the SDK works against it unchanged, but the model was never trained for this. It is a way to learn the idea locally, not a stand-in for Jev's quality.",
+      "symbol": "prompt_for"
     },
     {
       "type": "code",
@@ -129,8 +184,9 @@
       "lines": "83-98",
       "kicker": "How it works",
       "title": "One token, a probability per option",
-      "body": "The model may write exactly one token. Ollama returns the log-probabilities of the top 20 candidates for it; each option gets the probability of its letter, renormalised. One short forward pass per question.",
-      "why": "Jev answers all the questions of a request in one pass. The adapter needs one call per question - six per insurance call - and a small model is often 100% sure and wrong. The scorecard measures both."
+      "body": "The model may write exactly one token. Ollama returns the log-probabilities of the top 20 candidates for it; each option gets the probability of its letter, renormalised. One short forward pass per question. (Python only, like the rest of the adapter.)",
+      "why": "Jev answers all the questions of a request in one pass. The adapter needs one call per question - six per insurance call - and a small model is often 100% sure and wrong. The scorecard measures both.",
+      "symbol": "letter_probabilities"
     },
     {
       "type": "code",
@@ -140,7 +196,25 @@
       "kicker": "How it works",
       "title": "The model answers; your policy decides",
       "body": "Four thresholds and no model: `EMERGENCY`, `SIU`, `FAST_TRACK`, `CONFIDENT`. The model never says \"send this to investigations\". It says P(fraud signals) = 0.83, and this code decides that is enough.",
-      "why": "Investigate an honest caller and you have insulted a customer; miss a staged accident and you have paid for it. `SIU` is the knob between the two, and you can move it without retraining or re-prompting anything. Rules and JSON answers are always 0 or 1, so for them the knob is decorative."
+      "why": "Investigate an honest caller and you have insulted a customer; miss a staged accident and you have paid for it. `SIU` is the knob between the two, and you can move it without retraining or re-prompting anything. Rules and JSON answers are always 0 or 1, so for them the knob is decorative.",
+      "symbol": "decide",
+      "group": "policy"
+    },
+    {
+      "type": "code",
+      "file": "node/jev.mjs",
+      "lang": "node",
+      "lines": "245-257",
+      "symbol": "decide",
+      "group": "policy"
+    },
+    {
+      "type": "code",
+      "file": "dotnet/Program.cs",
+      "lang": "csharp",
+      "lines": "173-186",
+      "symbol": "Decide",
+      "group": "policy"
     },
     {
       "type": "code",
@@ -150,7 +224,25 @@
       "kicker": "How it works",
       "title": "What goes wrong when an LLM writes the answer",
       "body": "The usual way: ask a chat model for JSON, then parse it. Every value that is not one of the options is a type error, and the question goes unanswered.",
-      "why": "This is the comparison that matters most in practice. Same model, same calls: written answers can be invalid and carry no probability; letter probabilities are always valid and can be thresholded."
+      "why": "This is the comparison that matters most in practice. Same model, same calls: written answers can be invalid and carry no probability; letter probabilities are always valid and can be thresholded.",
+      "symbol": "parse_llm_json",
+      "group": "parse-llm"
+    },
+    {
+      "type": "code",
+      "file": "node/jev.mjs",
+      "lang": "node",
+      "lines": "210-231",
+      "symbol": "parseLlmJson",
+      "group": "parse-llm"
+    },
+    {
+      "type": "code",
+      "file": "dotnet/Program.cs",
+      "lang": "csharp",
+      "lines": "129-158",
+      "symbol": "ParseLlmJson",
+      "group": "parse-llm"
     },
     {
       "type": "code",
@@ -160,7 +252,25 @@
       "kicker": "How it works",
       "title": "Scoring a decision: the Brier score",
       "body": "The squared distance between the probabilities and the truth. 0 is perfect; certain and wrong costs 2 per question; \"no idea\" on a yes/no question costs 0.5.",
-      "why": "Accuracy ranks an engine that is confidently wrong next to one that knows when it is unsure. Only the second lets a threshold do its job. Lesson 5 scored retrieval against a golden set; this is the same discipline for decisions."
+      "why": "Accuracy ranks an engine that is confidently wrong next to one that knows when it is unsure. Only the second lets a threshold do its job. Lesson 5 scored retrieval against a golden set; this is the same discipline for decisions.",
+      "symbol": "brier",
+      "group": "brier"
+    },
+    {
+      "type": "code",
+      "file": "node/jev.mjs",
+      "lang": "node",
+      "lines": "290-297",
+      "symbol": "brier",
+      "group": "brier"
+    },
+    {
+      "type": "code",
+      "file": "dotnet/Program.cs",
+      "lang": "csharp",
+      "lines": "225-234",
+      "symbol": "Brier",
+      "group": "brier"
     },
     {
       "type": "command",

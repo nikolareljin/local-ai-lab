@@ -178,7 +178,7 @@ ollama pull qwen3.<span class="hl-num">5</span>:4b            <span class="hl-co
     }
   }
 }</code></pre></div><div class='why'>The options <em>are</em> the output. A System One model cannot answer <code>"very bad"</code> to a question whose levels are <code>none..catastrophic</code>; an LLM asked to write JSON can, and this lesson counts how often it does.</div></section>
-<section class='slide'><div class='step-no'>How it works</div><h2>The whole API: one POST</h2><p><code>POST /v1/systemone</code> with <code>{model, state, questions}</code> and a Bearer key. The standard library is enough; the official SDK does the same with retries and types.</p><div class='block'><div class='label'>python/systemone.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> post(base_url: str, body: dict, api_key: str = <span class="hl-str">""</span>, timeout: float = <span class="hl-num">120.0</span>) -&gt; tuple[dict, float]:
+<section class='slide'><div class='step-no'>How it works</div><h2>The whole API: one POST</h2><p><code>POST /v1/systemone</code> with <code>{model, state, questions}</code> and a Bearer key. Python uses the standard library and C# uses <code>HttpClient</code>; in Node.js the official SDK is the client, so its tab shows the destination check that runs before the SDK is given a URL.</p><div class='lang lang-python'><div class='block'><div class='label'>python/systemone.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> post(base_url: str, body: dict, api_key: str = <span class="hl-str">""</span>, timeout: float = <span class="hl-num">120.0</span>) -&gt; tuple[dict, float]:
     <span class="hl-str">"""POST one request; return (response, seconds).
 
     A key is only ever sent to TypeSafe or to this machine: anything else is refused,
@@ -200,8 +200,55 @@ ollama pull qwen3.<span class="hl-num">5</span>:4b            <span class="hl-co
         <span class="hl-kw">raise</span> RuntimeError(f<span class="hl-str">"HTTP {err.code} from {base_url}: {detail}"</span>) <span class="hl-kw">from</span> <span class="hl-kw">None</span>
     <span class="hl-kw">except</span> (urllib.error.URLError, socket.timeout) <span class="hl-kw">as</span> err:
         <span class="hl-kw">raise</span> RuntimeError(f<span class="hl-str">"cannot reach {base_url}: {err}"</span>) <span class="hl-kw">from</span> <span class="hl-kw">None</span>
-    <span class="hl-kw">return</span> data, time.monotonic() - started</code></pre></div><div class='why'>The function refuses any destination except <code>https://api.typesafe.ai</code> or a loopback address. A typo in <code>TYPESAFE_BASE_URL</code> cannot send your key - or your callers - to a stranger.</div></section>
-<section class='slide'><div class='step-no'>How it works</div><h2>Every answer becomes a label and a probability</h2><p><code>read_answers()</code> turns the three wire shapes into one: <code>{pick, probs, confidence}</code>, keyed by label. A noul's 0.93 becomes <code>{yes: 0.93, no: 0.07}</code>; a score's <code>{"2": 0.7}</code> becomes <code>{moderate: 0.7}</code>.</p><div class='block'><div class='label'>python/systemone.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> read_answers(questions: dict, response: dict) -&gt; tuple[dict, list[str]]:
+    <span class="hl-kw">return</span> data, time.monotonic() - started</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/sdk_example.mjs</div><pre><code class='lang-js'><span class="hl-kw">export</span> <span class="hl-kw">function</span> isLoopback(url) {
+  <span class="hl-kw">if</span> (url.includes(<span class="hl-str">"\\"</span>)) <span class="hl-kw">return</span> <span class="hl-kw">false</span>; <span class="hl-com">// parsers disagree on what a backslash means</span>
+  url = url.replace(/[\t\r\n]/g, <span class="hl-str">""</span>).replace(/^[\x00-\x20]+/, <span class="hl-str">""</span>);
+  <span class="hl-kw">const</span> m = /^([A-Za-z][A-Za-z0-<span class="hl-num">9</span>+.-]*):\/\/([^/?#]*)/.exec(url);
+  <span class="hl-kw">if</span> (!m || ![<span class="hl-str">"http"</span>, <span class="hl-str">"https"</span>].includes(m[<span class="hl-num">1</span>].toLowerCase())) <span class="hl-kw">return</span> <span class="hl-kw">false</span>;
+  <span class="hl-kw">const</span> netloc = m[<span class="hl-num">2</span>];
+  <span class="hl-kw">if</span> (netloc.includes(<span class="hl-str">"["</span>) !== netloc.includes(<span class="hl-str">"]"</span>)) <span class="hl-kw">return</span> <span class="hl-kw">false</span>; <span class="hl-com">// urlparse raises ValueError</span>
+  <span class="hl-kw">const</span> hostinfo = netloc.slice(netloc.lastIndexOf(<span class="hl-str">"@"</span>) + <span class="hl-num">1</span>);
+  <span class="hl-kw">const</span> open = hostinfo.indexOf(<span class="hl-str">"["</span>);
+  <span class="hl-kw">if</span> (open &gt;= <span class="hl-num">0</span>) {
+    <span class="hl-kw">const</span> inside = hostinfo.slice(open + <span class="hl-num">1</span>).split(<span class="hl-str">"]"</span>)[<span class="hl-num">0</span>];
+    <span class="hl-kw">if</span> (!isIPv6(inside)) <span class="hl-kw">return</span> <span class="hl-kw">false</span>; <span class="hl-com">// urlparse accepts only an IPv6 address in brackets</span>
+    <span class="hl-kw">return</span> <span class="hl-kw">new</span> URL(<span class="hl-str">`http://[${inside}]/`</span>).hostname === <span class="hl-str">"[::1]"</span>;
+  }
+  <span class="hl-kw">const</span> host = hostinfo.split(<span class="hl-str">":"</span>)[<span class="hl-num">0</span>].toLowerCase();
+  <span class="hl-kw">if</span> (host === <span class="hl-str">"localhost"</span>) <span class="hl-kw">return</span> <span class="hl-kw">true</span>;
+  <span class="hl-com">// ipaddress.ip_address takes dotted quads only, no leading zeros.</span>
+  <span class="hl-kw">const</span> octet = <span class="hl-str">"(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])"</span>;
+  <span class="hl-kw">return</span> <span class="hl-kw">new</span> RegExp(<span class="hl-str">`^127\\.${octet}\\.${octet}\\.${octet}$`</span>).test(host);
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/SystemOne.cs</div><pre><code class='lang-csharp'>    <span class="hl-kw">public</span> <span class="hl-kw">async</span> Task&lt;(Dict Response, <span class="hl-kw">double</span> Seconds)&gt; PostAsync(<span class="hl-kw">string</span> baseUrl, JsonObject body, <span class="hl-kw">string</span> apiKey)
+    {
+        <span class="hl-kw">var</span> root = baseUrl.TrimEnd('/');
+        <span class="hl-kw">if</span> (!(root == SystemOne.TypeSafeUrl || SystemOne.IsLoopback(baseUrl)))
+            <span class="hl-kw">throw</span> <span class="hl-kw">new</span> ArgumentException(<span class="hl-str">$"refusing {baseUrl}: only {SystemOne.TypeSafeUrl} or a loopback address"</span>);
+        <span class="hl-kw">using</span> <span class="hl-kw">var</span> req = <span class="hl-kw">new</span> HttpRequestMessage(HttpMethod.Post, root + SystemOne.Path)
+        {
+            Content = <span class="hl-kw">new</span> StringContent(body.ToJsonString(), Encoding.UTF8, <span class="hl-str">"application/json"</span>),
+        };
+        <span class="hl-kw">if</span> (apiKey.Length &gt; <span class="hl-num">0</span>) req.Headers.Authorization = <span class="hl-kw">new</span> AuthenticationHeaderValue(<span class="hl-str">"Bearer"</span>, apiKey);
+        <span class="hl-kw">var</span> started = Stopwatch.StartNew();
+        <span class="hl-kw">string</span> text;
+        <span class="hl-kw">try</span>
+        {
+            <span class="hl-kw">using</span> <span class="hl-kw">var</span> resp = <span class="hl-kw">await</span> Http.SendAsync(req);
+            text = <span class="hl-kw">await</span> resp.Content.ReadAsStringAsync();
+            <span class="hl-kw">if</span> (!resp.IsSuccessStatusCode)
+            {
+                <span class="hl-kw">var</span> detail = text.Length &gt; <span class="hl-num">300</span> ? text[..<span class="hl-num">300</span>] : text;
+                <span class="hl-kw">throw</span> <span class="hl-kw">new</span> InvalidOperationException(<span class="hl-str">$"HTTP {(int)resp.StatusCode} from {baseUrl}: {detail}"</span>);
+            }
+        }
+        <span class="hl-kw">catch</span> (Exception err) when (err is HttpRequestException or TaskCanceledException)
+        {
+            <span class="hl-kw">throw</span> <span class="hl-kw">new</span> InvalidOperationException(<span class="hl-str">$"cannot reach {baseUrl}: {err.Message}"</span>);
+        }
+        <span class="hl-kw">if</span> (Py.Loads(text) is not Dict response) <span class="hl-kw">throw</span> <span class="hl-kw">new</span> InvalidOperationException(<span class="hl-str">$"{baseUrl}: response is not a JSON object"</span>);
+        <span class="hl-kw">return</span> (response, started.Elapsed.TotalSeconds);
+    }</code></pre></div></div><div class='why'>The function refuses any destination except <code>https://api.typesafe.ai</code> or a loopback address. A typo in <code>TYPESAFE_BASE_URL</code> cannot send your key - or your callers - to a stranger.</div></section>
+<section class='slide'><div class='step-no'>How it works</div><h2>Every answer becomes a label and a probability</h2><p><code>read_answers()</code> turns the three wire shapes into one: <code>{pick, probs, confidence}</code>, keyed by label. A noul's 0.93 becomes <code>{yes: 0.93, no: 0.07}</code>; a score's <code>{"2": 0.7}</code> becomes <code>{moderate: 0.7}</code>.</p><div class='lang lang-python'><div class='block'><div class='label'>python/systemone.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> read_answers(questions: dict, response: dict) -&gt; tuple[dict, list[str]]:
     <span class="hl-str">"""Turn a wire response into {question: {"pick", "probs", "confidence"}}.
 
     Every pick is a label from `options()` ("yes"/"no" for a noul, the level name for
@@ -245,8 +292,136 @@ ollama pull qwen3.<span class="hl-num">5</span>:4b            <span class="hl-co
                 confidence = max(probs.values())
             confidence = float(confidence)
         answers[name] = {<span class="hl-str">"pick"</span>: pick, <span class="hl-str">"probs"</span>: probs, <span class="hl-str">"confidence"</span>: confidence}
-    <span class="hl-kw">return</span> answers, problems</code></pre></div><div class='why'>Everything downstream - the policy, the scorecard, the playground - sees one shape, so it cannot tell TypeSafe's Jev from the local adapter or from the keyword rules. That is what makes the comparison fair.</div></section>
-<section class='slide'><div class='step-no'>How it works</div><h2>The official SDK - same code, two destinations</h2><p><code>TypeSafeClient()</code> reads <code>TYPESAFE_API_KEY</code> and <code>TYPESAFE_BASE_URL</code>. Leave the URL unset and it calls TypeSafe's Jev; set it to <code>http://127.0.0.1:8765</code> and the same code calls the local adapter. Node.js has the same in <code>node/sdk_example.mjs</code>.</p><div class='block'><div class='label'>python/sdk_example.py</div><pre><code class='lang-python'>    <span class="hl-com"># --- the whole integration -------------------------------------------------</span>
+    <span class="hl-kw">return</span> answers, problems</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/jev.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> readAnswers(questions, response) {
+  <span class="hl-kw">const</span> answers = {}, problems = [];
+  <span class="hl-kw">const</span> got = isDict(response) &amp;&amp; isDict(response.answers) ? response.answers : {};
+  <span class="hl-kw">for</span> (<span class="hl-kw">const</span> [name, q] <span class="hl-kw">of</span> Object.entries(questions)) {
+    <span class="hl-kw">const</span> a = Object.hasOwn(got, name) ? got[name] : <span class="hl-kw">undefined</span>;
+    <span class="hl-kw">const</span> labels = options(q);
+    <span class="hl-kw">if</span> (!isDict(a) || a.type !== q.type) {
+      problems.push(<span class="hl-str">`${name}: no ${q.type} answer`</span>);
+      continue;
+    }
+    <span class="hl-kw">let</span> pick, probs, confidence;
+    <span class="hl-kw">if</span> (q.type === <span class="hl-str">"noul"</span>) {
+      <span class="hl-kw">if</span> (!isProbability(a.noul)) {
+        problems.push(<span class="hl-str">`${name}: noul must be a number in [0, 1]`</span>);
+        continue;
+      }
+      <span class="hl-kw">const</span> p = Number(num(a.noul));
+      probs = { yes: p, no: <span class="hl-num">1.0</span> - p };
+      pick = p &gt;= <span class="hl-num">0.5</span> ? <span class="hl-str">"yes"</span> : <span class="hl-str">"no"</span>;
+      confidence = Math.max(p, <span class="hl-num">1</span> - p);
+    } <span class="hl-kw">else</span> {
+      <span class="hl-kw">let</span> raw = isDict(a.probabilities) ? a.probabilities : {};
+      <span class="hl-kw">if</span> (q.type === <span class="hl-str">"score"</span>) {
+        <span class="hl-kw">const</span> mapped = {};
+        <span class="hl-kw">for</span> (<span class="hl-kw">const</span> [k, v] <span class="hl-kw">of</span> Object.entries(raw)) {
+          <span class="hl-kw">if</span> (/^[<span class="hl-num">0</span>-<span class="hl-num">9</span>]+$/.test(k) &amp;&amp; Number(k) &lt; labels.length) mapped[labels[Number(k)]] = v;
+        }
+        raw = mapped;
+      }
+      <span class="hl-kw">const</span> keys = Object.keys(raw);
+      <span class="hl-kw">const</span> sameSet = keys.length === <span class="hl-kw">new</span> Set(labels).size &amp;&amp; keys.every((k) =&gt; labels.includes(k));
+      <span class="hl-kw">const</span> numeric = Object.values(raw).every(isProbability);
+      <span class="hl-kw">if</span> (!sameSet || !numeric || Math.abs(fsum(Object.values(raw)) - <span class="hl-num">1.0</span>) &gt; <span class="hl-num">0.01</span>) {
+        problems.push(<span class="hl-str">`${name}: probabilities must cover ${repr(labels)} and sum to 1`</span>);
+        continue;
+      }
+      probs = {};
+      <span class="hl-kw">for</span> (<span class="hl-kw">const</span> label <span class="hl-kw">of</span> labels) probs[label] = Number(num(raw[label]));
+      <span class="hl-kw">if</span> (q.type === <span class="hl-str">"choice"</span>) {
+        pick = Object.hasOwn(a, <span class="hl-str">"choice"</span>) ? a.choice : <span class="hl-kw">null</span>;
+      } <span class="hl-kw">else</span> {
+        pick = labels[<span class="hl-num">0</span>];
+        <span class="hl-kw">for</span> (<span class="hl-kw">const</span> label <span class="hl-kw">of</span> labels) <span class="hl-kw">if</span> (probs[label] &gt; probs[pick]) pick = label;
+      }
+      <span class="hl-kw">if</span> (!labels.includes(pick)) {
+        problems.push(<span class="hl-str">`${name}: ${repr(pick)} is not an option`</span>);
+        continue;
+      }
+      <span class="hl-kw">const</span> c = Object.hasOwn(a, <span class="hl-str">"confidence"</span>) ? a.confidence : <span class="hl-kw">null</span>;
+      confidence = isProbability(c) ? Number(num(c)) : Math.max(...Object.values(probs));
+    }
+    answers[name] = { pick, probs, confidence };
+  }
+  <span class="hl-kw">return</span> [answers, problems];
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/SystemOne.cs</div><pre><code class='lang-csharp'>    <span class="hl-kw">public</span> <span class="hl-kw">static</span> (Dictionary&lt;<span class="hl-kw">string</span>, Answer&gt; Answers, List&lt;<span class="hl-kw">string</span>&gt; Problems) ReadAnswers(Dict questions, object? response)
+    {
+        <span class="hl-kw">var</span> answers = <span class="hl-kw">new</span> Dictionary&lt;<span class="hl-kw">string</span>, Answer&gt;();
+        <span class="hl-kw">var</span> problems = <span class="hl-kw">new</span> List&lt;<span class="hl-kw">string</span>&gt;();
+        <span class="hl-kw">var</span> got = response is Dict r0 &amp;&amp; r0.Get(<span class="hl-str">"answers"</span>) is Dict g ? g : <span class="hl-kw">new</span> Dict();
+        <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> (name, value) <span class="hl-kw">in</span> questions.Items)
+        {
+            <span class="hl-kw">var</span> q = (Dict)value!;
+            <span class="hl-kw">var</span> kind = (<span class="hl-kw">string</span>)q[<span class="hl-str">"type"</span>]!;
+            <span class="hl-kw">var</span> labels = Options(q);
+            <span class="hl-kw">if</span> (got.Get(name) is not Dict a || a.Get(<span class="hl-str">"type"</span>) as <span class="hl-kw">string</span> != kind)
+            {
+                problems.Add(<span class="hl-str">$"{name}: no {kind} answer"</span>);
+                continue;
+            }
+            <span class="hl-kw">string</span> pick;
+            List&lt;KeyValuePair&lt;<span class="hl-kw">string</span>, <span class="hl-kw">double</span>&gt;&gt; probs;
+            <span class="hl-kw">double</span> confidence;
+            <span class="hl-kw">if</span> (kind == <span class="hl-str">"noul"</span>)
+            {
+                <span class="hl-kw">var</span> p = a.Get(<span class="hl-str">"noul"</span>);
+                <span class="hl-kw">if</span> (!Py.IsProbability(p))
+                {
+                    problems.Add(<span class="hl-str">$"{name}: noul must be a number in [0, 1]"</span>);
+                    continue;
+                }
+                <span class="hl-kw">double</span> x = Py.Num(p);
+                probs = <span class="hl-kw">new</span>() { <span class="hl-kw">new</span>(<span class="hl-str">"yes"</span>, x), <span class="hl-kw">new</span>(<span class="hl-str">"no"</span>, <span class="hl-num">1.0</span> - x) };
+                pick = x &gt;= <span class="hl-num">0.5</span> ? <span class="hl-str">"yes"</span> : <span class="hl-str">"no"</span>;
+                confidence = Math.Max(x, <span class="hl-num">1</span> - x);
+            }
+            <span class="hl-kw">else</span>
+            {
+                <span class="hl-kw">var</span> raw = a.Get(<span class="hl-str">"probabilities"</span>) is Dict r ? r : <span class="hl-kw">new</span> Dict();
+                <span class="hl-kw">if</span> (kind == <span class="hl-str">"score"</span>)
+                {
+                    <span class="hl-kw">var</span> mapped = <span class="hl-kw">new</span> Dict();
+                    <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> (k, v) <span class="hl-kw">in</span> raw.Items)
+                    {
+                        <span class="hl-kw">if</span> (Regex.IsMatch(k, <span class="hl-str">@"\A[0-9]+\z"</span>) &amp;&amp; k.TrimStart('<span class="hl-num">0</span>').Length &lt;= <span class="hl-num">3</span> &amp;&amp; <span class="hl-kw">int</span>.Parse(k, Py.Inv) &lt; labels.Count)
+                            mapped[labels[<span class="hl-kw">int</span>.Parse(k, Py.Inv)]] = v;
+                    }
+                    raw = mapped;
+                }
+                <span class="hl-kw">bool</span> numeric = raw.Items.All(kv =&gt; Py.IsProbability(kv.Value));
+                <span class="hl-kw">bool</span> sameSet = raw.Count == labels.Distinct().Count() &amp;&amp; raw.Keys.All(labels.Contains);
+                <span class="hl-kw">if</span> (!sameSet || !numeric || Math.Abs(Py.FSum(raw.Items.Select(kv =&gt; kv.Value)) - <span class="hl-num">1.0</span>) &gt; <span class="hl-num">0.01</span>)
+                {
+                    problems.Add(<span class="hl-str">$"{name}: probabilities must cover {Py.Repr(labels)} and sum to 1"</span>);
+                    continue;
+                }
+                probs = labels.Select(l =&gt; <span class="hl-kw">new</span> KeyValuePair&lt;<span class="hl-kw">string</span>, <span class="hl-kw">double</span>&gt;(l, Py.Num(raw[l]))).ToList();
+                object? chosen;
+                <span class="hl-kw">if</span> (kind == <span class="hl-str">"choice"</span>)
+                {
+                    chosen = a.Get(<span class="hl-str">"choice"</span>);
+                }
+                <span class="hl-kw">else</span>
+                {
+                    <span class="hl-kw">var</span> best = probs[<span class="hl-num">0</span>];
+                    <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> kv <span class="hl-kw">in</span> probs) <span class="hl-kw">if</span> (kv.Value &gt; best.Value) best = kv;
+                    chosen = best.Key;
+                }
+                <span class="hl-kw">if</span> (chosen is not <span class="hl-kw">string</span> c || !labels.Contains(c))
+                {
+                    problems.Add(<span class="hl-str">$"{name}: {Py.Repr(chosen)} is not an option"</span>);
+                    continue;
+                }
+                pick = c;
+                confidence = Py.IsProbability(a.Get(<span class="hl-str">"confidence"</span>)) ? Py.Num(a[<span class="hl-str">"confidence"</span>]) : probs.Max(kv =&gt; kv.Value);
+            }
+            answers[name] = <span class="hl-kw">new</span> Answer(pick, probs, confidence);
+        }
+        <span class="hl-kw">return</span> (answers, problems);
+    }</code></pre></div></div><div class='why'>Everything downstream - the policy, the scorecard, the playground - sees one shape, so it cannot tell TypeSafe's Jev from the local adapter or from the keyword rules. That is what makes the comparison fair.</div></section>
+<section class='slide'><div class='step-no'>How it works</div><h2>The official SDK - same code, two destinations</h2><p><code>TypeSafeClient()</code> reads <code>TYPESAFE_API_KEY</code> and <code>TYPESAFE_BASE_URL</code>. Leave the URL unset and it calls TypeSafe's Jev; set it to <code>http://127.0.0.1:8765</code> and the same code calls the local adapter. Python and Node.js have official SDKs. C# has none, so its tab shows the same request made with <code>HttpClient</code>.</p><div class='lang lang-python'><div class='block'><div class='label'>python/sdk_example.py</div><pre><code class='lang-python'>    <span class="hl-com"># --- the whole integration -------------------------------------------------</span>
     client = TypeSafeClient()  <span class="hl-com"># reads TYPESAFE_API_KEY and TYPESAFE_BASE_URL</span>
     result = client.system_one(text, {
         <span class="hl-str">"intent"</span>: Choice(
@@ -263,8 +438,63 @@ ollama pull qwen3.<span class="hl-num">5</span>:4b            <span class="hl-co
     intent = result.choices[<span class="hl-str">"intent"</span>]
     severity = result.scores[<span class="hl-str">"severity"</span>]
     fraud = result.nouls[<span class="hl-str">"fraud_signals"</span>]
-    <span class="hl-com"># -----------------------------------------------------------------------------</span></code></pre></div><div class='why'>Install it with <code>./run -l 10 install-sdk</code>: every file is checked against a sha256 in <code>requirements-sdk.txt</code>, into its own venv. On npm, <code>npm audit signatures</code> verifies the package was built from TypeSafe's GitHub repository. And <code>pip install qev</code> installs an unrelated project - not anything from TypeSafe.</div></section>
-<section class='slide'><div class='step-no'>How it works</div><h2>Making a local LLM answer like Jev</h2><p>Each question becomes a lettered multiple-choice prompt, with the transcript fenced as data and an instruction to ignore instructions inside it (Lesson 4). Two callers in the data read such instructions out loud.</p><div class='block'><div class='label'>python/local_adapter.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> prompt_for(state, question: dict) -&gt; list[dict]:
+    <span class="hl-com"># -----------------------------------------------------------------------------</span></code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/sdk_example.mjs</div><pre><code class='lang-js'><span class="hl-com">// --- the whole integration -------------------------------------------------</span>
+<span class="hl-kw">const</span> client = <span class="hl-kw">new</span> TypeSafeClient(); <span class="hl-com">// reads TYPESAFE_API_KEY and TYPESAFE_BASE_URL</span>
+<span class="hl-kw">const</span> result = <span class="hl-kw">await</span> client.systemOne({
+  state: text,
+  questions: {
+    intent: choice(<span class="hl-str">"What does the caller want from this call?"</span>, {
+      new_claim: <span class="hl-str">"Reports a loss or sends in a bill to be paid"</span>,
+      claim_status: <span class="hl-str">"Asks where an existing claim stands"</span>,
+      coverage_question: <span class="hl-str">"Asks whether something is covered"</span>,
+      complaint: <span class="hl-str">"Complains about price, service or a decision"</span>,
+      cancel_policy: <span class="hl-str">"Wants to end the policy"</span>,
+    }),
+    severity: score(<span class="hl-str">"How serious is the damage, loss or harm described?"</span>,
+      [<span class="hl-str">"none"</span>, <span class="hl-str">"minor"</span>, <span class="hl-str">"moderate"</span>, <span class="hl-str">"major"</span>, <span class="hl-str">"catastrophic"</span>]),
+    fraud_signals: noul(<span class="hl-str">"Does the story have warning signs of a dishonest claim?"</span>),
+  },
+});
+<span class="hl-kw">const</span> { intent, severity, fraud_signals: fraud } = result.answers;
+<span class="hl-com">// -----------------------------------------------------------------------------</span></code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>    <span class="hl-kw">static</span> <span class="hl-kw">async</span> Task&lt;<span class="hl-kw">int</span>&gt; Ask(<span class="hl-kw">string</span> text, <span class="hl-kw">string</span> dataset, TextWriter output)
+    {
+        <span class="hl-kw">var</span> (questions, _) = LoadDataset(dataset);
+        <span class="hl-kw">var</span> model = Environment.GetEnvironmentVariable(<span class="hl-str">"TYPESAFE_DEFAULT_MODEL"</span>) is { Length: &gt; <span class="hl-num">0</span> } m ? m : <span class="hl-str">"jev-latest"</span>;
+        <span class="hl-kw">var</span> url = Environment.GetEnvironmentVariable(<span class="hl-str">"TYPESAFE_BASE_URL"</span>) ?? SystemOne.TypeSafeUrl;
+        <span class="hl-kw">var</span> key = Environment.GetEnvironmentVariable(<span class="hl-str">"TYPESAFE_API_KEY"</span>) ?? <span class="hl-str">""</span>;
+        <span class="hl-kw">if</span> (key.Length == <span class="hl-num">0</span> &amp;&amp; !SystemOne.IsLoopback(url))
+            <span class="hl-kw">throw</span> <span class="hl-kw">new</span> Exit(<span class="hl-num">1</span>, <span class="hl-str">"TYPESAFE_API_KEY is not set (get one at https://console.typesafe.ai)"</span>);
+        <span class="hl-kw">var</span> body = SystemOne.BuildRequest(text, questions, model);
+        Dict response;
+        <span class="hl-kw">double</span> seconds;
+        <span class="hl-kw">try</span>
+        {
+            (response, seconds) = <span class="hl-kw">await</span> <span class="hl-kw">new</span> SystemOneClient().PostAsync(url, (JsonObject)SystemOne.ToJsonNode(body)!, key);
+        }
+        <span class="hl-kw">catch</span> (Exception err) when (err is ArgumentException or InvalidOperationException or JsonDecodeError or UriFormatException)
+        {
+            <span class="hl-kw">throw</span> <span class="hl-kw">new</span> Exit(<span class="hl-num">1</span>, err.Message);
+        }
+        <span class="hl-kw">var</span> run = ToRun(questions, <span class="hl-kw">new</span> Dict { [<span class="hl-str">"response"</span>] = response, [<span class="hl-str">"seconds"</span>] = seconds, [<span class="hl-str">"calls"</span>] = 1L });
+        <span class="hl-com">// never call a stand-in on this machine "Jev"</span>
+        <span class="hl-kw">var</span> label = SystemOne.IsLoopback(url) ? <span class="hl-str">"local System One server (simulated)"</span> : LabelFor(<span class="hl-str">"typesafe"</span>, <span class="hl-kw">null</span>, model);
+        output.WriteLine(<span class="hl-str">$"{label}  {Py.Fixed(run.Seconds, 1)}s, {run.Calls} model call(s)"</span>);
+        <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> name <span class="hl-kw">in</span> questions.Keys)
+        {
+            <span class="hl-kw">if</span> (!run.Answers.TryGetValue(name, <span class="hl-kw">out</span> <span class="hl-kw">var</span> a))
+            {
+                output.WriteLine(<span class="hl-str">$"  {Py.Ljust(name, 15)} (no valid answer)"</span>);
+                continue;
+            }
+            <span class="hl-kw">var</span> probs = <span class="hl-kw">string</span>.Join(<span class="hl-str">"  "</span>, a.Probs.Select(kv =&gt; <span class="hl-str">$"{kv.Key} {Py.Fixed(kv.Value, 2)}"</span>));
+            output.WriteLine(<span class="hl-str">$"  {Py.Ljust(name, 15)} {a.Pick}"</span>);
+            output.WriteLine(<span class="hl-str">$"      {probs}"</span>);
+        }
+        <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> problem <span class="hl-kw">in</span> run.Problems) output.WriteLine(<span class="hl-str">$"  ! {problem}"</span>);
+        output.WriteLine(<span class="hl-str">$"  -&gt; action: {Policies[dataset].Decide(run.Answers, null)}"</span>);
+        <span class="hl-kw">return</span> <span class="hl-num">0</span>;
+    }</code></pre></div></div><div class='why'>Install it with <code>./run -l 10 install-sdk</code>: every file is checked against a sha256 in <code>requirements-sdk.txt</code>, into its own venv. On npm, <code>npm audit signatures</code> verifies the package was built from TypeSafe's GitHub repository. And <code>pip install qev</code> installs an unrelated project - not anything from TypeSafe.</div></section>
+<section class='slide'><div class='step-no'>How it works</div><h2>Making a local LLM answer like Jev</h2><p>Each question becomes a lettered multiple-choice prompt, with the transcript fenced as data and an instruction to ignore instructions inside it (Lesson 4). Two callers in the data read such instructions out loud. The adapter is written in Python only; Node.js and C# reach it over HTTP like any System One server.</p><div class='block'><div class='label'>python/local_adapter.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> prompt_for(state, question: dict) -&gt; list[dict]:
     <span class="hl-str">"""The chat messages for one question. The option texts are the criteria."""</span>
     labels = systemone.options(question)
     criteria = question.get(<span class="hl-str">"criteria"</span>)
@@ -281,7 +511,7 @@ ollama pull qwen3.<span class="hl-num">5</span>:4b            <span class="hl-co
             {<span class="hl-str">"role"</span>: <span class="hl-str">"user"</span>, <span class="hl-str">"content"</span>: f<span class="hl-str">"Input:\n&lt;&lt;&lt;\n{shown}\n&gt;&gt;&gt;\n\n"</span>
                                         f<span class="hl-str">"Question: {question['instructions']}\n{lines}\n\n"</span>
                                         f<span class="hl-str">"Answer with one letter."</span>}]</code></pre></div><div class='why'>This is the simulated part. The adapter serves the same API, so the SDK works against it unchanged, but the model was never trained for this. It is a way to learn the idea locally, not a stand-in for Jev's quality.</div></section>
-<section class='slide'><div class='step-no'>How it works</div><h2>One token, a probability per option</h2><p>The model may write exactly one token. Ollama returns the log-probabilities of the top 20 candidates for it; each option gets the probability of its letter, renormalised. One short forward pass per question.</p><div class='block'><div class='label'>python/local_adapter.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> letter_probabilities(top_logprobs: list[dict], n: int) -&gt; list[float]:
+<section class='slide'><div class='step-no'>How it works</div><h2>One token, a probability per option</h2><p>The model may write exactly one token. Ollama returns the log-probabilities of the top 20 candidates for it; each option gets the probability of its letter, renormalised. One short forward pass per question. (Python only, like the rest of the adapter.)</p><div class='block'><div class='label'>python/local_adapter.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> letter_probabilities(top_logprobs: list[dict], n: int) -&gt; list[float]:
     <span class="hl-str">"""Probability per option letter from the first token's top candidates.
 
     "A", " A" and "a" are the same answer. Letters outside the top 20 get 0. If no
@@ -297,7 +527,7 @@ ollama pull qwen3.<span class="hl-num">5</span>:4b            <span class="hl-co
     <span class="hl-kw">if</span> total &lt;= <span class="hl-num">0</span>:
         <span class="hl-kw">return</span> [<span class="hl-num">1.0</span> / n] * n
     <span class="hl-kw">return</span> [m / total <span class="hl-kw">for</span> m <span class="hl-kw">in</span> mass]</code></pre></div><div class='why'>Jev answers all the questions of a request in one pass. The adapter needs one call per question - six per insurance call - and a small model is often 100% sure and wrong. The scorecard measures both.</div></section>
-<section class='slide'><div class='step-no'>How it works</div><h2>The model answers; your policy decides</h2><p>Four thresholds and no model: <code>EMERGENCY</code>, <code>SIU</code>, <code>FAST_TRACK</code>, <code>CONFIDENT</code>. The model never says "send this to investigations". It says P(fraud signals) = 0.83, and this code decides that is enough.</p><div class='block'><div class='label'>python/policy.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> decide(answers: dict, siu: float = SIU, emergency: float = EMERGENCY,
+<section class='slide'><div class='step-no'>How it works</div><h2>The model answers; your policy decides</h2><p>Four thresholds and no model: <code>EMERGENCY</code>, <code>SIU</code>, <code>FAST_TRACK</code>, <code>CONFIDENT</code>. The model never says "send this to investigations". It says P(fraud signals) = 0.83, and this code decides that is enough.</p><div class='lang lang-python'><div class='block'><div class='label'>python/policy.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> decide(answers: dict, siu: float = SIU, emergency: float = EMERGENCY,
            fast_track: float = FAST_TRACK, confident: float = CONFIDENT) -&gt; str:
     <span class="hl-str">"""One action per insurance call, from the answers to the six questions."""</span>
     intent = answers.get(<span class="hl-str">"intent"</span>)
@@ -316,8 +546,33 @@ ollama pull qwen3.<span class="hl-num">5</span>:4b            <span class="hl-co
     small = _p(answers, <span class="hl-str">"severity"</span>, <span class="hl-str">"none"</span>) + _p(answers, <span class="hl-str">"severity"</span>, <span class="hl-str">"minor"</span>) &gt; <span class="hl-num">0.5</span>
     <span class="hl-kw">if</span> small <span class="hl-kw">and</span> _p(answers, <span class="hl-str">"needs_adjuster"</span>, <span class="hl-str">"yes"</span>, <span class="hl-num">1.0</span>) &lt; <span class="hl-num">0.5</span> <span class="hl-kw">and</span> <span class="hl-num">1</span> - p_fraud &gt;= fast_track:
         <span class="hl-kw">return</span> <span class="hl-str">"fast-track payout"</span>
-    <span class="hl-kw">return</span> <span class="hl-str">"assign adjuster"</span></code></pre></div><div class='why'>Investigate an honest caller and you have insulted a customer; miss a staged accident and you have paid for it. <code>SIU</code> is the knob between the two, and you can move it without retraining or re-prompting anything. Rules and JSON answers are always 0 or 1, so for them the knob is decorative.</div></section>
-<section class='slide'><div class='step-no'>How it works</div><h2>What goes wrong when an LLM writes the answer</h2><p>The usual way: ask a chat model for JSON, then parse it. Every value that is not one of the options is a type error, and the question goes unanswered.</p><div class='block'><div class='label'>python/engines.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> parse_llm_json(body: dict, text: str) -&gt; tuple[dict, list[str]]:
+    <span class="hl-kw">return</span> <span class="hl-str">"assign adjuster"</span></code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/jev.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> decide(answers, { siu = SIU, emergency = EMERGENCY, fast_track: fastTrack = FAST_TRACK, confident = CONFIDENT } = {}) {
+  <span class="hl-kw">const</span> intent = answers.intent;
+  <span class="hl-kw">if</span> (prob(answers, <span class="hl-str">"emergency"</span>, <span class="hl-str">"yes"</span>) &gt;= emergency) <span class="hl-kw">return</span> <span class="hl-str">"dispatch emergency help"</span>; <span class="hl-com">// first, whatever else</span>
+  <span class="hl-kw">if</span> (answers.emergency === <span class="hl-kw">undefined</span> || intent === <span class="hl-kw">undefined</span> || intent.confidence &lt; confident) <span class="hl-kw">return</span> <span class="hl-str">"human agent"</span>; <span class="hl-com">// never guess</span>
+  <span class="hl-kw">if</span> ([<span class="hl-str">"complaint"</span>, <span class="hl-str">"cancel_policy"</span>].includes(intent.pick)) <span class="hl-kw">return</span> <span class="hl-str">"human agent"</span>;
+  <span class="hl-kw">if</span> ([<span class="hl-str">"claim_status"</span>, <span class="hl-str">"coverage_question"</span>].includes(intent.pick)) <span class="hl-kw">return</span> <span class="hl-str">"self-service answer"</span>;
+  <span class="hl-com">// a new claim</span>
+  <span class="hl-kw">const</span> pFraud = prob(answers, <span class="hl-str">"fraud_signals"</span>, <span class="hl-str">"yes"</span>, <span class="hl-num">1.0</span>);
+  <span class="hl-kw">if</span> (pFraud &gt;= siu) <span class="hl-kw">return</span> <span class="hl-str">"special investigations"</span>;
+  <span class="hl-kw">const</span> small = prob(answers, <span class="hl-str">"severity"</span>, <span class="hl-str">"none"</span>) + prob(answers, <span class="hl-str">"severity"</span>, <span class="hl-str">"minor"</span>) &gt; <span class="hl-num">0.5</span>;
+  <span class="hl-kw">if</span> (small &amp;&amp; prob(answers, <span class="hl-str">"needs_adjuster"</span>, <span class="hl-str">"yes"</span>, <span class="hl-num">1.0</span>) &lt; <span class="hl-num">0.5</span> &amp;&amp; <span class="hl-num">1</span> - pFraud &gt;= fastTrack) <span class="hl-kw">return</span> <span class="hl-str">"fast-track payout"</span>;
+  <span class="hl-kw">return</span> <span class="hl-str">"assign adjuster"</span>;
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>    <span class="hl-kw">static</span> <span class="hl-kw">string</span> Decide(Dictionary&lt;<span class="hl-kw">string</span>, Answer&gt; answers, <span class="hl-kw">double</span> siu = Siu)
+    {
+        answers.TryGetValue(<span class="hl-str">"intent"</span>, <span class="hl-kw">out</span> <span class="hl-kw">var</span> intent);
+        <span class="hl-kw">if</span> (Prob(answers, <span class="hl-str">"emergency"</span>, <span class="hl-str">"yes"</span>) &gt;= Emergency) <span class="hl-kw">return</span> <span class="hl-str">"dispatch emergency help"</span>; <span class="hl-com">// first, whatever else</span>
+        <span class="hl-kw">if</span> (!answers.ContainsKey(<span class="hl-str">"emergency"</span>) || intent is <span class="hl-kw">null</span> || intent.Confidence &lt; Confident) <span class="hl-kw">return</span> <span class="hl-str">"human agent"</span>; <span class="hl-com">// never guess</span>
+        <span class="hl-kw">if</span> (intent.Pick is <span class="hl-str">"complaint"</span> or <span class="hl-str">"cancel_policy"</span>) <span class="hl-kw">return</span> <span class="hl-str">"human agent"</span>;
+        <span class="hl-kw">if</span> (intent.Pick is <span class="hl-str">"claim_status"</span> or <span class="hl-str">"coverage_question"</span>) <span class="hl-kw">return</span> <span class="hl-str">"self-service answer"</span>;
+        <span class="hl-com">// a new claim</span>
+        <span class="hl-kw">double</span> pFraud = Prob(answers, <span class="hl-str">"fraud_signals"</span>, <span class="hl-str">"yes"</span>, <span class="hl-num">1.0</span>);
+        <span class="hl-kw">if</span> (pFraud &gt;= siu) <span class="hl-kw">return</span> <span class="hl-str">"special investigations"</span>;
+        <span class="hl-kw">bool</span> small = Prob(answers, <span class="hl-str">"severity"</span>, <span class="hl-str">"none"</span>) + Prob(answers, <span class="hl-str">"severity"</span>, <span class="hl-str">"minor"</span>) &gt; <span class="hl-num">0.5</span>;
+        <span class="hl-kw">if</span> (small &amp;&amp; Prob(answers, <span class="hl-str">"needs_adjuster"</span>, <span class="hl-str">"yes"</span>, <span class="hl-num">1.0</span>) &lt; <span class="hl-num">0.5</span> &amp;&amp; <span class="hl-num">1</span> - pFraud &gt;= FastTrack) <span class="hl-kw">return</span> <span class="hl-str">"fast-track payout"</span>;
+        <span class="hl-kw">return</span> <span class="hl-str">"assign adjuster"</span>;
+    }</code></pre></div></div><div class='why'>Investigate an honest caller and you have insulted a customer; miss a staged accident and you have paid for it. <code>SIU</code> is the knob between the two, and you can move it without retraining or re-prompting anything. Rules and JSON answers are always 0 or 1, so for them the knob is decorative.</div></section>
+<section class='slide'><div class='step-no'>How it works</div><h2>What goes wrong when an LLM writes the answer</h2><p>The usual way: ask a chat model for JSON, then parse it. Every value that is not one of the options is a type error, and the question goes unanswered.</p><div class='lang lang-python'><div class='block'><div class='label'>python/engines.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> parse_llm_json(body: dict, text: str) -&gt; tuple[dict, list[str]]:
     <span class="hl-str">"""Read what the model wrote. Anything that is not a valid option is a type error.
 
     Returns (response, errors). A field the model got wrong, or left out, is simply
@@ -340,14 +595,80 @@ ollama pull qwen3.<span class="hl-num">5</span>:4b            <span class="hl-co
             errors.append(f<span class="hl-str">"{name}={value!r}"</span>)
             <span class="hl-kw">continue</span>
         answers[name] = certain(q, value.strip().lower())
-    <span class="hl-kw">return</span> {<span class="hl-str">"model"</span>: <span class="hl-str">"llm-json"</span>, <span class="hl-str">"answers"</span>: answers, <span class="hl-str">"usage"</span>: {}}, errors</code></pre></div><div class='why'>This is the comparison that matters most in practice. Same model, same calls: written answers can be invalid and carry no probability; letter probabilities are always valid and can be thresholded.</div></section>
-<section class='slide'><div class='step-no'>How it works</div><h2>Scoring a decision: the Brier score</h2><p>The squared distance between the probabilities and the truth. 0 is perfect; certain and wrong costs 2 per question; "no idea" on a yes/no question costs 0.5.</p><div class='block'><div class='label'>python/scorecard.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> brier(question: dict, answer: dict | <span class="hl-kw">None</span>, truth: str) -&gt; float:
+    <span class="hl-kw">return</span> {<span class="hl-str">"model"</span>: <span class="hl-str">"llm-json"</span>, <span class="hl-str">"answers"</span>: answers, <span class="hl-str">"usage"</span>: {}}, errors</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/jev.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> parseLlmJson(body, text) {
+  <span class="hl-kw">const</span> errors = [];
+  <span class="hl-kw">const</span> match = /\{.*\}/s.exec(text);
+  <span class="hl-kw">let</span> written = <span class="hl-kw">null</span>;
+  <span class="hl-kw">try</span> {
+    written = match ? loads(match[<span class="hl-num">0</span>], { floats: <span class="hl-kw">true</span> }) : <span class="hl-kw">null</span>;
+  } <span class="hl-kw">catch</span> {
+    written = <span class="hl-kw">null</span>;
+  }
+  <span class="hl-kw">if</span> (!isDict(written)) <span class="hl-kw">return</span> [{ model: <span class="hl-str">"llm-json"</span>, answers: {}, usage: {} }, [<span class="hl-str">"not a JSON object"</span>]];
+  <span class="hl-kw">const</span> answers = {};
+  <span class="hl-kw">for</span> (<span class="hl-kw">const</span> [name, q] <span class="hl-kw">of</span> Object.entries(body.questions)) {
+    <span class="hl-kw">let</span> value = Object.hasOwn(written, name) ? written[name] : <span class="hl-kw">null</span>;
+    <span class="hl-kw">if</span> (<span class="hl-kw">typeof</span> value === <span class="hl-str">"boolean"</span>) value = value ? <span class="hl-str">"yes"</span> : <span class="hl-str">"no"</span>; <span class="hl-com">// {"emergency": true} is a fair reading</span>
+    <span class="hl-kw">if</span> (<span class="hl-kw">typeof</span> value !== <span class="hl-str">"string"</span> || !options(q).includes(strip(value).toLowerCase())) {
+      errors.push(<span class="hl-str">`${name}=${repr(value)}`</span>);
+      continue;
+    }
+    answers[name] = certain(q, strip(value).toLowerCase());
+  }
+  <span class="hl-kw">return</span> [{ model: <span class="hl-str">"llm-json"</span>, answers, usage: {} }, errors];
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>    <span class="hl-kw">static</span> (Dict Response, List&lt;<span class="hl-kw">string</span>&gt; Errors) ParseLlmJson(Dict questions, <span class="hl-kw">string</span> text)
+    {
+        <span class="hl-kw">var</span> errors = <span class="hl-kw">new</span> List&lt;<span class="hl-kw">string</span>&gt;();
+        <span class="hl-kw">var</span> match = System.Text.RegularExpressions.Regex.Match(text, <span class="hl-str">@"\{.*\}"</span>, System.Text.RegularExpressions.RegexOptions.Singleline);
+        object? written;
+        <span class="hl-kw">try</span>
+        {
+            written = match.Success ? Py.Loads(match.Value) : <span class="hl-kw">null</span>;
+        }
+        <span class="hl-kw">catch</span> (JsonDecodeError)
+        {
+            written = <span class="hl-kw">null</span>;
+        }
+        <span class="hl-kw">if</span> (written is not Dict w)
+            <span class="hl-kw">return</span> (<span class="hl-kw">new</span> Dict { [<span class="hl-str">"model"</span>] = <span class="hl-str">"llm-json"</span>, [<span class="hl-str">"answers"</span>] = <span class="hl-kw">new</span> Dict(), [<span class="hl-str">"usage"</span>] = <span class="hl-kw">new</span> Dict() }, <span class="hl-kw">new</span>() { <span class="hl-str">"not a JSON object"</span> });
+        <span class="hl-kw">var</span> answers = <span class="hl-kw">new</span> Dict();
+        <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> (name, qv) <span class="hl-kw">in</span> questions.Items)
+        {
+            <span class="hl-kw">var</span> q = (Dict)qv!;
+            <span class="hl-kw">var</span> value = w.Get(name);
+            <span class="hl-kw">if</span> (value is <span class="hl-kw">bool</span> b) value = b ? <span class="hl-str">"yes"</span> : <span class="hl-str">"no"</span>; <span class="hl-com">// {"emergency": true} is a fair reading</span>
+            <span class="hl-kw">if</span> (value is not <span class="hl-kw">string</span> s || !SystemOne.Options(q).Contains(Py.Lower(Py.Strip(s))))
+            {
+                errors.Add(<span class="hl-str">$"{name}={Py.Repr(value)}"</span>);
+                continue;
+            }
+            answers[name] = Certain(q, Py.Lower(Py.Strip(s)));
+        }
+        <span class="hl-kw">return</span> (<span class="hl-kw">new</span> Dict { [<span class="hl-str">"model"</span>] = <span class="hl-str">"llm-json"</span>, [<span class="hl-str">"answers"</span>] = answers, [<span class="hl-str">"usage"</span>] = <span class="hl-kw">new</span> Dict() }, errors);
+    }</code></pre></div></div><div class='why'>This is the comparison that matters most in practice. Same model, same calls: written answers can be invalid and carry no probability; letter probabilities are always valid and can be thresholded.</div></section>
+<section class='slide'><div class='step-no'>How it works</div><h2>Scoring a decision: the Brier score</h2><p>The squared distance between the probabilities and the truth. 0 is perfect; certain and wrong costs 2 per question; "no idea" on a yes/no question costs 0.5.</p><div class='lang lang-python'><div class='block'><div class='label'>python/scorecard.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> brier(question: dict, answer: dict | <span class="hl-kw">None</span>, truth: str) -&gt; float:
     labels = systemone.options(question)
     <span class="hl-kw">if</span> answer <span class="hl-kw">is</span> <span class="hl-kw">None</span>:
         probs = {label: <span class="hl-num">1.0</span> / len(labels) <span class="hl-kw">for</span> label <span class="hl-kw">in</span> labels}
     <span class="hl-kw">else</span>:
         probs = answer[<span class="hl-str">"probs"</span>]
-    <span class="hl-kw">return</span> systemone.fsum((probs[label] - (<span class="hl-num">1.0</span> <span class="hl-kw">if</span> label == truth <span class="hl-kw">else</span> <span class="hl-num">0.0</span>)) ** <span class="hl-num">2</span> <span class="hl-kw">for</span> label <span class="hl-kw">in</span> labels)</code></pre></div><div class='why'>Accuracy ranks an engine that is confidently wrong next to one that knows when it is unsure. Only the second lets a threshold do its job. Lesson 5 scored retrieval against a golden set; this is the same discipline for decisions.</div></section>
+    <span class="hl-kw">return</span> systemone.fsum((probs[label] - (<span class="hl-num">1.0</span> <span class="hl-kw">if</span> label == truth <span class="hl-kw">else</span> <span class="hl-num">0.0</span>)) ** <span class="hl-num">2</span> <span class="hl-kw">for</span> label <span class="hl-kw">in</span> labels)</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/jev.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> brier(q, answer, truth) {
+  <span class="hl-kw">const</span> labels = options(q);
+  <span class="hl-kw">return</span> fsum(labels.map((label) =&gt; {
+    <span class="hl-kw">const</span> p = answer === <span class="hl-kw">undefined</span> ? <span class="hl-num">1.0</span> / labels.length : answer.probs[label];
+    <span class="hl-kw">const</span> d = p - (label === truth ? <span class="hl-num">1.0</span> : <span class="hl-num">0.0</span>);
+    <span class="hl-kw">return</span> d * d;
+  }));
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>    <span class="hl-kw">static</span> <span class="hl-kw">double</span> Brier(Dict q, Answer? answer, <span class="hl-kw">string</span> truth)
+    {
+        <span class="hl-kw">var</span> labels = SystemOne.Options(q);
+        <span class="hl-kw">return</span> Py.FSum(labels.Select(label =&gt;
+        {
+            <span class="hl-kw">double</span> p = answer is <span class="hl-kw">null</span> ? <span class="hl-num">1.0</span> / labels.Count : answer.Prob(label, <span class="hl-kw">double</span>.NaN);
+            <span class="hl-kw">double</span> d = p - (label == truth ? <span class="hl-num">1.0</span> : <span class="hl-num">0.0</span>);
+            <span class="hl-kw">return</span> (object?)(d * d);
+        }));
+    }</code></pre></div></div><div class='why'>Accuracy ranks an engine that is confidently wrong next to one that knows when it is unsure. Only the second lets a threshold do its job. Lesson 5 scored retrieval against a golden set; this is the same discipline for decisions.</div></section>
 <section class='slide'><div class='step-no'>Run it</div><h2>Run the scorecard</h2><div class='lang lang-python'><div class='block'><div class='label'>demo · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">10</span> demo</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>demo · node</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">10</span> --lang node demo</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>demo · csharp</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">10</span> --lang csharp demo</code></pre></div></div></section>
 <section class='slide'><div class='step-no'>Run it</div><h2>Read the output</h2><pre><code>Lesson 10 · Jev and System One models - Kestrel Mutual claims line: 36 labelled fake calls, 6 typed questions
 Replayed from recorded replies: no model, no network. Live: ./run -l 10 live --backend keywords,llm-json,local

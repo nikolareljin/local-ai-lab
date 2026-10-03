@@ -519,24 +519,61 @@ def test_labels_are_options_of_their_questions():
                 assert label in systemone.options(questions[name]), (rec["id"], name)
 
 
-def test_lesson_code_steps_still_point_at_whole_functions():
-    """Each code step's `lines` must start at a def (or a marked block) and end at its last line.
+def _symbol_range(path: Path, symbol: str) -> str:
+    """Where `symbol` lives in a source file, as lesson.json writes it: "start-end"."""
+    import ast
+    lines = path.read_text(encoding="utf-8").splitlines()
+    if symbol.startswith("marker:"):  # a block between two comment rules
+        i = next(k for k, line in enumerate(lines) if "--- the whole integration" in line)
+        j = next(k for k, line in enumerate(lines)
+                 if re.search(r"(#|//) -{20,}$", line) and k > i)
+        return f"{i + 1}-{j + 1}"
+    if path.suffix == ".py":
+        node = next(n for n in ast.walk(ast.parse("\n".join(lines)))
+                    if isinstance(n, ast.FunctionDef) and n.name == symbol)
+        return f"{node.lineno}-{node.end_lineno}"
+    signature = re.compile(r"\b" + re.escape(symbol) + r"\s*\(")
+    start = next(k for k, line in enumerate(lines)
+                 if signature.search(line) and not line.rstrip().endswith(";")
+                 and re.match(r"\s*(export |async |public |private |static |function )", line))
+    depth, opened = 0, False
+    for k in range(start, len(lines)):  # JavaScript and C#: the matching closing brace
+        depth += lines[k].count("{") - lines[k].count("}")
+        opened = opened or "{" in lines[k]
+        if opened and depth == 0:
+            return f"{start + 1}-{k + 1}"
+    raise AssertionError(f"{symbol}: no closing brace in {path.name}")
 
-    The ranges are typed into lesson.json; an edit above them shifts the slide onto the
-    wrong code without failing anything else.
+
+def test_lesson_code_steps_show_the_function_they_name():
+    """Every code step names a `symbol`; its `lines` must be exactly that function.
+
+    The ranges are typed into lesson.json; an edit above one shifts the slide onto the
+    wrong code without failing anything else. On failure the message gives the new range.
     """
     lesson = json.loads((HERE.parent / "lesson.json").read_text(encoding="utf-8"))
+    steps = [el for el in lesson["elements"] if el.get("type") == "code"]
+    assert steps
+    for el in steps:
+        want = _symbol_range(HERE.parent / el["file"], el["symbol"])
+        assert el["lines"] == want, f"{el['file']} {el['symbol']}: lines should be {want}"
+
+
+def test_a_step_with_ports_shows_each_language_its_own_code():
+    """A grouped code step has one variant per language of the lesson, each from that
+    language's sources. An ungrouped step is Python-only on purpose (the adapter)."""
+    lesson = json.loads((HERE.parent / "lesson.json").read_text(encoding="utf-8"))
+    groups: dict[str, dict] = {}
     for el in lesson["elements"]:
-        if el.get("type") != "code":
-            continue
-        lines = (HERE.parent / el["file"]).read_text(encoding="utf-8").splitlines()
-        start, end = (int(x) for x in el["lines"].split("-"))
-        first = lines[start - 1].strip()
-        assert first.startswith(("def ", "# ---")), f"{el['title']}: starts at {first!r}"
-        after = lines[end] if end < len(lines) else ""
-        indent = len(lines[start - 1]) - len(lines[start - 1].lstrip())
-        assert not after.strip() or len(after) - len(after.lstrip()) <= indent, (
-            f"{el['title']}: ends inside the block at line {end}")
+        if el.get("type") == "code" and el.get("group"):
+            groups.setdefault(el["group"], {})[el["lang"]] = el["file"]
+    assert len(groups) >= 6
+    for name, variants in groups.items():
+        assert set(variants) == set(lesson["languages"]), name
+        assert variants["python"].startswith("python/")
+        assert variants["node"].startswith("node/") and variants["csharp"].startswith("dotnet/")
+    alone = [el for el in lesson["elements"] if el.get("type") == "code" and not el.get("group")]
+    assert {el["file"] for el in alone} == {"python/local_adapter.py"}
 
 
 def test_only_typesafe_keys_are_read_from_dotenv(tmp_path, monkeypatch):
