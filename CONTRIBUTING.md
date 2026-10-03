@@ -64,6 +64,24 @@ Prose and generated files are checked separately, because the Python job deliber
 python3 tools/check_docs.py     # relative links, generated tables, published lesson pages
 ```
 
+**Code shown in a lesson page** is cut from the source by line range (`lines` in `lesson.json`).
+The ranges are computed, never typed: each code step names a `symbol`, and after you change a file
+a lesson shows you run
+
+```bash
+python3 tools/lesson_lines.py --write   # recompute the ranges
+./run -l N build                        # rebuild that lesson's page
+```
+
+`check_docs.py` fails when a range no longer matches its symbol or a page was not rebuilt.
+
+The published pages also have browser tests (Playwright, Node 22+):
+
+```bash
+npm --prefix e2e ci && npx --prefix e2e playwright install chromium   # once
+npm --prefix e2e test
+```
+
 The README "Lessons & downloads" table is generated - if you add a lesson or rebuild PDFs, run
 `python3 tools/sync-readme-downloads.py` to regenerate it. `check_docs.py` covers the `--check`
 for you and fails the build when it is stale.
@@ -83,4 +101,5 @@ for you and fails the build when it is stale.
 - [ ] One lesson / one concern per PR
 - [ ] `pytest -q` passes and `py_compile` is clean
 - [ ] Docs and the generated README table updated if behavior changed
+- [ ] Changed a file a lesson shows? `tools/lesson_lines.py --write`, then `./run -l N build`
 - [ ] A `CHANGELOG.md` entry under `## [Unreleased]`

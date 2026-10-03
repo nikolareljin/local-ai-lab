@@ -145,8 +145,7 @@
       <span class="hl-str">"why"</span>: <span class="hl-str">"not in the corpus at all - the loop has to give up rather than spin"</span> }
   ]
 }</code></pre></div><div class='why'>Corrective RAG only demonstrates itself on questions the first search actually fails. These fail for a boring, reproducible reason - the words are not in the documents - which is exactly what makes the result provable offline, through retrieval alone, with no model in the loop.</div></section>
-<section class='slide'><div class='step-no'>Step 2</div><h2>The grader - one judgement the whole graph turns on</h2><p>Term coverage: what fraction of the query's content words appear anywhere in the retrieved text? It is a real information-retrieval signal, it detects precisely the failure this lesson is about, and <code>missing</code> - the terms that did not land - is exactly what the rewriter needs next.</p><div class='lang lang-python'><div class='block'><div class='label'>python/graders.py</div><pre><code class='lang-python'>
-<span class="hl-kw">class</span> CoverageGrader:
+<section class='slide'><div class='step-no'>Step 2</div><h2>The grader - one judgement the whole graph turns on</h2><p>Term coverage: what fraction of the query's content words appear anywhere in the retrieved text? It is a real information-retrieval signal, it detects precisely the failure this lesson is about, and <code>missing</code> - the terms that did not land - is exactly what the rewriter needs next.</p><div class='lang lang-python'><div class='block'><div class='label'>python/graders.py</div><pre><code class='lang-python'><span class="hl-kw">class</span> CoverageGrader:
     <span class="hl-str">"""Term coverage: what fraction of the query's content words does the evidence contain?
 
     This is a real information-retrieval signal, not a stand-in for one. It
@@ -182,25 +181,7 @@
             reason=(f<span class="hl-str">"evidence covers {len(terms) - len(missing)}/{len(terms)} query terms"</span>
                     + (<span class="hl-str">""</span> <span class="hl-kw">if</span> grounded <span class="hl-kw">else</span> f<span class="hl-str">"; missing {missing}"</span>)),
             grader=self.name,
-        )
-
-
-GRADE_SYSTEM = (
-    <span class="hl-str">"You judge whether retrieved documentation is enough to answer a question. "</span>
-    <span class="hl-str">"You are strict: if the evidence does not actually address the question, say WEAK."</span>
-)
-
-GRADE_BRIEF = <span class="hl-str">"""\
-Reply with exactly one word on the first line: GROUNDED or WEAK.
-On the second line, at most fifteen words saying why.
-If WEAK, on the third line list the query terms the evidence is missing, comma separated.
-
-Question: {question}
-Search query used: {query}
-
-Retrieved evidence:
-{evidence}
-"""</span></code></pre></div></div><div class='why'>The grader is never shown the expected answer. It cannot be: <code>expect</code> lives in the data and is used only to score the run afterwards. A test asserts that on the function signature, because a grader that can read the label turns the whole measurement into theatre.</div></section>
+        )</code></pre></div></div><div class='why'>The grader is never shown the expected answer. It cannot be: <code>expect</code> lives in the data and is used only to score the run afterwards. A test asserts that on the function signature, because a grader that can read the label turns the whole measurement into theatre.</div></section>
 <section class='slide'><div class='step-no'>Step 3</div><h2>The rewriter - and an admission</h2><p>When the grader says the evidence is weak, the <em>query</em> has to change or the next attempt just repeats the last one. This expands the missing terms into the words the documents actually use, and drops the ones that landed nowhere.</p><div class='lang lang-python'><div class='block'><div class='label'>python/rewriter.py</div><pre><code class='lang-python'><span class="hl-kw">class</span> GlossaryRewriter:
     <span class="hl-str">"""Expand the terms the evidence did not cover into the words the docs use.
 
@@ -235,22 +216,7 @@ Retrieved evidence:
         <span class="hl-kw">for</span> term <span class="hl-kw">in</span> kept + expanded:
             <span class="hl-kw">if</span> term <span class="hl-kw">not</span> <span class="hl-kw">in</span> out:
                 out.append(term)
-        <span class="hl-kw">return</span> <span class="hl-str">" "</span>.join(out)
-
-
-REWRITE_SYSTEM = (
-    <span class="hl-str">"You rewrite a failed documentation search query using the vocabulary the "</span>
-    <span class="hl-str">"documentation itself is likely to use. Reply with the query only."</span>
-)
-
-REWRITE_BRIEF = <span class="hl-str">"""\
-The question was: {question}
-The search query "{query}" returned nothing useful.
-These terms appear nowhere in the retrieved text: {missing}
-
-Write one better search query, using words a technical manual would use.
-Reply with the query and nothing else.
-"""</span></code></pre></div></div><div class='why'>It is a lookup table, and a lookup table is a fixture rather than a design. It fixes <code>orange</code> only because somebody wrote <code>orange</code> into a JSON file, and it will not fix the phrasing nobody anticipated. It exists so this page prints the same thing on every machine. That is the entire argument for <code>--llm-rewrite</code>, and the lesson would rather say so than let you discover it.</div></section>
+        <span class="hl-kw">return</span> <span class="hl-str">" "</span>.join(out)</code></pre></div></div><div class='why'>It is a lookup table, and a lookup table is a fixture rather than a design. It fixes <code>orange</code> only because somebody wrote <code>orange</code> into a JSON file, and it will not fix the phrasing nobody anticipated. It exists so this page prints the same thing on every machine. That is the entire argument for <code>--llm-rewrite</code>, and the lesson would rather say so than let you discover it.</div></section>
 <section class='slide'><div class='step-no'>Step 4</div><h2>Arm B - the objection, written out in full</h2><p>Before any graph: here is the corrective loop as a plain <code>while</code>. It calls the same retrieve, the same grader and the same rewriter the graph will call. Note the early exit - if the rewriter hands back the query unchanged, there is nothing left to try, and a cycle that cannot change its own input is an infinite loop with extra steps.</p><div class='lang lang-python'><div class='block'><div class='label'>python/loop_agent.py</div><pre><code class='lang-python'><span class="hl-kw">def</span> run(retriever, question: str, *, grader: Grader, rewriter: Rewriter,
         top_k: int, max_attempts: int,
         generate: Optional[Callable] = <span class="hl-kw">None</span>) -&gt; dict:
@@ -308,8 +274,12 @@ Reply with the query and nothing else.
         <span class="hl-str">"question"</span>: question, <span class="hl-str">"query"</span>: query, <span class="hl-str">"attempts"</span>: attempt,
         <span class="hl-str">"retrievals"</span>: retrievals, <span class="hl-str">"grades"</span>: grades, <span class="hl-str">"rewrites"</span>: rewrites,
         <span class="hl-str">"sources"</span>: rag_core.sources(docs) <span class="hl-kw">if</span> grounded <span class="hl-kw">else</span> [],
-        <span class="hl-str">"verdicts"</span>: verdicts, <span class="hl-str">"grade"</span>: grade, <span class="hl-str">"docs"</span>: docs,</code></pre></div></div><div class='why'>Benchmarking LangGraph against a single-shot chain would prove that looping helps, which is not the same claim. A reader would be right to answer "so write a while loop". Lesson 7's authority came from refusing to benchmark against a straw man; dropping that standard one lesson later would be worse than never having had it.</div></section>
-<section class='slide'><div class='step-no'>Step 5</div><h2>State, and what a reducer actually is</h2><p>Look at the two kinds of field in one struct. <code>trace</code>, <code>turns</code> and the three counters are <code>Annotated[..., operator.add]</code>, so a node returning <code>{"retrievals": 1}</code> <strong>adds one</strong> to the running total. Everything else is last-write-wins, so a node returning <code>{"query": ...}</code> <strong>replaces</strong> it.</p><div class='lang lang-python'><div class='block'><div class='label'>python/graph_agent.py</div><pre><code class='lang-python'>    <span class="hl-str">"""Everything that flows between nodes.
+        <span class="hl-str">"verdicts"</span>: verdicts, <span class="hl-str">"grade"</span>: grade, <span class="hl-str">"docs"</span>: docs,
+        <span class="hl-str">"status"</span>: <span class="hl-str">"answered"</span> <span class="hl-kw">if</span> grounded <span class="hl-kw">else</span> <span class="hl-str">"abstained"</span>,
+        <span class="hl-str">"answer"</span>: answer, <span class="hl-str">"trace"</span>: trace,
+    }</code></pre></div></div><div class='why'>Benchmarking LangGraph against a single-shot chain would prove that looping helps, which is not the same claim. A reader would be right to answer "so write a while loop". Lesson 7's authority came from refusing to benchmark against a straw man; dropping that standard one lesson later would be worse than never having had it.</div></section>
+<section class='slide'><div class='step-no'>Step 5</div><h2>State, and what a reducer actually is</h2><p>Look at the two kinds of field in one struct. <code>trace</code>, <code>turns</code> and the three counters are <code>Annotated[..., operator.add]</code>, so a node returning <code>{"retrievals": 1}</code> <strong>adds one</strong> to the running total. Everything else is last-write-wins, so a node returning <code>{"query": ...}</code> <strong>replaces</strong> it.</p><div class='lang lang-python'><div class='block'><div class='label'>python/graph_agent.py</div><pre><code class='lang-python'><span class="hl-kw">class</span> AgentState(TypedDict, total=<span class="hl-kw">False</span>):
+    <span class="hl-str">"""Everything that flows between nodes.
 
     Note the two kinds of field, deliberately side by side:
 
@@ -339,10 +309,7 @@ Reply with the query and nothing else.
     decision: str          <span class="hl-com"># "approve" | "veto" | "edit:&lt;new query&gt;"</span>
     answer: str
     status: str            <span class="hl-com"># "answered" | "abstained" | "vetoed"</span></code></pre></div></div><div class='why'>That contrast is the clearest available definition of a reducer, and it is far easier to see side by side in one TypedDict than in any amount of explanation. It is also why the scorecard's counters are measured rather than asserted: the graph counts itself.</div></section>
-<section class='slide'><div class='step-no'>Step 6</div><h2>Conditional edges, and the edge that points backwards</h2><p><code>add_conditional_edges</code> takes a function that returns a <strong>string key</strong>, and a map from those keys to nodes. <code>rewrite -&gt; retrieve</code> is the cycle. <code>grade</code> has three or four ways out depending on whether a human is in the loop.</p><div class='lang lang-python'><div class='block'><div class='label'>python/graph_agent.py</div><pre><code class='lang-python'>            <span class="hl-str">"trace"</span>: [<span class="hl-str">"veto      reviewer stopped the run before generate"</span>],
-        }
-
-    <span class="hl-kw">def</span> route_after_grade(state: AgentState) -&gt; str:
+<section class='slide'><div class='step-no'>Step 6</div><h2>Conditional edges, and the edge that points backwards</h2><p><code>add_conditional_edges</code> takes a function that returns a <strong>string key</strong>, and a map from those keys to nodes. <code>rewrite -&gt; retrieve</code> is the cycle. <code>grade</code> has three or four ways out depending on whether a human is in the loop.</p><div class='lang lang-python'><div class='block'><div class='label'>python/graph_agent.py</div><pre><code class='lang-python'>    <span class="hl-kw">def</span> route_after_grade(state: AgentState) -&gt; str:
         <span class="hl-kw">if</span> state[<span class="hl-str">"grade"</span>][<span class="hl-str">"verdict"</span>] == <span class="hl-str">"grounded"</span>:
             <span class="hl-kw">return</span> <span class="hl-str">"review"</span> <span class="hl-kw">if</span> human_review <span class="hl-kw">else</span> <span class="hl-str">"generate"</span>
         <span class="hl-kw">if</span> state[<span class="hl-str">"attempt"</span>] &gt;= max_attempts:
@@ -385,11 +352,10 @@ Reply with the query and nothing else.
     builder.add_edge(<span class="hl-str">"generate"</span>, END)
     builder.add_edge(<span class="hl-str">"abstain"</span>, END)
 
-    graph = builder.compile(checkpointer=checkpointer)</code></pre></div></div><div class='why'>Because the routing function returns a key rather than a node, the topology stays separable from the logic - which is what lets <code>get_graph().edges</code> print the back-edge as a value. A <code>while</code> loop cannot answer "what are your edges?" at runtime. Its control flow is <code>if</code> and <code>while</code>; this one is data.</div></section>
-<section class='slide'><div class='step-no'>Step 7</div><h2>interrupt() - stopping to ask a human</h2><p>The graph stops here and hands back a <strong>review packet</strong>: the question, the query it ended up searching, how many attempts it took, the citations, and the evidence itself. You resume with <code>Command(resume="approve")</code>, <code>"veto"</code>, or <code>"edit:&lt;a better query&gt;"</code> - and that last one re-enters the cycle at <code>retrieve</code>.</p><div class='lang lang-python'><div class='block'><div class='label'>python/graph_agent.py</div><pre><code class='lang-python'>                      f<span class="hl-str">"(missing {state['grade']['missing']}){note}"</span>],
-        }
-
-    <span class="hl-kw">def</span> review_node(state: AgentState) -&gt; dict:
+    graph = builder.compile(checkpointer=checkpointer)
+    graph._retrieve_node = retrieve_node  <span class="hl-com"># so run() can attach the retriever</span>
+    <span class="hl-kw">return</span> graph</code></pre></div></div><div class='why'>Because the routing function returns a key rather than a node, the topology stays separable from the logic - which is what lets <code>get_graph().edges</code> print the back-edge as a value. A <code>while</code> loop cannot answer "what are your edges?" at runtime. Its control flow is <code>if</code> and <code>while</code>; this one is data.</div></section>
+<section class='slide'><div class='step-no'>Step 7</div><h2>interrupt() - stopping to ask a human</h2><p>The graph stops here and hands back a <strong>review packet</strong>: the question, the query it ended up searching, how many attempts it took, the citations, and the evidence itself. You resume with <code>Command(resume="approve")</code>, <code>"veto"</code>, or <code>"edit:&lt;a better query&gt;"</code> - and that last one re-enters the cycle at <code>retrieve</code>.</p><div class='lang lang-python'><div class='block'><div class='label'>python/graph_agent.py</div><pre><code class='lang-python'>    <span class="hl-kw">def</span> review_node(state: AgentState) -&gt; dict:
         <span class="hl-str">"""Stop, and hand a human everything they need to judge the answer.
 
         The payload IS the review packet. That is why this uses the dynamic
@@ -414,7 +380,9 @@ Reply with the query and nothing else.
             edited = decision[len(<span class="hl-str">"edit:"</span>):].strip()
             <span class="hl-kw">if</span> edited:
                 out[<span class="hl-str">"query"</span>] = edited
-                out[<span class="hl-str">"attempt"</span>] = state[<span class="hl-str">"attempt"</span>] + <span class="hl-num">1</span></code></pre></div></div><div class='why'>This uses the dynamic <code>interrupt()</code> rather than the older <code>interrupt_before=["generate"]</code>, because the payload IS the point. A static pause tells the reviewer nothing, and a human approving a grounded answer needs to see what it is grounded in. The <code>edit</code> branch is also why <code>review</code> earns a node instead of being a flag on <code>generate</code>: it is a second way into the loop.</div></section>
+                out[<span class="hl-str">"attempt"</span>] = state[<span class="hl-str">"attempt"</span>] + <span class="hl-num">1</span>
+                out[<span class="hl-str">"trace"</span>] = [f<span class="hl-str">"review    human rewrote the query -&gt; {edited!r}"</span>]
+        <span class="hl-kw">return</span> out</code></pre></div></div><div class='why'>This uses the dynamic <code>interrupt()</code> rather than the older <code>interrupt_before=["generate"]</code>, because the payload IS the point. A static pause tells the reviewer nothing, and a human approving a grounded answer needs to see what it is grounded in. The <code>edit</code> branch is also why <code>review</code> earns a node instead of being a flag on <code>generate</code>: it is a second way into the loop.</div></section>
 <section class='slide'><div class='step-no'>Command</div><h2>Run the comparison</h2><div class='lang lang-python'><div class='block'><div class='label'>demo · python</div><pre><code class='lang-bash'>$ python -m pip install -q -r requirements.txt</code></pre></div></div><div class='lang lang-python'><div class='block'><div class='label'>demo · python</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">8</span> demo</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>demo · node</div><pre><code class='lang-bash'>$ npm --prefix node install --silent --no-audit --no-fund</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>demo · node</div><pre><code class='lang-bash'>$ ./run -l <span class="hl-num">8</span> --lang node demo</code></pre></div></div></section>
 <section class='slide'><div class='step-no'>Run it</div><h2>Read the output</h2><p><strong>The headline: 4/8 becomes 8/8, plus the abstention the chain never makes, for 67% more retrieval calls.</strong> The four the loop fixes are exactly the four where the reader's words are not the documents' words. <code>q8</code> was already right and looped anyway - a retrieval that bought nothing, left in because pretending the loop is free would be a lie. <code>q9</code> has no answer in the corpus, and the loop refuses rather than spinning.</p><p>Then the part that matters. <strong>The <code>while</code> loop and the graph agree on all nine questions - exactly.</strong> LangGraph did not make the agent smarter. Everything it cost bought the three rows the loop leaves blank: state that survives the process, a run you can pause and resume, and a topology you can print. The line counts and package counts are read off disk at run time, so they cannot drift from the code.</p><pre><code>Lesson 8 · A stateful agent with LangGraph
 corpus: lessons/07-langchain-rag/data/corpus  (7 documents - Lesson 7's, by path)

@@ -1,0 +1,15 @@
+{
+  "name": "local-ai-lab-e2e",
+  "private": true,
+  "type": "module",
+  "description": "Browser tests for the published course pages in docs/.",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

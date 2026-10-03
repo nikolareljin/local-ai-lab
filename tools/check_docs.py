@@ -18,6 +18,9 @@ Checks, in order of how often they have actually broken:
   5. SEO metadata     every page has the description, canonical, Open Graph and
                       JSON-LD block from `tools/seo.py`; sitemap.xml is current; no
                       two pages share a description
+  6. code excerpts    every code step in a `lesson.json` shows the function its
+                      `symbol` names (`tools/lesson_lines.py`), and the published
+                      page shows that code as it is now
 
 Run it locally the same way CI does:
 
@@ -180,12 +183,28 @@ def check_seo() -> list[str]:
     return seo.problems()
 
 
+def check_code_excerpts() -> list[str]:
+    """A step's `lines` must be its `symbol`, and the built page must show it.
+
+    The ranges are numbers in lesson.json; an edit above a function used to move the
+    slide onto the wrong code and fail nothing. Lesson 6 was published that way.
+    """
+    if str(ROOT / "tools") not in sys.path:
+        sys.path.insert(0, str(ROOT / "tools"))
+    import lesson_lines
+    drift = lesson_lines.check()
+    if drift:
+        return drift + ["fix the ranges with: python3 tools/lesson_lines.py --write"]
+    return lesson_lines.published_problems()
+
+
 CHECKS = (
     ("relative links", check_links),
     ("README downloads table", check_readme_table),
     ("generated curriculum", check_curriculum),
     ("published lesson pages", check_published_pages),
     ("SEO metadata", check_seo),
+    ("code excerpts", check_code_excerpts),
 )
 
 

@@ -125,7 +125,8 @@ it; an eyeball check (correctness held at 1.00) would not.</code></pre></section
         <span class="hl-kw">if</span> score &gt; <span class="hl-num">0</span>:
             scored.append((score, d))
     scored.sort(key=<span class="hl-kw">lambda</span> s: (-s[<span class="hl-num">0</span>], s[<span class="hl-num">1</span>][<span class="hl-str">"name"</span>]))
-    <span class="hl-kw">return</span> [d <span class="hl-kw">for</span> _, d <span class="hl-kw">in</span> scored[:top_k]]</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/eval_rag.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> retrieve(query, docs, topK) {
+    <span class="hl-kw">return</span> [d <span class="hl-kw">for</span> _, d <span class="hl-kw">in</span> scored[:top_k]]</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/eval_rag.mjs</div><pre><code class='lang-js'><span class="hl-com">// --- Retrieval: distinct-term overlap, minus stopwords (deterministic) -------</span>
+<span class="hl-kw">function</span> retrieve(query, docs, topK) {
   <span class="hl-kw">const</span> q = terms(query);
   <span class="hl-kw">const</span> scored = [];
   <span class="hl-kw">for</span> (<span class="hl-kw">const</span> d <span class="hl-kw">of</span> docs) {
@@ -135,7 +136,8 @@ it; an eyeball check (correctness held at 1.00) would not.</code></pre></section
   }
   scored.sort((a, b) =&gt; b.score - a.score || cmpOrdinal(a.d.name, b.d.name));
   <span class="hl-kw">return</span> scored.slice(<span class="hl-num">0</span>, topK).map((s) =&gt; s.d);
-}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>List&lt;Doc&gt; Retrieve(<span class="hl-kw">string</span> query, List&lt;Doc&gt; corpus, <span class="hl-kw">int</span> topK)
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'><span class="hl-com">// --- Retrieval: distinct-term overlap, minus stopwords (deterministic) -------</span>
+List&lt;Doc&gt; Retrieve(<span class="hl-kw">string</span> query, List&lt;Doc&gt; corpus, <span class="hl-kw">int</span> topK)
 {
     <span class="hl-kw">var</span> q = Terms(query);
     <span class="hl-kw">return</span> corpus
@@ -196,7 +198,8 @@ it; an eyeball check (correctness held at 1.00) would not.</code></pre></section
         <span class="hl-kw">return</span> <span class="hl-num">1.0</span>
     toks = set(tokenize(answer_text))
     hit = sum(<span class="hl-num">1</span> <span class="hl-kw">for</span> k <span class="hl-kw">in</span> keywords <span class="hl-kw">if</span> k <span class="hl-kw">in</span> toks)
-    <span class="hl-kw">return</span> hit / len(keywords)</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/eval_rag.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> firstBodyLine(doc) {
+    <span class="hl-kw">return</span> hit / len(keywords)</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/eval_rag.mjs</div><pre><code class='lang-js'><span class="hl-com">// --- Answerer: a deterministic, offline extractive stand-in ------------------</span>
+<span class="hl-kw">function</span> firstBodyLine(doc) {
   <span class="hl-kw">for</span> (<span class="hl-kw">const</span> raw <span class="hl-kw">of</span> doc.raw.split(<span class="hl-str">"\n"</span>)) {
     <span class="hl-kw">const</span> line = raw.trim();
     <span class="hl-kw">if</span> (line &amp;&amp; !line.startsWith(<span class="hl-str">"#"</span>)) <span class="hl-kw">return</span> line;
@@ -238,7 +241,8 @@ it; an eyeball check (correctness held at 1.00) would not.</code></pre></section
   <span class="hl-kw">const</span> toks = <span class="hl-kw">new</span> Set(tokenize(answerText));
   <span class="hl-kw">const</span> hit = keywords.filter((k) =&gt; toks.has(k)).length;
   <span class="hl-kw">return</span> hit / keywords.length;
-}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'><span class="hl-kw">string</span> FirstBodyLine(Doc doc)
+}</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'><span class="hl-com">// --- Answerer: a deterministic, offline extractive stand-in ------------------</span>
+<span class="hl-kw">string</span> FirstBodyLine(Doc doc)
 {
     <span class="hl-kw">foreach</span> (<span class="hl-kw">var</span> raw <span class="hl-kw">in</span> doc.Raw.Split('\n'))
     {
@@ -311,7 +315,8 @@ it; an eyeball check (correctness held at 1.00) would not.</code></pre></section
 
 <span class="hl-com"># Two configs that tell the regression story.</span>
 BASELINE = {<span class="hl-str">"name"</span>: <span class="hl-str">"baseline"</span>, <span class="hl-str">"top_k"</span>: <span class="hl-num">3</span>, <span class="hl-str">"pad_unsupported"</span>: <span class="hl-kw">False</span>}
-CANDIDATE = {<span class="hl-str">"name"</span>: <span class="hl-str">"candidate"</span>, <span class="hl-str">"top_k"</span>: <span class="hl-num">1</span>, <span class="hl-str">"pad_unsupported"</span>: <span class="hl-kw">True</span>}</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/eval_rag.mjs</div><pre><code class='lang-js'><span class="hl-kw">function</span> evaluate(golden, docs, config) {
+CANDIDATE = {<span class="hl-str">"name"</span>: <span class="hl-str">"candidate"</span>, <span class="hl-str">"top_k"</span>: <span class="hl-num">1</span>, <span class="hl-str">"pad_unsupported"</span>: <span class="hl-kw">True</span>}</code></pre></div></div><div class='lang lang-node'><div class='block'><div class='label'>node/eval_rag.mjs</div><pre><code class='lang-js'><span class="hl-com">// --- One config over the whole golden set ------------------------------------</span>
+<span class="hl-kw">function</span> evaluate(golden, docs, config) {
   <span class="hl-kw">const</span> thr = golden.thresholds;
   <span class="hl-kw">if</span> (golden.questions.length === <span class="hl-num">0</span>) {
     <span class="hl-kw">throw</span> <span class="hl-kw">new</span> Error(<span class="hl-str">"golden set has no questions - add at least one to data/golden.json"</span>);
@@ -338,7 +343,8 @@ CANDIDATE = {<span class="hl-str">"name"</span>: <span class="hl-str">"candidate
 }
 
 <span class="hl-kw">const</span> BASELINE = { name: <span class="hl-str">"baseline"</span>, top_k: <span class="hl-num">3</span>, pad_unsupported: <span class="hl-kw">false</span> };
-<span class="hl-kw">const</span> CANDIDATE = { name: <span class="hl-str">"candidate"</span>, top_k: <span class="hl-num">1</span>, pad_unsupported: <span class="hl-kw">true</span> };</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'>EvalResult Evaluate(GoldenSet g, List&lt;Doc&gt; corpus, Config config)
+<span class="hl-kw">const</span> CANDIDATE = { name: <span class="hl-str">"candidate"</span>, top_k: <span class="hl-num">1</span>, pad_unsupported: <span class="hl-kw">true</span> };</code></pre></div></div><div class='lang lang-csharp'><div class='block'><div class='label'>dotnet/Program.cs</div><pre><code class='lang-csharp'><span class="hl-com">// --- One config over the whole golden set ------------------------------------</span>
+EvalResult Evaluate(GoldenSet g, List&lt;Doc&gt; corpus, Config config)
 {
     <span class="hl-kw">var</span> thr = g.Thresholds;
     <span class="hl-kw">if</span> (g.Questions.Count == <span class="hl-num">0</span>)

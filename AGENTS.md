@@ -37,6 +37,30 @@ Lessons 3+ are config-driven (`lessons/NN-slug/lesson.json`); see
 - Guard heavy/optional imports (`numpy`, provider SDKs) inside the functions that use them.
 - Course site is plain static HTML/CSS/JS (no build step); `docs/.nojekyll` disables Jekyll.
 
+## Code Excerpts In Lesson Pages - recompute after every edit
+A lesson page shows code by line range: `"file": "python/policy.py", "lines": "26-45",
+"symbol": "decide"` in `lesson.json`. **Never type or adjust a `lines` value by hand.** Every code
+step names a `symbol`; `tools/lesson_lines.py` computes `lines` from it.
+
+After changing **any** file a lesson shows (Python, Node.js or C#), in this order:
+
+```bash
+python3 tools/lesson_lines.py --write   # recompute every range from its symbol
+./run -l N build                        # rebuild the page of each lesson you touched
+python3 tools/check_docs.py             # must pass: ranges, and pages that match them
+npm --prefix e2e test                   # the same, as a browser sees it (after `npm --prefix e2e ci`)
+```
+
+- A new code step needs a `symbol`: a function, class or constant (`decide`), a method
+  (`Replay.next`), a span (`rank..rrf`), `marker:<text>` or `around:<text>`. See the header of
+  `tools/lesson_lines.py`.
+- Renaming or deleting a function a lesson shows breaks the check on purpose. Update the `symbol`.
+- Do this for every language of the step. A range that is right in Python and stale in C# is
+  the same bug.
+
+Why: an edit above a function moves it, the range keeps pointing at the old lines, and the page
+shows the wrong code without failing anything. Lessons 6, 7 and 8 were published that way.
+
 ## Testing Guidelines
 - Tests in `tests/test_*.py` must stay **offline** (no network, no LLM). Cover the retrieval core.
 
