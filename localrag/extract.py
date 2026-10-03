@@ -2,8 +2,7 @@
 
 Returns a list of "pages": dicts with ``text``, ``page_number`` and ``source``.
 For formats without real pages (DOCX/TXT/MD) the whole document is one page.
-Mirrors the extraction approach used in document-tracker's document_processor,
-trimmed down to the handful of formats this demo needs.
+A deliberately small extractor, covering the handful of formats this demo needs.
 """
 
 from __future__ import annotations
