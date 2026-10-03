@@ -19,8 +19,11 @@
     .panel { background:var(--panel); border:1px solid var(--edge); border-radius:12px; padding:18px; }
     .panel h2 { margin:0 0 12px; font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
     .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    input[type=text] { flex:1; min-width:240px; background:#11141a; color:var(--txt);
+    input[type=text], textarea#q { flex:1; min-width:240px; background:#11141a; color:var(--txt);
                        border:1px solid var(--edge); border-radius:10px; padding:12px; font:inherit; }
+    /* The prompt box: several lines, grows with its text (up to a point), resizable by hand. */
+    textarea#q { font-family:inherit; line-height:1.45; resize:vertical; min-height:4.6em; max-height:60vh; }
+    .row.ask { align-items:flex-start; }
     button { font:inherit; border-radius:10px; border:none;
              background:var(--accent2); color:#fff; padding:10px 18px; cursor:pointer; font-weight:600; }
     button:hover { background:var(--accent); }
@@ -77,8 +80,8 @@
   <main>
     <section class="panel">
       <h2>Ask</h2>
-      <div class="row">
-        <input id="q" type="text" placeholder="type a query..." aria-label="Search query" autofocus />
+      <div class="row ask">
+        <textarea id="q" rows="3" placeholder="type or paste a prompt... (Enter = search, Shift+Enter = new line)" aria-label="Prompt" autofocus></textarea>
         <button id="go">Search ▶</button>
       </div>
       <div id="examples" class="examples"></div>
@@ -182,7 +185,7 @@
       for (const ex of examples) {
         const b = document.createElement("button");
         b.className = "ex"; b.textContent = ex.label;
-        b.addEventListener("click", () => { $("q").value = ex.query; search(); });
+        b.addEventListener("click", () => { $("q").value = ex.query; fitPrompt(); search(); });
         box.appendChild(b);
       }
     }
@@ -199,9 +202,18 @@
 
     $("reset").addEventListener("click", () => { renderParams(PARAMS); search(); });
     $("go").addEventListener("click", search);
-    $("q").addEventListener("keydown", (e) => { if (e.key === "Enter") search(); });
+    // Enter searches (as the one-line box did); Shift+Enter adds a line to the prompt.
+    $("q").addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); search(); }
+    });
+    // Grow the box to fit its text, so a pasted transcript is readable without scrolling.
+    function fitPrompt() {
+      const q = $("q");
+      q.style.height = "auto";
+      q.style.height = (q.scrollHeight + 2) + "px";
+    }
     // Live search as you type, debounced so we don't fire a request per keystroke.
-    $("q").addEventListener("input", scheduleSearch);
+    $("q").addEventListener("input", () => { fitPrompt(); scheduleSearch(); });
 
     let timer = null;
     let reqSeq = 0;  // guards against out-of-order responses (typing + slider changes overlap)

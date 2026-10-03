@@ -35,8 +35,8 @@ QUESTIONS, RECORDS = jev.load_dataset(DATASET)
 
 
 def _key(text: str) -> str:
-    """A transcript without its whitespace. The form's query box is a single-line input,
-    and a browser drops the line breaks of a pasted or clicked transcript."""
+    """A transcript without its whitespace, so a call is recognised however it was typed,
+    pasted or re-wrapped in the prompt box."""
     return "".join(text.split())
 
 
