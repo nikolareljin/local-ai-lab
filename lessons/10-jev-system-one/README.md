@@ -351,13 +351,20 @@ curl -s http://127.0.0.1:8765/v1/systemone -H 'Content-Type: application/json' -
 ./run -l 10 ask "Our API returns 502 for everyone since 09:40" --backend llm-json
 ```
 
-### Score an engine on your machine
+### Score engines on your machine - local and TypeSafe side by side
 
 ```bash
-./run -l 10 live --backend local --model qwen3.5:4b --limit 10
-./run -l 10 live --backend local --dataset incidents
-TYPESAFE_API_KEY=... ./run -l 10 live --backend typesafe     # real Jev; the fake tickets leave your machine
+ollama pull qwen3:1.7b
+export TYPESAFE_API_KEY=...                  # optional; without it the TypeSafe row says "not run"
+./run -l 10 live --backend keywords,llm-json,local,typesafe --limit 10
+./run -l 10 live --backend local --model qwen3.5:4b --dataset incidents
 ```
+
+`--backend` takes one engine or several, comma-separated. Every engine answers the same records in
+the same run and lands in one scorecard. An engine that cannot run - no API key, Ollama not
+started - gets a row saying why, and the others still run. With `typesafe`, the fake tickets leave
+your machine. The playground (`./run -l 10`) has a live switch for each: the local adapter and
+TypeSafe.
 
 ### Record what the demo replays
 
@@ -365,6 +372,10 @@ TYPESAFE_API_KEY=... ./run -l 10 live --backend typesafe     # real Jev; the fak
 ./run -l 10 record --backend local --model qwen3:1.7b --hardware "my laptop"
 ./run -l 10 record --backend typesafe                        # needs TYPESAFE_API_KEY
 ```
+
+Recordings are named per engine, model and dataset (`jev-like-qwen3-1.7b.json` for the tickets,
+`jev-like-qwen3-1.7b-reviews.json` for the reviews), so recording one never overwrites another.
+A run with `--limit N` writes `...-firstN.json`, which the demo does not read.
 
 Record one model at a time with nothing else on the CPU. Two resident models on a 19 GB laptop got
 the Ollama service killed in Lesson 9.

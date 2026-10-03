@@ -119,6 +119,18 @@ function floatRepr(x) {
   return `${sign}${m}e${e < 0 ? "-" : "+"}${String(Math.abs(e)).padStart(2, "0")}`;
 }
 
+/** systemone.fsum: every value as a float, Neumaier compensation from the first. */
+export function fsum(values) {
+  let total = 0.0, comp = 0.0;
+  for (const raw of values) {
+    const v = Number(num(raw));
+    const t = total + v;
+    comp += Math.abs(total) >= Math.abs(v) ? (total - t) + v : (v - t) + total;
+    total = t;
+  }
+  return total + comp;
+}
+
 /** sum() as CPython 3.12+ does it: ints added exactly until the first float, then
  *  floats with Neumaier compensation (ints after that added plainly). Values are
  *  parsed with floats: true, so a PyFloat is a float and a plain number an int. */

@@ -13,6 +13,8 @@ which is exactly what the Brier score punishes when the pick is wrong.
 
 from __future__ import annotations
 
+import hashlib
+import inspect
 import json
 import re
 import urllib.request
@@ -130,3 +132,7 @@ def llm_json_text(body: dict, model: str, url: str, keep_alive="5m") -> str:
                                  {"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=300) as resp:
         return json.load(resp)["message"]["content"]
+
+
+# A change to the prompt makes recordings of this engine stale (see jev.load_cassette).
+PROMPT_VERSION = hashlib.sha256(inspect.getsource(llm_json_prompt).encode()).hexdigest()[:12]

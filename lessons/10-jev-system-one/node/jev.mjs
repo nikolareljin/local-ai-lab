@@ -13,7 +13,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
-  canonical, formatFixed, isDict, ljust, loads, num, PyFloat, pySum, pySumFloats, repr, rjust, strip,
+  canonical, formatFixed, isDict, ljust, loads, num, PyFloat, fsum, repr, rjust, strip,
 } from "./pycompat.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -36,10 +36,11 @@ function shortName(backend, tape) {
   return `${prefix} ${tape.model.split(":").at(-1)}`;
 }
 
-function cassetteName(backend, model) {
-  if (backend === "typesafe") return "typesafe-jev.json";
+function cassetteName(backend, model, dataset = "tickets") {
+  const suffix = dataset === "tickets" ? "" : `-${dataset}`;
+  if (backend === "typesafe") return `typesafe-jev${suffix}.json`;
   const prefix = { "llm-json": "llm-json", local: "jev-like" }[backend];
-  return `${prefix}-${model.replaceAll(":", "-").replaceAll("/", "-")}.json`;
+  return `${prefix}-${model.replaceAll(":", "-").replaceAll("/", "-")}${suffix}.json`;
 }
 
 const PAGE = 0.7, REFUND = 0.8, CONFIDENT = 0.6; // policy.py
@@ -62,6 +63,7 @@ function options(q) {
 }
 
 function requestProblems(body) {
+  if (!isDict(body)) return ["body: a JSON object"];
   const found = [];
   if (typeof body.model !== "string" || !body.model) found.push("model: required");
   if (!("state" in body)) found.push("state: required");
@@ -70,6 +72,10 @@ function requestProblems(body) {
   const n = Object.keys(questions).length;
   if (n > 64) found.push(`questions: at most 64, got ${n}`);
   for (const [name, q] of Object.entries(questions)) {
+    if (!isDict(q)) {
+      found.push(`questions.${name}: an object`);
+      continue;
+    }
     if (!["noul", "choice", "score"].includes(q.type)) {
       found.push(`questions.${name}.type: noul, choice or score`);
       continue;
@@ -97,12 +103,16 @@ const digest = (body) =>
   createHash("sha256").update(canonical({ state: body.state, questions: body.questions }), "utf8")
     .digest("hex").slice(0, 16);
 
-// bool is an int in Python
-const isNumber = (v) => typeof v === "number" || typeof v === "boolean" || typeof v === "bigint" || v instanceof PyFloat;
+/** A real number in [0, 1]. Not a bool, not NaN, not 1.5. */
+function isProbability(v) {
+  if (!(typeof v === "number" || typeof v === "bigint" || v instanceof PyFloat)) return false;
+  const x = Number(num(v));
+  return Number.isFinite(x) && x >= 0 && x <= 1;
+}
 
 function readAnswers(questions, response) {
   const answers = {}, problems = [];
-  const got = isDict(response.answers) && Object.keys(response.answers).length ? response.answers : {};
+  const got = isDict(response) && isDict(response.answers) ? response.answers : {};
   for (const [name, q] of Object.entries(questions)) {
     const a = Object.hasOwn(got, name) ? got[name] : undefined;
     const labels = options(q);
@@ -112,11 +122,11 @@ function readAnswers(questions, response) {
     }
     let pick, probs, confidence;
     if (q.type === "noul") {
-      const p = isNumber(a.noul) ? Number(num(a.noul)) : NaN;
-      if (!isNumber(a.noul) || !(p >= 0 && p <= 1)) {
+      if (!isProbability(a.noul)) {
         problems.push(`${name}: noul must be a number in [0, 1]`);
         continue;
       }
+      const p = Number(num(a.noul));
       probs = { yes: p, no: 1.0 - p };
       pick = p >= 0.5 ? "yes" : "no";
       confidence = Math.max(p, 1 - p);
@@ -131,8 +141,8 @@ function readAnswers(questions, response) {
       }
       const keys = Object.keys(raw);
       const sameSet = keys.length === new Set(labels).size && keys.every((k) => labels.includes(k));
-      const numeric = Object.values(raw).every((v) => isNumber(v) && typeof v !== "boolean");
-      if (!sameSet || !numeric || Math.abs(pySum(Object.values(raw)) - 1.0) > 0.01) {
+      const numeric = Object.values(raw).every(isProbability);
+      if (!sameSet || !numeric || Math.abs(fsum(Object.values(raw)) - 1.0) > 0.01) {
         problems.push(`${name}: probabilities must cover ${repr(labels)} and sum to 1`);
         continue;
       }
@@ -149,7 +159,7 @@ function readAnswers(questions, response) {
         continue;
       }
       const c = Object.hasOwn(a, "confidence") ? a.confidence : null;
-      confidence = isNumber(c) && typeof c !== "boolean" ? Number(num(c)) : Math.max(...Object.values(probs));
+      confidence = isProbability(c) ? Number(num(c)) : Math.max(...Object.values(probs));
     }
     answers[name] = { pick, probs, confidence };
   }
@@ -255,7 +265,7 @@ function goldAnswers(questions, labels) {
 
 function brier(q, answer, truth) {
   const labels = options(q);
-  return pySumFloats(labels.map((label) => {
+  return fsum(labels.map((label) => {
     const p = answer === undefined ? 1.0 / labels.length : answer.probs[label];
     const d = p - (label === truth ? 1.0 : 0.0);
     return d * d;
@@ -319,9 +329,12 @@ function loadCassette(file, questions, records, dataset) {
   if (tape.dataset !== dataset) return null;
   // prompt_version is not checked here; Python's test suite enforces it.
   for (const rec of records) {
-    const stored = Object.hasOwn(tape.calls, rec.id) ? tape.calls[rec.id] : undefined;
+    const stored = Object.hasOwn(tape.calls, rec.id) ? tape.calls[rec.id] : null;
+    if (stored === null) {
+      throw new StaleCassette(`${file}: has no recording of ${rec.id} - re-record it without --limit`);
+    }
     const want = digest(buildRequest(rec.text, questions, tape.model));
-    if (stored === undefined || stored === null || stored.digest !== want) {
+    if (stored.digest !== want) {
       throw new StaleCassette(`${file}: ${rec.id} was recorded for a different question `
         + "or text - re-record it");
     }
@@ -371,7 +384,7 @@ function demo(dataset) {
   const rows = [["keywords", null, keywordRuns]];
   const missing = [];
   for (const [backend, model] of RECORDED_MODELS) {
-    const tape = loadCassette(cassetteName(backend, model), questions, records, dataset);
+    const tape = loadCassette(cassetteName(backend, model, dataset), questions, records, dataset);
     if (tape === null) {
       missing.push([backend, model]);
       continue;

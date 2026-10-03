@@ -4,3 +4,5 @@ node/node_modules/
 dotnet/bin/
 dotnet/obj/
 slides/deck.filled.html
+# Partial recordings (record --limit N) are scratch; the demo never reads them.
+data/cassettes/*-first*.json

@@ -46,11 +46,18 @@ RECORDED_MODELS = [
 ]
 
 
-def cassette_name(backend: str, model: str) -> str:
+def cassette_name(backend: str, model: str, dataset: str = "tickets") -> str:
+    """jev-like-qwen3-1.7b.json for the tickets; other datasets add their name."""
+    suffix = "" if dataset == "tickets" else f"-{dataset}"
     if backend == "typesafe":
-        return "typesafe-jev.json"
+        return f"typesafe-jev{suffix}.json"
     prefix = {"llm-json": "llm-json", "local": "jev-like"}[backend]
-    return f"{prefix}-{model.replace(':', '-').replace('/', '-')}.json"
+    return f"{prefix}-{model.replace(':', '-').replace('/', '-')}{suffix}.json"
+
+
+# The prompt each engine's recordings depend on (None: the model's own API, no prompt).
+PROMPT_VERSIONS = {"local": local_adapter.PROMPT_VERSION, "llm-json": engines.PROMPT_VERSION,
+                   "typesafe": None}
 
 
 RECORDED = [(backend, cassette_name(backend, model)) for backend, model in RECORDED_MODELS]
@@ -109,13 +116,17 @@ def load_cassette(file: str, questions: dict, records: list[dict], dataset: str)
     tape = json.loads(path.read_text(encoding="utf-8"))
     if tape.get("dataset") != dataset:
         return None
-    if tape.get("prompt_version") not in (None, local_adapter.PROMPT_VERSION):
-        raise StaleCassette(f"{file}: recorded with adapter prompt {tape['prompt_version']}, "
-                            f"current is {local_adapter.PROMPT_VERSION} - re-record it")
+    want_prompt = PROMPT_VERSIONS.get(tape.get("engine"))
+    if tape.get("prompt_version") != want_prompt:
+        raise StaleCassette(f"{file}: recorded with prompt {tape.get('prompt_version')}, "
+                            f"current is {want_prompt} - re-record it")
     for rec in records:
         stored = tape["calls"].get(rec["id"])
+        if stored is None:
+            raise StaleCassette(f"{file}: has no recording of {rec['id']} - re-record it "
+                                f"without --limit")
         want = systemone.digest(systemone.build_request(rec["text"], questions, tape["model"]))
-        if stored is None or stored["digest"] != want:
+        if stored["digest"] != want:
             raise StaleCassette(f"{file}: {rec['id']} was recorded for a different question "
                                 f"or text - re-record it")
     return tape
@@ -124,7 +135,9 @@ def load_cassette(file: str, questions: dict, records: list[dict], dataset: str)
 def record(backend: str, dataset: str, model: str, hardware: str, limit: int = 0) -> Path:
     questions, records = load_dataset(dataset)
     records = records[:limit] if limit else records
-    file = cassette_name(backend, model)
+    file = cassette_name(backend, model, dataset)
+    if limit:  # a partial run never replaces what the demo replays
+        file = file.removesuffix(".json") + f"-first{limit}.json"
     wire_model = model if backend != "typesafe" else os.environ.get("TYPESAFE_DEFAULT_MODEL",
                                                                     "jev-latest")
     calls = {}
@@ -137,7 +150,7 @@ def record(backend: str, dataset: str, model: str, hardware: str, limit: int = 0
     tape = {
         "engine": backend, "model": wire_model, "dataset": dataset,
         "recorded": datetime.date.today().isoformat(), "hardware": hardware,
-        "prompt_version": local_adapter.PROMPT_VERSION if backend == "local" else None,
+        "prompt_version": PROMPT_VERSIONS[backend],
         "calls": calls,
     }
     CASSETTES.mkdir(parents=True, exist_ok=True)
@@ -180,7 +193,8 @@ def header(questions: dict) -> str:
             f"{'missed':>7}{'s/item':>8}{'calls':>6}")
 
 
-def demo(dataset: str = "tickets", out=sys.stdout) -> int:
+def demo(dataset: str = "tickets", out=None) -> int:
+    out = out or sys.stdout
     questions, records = load_dataset(dataset)
     p = lambda line="": print(line, file=out)  # noqa: E731
     p(f"Lesson 10 · Jev and System One models - {len(records)} labelled fake {dataset}, "
@@ -192,7 +206,7 @@ def demo(dataset: str = "tickets", out=sys.stdout) -> int:
         r["text"], questions), "")) for r in records})]
     missing = []
     for backend, model in RECORDED_MODELS:
-        file = cassette_name(backend, model)
+        file = cassette_name(backend, model, dataset)
         tape = load_cassette(file, questions, records, dataset)
         if tape is None:
             missing.append((backend, model))
@@ -242,26 +256,55 @@ def demo(dataset: str = "tickets", out=sys.stdout) -> int:
 
 
 # --------------------------------------------------------------------------- live
-def live(backend: str, dataset: str, model: str, limit: int, out=sys.stdout) -> int:
+BACKENDS = ["keywords", "llm-json", "local", "typesafe"]
+
+
+def live(backends: list[str], dataset: str, model: str, limit: int, out=None) -> int:
+    """Score each backend now, on the same records, and print one scorecard.
+
+    A backend that cannot run - no TYPESAFE_API_KEY, Ollama not started - gets a row
+    saying why, and the others still run.
+    """
+    out = out or sys.stdout
     questions, records = load_dataset(dataset)
     records = records[:limit] if limit else records
-    wire_model = model if backend != "typesafe" else os.environ.get("TYPESAFE_DEFAULT_MODEL",
-                                                                    "jev-latest")
-    runs = {}
-    for rec in records:
-        body = systemone.build_request(rec["text"], questions, wire_model)
-        runs[rec["id"]] = to_run(questions, run_live(backend, body, model))
-        bad = runs[rec["id"]]["problems"]
-        print(f"  {rec['id']}  {runs[rec['id']]['seconds']:.1f}s"
-              + (f"  invalid: {', '.join(bad)}" if bad else ""), file=out, flush=True)
+    rows = []
+    for backend in backends:
+        wire_model = model if backend != "typesafe" else os.environ.get(
+            "TYPESAFE_DEFAULT_MODEL", "jev-latest")
+        label = label_for(backend, None, wire_model if backend != "keywords" else "")
+        print(f"{label}:", file=out, flush=True)
+        runs = {}
+        try:
+            for rec in records:
+                body = systemone.build_request(rec["text"], questions, wire_model)
+                runs[rec["id"]] = to_run(questions, run_live(backend, body, model))
+                bad = runs[rec["id"]]["problems"]
+                print(f"  {rec['id']}  {runs[rec['id']]['seconds']:.1f}s"
+                      + (f"  invalid: {', '.join(bad)}" if bad else ""), file=out, flush=True)
+        except (SystemExit, RuntimeError, OSError, ValueError) as err:
+            rows.append((label, None, str(err) or type(err).__name__))
+            print(f"  skipped: {err}", file=out, flush=True)
+            continue
+        rows.append((label, scorecard.score(questions, records, runs), ""))
     print(file=out)
     print(header(questions), file=out)
-    print(fmt_row(label_for(backend, None, wire_model), scorecard.score(questions, records, runs),
-                  questions), file=out)
-    return 0
+    for label, score, why in rows:
+        print(fmt_row(label, score, questions) if score else f"{label:<34}not run - {why}",
+              file=out)
+    return 0 if any(score for _l, score, _w in rows) else 1
 
 
-def ask(text: str, backend: str, model: str, out=sys.stdout) -> int:
+def parse_backends(text: str) -> list[str]:
+    names = [b.strip() for b in text.split(",") if b.strip()]
+    unknown = [b for b in names if b not in BACKENDS]
+    if unknown or not names:
+        raise argparse.ArgumentTypeError(f"backends are {', '.join(BACKENDS)}; got {text!r}")
+    return names
+
+
+def ask(text: str, backend: str, model: str, out=None) -> int:
+    out = out or sys.stdout
     questions, _ = load_dataset("tickets")
     wire_model = model if backend != "typesafe" else os.environ.get("TYPESAFE_DEFAULT_MODEL",
                                                                     "jev-latest")
@@ -289,15 +332,18 @@ def main(argv=None) -> int:
     d.add_argument("--dataset", default="tickets", choices=["tickets", "reviews", "incidents"])
     for name in ("live", "record"):
         sp = sub.add_parser(name)
-        sp.add_argument("--backend", required=True,
-                        choices=["keywords", "llm-json", "local", "typesafe"])
+        if name == "live":
+            sp.add_argument("--backend", required=True, type=parse_backends,
+                            help="one or more, comma-separated: " + ",".join(BACKENDS))
+        else:
+            sp.add_argument("--backend", required=True, choices=BACKENDS)
         sp.add_argument("--dataset", default="tickets", choices=["tickets", "reviews", "incidents"])
         sp.add_argument("--model", default=LOCAL_MODEL)
         sp.add_argument("--limit", type=int, default=0)
         sp.add_argument("--hardware", default=f"{platform.machine()} {os.cpu_count()} threads")
     a = sub.add_parser("ask")
     a.add_argument("text")
-    a.add_argument("--backend", default="local", choices=["keywords", "llm-json", "local", "typesafe"])
+    a.add_argument("--backend", default="local", choices=BACKENDS)
     a.add_argument("--model", default=LOCAL_MODEL)
     s = sub.add_parser("serve")
     s.add_argument("--port", type=int, default=8765)

@@ -57,9 +57,13 @@ static class Jev
         ("typesafe", "jev-latest"),
     };
 
-    static string CassetteName(string backend, string model) => backend == "typesafe"
-        ? "typesafe-jev.json"
-        : $"{(backend == "llm-json" ? "llm-json" : "jev-like")}-{model.Replace(':', '-').Replace('/', '-')}.json";
+    static string CassetteName(string backend, string model, string dataset = "tickets")
+    {
+        var suffix = dataset == "tickets" ? "" : $"-{dataset}";
+        return backend == "typesafe"
+            ? $"typesafe-jev{suffix}.json"
+            : $"{(backend == "llm-json" ? "llm-json" : "jev-like")}-{model.Replace(':', '-').Replace('/', '-')}{suffix}.json";
+    }
 
     const double Page = 0.7, Refund = 0.8, Confident = 0.6; // policy.py
 
@@ -197,7 +201,7 @@ static class Jev
     static double Brier(Dict q, Answer? answer, string truth)
     {
         var labels = SystemOne.Options(q);
-        return (double)Py.PySum(labels.Select(label =>
+        return Py.FSum(labels.Select(label =>
         {
             double p = answer is null ? 1.0 / labels.Count : answer.Prob(label, double.NaN);
             double d = p - (label == truth ? 1.0 : 0.0);
@@ -250,10 +254,10 @@ static class Jev
     // ----------------------------------------------------------------------- jev.py
     static Run ToRun(Dict questions, Dict stored)
     {
-        Dict response;
+        object? response;
         List<string> problems;
         if (stored.Has("text")) (response, problems) = ParseLlmJson(questions, S(stored, "text"));
-        else (response, problems) = ((Dict)stored["response"]!, new List<string>());
+        else (response, problems) = (stored["response"], new List<string>());
         var (answers, more) = SystemOne.ReadAnswers(questions, response);
         return (answers, Py.Num(stored["seconds"]), Convert.ToInt64(stored["calls"]), problems.Concat(more).ToList());
     }
@@ -268,9 +272,10 @@ static class Jev
         var calls = (Dict)tape["calls"]!;
         foreach (var rec in records)
         {
-            var stored = calls.Get(S(rec, "id")) as Dict;
+            if (calls.Get(S(rec, "id")) is not Dict stored)
+                throw new StaleCassette($"{file}: has no recording of {S(rec, "id")} - re-record it without --limit");
             var want = SystemOne.Digest(SystemOne.BuildRequest(rec["text"], questions, (string)tape["model"]!));
-            if (stored is null || stored.Get("digest") as string != want)
+            if (stored.Get("digest") as string != want)
                 throw new StaleCassette($"{file}: {S(rec, "id")} was recorded for a different question or text - re-record it");
         }
         return tape;
@@ -336,7 +341,7 @@ static class Jev
         var missing = new List<(string Backend, string Model)>();
         foreach (var (backend, model) in RecordedModels)
         {
-            var tape = LoadCassette(CassetteName(backend, model), questions, records, dataset);
+            var tape = LoadCassette(CassetteName(backend, model, dataset), questions, records, dataset);
             if (tape is null)
             {
                 missing.Add((backend, model));

@@ -168,6 +168,24 @@ public static class Py
         return $"{sign}{m}e{(e < 0 ? "-" : "+")}{Math.Abs(e).ToString(Inv).PadLeft(2, '0')}";
     }
 
+    /// <summary>systemone.fsum: every value as a float, Neumaier compensation from the first.</summary>
+    public static double FSum(IEnumerable<object?> values)
+    {
+        double total = 0.0, comp = 0.0;
+        foreach (var raw in values)
+        {
+            double v = Num(raw);
+            double t = total + v;
+            comp += Math.Abs(total) >= Math.Abs(v) ? (total - t) + v : (v - t) + total;
+            total = t;
+        }
+        return total + comp;
+    }
+
+    /// <summary>A real number in [0, 1]. Not a bool, not NaN, not 1.5.</summary>
+    public static bool IsProbability(object? v) =>
+        v is long or BigInteger or double && double.IsFinite(Num(v)) && Num(v) >= 0 && Num(v) <= 1;
+
     /// <summary>sum() as CPython 3.12+ does it: ints added exactly until the first float,
     /// then floats with Neumaier compensation (ints after that added plainly).</summary>
     public static object PySum(IEnumerable<object?> values)

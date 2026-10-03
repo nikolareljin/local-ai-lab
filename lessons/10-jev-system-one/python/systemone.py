@@ -24,6 +24,7 @@ from __future__ import annotations
 import hashlib
 import ipaddress
 import json
+import math
 import socket
 import time
 import urllib.error
@@ -65,6 +66,8 @@ def options(question: dict) -> list[str]:
 
 def request_problems(body: dict) -> list[str]:
     """What TypeSafe would reject with HTTP 422, checked before anything is sent."""
+    if not isinstance(body, dict):
+        return ["body: a JSON object"]
     found = []
     if not isinstance(body.get("model"), str) or not body["model"]:
         found.append("model: required")
@@ -76,6 +79,9 @@ def request_problems(body: dict) -> list[str]:
     if len(questions) > MAX_QUESTIONS:
         found.append(f"questions: at most {MAX_QUESTIONS}, got {len(questions)}")
     for name, q in questions.items():
+        if not isinstance(q, dict):
+            found.append(f"questions.{name}: an object")
+            continue
         kind = q.get("type")
         if kind not in ("noul", "choice", "score"):
             found.append(f"questions.{name}.type: noul, choice or score")
@@ -107,6 +113,12 @@ def digest(body: dict) -> str:
 
 
 # --------------------------------------------------------------------------- reading answers
+def is_probability(value) -> bool:
+    """A real number in [0, 1]. Not a bool, not NaN, not 1.5."""
+    return (isinstance(value, (int, float)) and not isinstance(value, bool)
+            and math.isfinite(value) and 0 <= value <= 1)
+
+
 def read_answers(questions: dict, response: dict) -> tuple[dict, list[str]]:
     """Turn a wire response into {question: {"pick", "probs", "confidence"}}.
 
@@ -115,7 +127,8 @@ def read_answers(questions: dict, response: dict) -> tuple[dict, list[str]]:
     A question with a missing or malformed answer is left out and reported.
     """
     answers, problems = {}, []
-    got = response.get("answers") or {}
+    got = response.get("answers") if isinstance(response, dict) else None
+    got = got if isinstance(got, dict) else {}
     for name, q in questions.items():
         a = got.get(name)
         labels = options(q)
@@ -124,7 +137,7 @@ def read_answers(questions: dict, response: dict) -> tuple[dict, list[str]]:
             continue
         if q["type"] == "noul":
             p = a.get("noul")
-            if not isinstance(p, (int, float)) or not 0 <= p <= 1:
+            if not is_probability(p):
                 problems.append(f"{name}: noul must be a number in [0, 1]")
                 continue
             probs = {"yes": float(p), "no": 1.0 - float(p)}
@@ -136,7 +149,7 @@ def read_answers(questions: dict, response: dict) -> tuple[dict, list[str]]:
             if q["type"] == "score":
                 raw = {labels[int(k)]: v for k, v in raw.items()
                        if isinstance(k, str) and k.isascii() and k.isdigit() and int(k) < len(labels)}
-            numeric = all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in raw.values())
+            numeric = all(is_probability(v) for v in raw.values())
             if set(raw) != set(labels) or not numeric or abs(fsum(raw.values()) - 1.0) > 0.01:
                 problems.append(f"{name}: probabilities must cover {labels} and sum to 1")
                 continue
@@ -146,7 +159,7 @@ def read_answers(questions: dict, response: dict) -> tuple[dict, list[str]]:
                 problems.append(f"{name}: {pick!r} is not an option")
                 continue
             confidence = a.get("confidence")
-            if not isinstance(confidence, (int, float)) or isinstance(confidence, bool):
+            if not is_probability(confidence):
                 confidence = max(probs.values())
             confidence = float(confidence)
         answers[name] = {"pick": pick, "probs": probs, "confidence": confidence}
@@ -155,7 +168,14 @@ def read_answers(questions: dict, response: dict) -> tuple[dict, list[str]]:
 
 # --------------------------------------------------------------------------- sending
 def is_loopback(url: str) -> bool:
-    host = urlparse(url).hostname or ""
+    """An http(s) URL whose host is this machine."""
+    try:
+        parsed = urlparse(url)
+        host = parsed.hostname or ""
+    except ValueError:  # e.g. an unclosed IPv6 bracket
+        return False
+    if parsed.scheme not in ("http", "https"):
+        return False
     if host == "localhost":
         return True
     try:
@@ -164,14 +184,19 @@ def is_loopback(url: str) -> bool:
         return False
 
 
+def check_destination(base_url: str) -> None:
+    """Refuse anything but TypeSafe's API or this machine."""
+    if not (base_url.rstrip("/") == TYPESAFE_URL or is_loopback(base_url)):
+        raise ValueError(f"refusing {base_url}: only {TYPESAFE_URL} or a loopback address")
+
+
 def post(base_url: str, body: dict, api_key: str = "", timeout: float = 120.0) -> tuple[dict, float]:
     """POST one request; return (response, seconds).
 
     A key is only ever sent to TypeSafe or to this machine: anything else is refused,
     so a typo in TYPESAFE_BASE_URL cannot hand the key (or the tickets) to a stranger.
     """
-    if not (base_url.rstrip("/") == TYPESAFE_URL or is_loopback(base_url)):
-        raise ValueError(f"refusing {base_url}: only {TYPESAFE_URL} or a loopback address")
+    check_destination(base_url)
     req = urllib.request.Request(
         base_url.rstrip("/") + SYSTEM_ONE_PATH,
         data=json.dumps(body).encode("utf-8"),

@@ -280,3 +280,109 @@ def test_lesson_code_steps_still_point_at_whole_functions():
         indent = len(lines[start - 1]) - len(lines[start - 1].lstrip())
         assert not after.strip() or len(after) - len(after.lstrip()) <= indent, (
             f"{el['title']}: ends inside the block at line {end}")
+
+
+# --------------------------------------------------------------------------- review hardening
+@pytest.mark.parametrize("bad", [float("nan"), float("inf"), 1.5, -0.5, True, "0.5", None])
+def test_read_answers_rejects_values_that_are_not_probabilities(bad):
+    choice = {"type": "choice", "choice": "billing", "confidence": 0.9,
+              "probabilities": {"billing": bad, "technical": 0.5, "account": 0.5,
+                                "sales": 0.0, "trust_safety": 0.0}}
+    _, problems = systemone.read_answers({"queue": QUESTIONS["queue"]}, {"answers": {"queue": choice}})
+    assert problems
+    _, problems = systemone.read_answers({"refund_request": QUESTIONS["refund_request"]},
+                                         {"answers": {"refund_request": {"type": "noul", "noul": bad}}})
+    assert problems
+
+
+def test_an_out_of_range_confidence_falls_back_to_the_top_probability():
+    answer = {"type": "noul", "noul": 0.9}
+    choice = {"type": "choice", "choice": "billing", "confidence": 7,
+              "probabilities": {"billing": 0.6, "technical": 0.4, "account": 0.0,
+                                "sales": 0.0, "trust_safety": 0.0}}
+    answers, _ = systemone.read_answers(QUESTIONS, {"answers": {"queue": choice,
+                                                                "refund_request": answer}})
+    assert answers["queue"]["confidence"] == 0.6
+
+
+@pytest.mark.parametrize("response", [None, [], "x", {"answers": [1]}])
+def test_read_answers_survives_a_response_that_is_not_an_object(response):
+    answers, problems = systemone.read_answers(QUESTIONS, response)
+    assert answers == {} and len(problems) == len(QUESTIONS)
+
+
+@pytest.mark.parametrize("body", [[1], "s", {"model": "m", "state": "x", "questions": {"a": "s"}}])
+def test_request_problems_on_bodies_that_are_not_objects(body):
+    assert systemone.request_problems(body)
+
+
+@pytest.mark.parametrize("url", ["file://localhost/etc/passwd", "ftp://127.0.0.1", "http://[::1"])
+def test_only_http_loopback_counts_as_local(url):
+    assert not systemone.is_loopback(url)
+
+
+def test_adapter_refuses_more_options_than_letters():
+    many = {"type": "choice", "instructions": "x", "criteria": {f"o{i}": "" for i in range(30)}}
+    body = systemone.build_request("x", {"many": many})
+    assert local_adapter.adapter_problems(body)
+    with pytest.raises(ValueError, match="A-Z"):
+        local_adapter.answer(body, "fake", "http://127.0.0.1:1")
+
+
+def test_adapter_server_rejects_bad_bodies(monkeypatch):
+    import http.client
+    from http.server import ThreadingHTTPServer
+    server = ThreadingHTTPServer(("127.0.0.1", 0), local_adapter.make_handler("fake", "x"))
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    port = server.server_address[1]
+
+    def status(body: bytes, length=None) -> int:
+        conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+        conn.putrequest("POST", "/v1/systemone")
+        conn.putheader("Content-Length", str(len(body) if length is None else length))
+        conn.endheaders()
+        conn.send(body)
+        return conn.getresponse().status
+
+    try:
+        assert status(b"[1]") == 422
+        assert status(b"x" * 10, length=local_adapter.MAX_BODY + 1) == 413
+        assert status(b"", length=0) == 413
+    finally:
+        server.shutdown()
+
+
+def test_record_names_keep_datasets_and_partial_runs_apart(tmp_path, monkeypatch):
+    monkeypatch.setattr(jev, "CASSETTES", tmp_path)
+    monkeypatch.setattr(jev, "run_live", lambda b, body, m: {
+        "response": engines.keywords_response(body), "seconds": 0.0, "calls": 0})
+    assert jev.record("local", "reviews", "qwen3:1.7b", "test").name == \
+        "jev-like-qwen3-1.7b-reviews.json"
+    assert jev.record("local", "tickets", "qwen3:1.7b", "test", limit=3).name == \
+        "jev-like-qwen3-1.7b-first3.json"
+    assert not (tmp_path / "jev-like-qwen3-1.7b.json").exists()
+
+
+def test_a_recording_missing_a_ticket_says_so(tmp_path, monkeypatch):
+    tape = json.loads((jev.CASSETTES / "jev-like-qwen3-1.7b.json").read_text(encoding="utf-8"))
+    del tape["calls"]["T-1004"]
+    monkeypatch.setattr(jev, "CASSETTES", tmp_path)
+    (tmp_path / "jev-like-qwen3-1.7b.json").write_text(json.dumps(tape), encoding="utf-8")
+    with pytest.raises(jev.StaleCassette, match="has no recording of T-1004"):
+        jev.load_cassette("jev-like-qwen3-1.7b.json", QUESTIONS, RECORDS, "tickets")
+
+
+def test_every_recording_carries_its_engine_prompt_version():
+    for backend, file in jev.RECORDED:
+        path = jev.CASSETTES / file
+        if path.is_file():
+            tape = json.loads(path.read_text(encoding="utf-8"))
+            assert tape["prompt_version"] == jev.PROMPT_VERSIONS[backend], file
+
+
+def test_live_runs_several_backends_and_reports_one_that_cannot(monkeypatch, capsys):
+    monkeypatch.delenv("TYPESAFE_API_KEY", raising=False)
+    monkeypatch.delenv("TYPESAFE_BASE_URL", raising=False)
+    assert jev.live(["keywords", "typesafe"], "tickets", "m", limit=2) == 0
+    out = capsys.readouterr().out
+    assert "keywords (rules)" in out and "not run - TYPESAFE_API_KEY is not set" in out

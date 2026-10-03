@@ -39,8 +39,14 @@ def main() -> int:
     from typesafe_sdk import Choice, Noul, Score, TypeSafeClient
 
     text = " ".join(sys.argv[1:]) or "I was charged twice for my Pro plan. Please refund one."
-    url = os.environ.get("TYPESAFE_BASE_URL", "https://api.typesafe.ai")
-    if "typesafe.ai" in url:
+    import systemone  # the same destination rule as python/systemone.post
+
+    url = os.environ.get("TYPESAFE_BASE_URL", systemone.TYPESAFE_URL)
+    try:
+        systemone.check_destination(url)  # TypeSafe or this machine, nothing else
+    except ValueError as err:
+        sys.exit(str(err))
+    if not systemone.is_loopback(url):
         print("Sending this text to TypeSafe (it leaves this machine). Use fake data only.")
 
     # --- the whole integration -------------------------------------------------
@@ -65,7 +71,8 @@ def main() -> int:
     print(f"model    {result.model}")
     print(f"queue    {queue.choice}  (confidence {queue.confidence:.2f})")
     print("         " + "  ".join(f"{k} {v:.2f}" for k, v in queue.probabilities.items()))
-    print(f"urgency  {urgency.legend[round(urgency.score)]}  (score {urgency.score:.2f} of 0-4)")
+    level = max(urgency.probabilities, key=urgency.probabilities.get)
+    print(f"urgency  {urgency.legend[level]}  (score {urgency.score:.2f} of 0-4)")
     print(f"refund   P(yes) = {refund.noul:.2f}")
     return 0
 

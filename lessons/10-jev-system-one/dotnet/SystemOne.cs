@@ -41,8 +41,9 @@ public static class SystemOne
     };
 
     /// <summary>What TypeSafe would reject with HTTP 422, checked before anything is sent.</summary>
-    public static List<string> RequestProblems(Dict body)
+    public static List<string> RequestProblems(object? bodyValue)
     {
+        if (bodyValue is not Dict body) return new List<string> { "body: a JSON object" };
         var found = new List<string>();
         if (body.Get("model") is not string { Length: > 0 }) found.Add("model: required");
         if (!body.Has("state")) found.Add("state: required");
@@ -54,7 +55,11 @@ public static class SystemOne
         if (questions.Count > 64) found.Add($"questions: at most 64, got {questions.Count}");
         foreach (var (name, value) in questions.Items)
         {
-            var q = (Dict)value!;
+            if (value is not Dict q)
+            {
+                found.Add($"questions.{name}: an object");
+                continue;
+            }
             var kind = q.Get("type");
             if (kind is not ("noul" or "choice" or "score"))
             {
@@ -87,11 +92,11 @@ public static class SystemOne
     }
 
     /// <summary>A wire response -> {question: Answer}, plus what was missing or malformed.</summary>
-    public static (Dictionary<string, Answer> Answers, List<string> Problems) ReadAnswers(Dict questions, Dict response)
+    public static (Dictionary<string, Answer> Answers, List<string> Problems) ReadAnswers(Dict questions, object? response)
     {
         var answers = new Dictionary<string, Answer>();
         var problems = new List<string>();
-        var got = Py.Truthy(response.Get("answers")) && response.Get("answers") is Dict g ? g : new Dict();
+        var got = response is Dict r0 && r0.Get("answers") is Dict g ? g : new Dict();
         foreach (var (name, value) in questions.Items)
         {
             var q = (Dict)value!;
@@ -108,7 +113,7 @@ public static class SystemOne
             if (kind == "noul")
             {
                 var p = a.Get("noul");
-                if (!Py.IsNumber(p) || !(Py.Num(p) >= 0 && Py.Num(p) <= 1))
+                if (!Py.IsProbability(p))
                 {
                     problems.Add($"{name}: noul must be a number in [0, 1]");
                     continue;
@@ -131,9 +136,9 @@ public static class SystemOne
                     }
                     raw = mapped;
                 }
-                bool numeric = raw.Items.All(kv => kv.Value is long or BigInteger or double);
+                bool numeric = raw.Items.All(kv => Py.IsProbability(kv.Value));
                 bool sameSet = raw.Count == labels.Distinct().Count() && raw.Keys.All(labels.Contains);
-                if (!sameSet || !numeric || Math.Abs(Py.Num(Py.PySum(raw.Items.Select(kv => kv.Value))) - 1.0) > 0.01)
+                if (!sameSet || !numeric || Math.Abs(Py.FSum(raw.Items.Select(kv => kv.Value)) - 1.0) > 0.01)
                 {
                     problems.Add($"{name}: probabilities must cover {Py.Repr(labels)} and sum to 1");
                     continue;
@@ -156,25 +161,35 @@ public static class SystemOne
                     continue;
                 }
                 pick = c;
-                confidence = a.Get("confidence") is long or BigInteger or double ? Py.Num(a["confidence"]) : probs.Max(kv => kv.Value);
+                confidence = Py.IsProbability(a.Get("confidence")) ? Py.Num(a["confidence"]) : probs.Max(kv => kv.Value);
             }
             answers[name] = new Answer(pick, probs, confidence);
         }
         return (answers, problems);
     }
 
-    /// <summary>localhost, 127.0.0.0/8 or ::1 - like Python's ipaddress.is_loopback.</summary>
+    /// <summary>An http(s) URL whose host is this machine: localhost, 127.0.0.0/8 or ::1.
+    /// urlparse(url).hostname by hand, because System.Uri rewrites "127.1" to "127.0.0.1".</summary>
     public static bool IsLoopback(string url)
     {
-        // urlparse(url).hostname, by hand: System.Uri rewrites "127.1" to "127.0.0.1".
-        var m = Regex.Match(url, @"\A[A-Za-z][A-Za-z0-9+.\-]*://([^/?#]*)");
-        if (!m.Success) return false;
-        var netloc = m.Groups[1].Value;
-        netloc = netloc[(netloc.LastIndexOf('@') + 1)..];
-        var host = (netloc.StartsWith('[') ? netloc[1..Math.Max(1, netloc.IndexOf(']'))]
-                                            : netloc.Split(':')[0]).ToLowerInvariant();
+        url = Regex.Replace(url, "[\t\r\n]", "").TrimStart(Enumerable.Range(0, 33).Select(c => (char)c).ToArray());
+        var m = Regex.Match(url, @"\A([A-Za-z][A-Za-z0-9+.\-]*)://([^/?#]*)");
+        if (!m.Success || m.Groups[1].Value.ToLowerInvariant() is not ("http" or "https")) return false;
+        var netloc = m.Groups[2].Value;
+        if (netloc.Contains('[') != netloc.Contains(']')) return false; // urlparse raises ValueError
+        var hostinfo = netloc[(netloc.LastIndexOf('@') + 1)..];
+        int open = hostinfo.IndexOf('[');
+        if (open >= 0)
+        {
+            var inside = hostinfo[(open + 1)..];
+            int close = inside.IndexOf(']');
+            var v6text = close >= 0 ? inside[..close] : inside;
+            // urlparse accepts only an IPv6 address in brackets
+            return IPAddress.TryParse(v6text, out var v6) && v6.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6
+                   && v6.ScopeId == 0 && v6.Equals(IPAddress.IPv6Loopback);
+        }
+        var host = hostinfo.Split(':')[0].ToLowerInvariant();
         if (host == "localhost") return true;
-        if (host.Contains(':')) return IPAddress.TryParse(host, out var v6) && v6.Equals(IPAddress.IPv6Loopback);
         // ipaddress.ip_address takes dotted quads only, no leading zeros.
         return Regex.IsMatch(host, @"\A127\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])){2}\z");
     }

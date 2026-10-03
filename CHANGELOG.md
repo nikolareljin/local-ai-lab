@@ -14,7 +14,8 @@ All notable changes to this project are documented here. This project follows
   an LLM writing JSON, the adapter on qwen3:1.7b and qwen3.5:4b) scored on 30 labelled fake support
   tickets for accuracy, typed answers, Brier score and wrong pages; two more labelled datasets
   (reviews, server alerts). A policy turns probabilities into actions. Recorded replies make the demo
-  offline and byte-identical in all three languages. Lesson PDF and a slide deck
+  offline and byte-identical in all three languages; `./run -l 10 live --backend
+  keywords,llm-json,local,typesafe` scores any mix live, side by side. Lesson PDF and a slide deck
   (`docs/pdf/LESSON10-SLIDES.pdf`, built by `lessons/10-jev-system-one/slides/build.py`).
 - Roadmap: five planned lessons listed in `roadmap/README.md` (MongoDB vector search, LoRA,
   constrained decoding, observability, local speech and vision) and a planned AI developer tools PDF.

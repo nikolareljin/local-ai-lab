@@ -6,10 +6,12 @@ probabilities once, and the business rule on top is yours to tune.
 
   Engine      0 keywords, then each recorded engine (same order as the demo)
   Live        ON asks the Jev-like adapter now (Ollama, OLLAMA_MODEL); any text works
+  TypeSafe    ON asks the real Jev now (needs TYPESAFE_API_KEY; the text leaves this machine)
 
 Launch it with:  ./run -l 10
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -42,6 +44,8 @@ PARAMS = [
      "kind": "range", "min": 0.0, "max": 1.0, "step": 0.05, "default": policy.CONFIDENT},
     {"name": "live", "label": "Live: ask the Jev-like adapter now (Ollama, OLLAMA_MODEL)",
      "kind": "toggle", "default": False},
+    {"name": "typesafe", "label": "Live: ask TypeSafe's Jev now (TYPESAFE_API_KEY; text leaves "
+     "this machine)", "kind": "toggle", "default": False},
 ]
 
 EXAMPLES = [{"label": f"{r['id']}{' - ' + r['trap'] if r['trap'] else ''}", "query": r["text"]}
@@ -50,7 +54,15 @@ EXAMPLES = [{"label": f"{r['id']}{' - ' + r['trap'] if r['trap'] else ''}", "que
 
 def search(query: str, values: dict) -> dict:
     rec = BY_TEXT.get(query.strip())
-    if values["live"]:
+    if values.get("typesafe"):
+        model = os.environ.get("TYPESAFE_DEFAULT_MODEL", "jev-latest")
+        body = systemone.build_request(query, QUESTIONS, model)
+        try:
+            run = jev.to_run(QUESTIONS, jev.run_live("typesafe", body, model))
+        except (SystemExit, RuntimeError, ValueError) as err:
+            return {"arms": [], "blocks": [{"kind": "note", "text": f"TypeSafe: {err}"}]}
+        label = f"TypeSafe Jev ({model}, live)"
+    elif values["live"]:
         body = systemone.build_request(query, QUESTIONS, jev.LOCAL_MODEL)
         run = jev.to_run(QUESTIONS, jev.run_live("local", body, jev.LOCAL_MODEL))
         label = f"Jev-like adapter ({jev.LOCAL_MODEL}, live)"

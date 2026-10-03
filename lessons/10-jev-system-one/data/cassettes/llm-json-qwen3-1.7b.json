@@ -4,7 +4,7 @@
  "dataset": "tickets",
  "recorded": "2026-10-02",
  "hardware": "Intel Core i5-10310U, 8 threads, 19 GB RAM, no GPU",
- "prompt_version": null,
+ "prompt_version": "a4473109ce53",
  "calls": {
   "T-1001": {
    "digest": "0500dc0f66e5f711",
