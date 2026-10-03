@@ -20,3 +20,14 @@ def test_the_prompt_box_is_multi_line():
 def test_enter_searches_and_shift_enter_adds_a_line():
     assert 'e.key === "Enter" && !e.shiftKey' in PAGE
     assert "fitPrompt()" in PAGE  # the box grows to fit a clicked or pasted prompt
+
+
+def test_a_search_shows_a_spinner_until_its_result_is_drawn():
+    """A lesson that calls a model can take minutes: the page must say it is working."""
+    assert "@keyframes spin" in PAGE and 'class="arms" aria-live="polite"' in PAGE
+    # Search, Enter and an example chip ask for it at once; typing and sliders go through the delay.
+    assert '$("go").addEventListener("click", () => search(true))' in PAGE
+    assert PAGE.count("search(true)") == 3
+    # Both ways out of a request (result, error) take the spinner down, after the stale check.
+    assert PAGE.count("if (seq !== reqSeq) return;") == PAGE.count("        stopBusy();\n") == 2
+    assert "#go.working::after" in PAGE  # Rankings can be below the fold; the button spins too

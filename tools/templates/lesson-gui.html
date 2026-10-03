@@ -49,6 +49,17 @@
     .arm .empty { color:var(--muted); font-style:italic; }
     .arm.hybrid { border-color:var(--accent2); }
     .arm.hybrid .name { color:var(--accent); }
+    /* "working" state: shown from the moment a search starts until its result is drawn */
+    .busy { grid-column:1 / -1; display:flex; align-items:center; gap:12px; color:var(--muted); padding:6px 2px; }
+    .spinner { width:22px; height:22px; flex:none; border-radius:50%; border:3px solid var(--edge);
+               border-top-color:var(--accent); animation:spin .8s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .spinner { animation-duration:2.4s; } }
+    /* The Rankings panel can be below the fold, so the Search button spins too. */
+    #go.working::after { content:""; display:inline-block; width:12px; height:12px; margin-left:8px;
+                         vertical-align:-1px; border-radius:50%; border:2px solid rgba(255,255,255,.45);
+                         border-top-color:#fff; animation:spin .8s linear infinite; }
+    #breakdown.stale { opacity:.35; transition:opacity .15s; }
     /* breakdown blocks (mirrors L1's "how the system sees your data" styling) */
     .blk { margin-top:16px; }
     .blk h4 { margin:0 0 8px; font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
@@ -98,7 +109,7 @@
 
     <section class="panel">
       <h2>Rankings</h2>
-      <div id="arms" class="arms"></div>
+      <div id="arms" class="arms" aria-live="polite"></div>
     </section>
 
     <section class="panel">
@@ -185,7 +196,7 @@
       for (const ex of examples) {
         const b = document.createElement("button");
         b.className = "ex"; b.textContent = ex.label;
-        b.addEventListener("click", () => { $("q").value = ex.query; fitPrompt(); search(); });
+        b.addEventListener("click", () => { $("q").value = ex.query; fitPrompt(); search(true); });
         box.appendChild(b);
       }
     }
@@ -201,10 +212,10 @@
     }
 
     $("reset").addEventListener("click", () => { renderParams(PARAMS); search(); });
-    $("go").addEventListener("click", search);
+    $("go").addEventListener("click", () => search(true));
     // Enter searches (as the one-line box did); Shift+Enter adds a line to the prompt.
     $("q").addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); search(); }
+      if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); search(true); }
     });
     // Grow the box to fit its text, so a pasted transcript is readable without scrolling.
     function fitPrompt() {
@@ -222,10 +233,44 @@
       timer = setTimeout(search, 250);
     }
 
-    async function search() {
+    // The spinner. Some lessons answer in milliseconds, some call a model and take minutes.
+    // Pressing Search (or Enter) shows it at once; searches fired by typing or by a slider
+    // wait SPINNER_DELAY_MS first, so a fast lesson does not flicker on every keystroke.
+    const SPINNER_DELAY_MS = 200;
+    let busyDelay = null, busyTick = null;
+    function showBusy() {
+      const started = Date.now();
+      const box = $("arms");
+      box.textContent = "";
+      const wrap = document.createElement("div");
+      wrap.className = "busy"; wrap.id = "busy"; wrap.setAttribute("role", "status");
+      const spin = document.createElement("div"); spin.className = "spinner";
+      const text = document.createElement("span"); text.textContent = "Working...";
+      wrap.append(spin, text);
+      box.appendChild(wrap);
+      $("breakdown").classList.add("stale");  // the old numbers stay readable, but dimmed
+      $("go").classList.add("working");
+      clearInterval(busyTick);
+      busyTick = setInterval(() => {
+        text.textContent = "Working... " + Math.round((Date.now() - started) / 1000) + " s";
+      }, 1000);
+    }
+    function startBusy(now) {
+      stopBusy();
+      if (now) showBusy(); else busyDelay = setTimeout(showBusy, SPINNER_DELAY_MS);
+    }
+    function stopBusy() {
+      clearTimeout(busyDelay); clearInterval(busyTick);
+      $("breakdown").classList.remove("stale");
+      $("go").classList.remove("working");
+    }
+
+    // `now` is true when the user asked for it (Search button, Enter): spinner immediately.
+    async function search(now) {
       clearTimeout(timer);  // cancel any pending debounced run
       const seq = ++reqSeq;
       const query = $("q").value;
+      startBusy(now === true);
       try {
         const r = await fetch("/api/search", {
           method: "POST",
@@ -235,11 +280,13 @@
         if (!r.ok) throw new Error("server responded " + r.status);
         const d = await r.json();
         if (seq !== reqSeq) return;  // a newer request landed first - drop this stale result
+        stopBusy();
         renderArms(d.arms || []);
         renderBlocks(d.blocks || []);
       } catch (e) {
         // Covers network failures, non-2xx responses, and JSON parse errors alike.
         if (seq !== reqSeq) return;
+        stopBusy();
         renderArms([]);
         renderBlocks([{ kind: "note", text: "Search request failed: " + (e && e.message ? e.message : e) }]);
       }
