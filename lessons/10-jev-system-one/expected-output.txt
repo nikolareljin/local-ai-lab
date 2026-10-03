@@ -2,10 +2,10 @@ Lesson 10 · Jev and System One models - Kestrel Mutual claims line: 36 labelled
 Replayed from recorded replies: no model, no network. Live: ./run -l 10 live --backend keywords,llm-json,local
 
 engine                             line intent severe  emerg  fraud adjust  typed  brier  action wrong missed  s/call calls
-keywords (rules)                  26/36  31/36  18/36  33/36  32/36  26/36   100%  0.463   21/36     0      4     0.0     0
-LLM writes JSON (qwen3:1.7b)      21/36  33/36  13/36  33/36  30/36  25/36   100%  0.565   19/36     0      6    12.3     1
-Jev-like adapter (qwen3:1.7b)     33/36  16/36  10/36  24/36  21/36  20/36   100%  0.834   14/36     0      5    16.9     6
-Jev-like adapter (qwen3.5:4b)     36/36  34/36  22/36  34/36  35/36  24/36   100%  0.219   28/36     0      1   100.2     6
+keywords (rules)                  26/36  31/36  18/36  33/36  32/36  25/36   100%  0.472   21/36     0      4     0.0     0
+LLM writes JSON (qwen3:1.7b)      21/36  33/36  13/36  33/36  30/36  26/36   100%  0.556   19/36     0      6    12.3     1
+Jev-like adapter (qwen3:1.7b)     33/36  16/36  10/36  24/36  21/36  19/36   100%  0.843   14/36     0      5    16.9     6
+Jev-like adapter (qwen3.5:4b)     36/36  34/36  22/36  34/36  35/36  25/36   100%  0.214   28/36     0      1   100.2     6
 TypeSafe Jev (jev-latest)       not recorded - needs TYPESAFE_API_KEY: ./run -l 10 record --backend typesafe
 
 Columns: right/total per question; typed = answers that were a valid option;

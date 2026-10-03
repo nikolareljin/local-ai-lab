@@ -172,6 +172,7 @@ public static class SystemOne
     /// urlparse(url).hostname by hand, because System.Uri rewrites "127.1" to "127.0.0.1".</summary>
     public static bool IsLoopback(string url)
     {
+        if (url.Contains('\\')) return false; // parsers disagree on what a backslash means
         url = Regex.Replace(url, "[\t\r\n]", "").TrimStart(Enumerable.Range(0, 33).Select(c => (char)c).ToArray());
         var m = Regex.Match(url, @"\A([A-Za-z][A-Za-z0-9+.\-]*)://([^/?#]*)");
         if (!m.Success || m.Groups[1].Value.ToLowerInvariant() is not ("http" or "https")) return false;
@@ -215,7 +216,7 @@ public sealed class SystemOneClient
 
     /// <summary>POST one request; return (response, seconds).
     /// A key is only ever sent to TypeSafe or to this machine: anything else is refused,
-    /// so a typo in TYPESAFE_BASE_URL cannot hand the key (or the tickets) to a stranger.</summary>
+    /// so a typo in TYPESAFE_BASE_URL cannot hand the key (or the calls) to a stranger.</summary>
     public async Task<(Dict Response, double Seconds)> PostAsync(string baseUrl, JsonObject body, string apiKey)
     {
         var root = baseUrl.TrimEnd('/');

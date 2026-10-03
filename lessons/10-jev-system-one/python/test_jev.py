@@ -299,6 +299,15 @@ def test_insurance_policy(labels, action):
 def test_policy_never_guesses_without_an_answer():
     assert policy.decide({}) == "human agent"
     assert policy.decide_media({}) == "human agent"
+    # no single missing answer may end in a payout or self-service (`line` is not read by
+    # the policy: it names the queue, not the action)
+    for missing in set(QUESTIONS) - {"line"}:
+        answers = answers_for()
+        del answers[missing]
+        assert policy.decide(answers) in ("human agent", "assign adjuster",
+                                          "special investigations"), missing
+    question_only = {"intent": answers_for(intent="coverage_question")["intent"]}
+    assert policy.decide(question_only) == "human agent"  # the K-1023 shape, emergency lost
 
 
 def test_an_unsure_intent_goes_to_a_person():
@@ -469,6 +478,7 @@ def test_check_names_the_pull_command_for_a_missing_model(monkeypatch):
 
 
 def test_check_says_how_to_start_ollama_when_it_is_down(monkeypatch):
+    monkeypatch.setattr(systemone, "load_typesafe_env", lambda path: None)  # not the real .env
     out = io.StringIO()
     monkeypatch.setenv("OLLAMA_BASE_URL", "http://127.0.0.1:1")
     assert check.main(out=out) == 1
@@ -579,3 +589,82 @@ def test_race_says_what_to_do_when_ollama_is_down(monkeypatch):
     out = io.StringIO()
     assert jev.race(jev.RACE_CALL, "fake", out=out) == 1
     assert "./run -l 10 check" in out.getvalue()
+
+
+@pytest.mark.parametrize("line,value", [
+    ("export TYPESAFE_API_KEY=abc", "abc"),
+    ("TYPESAFE_API_KEY = abc", "abc"),
+    ("TYPESAFE_API_KEY=abc # my key", "abc"),
+    ('TYPESAFE_API_KEY="abc def" # my key', "abc def"),
+    ("\ufeffTYPESAFE_API_KEY=abc\r", "abc"),
+])
+def test_dotenv_spellings(tmp_path, monkeypatch, line, value):
+    import os
+    env = tmp_path / ".env"
+    env.write_text(line + "\n", encoding="utf-8")
+    monkeypatch.delenv("TYPESAFE_API_KEY", raising=False)
+    systemone.load_typesafe_env(env)
+    assert os.environ.pop("TYPESAFE_API_KEY") == value
+
+
+def test_a_broken_dotenv_never_stops_the_lesson(tmp_path):
+    env = tmp_path / ".env"
+    env.write_bytes(b"\xff\xfe not utf-8\nTYPESAFE_X=a\x00b\n")
+    systemone.load_typesafe_env(env)
+    import os
+    assert "TYPESAFE_X" not in os.environ
+
+
+def test_a_local_stand_in_is_never_labelled_jev(monkeypatch):
+    monkeypatch.setenv("TYPESAFE_BASE_URL", "http://127.0.0.1:8765")
+    assert "Jev" not in jev.label_for("typesafe", None, "jev-latest")
+    assert "simulated" in jev.label_for("typesafe", None, "jev-latest")
+    with pytest.raises(SystemExit, match="not Jev"):
+        jev.main(["record", "--backend", "typesafe"])
+    monkeypatch.delenv("TYPESAFE_BASE_URL")
+    assert jev.label_for("typesafe", None, "jev-latest") == "TypeSafe Jev (jev-latest)"
+
+
+def test_hello_refuses_a_stray_url_before_saying_anything_is_sent(monkeypatch):
+    monkeypatch.setenv("TYPESAFE_BASE_URL", "http://192.0.2.10:8765")
+    monkeypatch.setenv("TYPESAFE_API_KEY", "secret")
+    out = io.StringIO()
+    assert jev.hello("fake", out=out) == 1
+    assert "refusing" in out.getvalue() and "Sending" not in out.getvalue()
+    assert "secret" not in out.getvalue()
+
+
+def test_ask_and_live_limits_fail_cleanly(monkeypatch, capsys):
+    monkeypatch.setattr(jev, "OLLAMA_URL", "http://127.0.0.1:1")
+    out = io.StringIO()
+    assert jev.ask("Caller: hello", "local", "fake", out=out) == 1
+    assert "./run -l 10 check" in out.getvalue()
+    with pytest.raises(SystemExit):
+        jev.main(["live", "--backend", "keywords", "--limit", "-1"])
+
+
+def test_keyword_rules_match_at_the_start_of_a_word():
+    rules = [["digital_access", ["app"]], ["delivery", [""]]]
+    assert engines._rule_pick("what happened to my paper", rules) == "delivery"
+    assert engines._rule_pick("the app is broken", rules) == "digital_access"
+    assert engines._rule_pick("I was burgled", [["home", ["burgl"]], ["auto", [""]]]) == "home"
+
+
+def test_the_playground_reads_the_key_from_dotenv_and_survives_ollama_being_down(monkeypatch):
+    sys.path.insert(0, str(HERE.parents[2] / "tools"))
+    pytest.importorskip("flask")
+    import web
+    monkeypatch.setattr(jev, "OLLAMA_URL", "http://127.0.0.1:1")
+    base = {"engine": 0, "siu": 0.6, "fast_track": 0.8, "emergency": 0.5,
+            "live": False, "typesafe": False, "race": False}
+    assert web.search(RECORDS[0]["text"], base)["arms"]
+    for toggle in ("live", "race"):
+        note = web.search("Caller: hello", {**base, toggle: True})["blocks"][0]["text"]
+        assert "./run -l 10 check" in note
+    assert web.search("x", {**base, "engine": 99})["blocks"]
+
+
+def test_a_backslash_url_is_never_local():
+    assert not systemone.is_loopback("http://a.example\\@localhost")
+    with pytest.raises(ValueError, match="refusing"):
+        systemone.check_destination("http://a.example\\@localhost")

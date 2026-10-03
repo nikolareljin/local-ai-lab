@@ -257,6 +257,9 @@ def _esc(s):
 
 def _inline(s):
     s = _esc(s)
+    # [text](https://...) - https only, so a body can never smuggle in a script: URL
+    s = re.sub(r"\[([^\]\n]+)\]\((https://[^)\s\"']+)\)",
+               r'<a href="\2" target="_blank" rel="noopener">\1</a>', s)
     s = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)   # bold first
     s = re.sub(r"\*([^*\n]+)\*", r"<em>\1</em>", s)             # then italics
     return re.sub(r"`([^`]+)`", r"<code>\1</code>", s)

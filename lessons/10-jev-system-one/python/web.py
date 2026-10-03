@@ -29,13 +29,23 @@ import scorecard  # noqa: E402
 import systemone  # noqa: E402
 from lesson_web import serve  # noqa: E402
 
+systemone.load_typesafe_env(ROOT / ".env")
 DATASET = jev.DEFAULT_DATASET
 QUESTIONS, RECORDS = jev.load_dataset(DATASET)
 BY_TEXT = {r["text"].strip(): r for r in RECORDS}
+def _tape(backend: str, model: str):
+    """A recording, or None when it is missing or stale: the page still opens without it."""
+    try:
+        return jev.load_cassette(jev.cassette_name(backend, model, DATASET),
+                                 QUESTIONS, RECORDS, DATASET)
+    except (jev.StaleCassette, ValueError) as err:
+        print(f"[INFO] skipping a recording: {err}", file=sys.stderr)
+        return None
+
+
 TAPES = [("keywords", None)] + [
     (backend, tape) for backend, model in jev.RECORDED_MODELS
-    if (tape := jev.load_cassette(jev.cassette_name(backend, model, DATASET),
-                                  QUESTIONS, RECORDS, DATASET)) is not None]
+    if (tape := _tape(backend, model)) is not None]
 
 PARAMS = [
     {"name": "engine", "label": "Engine:  " + " · ".join(
@@ -64,7 +74,7 @@ def race_blocks(query: str) -> dict:
     """The race as page blocks: both runs, where their time went, and the ratio."""
     try:
         rows = jev.race_rows(query, jev.LOCAL_MODEL)
-    except (RuntimeError, OSError, ValueError) as err:
+    except jev.LIVE_ERRORS as err:
         return {"arms": [], "blocks": [{"kind": "note", "text":
                 f"Ollama did not answer: {err}. Run ./run -l 10 check."}]}
     question = QUESTIONS[jev.RACE_QUESTION]["instructions"]
@@ -83,8 +93,8 @@ def race_blocks(query: str) -> dict:
         {"kind": "table", "title": "Both runs", "columns":
          ["engine", "answer", "read s", "write s", "total s", "tokens written"], "rows": table},
         {"kind": "note", "text": " ".join(jev.race_summary(rows)) + " That is for ONE question: "
-         "the adapter needs one model call per question; the real Jev answers up to 64 in one "
-         "request."}]}
+         "the adapter needs one model call per question; the real Jev answers all of a request's "
+         "questions in one pass."}]}
 
 
 def search(query: str, values: dict) -> dict:
@@ -96,12 +106,17 @@ def search(query: str, values: dict) -> dict:
         body = systemone.build_request(query, QUESTIONS, model)
         try:
             run = jev.to_run(QUESTIONS, jev.run_live("typesafe", body, model))
-        except (SystemExit, RuntimeError, ValueError) as err:
+        except (SystemExit, *jev.LIVE_ERRORS) as err:
             return {"arms": [], "blocks": [{"kind": "note", "text": f"TypeSafe: {err}"}]}
-        label = f"TypeSafe Jev ({model}, live)"
+        label = (jev.label_for("typesafe", None) + ", live" if jev.typesafe_is_local()
+                 else f"TypeSafe Jev ({model}, live)")
     elif values["live"]:
         body = systemone.build_request(query, QUESTIONS, jev.LOCAL_MODEL)
-        run = jev.to_run(QUESTIONS, jev.run_live("local", body, jev.LOCAL_MODEL))
+        try:
+            run = jev.to_run(QUESTIONS, jev.run_live("local", body, jev.LOCAL_MODEL))
+        except jev.LIVE_ERRORS as err:
+            return {"arms": [], "blocks": [{"kind": "note", "text":
+                    f"Ollama did not answer: {err}. Run ./run -l 10 check."}]}
         label = f"Jev-like adapter ({jev.LOCAL_MODEL}, live, simulated)"
     else:
         backend, tape = TAPES[max(0, min(int(values["engine"]), len(TAPES) - 1))]

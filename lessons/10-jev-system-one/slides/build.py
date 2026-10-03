@@ -92,12 +92,33 @@ def side_by_side(table, questions) -> dict:
             answers = runs[jev.HELLO_CALL]["answers"]
             lines = []
             for name in questions:
-                a = answers[name]
-                lines.append(f"{name:<15}{a['pick']:<13}{a['probs'][a['pick']]:.2f}")
+                a = answers.get(name)
+                lines.append(f"{name:<15}{a['pick']:<13}{a['probs'][a['pick']]:.2f}" if a
+                             else f"{name:<15}(no valid answer)")
             lines.append(f"-> {POL.decide(answers)}")
             out["JEV_MODEL"] = tape["model"]
             out["JEV_REPLY"] = html.escape("\n".join(lines))
     return out
+
+
+def media_note() -> str:
+    """One sentence on the second dataset: who gets the most actions right there."""
+    questions, records = jev.load_dataset("media")
+    pol = policy.POLICIES["media"]
+    best = ("", -1)
+    runs = {r["id"]: jev.to_run(questions, jev.run_live(
+        "keywords", systemone.build_request(r["text"], questions), "", "media")) for r in records}
+    best = ("keyword rules", scorecard.score(questions, records, runs, pol)["actions"])
+    for backend, model in jev.RECORDED_MODELS:
+        tape = jev.load_cassette(jev.cassette_name(backend, model, "media"),
+                                 questions, records, "media")
+        if tape:
+            runs = {r["id"]: jev.to_run(questions, tape["calls"][r["id"]]) for r in records}
+            got = scorecard.score(questions, records, runs, pol)["actions"]
+            if got > best[1]:
+                best = (jev.label_for(backend, tape), got)
+    return (f"On the {len(records)} newspaper calls the best row is {html.escape(best[0])}: "
+            f"{best[1]} actions right.")
 
 
 def fill() -> str:
@@ -110,6 +131,7 @@ def fill() -> str:
         "QCOLS": "".join(f"<th>{short[q]}</th>" for q in questions),
         "KNOBCOLS": "".join(f"<th>{POL.knob.upper()} {v:.1f}</th>" for v in POL.values),
         "HARDWARE": html.escape(tapes[0]["hardware"]) if tapes else "-",
+        "MEDIA_NOTE": media_note(),
         **side_by_side(table, questions),
     }
     text = (HERE / "deck.html").read_text(encoding="utf-8")

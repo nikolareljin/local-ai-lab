@@ -175,9 +175,11 @@ function readAnswers(questions, response) {
 // The first rule with a word in the transcript wins; the last rule is the default.
 const RULES = JSON.parse(read(join(DATA, "rules.json")));
 
+/** A word matches at the start of a word ("app" in "the app", not in "happened"). */
 function rulePick(text, rules) {
   const low = text.toLowerCase();
-  for (const [label, words] of rules) if (words.some((w) => low.includes(w))) return label;
+  const starts = (w) => w === "" || new RegExp("(?<![a-z0-9])" + w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).test(low);
+  for (const [label, words] of rules) if (words.some(starts)) return label;
   return rules[rules.length - 1][0];
 }
 
@@ -218,7 +220,7 @@ function parseLlmJson(body, text) {
   const answers = {};
   for (const [name, q] of Object.entries(body.questions)) {
     let value = Object.hasOwn(written, name) ? written[name] : null;
-    if (typeof value === "boolean") value = value ? "yes" : "no"; // {"refund_request": true} is a fair reading
+    if (typeof value === "boolean") value = value ? "yes" : "no"; // {"emergency": true} is a fair reading
     if (typeof value !== "string" || !options(q).includes(strip(value).toLowerCase())) {
       errors.push(`${name}=${repr(value)}`);
       continue;
@@ -243,21 +245,21 @@ const prob = (answers, name, label, dflt = 0.0) => answers[name]?.probs?.[label]
 function decide(answers, { siu = SIU, emergency = EMERGENCY, fast_track: fastTrack = FAST_TRACK, confident = CONFIDENT } = {}) {
   const intent = answers.intent;
   if (prob(answers, "emergency", "yes") >= emergency) return "dispatch emergency help"; // first, whatever else
-  if (intent === undefined || intent.confidence < confident) return "human agent"; // never guess
+  if (answers.emergency === undefined || intent === undefined || intent.confidence < confident) return "human agent"; // never guess
   if (["complaint", "cancel_policy"].includes(intent.pick)) return "human agent";
   if (["claim_status", "coverage_question"].includes(intent.pick)) return "self-service answer";
   // a new claim
   const pFraud = prob(answers, "fraud_signals", "yes", 1.0);
   if (pFraud >= siu) return "special investigations";
-  const small = prob(answers, "severity", "none") + prob(answers, "severity", "minor") >= 0.5;
+  const small = prob(answers, "severity", "none") + prob(answers, "severity", "minor") > 0.5;
   if (small && prob(answers, "needs_adjuster", "yes", 1.0) < 0.5 && 1 - pFraud >= fastTrack) return "fast-track payout";
   return "assign adjuster";
 }
 
 /** One action per newspaper call. */
-function decideMedia(answers, { retain = RETAIN, refund = REFUND } = {}) {
+function decideMedia(answers, { retain = RETAIN, refund = REFUND, confident = CONFIDENT } = {}) {
   const topic = answers.topic;
-  if (topic === undefined) return "human agent";
+  if (topic === undefined || topic.confidence < confident) return "human agent";
   if (topic.pick === "editorial") return "pass to newsroom";
   if (topic.pick === "advertising") return "pass to ad sales";
   if (topic.pick === "cancel" || prob(answers, "churn_risk", "high", 1.0) >= retain) return "retention desk";

@@ -43,7 +43,7 @@
       "type": "command",
       "kicker": "Setup",
       "title": "Before you start",
-      "body": "**The demo needs nothing.** For the local session you need [Ollama](https://ollama.com/download) and `qwen3:1.7b`. For the one real call you need a TypeSafe key: log in or create an account at the [Playground](https://console.typesafe.ai/playground), create a key on the [keys page](https://console.typesafe.ai/keys), and `export TYPESAFE_API_KEY=...` (or put it in the repo's `.env`). The [quick start](https://docs.typesafe.ai/introduction/quickstart) and the [models page](https://docs.typesafe.ai/models) are worth a skim. Run everything from the repo root:",
+      "body": "**The demo needs nothing.** For the local session you need [Ollama](https://ollama.com/download) and `qwen3:1.7b`. For the one real call you need a TypeSafe key: log in or create an account at the [Playground](https://console.typesafe.ai/playground), create a key on the [keys page](https://console.typesafe.ai/keys), and `export TYPESAFE_API_KEY=...` (the Python commands also read it from the repo's `.env`). Jev is in early access: if signing up puts you on a waitlist, carry on - every step runs without a key, on the simulated Jev. The [quick start](https://docs.typesafe.ai/introduction/quickstart) and the [models page](https://docs.typesafe.ai/models) are worth a skim. Run everything from the repo root:",
       "shell": "ollama pull qwen3:1.7b            # the local model (1.4 GB)\nollama pull qwen3.5:4b            # optional: slower, better (3.4 GB)\nexport TYPESAFE_API_KEY=...       # optional: only the one real call needs it\n./run -l 10 check                 # is this machine ready?"
     },
     {
@@ -66,12 +66,12 @@
       "shell": "python python/jev.py hello",
       "kicker": "Step 1",
       "title": "Hello, Jev: one real call",
-      "body": "Sends **one** fake call - a very calm gentleman in an upside-down car - to TypeSafe's Jev and prints the request, the response, the time, the tokens used and the action the policy takes. The text leaves your machine, which is why it is fake.\n\nNo key? It prints the three steps to get one and sends the same request to the local adapter instead, clearly marked as **not** the real Jev."
+      "body": "Sends **one** fake call - a very calm caller in an upside-down car - to TypeSafe's Jev and prints the request, the response, the time, the tokens used and the action the policy takes. The text leaves your machine, which is why it is fake.\n\nNo key? It prints the three steps to get one and sends the same request to the local adapter instead, clearly marked as **not** the real Jev."
     },
     {
       "type": "config",
       "file": "data/questions.json",
-      "kicker": "Step 2",
+      "kicker": "How it works",
       "title": "A question is a type and a sentence",
       "body": "Six questions per insurance call, three per newspaper call, written in TypeSafe's own request format: `choice` (pick a label), `score` (ordered levels) and `noul` (yes/no). The `criteria` are what the model reads to tell the options apart.",
       "why": "The options *are* the output. A System One model cannot answer `\"very bad\"` to a question whose levels are `none..catastrophic`; an LLM asked to write JSON can, and this lesson counts how often it does."
@@ -80,8 +80,8 @@
       "type": "code",
       "file": "python/systemone.py",
       "lang": "python",
-      "lines": "210-232",
-      "kicker": "Step 3",
+      "lines": "221-243",
+      "kicker": "How it works",
       "title": "The whole API: one POST",
       "body": "`POST /v1/systemone` with `{model, state, questions}` and a Bearer key. The standard library is enough; the official SDK does the same with retries and types.",
       "why": "The function refuses any destination except `https://api.typesafe.ai` or a loopback address. A typo in `TYPESAFE_BASE_URL` cannot send your key - or your callers - to a stranger."
@@ -90,8 +90,8 @@
       "type": "code",
       "file": "python/systemone.py",
       "lang": "python",
-      "lines": "139-183",
-      "kicker": "Step 4",
+      "lines": "148-192",
+      "kicker": "How it works",
       "title": "Every answer becomes a label and a probability",
       "body": "`read_answers()` turns the three wire shapes into one: `{pick, probs, confidence}`, keyed by label. A noul's 0.93 becomes `{yes: 0.93, no: 0.07}`; a score's `{\"2\": 0.7}` becomes `{moderate: 0.7}`.",
       "why": "Everything downstream - the policy, the scorecard, the playground - sees one shape, so it cannot tell TypeSafe's Jev from the local adapter or from the keyword rules. That is what makes the comparison fair."
@@ -101,7 +101,7 @@
       "file": "python/sdk_example.py",
       "lang": "python",
       "lines": "56-73",
-      "kicker": "Step 5",
+      "kicker": "How it works",
       "title": "The official SDK - same code, two destinations",
       "body": "`TypeSafeClient()` reads `TYPESAFE_API_KEY` and `TYPESAFE_BASE_URL`. Leave the URL unset and it calls TypeSafe's Jev; set it to `http://127.0.0.1:8765` and the same code calls the local adapter. Node.js has the same in `node/sdk_example.mjs`.",
       "why": "Install it with `./run -l 10 install-sdk`: every file is checked against a sha256 in `requirements-sdk.txt`, into its own venv. On npm, `npm audit signatures` verifies the package was built from TypeSafe's GitHub repository. And `pip install qev` installs an unrelated project - not anything from TypeSafe."
@@ -111,7 +111,7 @@
       "file": "python/local_adapter.py",
       "lang": "python",
       "lines": "52-68",
-      "kicker": "Step 6",
+      "kicker": "How it works",
       "title": "Making a local LLM answer like Jev",
       "body": "Each question becomes a lettered multiple-choice prompt, with the transcript fenced as data and an instruction to ignore instructions inside it (Lesson 4). Two callers in the data read such instructions out loud.",
       "why": "This is the simulated part. The adapter serves the same API, so the SDK works against it unchanged, but the model was never trained for this. It is a way to learn the idea locally, not a stand-in for Jev's quality."
@@ -121,17 +121,17 @@
       "file": "python/local_adapter.py",
       "lang": "python",
       "lines": "83-98",
-      "kicker": "Step 7",
+      "kicker": "How it works",
       "title": "One token, a probability per option",
       "body": "The model may write exactly one token. Ollama returns the log-probabilities of the top 20 candidates for it; each option gets the probability of its letter, renormalised. One short forward pass per question.",
-      "why": "Jev answers up to 64 questions in one pass. The adapter needs one call per question - six per insurance call - and a small model is often 100% sure and wrong. The scorecard measures both."
+      "why": "Jev answers all the questions of a request in one pass. The adapter needs one call per question - six per insurance call - and a small model is often 100% sure and wrong. The scorecard measures both."
     },
     {
       "type": "code",
       "file": "python/policy.py",
       "lang": "python",
       "lines": "26-45",
-      "kicker": "Step 8",
+      "kicker": "How it works",
       "title": "The model answers; your policy decides",
       "body": "Four thresholds and no model: `EMERGENCY`, `SIU`, `FAST_TRACK`, `CONFIDENT`. The model never says \"send this to investigations\". It says P(fraud signals) = 0.83, and this code decides that is enough.",
       "why": "Investigate an honest caller and you have insulted a customer; miss a staged accident and you have paid for it. `SIU` is the knob between the two, and you can move it without retraining or re-prompting anything. Rules and JSON answers are always 0 or 1, so for them the knob is decorative."
@@ -140,8 +140,8 @@
       "type": "code",
       "file": "python/engines.py",
       "lang": "python",
-      "lines": "84-107",
-      "kicker": "Step 9",
+      "lines": "86-109",
+      "kicker": "How it works",
       "title": "What goes wrong when an LLM writes the answer",
       "body": "The usual way: ask a chat model for JSON, then parse it. Every value that is not one of the options is a type error, and the question goes unanswered.",
       "why": "This is the comparison that matters most in practice. Same model, same calls: written answers can be invalid and carry no probability; letter probabilities are always valid and can be thresholded."
@@ -151,7 +151,7 @@
       "file": "python/scorecard.py",
       "lang": "python",
       "lines": "38-44",
-      "kicker": "Step 10",
+      "kicker": "How it works",
       "title": "Scoring a decision: the Brier score",
       "body": "The squared distance between the probabilities and the truth. 0 is perfect; certain and wrong costs 2 per question; \"no idea\" on a yes/no question costs 0.5.",
       "why": "Accuracy ranks an engine that is confidently wrong next to one that knows when it is unsure. Only the second lets a threshold do its job. Lesson 5 scored retrieval against a golden set; this is the same discipline for decisions."
@@ -198,7 +198,7 @@
       "shell": "python python/jev.py race",
       "kicker": "Live",
       "title": "The one live run: the same question, two ways",
-      "body": "One call, one yes/no question - *does someone need help right now?* - asked of the **same local model** twice: as a chat model that writes its answer, and through the Jev-like adapter that lets it write one token and reads the probability off it. It prints both answers, and for each the seconds spent reading the prompt, the seconds spent writing, the total and the tokens written. With `TYPESAFE_API_KEY` set, the real Jev joins as a third row. Pass your own text: `./run -l 10 race \"Caller: my car is on fire\"`.\n\nOn this lesson's laptop the chat model spent 2.4 of 3.7 seconds writing 40 tokens; the adapter spent none, but its longer prompt took longer to read, so the total was about 1.3 times faster. A decision does not need generated text - and a model built to skip it, in one pass for many questions, is the part a laptop cannot simulate."
+      "body": "One call, one yes/no question - *does someone need help right now?* - asked of the **same local model** twice: as a chat model that writes its answer, and through the Jev-like adapter that lets it write one token and reads the probability off it. It prints both answers, and for each the seconds spent reading the prompt, the seconds spent writing, the total and the tokens written. With `TYPESAFE_API_KEY` set, the real Jev joins as a third row. Pass your own text: `./run -l 10 race \"Caller: my car is on fire\"`.\n\nOn this lesson's laptop the chat model spent 2.3 of 3.6 seconds writing 40 tokens; the adapter spent none, but its longer prompt took longer to read, so the total was about 1.4 times faster. A decision does not need generated text - and a model built to skip it, in one pass for many questions, is the part a laptop cannot simulate."
     },
     {
       "type": "command",

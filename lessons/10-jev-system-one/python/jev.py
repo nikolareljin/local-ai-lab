@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import datetime
+import http.client
 import json
 import os
 import platform
@@ -74,6 +75,11 @@ def load_dataset(name: str) -> tuple[dict, list[dict]]:
     questions = json.loads((DATA / "questions.json").read_text(encoding="utf-8"))[name]
     lines = (DATA / f"{name}.jsonl").read_text(encoding="utf-8").splitlines()
     return questions, [json.loads(line) for line in lines if line.strip()]
+
+
+# What a live call can fail with: a dead or odd server, a refused URL, an unexpected reply.
+LIVE_ERRORS = (RuntimeError, OSError, ValueError, KeyError, TypeError, AttributeError,
+               http.client.HTTPException)
 
 
 # --------------------------------------------------------------------------- one backend, one record
@@ -167,9 +173,16 @@ def record(backend: str, dataset: str, model: str, hardware: str, limit: int = 0
 
 
 # --------------------------------------------------------------------------- printing
+def typesafe_is_local() -> bool:
+    """TYPESAFE_BASE_URL points at this machine: a stand-in server, not TypeSafe's Jev."""
+    return systemone.is_loopback(os.environ.get("TYPESAFE_BASE_URL", systemone.TYPESAFE_URL))
+
+
 def label_for(backend: str, tape: dict | None, model: str = "") -> str:
     if backend == "keywords":
         return "keywords (rules)"
+    if backend == "typesafe" and tape is None and typesafe_is_local():
+        return "local System One server (simulated)"  # never call a stand-in "Jev"
     name = tape["model"] if tape else model
     return {"llm-json": f"LLM writes JSON ({name})",
             "local": f"Jev-like adapter ({name.removeprefix('local-')})",
@@ -187,7 +200,7 @@ def short_name(backend: str, tape: dict | None) -> str:
 def fmt_row(label: str, s: dict, questions: dict) -> str:
     cells = [f"{s['correct'][q]:>2}/{s['n']}" for q in questions]
     return (f"{label:<32}" + "".join(f"{c:>7}" for c in cells)
-            + f"{s['typed'] * 100 // s['asked']:>6}%{s['brier']:>7.3f}"
+            + f"{s['typed'] * 100 // max(s['asked'], 1):>6}%{s['brier']:>7.3f}"
             + f"{s['actions']:>5}/{s['n']}{s['wrong']:>6}{s['missed']:>7}"
             + f"{s['seconds']:>8.1f}{s['calls']:>6}")
 
@@ -289,7 +302,7 @@ def live(backends: list[str], dataset: str, model: str, limit: int, out=None) ->
                 bad = runs[rec["id"]]["problems"]
                 print(f"  {rec['id']}  {runs[rec['id']]['seconds']:.1f}s"
                       + (f"  invalid: {', '.join(bad)}" if bad else ""), file=out, flush=True)
-        except (SystemExit, RuntimeError, OSError, ValueError) as err:
+        except (SystemExit, *LIVE_ERRORS) as err:
             rows.append((label, None, str(err) or type(err).__name__))
             print(f"  skipped: {err}", file=out, flush=True)
             continue
@@ -301,6 +314,13 @@ def live(backends: list[str], dataset: str, model: str, limit: int, out=None) ->
         print(fmt_row(label, score, questions) if score else f"{label:<32}not run - {why}",
               file=out)
     return 0 if any(score for _l, score, _w in rows) else 1
+
+
+def limit_arg(text: str) -> int:
+    value = int(text)
+    if value < 0:
+        raise argparse.ArgumentTypeError("--limit must be 0 (all records) or more")
+    return value
 
 
 def parse_backends(text: str) -> list[str]:
@@ -329,7 +349,12 @@ def ask(text: str, backend: str, model: str, dataset: str = DEFAULT_DATASET, out
     wire_model = model if backend != "typesafe" else os.environ.get("TYPESAFE_DEFAULT_MODEL",
                                                                     "jev-latest")
     body = systemone.build_request(text, questions, wire_model)
-    run = to_run(questions, run_live(backend, body, model, dataset))
+    try:
+        run = to_run(questions, run_live(backend, body, model, dataset))
+    except LIVE_ERRORS as err:
+        print(f"{label_for(backend, None, wire_model)} did not answer: {err}", file=out)
+        print("Run ./run -l 10 check to see what is missing.", file=out)
+        return 1
     print(f"{label_for(backend, None, wire_model)}  {run['seconds']:.1f}s, "
           f"{run['calls']} model call(s)", file=out)
     print_answers(questions, run, out)
@@ -381,7 +406,7 @@ def race_rows(text: str, model: str) -> list[dict]:
                          "answer": f"P(yes) = {got[RACE_QUESTION]['probs']['yes']:.2f}",
                          "seconds": seconds, "tokens": usage.get("output_tokens") or 0,
                          "read_tokens": usage.get("input_tokens") or 0})
-        except (RuntimeError, ValueError, KeyError) as err:
+        except LIVE_ERRORS as err:
             rows.append({"engine": "TypeSafe Jev (real)", "answer": f"did not answer: {err}",
                          "seconds": 0.0, "tokens": 0})
     return rows
@@ -416,16 +441,16 @@ def race(text: str, model: str, out=None) -> int:
     p()
     try:
         rows = race_rows(text, model)
-    except (RuntimeError, OSError, ValueError) as err:
+    except LIVE_ERRORS as err:
         p(f"Ollama did not answer: {err}")
         p("Run ./run -l 10 check to see what is missing.")
         return 1
-    p(f"{'engine':<40}{'answer':<32}{'read':>7}{'write':>7}{'total':>7}{'tokens':>8}")
+    p(f"{'engine':<42}{'answer':<32}{'read':>7}{'write':>7}{'total':>7}{'tokens':>8}")
     for row in rows:
         read = f"{row['read_seconds']:.2f}s" if "read_seconds" in row else "-"
         write = f"{row['write_seconds']:.2f}s" if "write_seconds" in row else "-"
         answer = row["answer"] if len(row["answer"]) <= 30 else row["answer"][:27] + "..."
-        p(f"{row['engine']:<40}{answer:<32}{read:>7}{write:>7}"
+        p(f"{row['engine']:<42}{answer:<32}{read:>7}{write:>7}"
           f"{row['seconds']:>6.2f}s{row['tokens']:>8}")
     p()
     p("What the chat model wrote:")
@@ -435,7 +460,7 @@ def race(text: str, model: str, out=None) -> int:
     for line in race_summary(rows):
         p(line)
     p("That is for ONE question. The adapter needs one model call per question; the real Jev")
-    p("answers up to 64 in a single request.")
+    p("answers all of a request's questions in one pass.")
     if not os.environ.get("TYPESAFE_API_KEY"):
         p("Add the real Jev to this table: export TYPESAFE_API_KEY=...")
         p("(create a key at https://console.typesafe.ai/keys)")
@@ -459,6 +484,12 @@ def hello(model: str, out=None) -> int:
     url = os.environ.get("TYPESAFE_BASE_URL", systemone.TYPESAFE_URL)
     key = os.environ.get("TYPESAFE_API_KEY", "")
     real = bool(key) or systemone.is_loopback(url)
+    if real:
+        try:
+            systemone.check_destination(url)
+        except ValueError as err:
+            p(str(err))
+            return 1
     p(f"One call to the {DATASETS[DEFAULT_DATASET]['title']} ({rec['id']}, fake):")
     p()
     for line in rec["text"].splitlines():
@@ -466,10 +497,13 @@ def hello(model: str, out=None) -> int:
     p()
     if real:
         wire_model = os.environ.get("TYPESAFE_DEFAULT_MODEL", "jev-latest")
-        where = "this machine" if systemone.is_loopback(url) else "TypeSafe"
-        p(f"Sending it to {url} ({where}). "
-          + ("" if systemone.is_loopback(url) else "The text leaves this machine; it is fake."))
-        backend, label = "typesafe", f"POST {url}{systemone.SYSTEM_ONE_PATH}"
+        if systemone.is_loopback(url):
+            p(f"Sending it to {url}: a System One server on this machine.")
+            p("That is a stand-in (simulated), NOT TypeSafe's Jev. Unset TYPESAFE_BASE_URL "
+              "for the real one.")
+        else:
+            p(f"Sending it to {url} (TypeSafe). The text leaves this machine; it is fake.")
+        backend, label = "typesafe", f"POST {url.rstrip('/')}{systemone.SYSTEM_ONE_PATH}"
     else:
         wire_model = model
         p("TYPESAFE_API_KEY is not set, so this is NOT the real Jev.")
@@ -487,7 +521,8 @@ def hello(model: str, out=None) -> int:
     p(json.dumps(shown, indent=2, ensure_ascii=False))
     try:
         stored = run_live(backend, body, model, DEFAULT_DATASET)
-    except (RuntimeError, OSError, ValueError) as err:
+        usage = stored["response"].get("usage") if real else None
+    except LIVE_ERRORS as err:
         p()
         p(f"Could not get an answer: {err}")
         p("Run ./run -l 10 check to see what is missing.")
@@ -495,7 +530,7 @@ def hello(model: str, out=None) -> int:
     run = to_run(questions, stored)
     p()
     p(f"Response in {run['seconds']:.2f}s, {run['calls']} model call(s)"
-      + (f", usage {json.dumps(stored['response'].get('usage'))}" if real else "") + ":")
+      + (f", usage {json.dumps(usage)}" if real else "") + ":")
     print_answers(questions, run, out)
     p()
     action = policy.POLICIES[DEFAULT_DATASET].decide(run["answers"])
@@ -519,7 +554,8 @@ def main(argv=None) -> int:
             sp.add_argument("--backend", required=True, choices=BACKENDS)
         sp.add_argument("--dataset", default=DEFAULT_DATASET, choices=list(DATASETS))
         sp.add_argument("--model", default=LOCAL_MODEL)
-        sp.add_argument("--limit", type=int, default=0)
+        sp.add_argument("--limit", type=limit_arg, default=0,
+                        help="only the first N records (0 = all)")
         sp.add_argument("--hardware", default=f"{platform.machine()} {os.cpu_count()} threads")
     a = sub.add_parser("ask")
     a.add_argument("text")
@@ -539,7 +575,11 @@ def main(argv=None) -> int:
     systemone.load_typesafe_env(LESSON.parents[1] / ".env")
 
     if args.command in (None, "demo"):
-        return demo(getattr(args, "dataset", DEFAULT_DATASET))
+        try:
+            return demo(getattr(args, "dataset", DEFAULT_DATASET))
+        except (StaleCassette, json.JSONDecodeError) as err:
+            print(f"StaleCassette: {err}", file=sys.stderr)
+            return 1
     if args.command == "hello":
         return hello(args.model)
     if args.command == "race":
@@ -552,6 +592,9 @@ def main(argv=None) -> int:
     if args.command == "record":
         if args.backend == "keywords":
             raise SystemExit("keywords needs no recording; demo runs the rules every time")
+        if args.backend == "typesafe" and typesafe_is_local():
+            raise SystemExit("TYPESAFE_BASE_URL points at this machine; that is not Jev. Unset it "
+                             "to record TypeSafe, or use --backend local for the adapter.")
         path = record(args.backend, args.dataset, args.model, args.hardware, args.limit)
         print(f"wrote {path.relative_to(LESSON)}")
         return 0

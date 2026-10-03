@@ -26,6 +26,7 @@ import systemone
 # --------------------------------------------------------------------------- keywords
 # data/rules.json: per dataset and question, an ordered list of [label, [words]].
 # The first rule with a word in the transcript wins; the last rule is the default.
+# A word may be a stem ("burgl"), but it must start a word.
 # Written from the question criteria in data/questions.json, in English, before
 # reading any call - the way a rule list is written on day one. Tuning it on these
 # calls would score well here and prove nothing.
@@ -34,9 +35,10 @@ RULES = json.loads((Path(__file__).resolve().parents[1] / "data" / "rules.json")
 
 
 def _rule_pick(text: str, rules: list) -> str:
+    """A word matches at the start of a word ("app" in "the app", not in "happened")."""
     low = text.lower()
     for label, words in rules:
-        if any(w in low for w in words):
+        if any(w == "" or re.search(r"(?<![a-z0-9])" + re.escape(w), low) for w in words):
             return label
     return rules[-1][0]
 
@@ -98,7 +100,7 @@ def parse_llm_json(body: dict, text: str) -> tuple[dict, list[str]]:
     answers = {}
     for name, q in body["questions"].items():
         value = written.get(name)
-        if isinstance(value, bool):  # {"refund_request": true} is a fair reading
+        if isinstance(value, bool):  # {"emergency": true} is a fair reading
             value = "yes" if value else "no"
         if not isinstance(value, str) or value.strip().lower() not in systemone.options(q):
             errors.append(f"{name}={value!r}")

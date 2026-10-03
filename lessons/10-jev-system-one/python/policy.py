@@ -29,7 +29,7 @@ def decide(answers: dict, siu: float = SIU, emergency: float = EMERGENCY,
     intent = answers.get("intent")
     if _p(answers, "emergency", "yes") >= emergency:
         return "dispatch emergency help"  # first, whatever else the call is about
-    if intent is None or intent["confidence"] < confident:
+    if "emergency" not in answers or intent is None or intent["confidence"] < confident:
         return "human agent"  # no usable answer: never guess
     if intent["pick"] in ("complaint", "cancel_policy"):
         return "human agent"
@@ -39,7 +39,7 @@ def decide(answers: dict, siu: float = SIU, emergency: float = EMERGENCY,
     p_fraud = _p(answers, "fraud_signals", "yes", 1.0)
     if p_fraud >= siu:
         return "special investigations"
-    small = _p(answers, "severity", "none") + _p(answers, "severity", "minor") >= 0.5
+    small = _p(answers, "severity", "none") + _p(answers, "severity", "minor") > 0.5
     if small and _p(answers, "needs_adjuster", "yes", 1.0) < 0.5 and 1 - p_fraud >= fast_track:
         return "fast-track payout"
     return "assign adjuster"
@@ -50,10 +50,11 @@ RETAIN = 0.5  # P(high churn risk) to hand the call to the retention desk
 REFUND = 0.8  # P(wants money back) to draft a refund for approval
 
 
-def decide_media(answers: dict, retain: float = RETAIN, refund: float = REFUND) -> str:
+def decide_media(answers: dict, retain: float = RETAIN, refund: float = REFUND,
+                 confident: float = CONFIDENT) -> str:
     """One action per newspaper call."""
     topic = answers.get("topic")
-    if topic is None:
+    if topic is None or topic["confidence"] < confident:
         return "human agent"
     if topic["pick"] == "editorial":
         return "pass to newsroom"

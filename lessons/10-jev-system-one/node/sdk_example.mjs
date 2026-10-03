@@ -27,6 +27,7 @@ const TYPESAFE_URL = "https://api.typesafe.ai";
 
 /** An http(s) URL whose host is this machine - python/systemone.is_loopback. */
 export function isLoopback(url) {
+  if (url.includes("\\")) return false; // parsers disagree on what a backslash means
   url = url.replace(/[\t\r\n]/g, "").replace(/^[\x00-\x20]+/, "");
   const m = /^([A-Za-z][A-Za-z0-9+.-]*):\/\/([^/?#]*)/.exec(url);
   if (!m || !["http", "https"].includes(m[1].toLowerCase())) return false;

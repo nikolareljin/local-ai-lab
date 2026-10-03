@@ -7,6 +7,7 @@
 
 using System.Text;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using Lesson10Jev;
 
 using Run = (System.Collections.Generic.Dictionary<string, Lesson10Jev.Answer> Answers, double Seconds, long Calls, System.Collections.Generic.List<string> Problems);
@@ -84,11 +85,13 @@ static class Jev
     // The first rule with a word in the transcript wins; the last rule is the default.
     static readonly Dict Rules = (Dict)Py.Loads(Read(Path.Combine(Data, "rules.json")))!;
 
+    /// <summary>A word matches at the start of a word ("app" in "the app", not in "happened").</summary>
     static string RulePick(string text, List<object?> rules)
     {
         var low = Py.Lower(text);
+        bool Starts(string w) => w == "" || Regex.IsMatch(low, "(?<![a-z0-9])" + Regex.Escape(w), RegexOptions.CultureInvariant);
         foreach (var rule in rules.Cast<List<object?>>())
-            if (((List<object?>)rule[1]!).Any(w => low.Contains((string)w!, StringComparison.Ordinal))) return (string)rule[0]!;
+            if (((List<object?>)rule[1]!).Any(w => Starts((string)w!))) return (string)rule[0]!;
         return (string)((List<object?>)rules[^1]!)[0]!;
     }
 
@@ -143,7 +146,7 @@ static class Jev
         {
             var q = (Dict)qv!;
             var value = w.Get(name);
-            if (value is bool b) value = b ? "yes" : "no"; // {"refund_request": true} is a fair reading
+            if (value is bool b) value = b ? "yes" : "no"; // {"emergency": true} is a fair reading
             if (value is not string s || !SystemOne.Options(q).Contains(Py.Lower(Py.Strip(s))))
             {
                 errors.Add($"{name}={Py.Repr(value)}");
@@ -171,13 +174,13 @@ static class Jev
     {
         answers.TryGetValue("intent", out var intent);
         if (Prob(answers, "emergency", "yes") >= Emergency) return "dispatch emergency help"; // first, whatever else
-        if (intent is null || intent.Confidence < Confident) return "human agent"; // never guess
+        if (!answers.ContainsKey("emergency") || intent is null || intent.Confidence < Confident) return "human agent"; // never guess
         if (intent.Pick is "complaint" or "cancel_policy") return "human agent";
         if (intent.Pick is "claim_status" or "coverage_question") return "self-service answer";
         // a new claim
         double pFraud = Prob(answers, "fraud_signals", "yes", 1.0);
         if (pFraud >= siu) return "special investigations";
-        bool small = Prob(answers, "severity", "none") + Prob(answers, "severity", "minor") >= 0.5;
+        bool small = Prob(answers, "severity", "none") + Prob(answers, "severity", "minor") > 0.5;
         if (small && Prob(answers, "needs_adjuster", "yes", 1.0) < 0.5 && 1 - pFraud >= FastTrack) return "fast-track payout";
         return "assign adjuster";
     }
@@ -185,7 +188,7 @@ static class Jev
     /// <summary>One action per newspaper call.</summary>
     static string DecideMedia(Dictionary<string, Answer> answers, double retain = Retain)
     {
-        if (!answers.TryGetValue("topic", out var topic)) return "human agent";
+        if (!answers.TryGetValue("topic", out var topic) || topic.Confidence < Confident) return "human agent";
         if (topic.Pick == "editorial") return "pass to newsroom";
         if (topic.Pick == "advertising") return "pass to ad sales";
         if (topic.Pick == "cancel" || Prob(answers, "churn_risk", "high", 1.0) >= retain) return "retention desk";
@@ -433,12 +436,14 @@ static class Jev
         {
             (response, seconds) = await new SystemOneClient().PostAsync(url, (JsonObject)SystemOne.ToJsonNode(body)!, key);
         }
-        catch (Exception err) when (err is ArgumentException or InvalidOperationException or JsonDecodeError)
+        catch (Exception err) when (err is ArgumentException or InvalidOperationException or JsonDecodeError or UriFormatException)
         {
             throw new Exit(1, err.Message);
         }
         var run = ToRun(questions, new Dict { ["response"] = response, ["seconds"] = seconds, ["calls"] = 1L });
-        output.WriteLine($"{LabelFor("typesafe", null, model)}  {Py.Fixed(run.Seconds, 1)}s, {run.Calls} model call(s)");
+        // never call a stand-in on this machine "Jev"
+        var label = SystemOne.IsLoopback(url) ? "local System One server (simulated)" : LabelFor("typesafe", null, model);
+        output.WriteLine($"{label}  {Py.Fixed(run.Seconds, 1)}s, {run.Calls} model call(s)");
         foreach (var name in questions.Keys)
         {
             if (!run.Answers.TryGetValue(name, out var a))

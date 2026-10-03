@@ -17,11 +17,11 @@ The demo (./run -l 10 demo) needs none of this: it replays recordings.
 
 from __future__ import annotations
 
+import http.client
 import json
 import os
 import shutil
 import sys
-import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -29,8 +29,14 @@ import local_adapter
 import systemone
 
 LESSON = Path(__file__).resolve().parents[1]
-REQUIRED_MODEL = local_adapter.DEFAULT_MODEL
+# The model the live commands will use: OLLAMA_MODEL if set, as in python/jev.py.
+REQUIRED_MODEL = os.environ.get("OLLAMA_MODEL", local_adapter.DEFAULT_MODEL)
 OPTIONAL_MODEL = "qwen3.5:4b"
+
+
+# Anything a missing, old or half-started Ollama can answer with.
+CHECK_ERRORS = (RuntimeError, OSError, ValueError, KeyError, TypeError, AttributeError,
+                http.client.HTTPException)
 
 
 def _get(url: str, timeout: float = 5.0) -> dict:
@@ -43,8 +49,8 @@ def ollama_rows(url: str) -> tuple[list[tuple], bool]:
     rows = []
     try:
         version = _get(url.rstrip("/") + "/api/version").get("version", "?")
-        models = {m["name"] for m in _get(url.rstrip("/") + "/api/tags").get("models", [])}
-    except (urllib.error.URLError, OSError, ValueError):
+        models = {m.get("name") for m in _get(url.rstrip("/") + "/api/tags").get("models") or []}
+    except CHECK_ERRORS:
         rows.append(("no", f"Ollama running at {url}",
                      "install: https://ollama.com/download   then start it: ollama serve"))
         return rows, False
@@ -63,8 +69,9 @@ def ollama_rows(url: str) -> tuple[list[tuple], bool]:
                 REQUIRED_MODEL, url, keep_alive="1m")
             ok = bool(top)
             detail = f"{len(top)} candidates for the first token" if ok else "none returned"
-        except (RuntimeError, OSError, ValueError) as err:
-            ok, detail = False, f"{err} - update Ollama: https://ollama.com/download"
+        except CHECK_ERRORS as err:
+            ok, detail = False, (f"{err} - if Ollama is older than 0.12.11, update it: "
+                                 "https://ollama.com/download")
         rows.append(("yes" if ok else "no", "log-probabilities from the model", detail))
         ready = ready and ok
     return rows, ready

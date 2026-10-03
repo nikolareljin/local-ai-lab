@@ -73,7 +73,7 @@ Agent: Are you able to get out of the vehicle?
 Caller: I'd rather not try, to be honest.
 ```
 
-A local LLM asked to fill in the form as JSON (qwen3:1.7b, recorded, 194 seconds) wrote:
+A local LLM asked to fill in the form as JSON (qwen3:1.7b, recorded) wrote:
 
 ```json
 {
@@ -86,7 +86,7 @@ A local LLM asked to fill in the form as JSON (qwen3:1.7b, recorded, 194 seconds
 }
 ```
 
-Valid JSON, every value a real option - and it took the caller at his word. "No rush", so
+Valid JSON, every value a real option - and it took the caller at their word. "No rush", so
 `"emergency": "no"`; an arm at a new angle, so `"line": "health"`. The policy turns that into
 **assign adjuster**. There is no number in there to be suspicious of: `"no"` is just `"no"`.
 
@@ -117,8 +117,8 @@ P(yes) = 0.93, and the policy compares that number with a threshold you chose.
 |---|---|---|
 | Output | text, token by token | a probability per option, one pass |
 | Typed? | only if you validate what it wrote | always: the options are the output |
-| Probabilities | none you can put a threshold on | calibrated, per TypeSafe: 0.8 should be right 8 times in 10 |
-| Many questions | one long answer, or one call each | up to 64 questions in one request |
+| Probabilities | a chat reply carries none (Concept 3 digs them out, at a cost) | calibrated, per TypeSafe: 0.8 should be right 8 times in 10 |
+| Many questions | one long answer, or one call each | all of them in one request, per TypeSafe |
 | Explains itself | yes | no |
 | Writes, summarises, converses | yes | no |
 | Speed (TypeSafe's figures) | seconds | 70-500 ms |
@@ -166,17 +166,20 @@ halves:
 | `qwen3.5:4b` (3.4 GB), optional | the better, slower simulated Jev | `ollama pull qwen3.5:4b` |
 | A TypeSafe account and API key | the one real call (`./run -l 10 hello`) | steps below |
 
-**Getting a TypeSafe key** (about two minutes):
+**Getting a TypeSafe key:**
 
 1. Open the [TypeSafe Playground](https://console.typesafe.ai/playground) and log in or create an
    account. You can try questions there in the browser before writing any code.
 2. Create an API key on the [keys page](https://console.typesafe.ai/keys).
-3. Put it where the lesson finds it, either way works:
+3. Put it where the lesson finds it:
    ```bash
-   export TYPESAFE_API_KEY=...            # this shell only
-   echo 'TYPESAFE_API_KEY=...' >> .env    # or the repo's .env (git-ignored)
+   export TYPESAFE_API_KEY=...            # this shell: works for every command
+   echo 'TYPESAFE_API_KEY=...' >> .env    # or the repo's .env (git-ignored): read by the
+                                          # Python commands; Node.js and C# need the export
    ```
-4. Worth a skim: the [quick start](https://docs.typesafe.ai/introduction/quickstart), the
+4. Jev is in early access. If signing up puts you on a waitlist, carry on: every step of the
+   lesson runs without a key, on the simulated Jev.
+5. Worth a skim: the [quick start](https://docs.typesafe.ai/introduction/quickstart), the
    [API reference](https://docs.typesafe.ai/api) and the [models page](https://docs.typesafe.ai/models)
    (limits and prices: you pay for input tokens, not for answers).
 
@@ -213,7 +216,7 @@ falls back to the simulated Jev and tells you so.
 ./run -l 10 hello
 ```
 
-This sends **one** fake call (the upside-down gentleman above) to TypeSafe and prints the request,
+This sends **one** fake call (the calm caller in the upside-down car) to TypeSafe and prints the request,
 the response, the time it took, the tokens it used, and the action the lesson's policy takes. One
 request, six questions, a fraction of a cent. The text leaves your machine, which is why it is
 fake.
@@ -239,9 +242,9 @@ TYPESAFE_API_KEY is not set, so this is NOT the real Jev.
 Meanwhile: the same request to the local Jev-like adapter (qwen3:1.7b, simulated).
 
 Request, abridged (local adapter, 6 Ollama calls): model, state, and 6 typed questions
-  { ... "model", "state" and the six questions ... }
+  (request JSON omitted here)
 
-Response in 14.23s, 6 model call(s):
+Response in 13.17s, 6 model call(s):
   line            health
       auto 0.00  home 0.00  health 1.00  travel 0.00  life 0.00
   intent          coverage_question
@@ -261,10 +264,11 @@ with a probability your code can compare against a threshold.
 ```
 
 Look at what came back: six answers, each one an option you defined, each with a probability. No
-JSON to repair. That is the whole trick, and the rest of the lesson is about what you can build on
+JSON to repair. (Also look at *which* answers: the small local model thinks a rolled car is a minor
+health matter. Three of six are wrong. Hold that thought; the scorecard comes back to it.) That is the whole trick, and the rest of the lesson is about what you can build on
 it - and how far a local imitation gets.
 
-## Step 2 · The local session: three engines, one scorecard
+## Step 2 · The local session: three local engines, one scorecard
 
 From here on nothing leaves your machine.
 
@@ -288,9 +292,9 @@ happened, not how loudly it was said:
 - the calm caller in the upside-down car (an emergency, reported as "a small incident")
 - the furious caller whose premium went up (loud, and nothing is damaged)
 - the "total loss" that turns out to be a meatball sandwich left on a dashboard in July
-- polite callers whose stories do not add up: a theft the day after the upgrade, a burglary with
+- polite callers whose stories do not add up: a theft days after the upgrade, a burglary with
   no broken window and no police report
-- the caller who asks whether an ambulance is covered, because he needs one, now
+- the caller who asks whether an ambulance is covered, because they need one, now
 - callers in Spanish and German
 - two callers who read out an instruction addressed to "the AI" - Lesson 4's prompt injection,
   now available by phone
@@ -341,7 +345,7 @@ All four produce a System One response, so the policy and the scorecard cannot t
 
 ### The one live run: the same question, two ways
 
-Everything above is replayed from recordings. If you run one thing live, run this:
+The scorecard above is replayed from recordings. If you run one thing live, run this:
 
 ```bash
 ./run -l 10 race
@@ -359,29 +363,29 @@ Call:      Caller: A pipe has burst upstairs, water is coming through the kitche
            light fitting is sparking. My mother is in there, she's 84.
 Question:  Does someone need help right now?
 
-engine                                  answer                             read  write  total  tokens
-Ollama chat (qwen3:1.7b)                Yes.   The person needs hel...    1.18s  2.40s  3.73s      40
-Jev-like adapter (qwen3:1.7b, simulated)P(yes) = 1.00                     2.71s  0.00s  2.89s       1
+engine                                    answer                             read  write  total  tokens
+Ollama chat (qwen3:1.7b)                  Yes.   The person needs hel...    1.15s  2.31s  3.62s      40
+Jev-like adapter (qwen3:1.7b, simulated)  P(yes) = 1.00                     2.49s  0.00s  2.68s       1
 
 What the chat model wrote:
   Yes.   The person needs help because the pipe has burst, water is coming through the kitchen
   ceiling, and there is a sparking light fitting, which could lead to a fire or electrical hazard.
 
-Total: 3.73s vs 2.89s - the one-token answer is 1.3x faster here.
-Writing the answer: 40 tokens took 2.40s; 1 token took 0.00s.
-Reading the prompt: 1.18s (69 tokens) vs 2.71s (135 tokens).
+Total: 3.62s vs 2.68s - the one-token answer is 1.4x faster here.
+Writing the answer: 40 tokens took 2.31s; 1 token took 0.00s.
+Reading the prompt: 1.15s (69 tokens) vs 2.49s (135 tokens).
 The adapter's prompt also lists the options, so it reads more.
 That is for ONE question. The adapter needs one model call per question; the real Jev
-answers up to 64 in a single request.
+answers all of a request's questions in one pass.
 Add the real Jev to this table: export TYPESAFE_API_KEY=...
 (create a key at https://console.typesafe.ai/keys)
 ```
 
 Read the lines under the table, because the headline number is modest and the reason is the
-interesting part. The chat model spent 2.4 of its 3.7 seconds **writing** 40 tokens. The adapter
+interesting part. The chat model spent 2.3 of its 3.6 seconds **writing** 40 tokens. The adapter
 spent nothing on writing: one token, then it read the probability off it. But its prompt is twice
 as long (it lists the options), and on a laptop CPU reading a prompt is slow too, so the total is
-only about 1.3 times faster.
+only about 1.4 times faster.
 
 Three honest conclusions:
 
@@ -410,10 +414,10 @@ Recorded on 2026-10-03 on an Intel Core i5-10310U laptop (8 threads, 19 GB RAM, 
 
 | Engine | Right of 36 (line / intent / severity / emergency / fraud / adjuster) | Brier | Actions right | Suspicious claims missed | s / call |
 |---|---|---|---|---|---|
-| keywords (rules) | 26 / 31 / 18 / 33 / 32 / 26 | 0.463 | 21/36 | 4 of 6 | 0 |
-| LLM writes JSON (qwen3:1.7b) | 21 / 33 / 13 / 33 / 30 / 25 | 0.565 | 19/36 | 6 of 6 | 12.3 |
-| Jev-like adapter (qwen3:1.7b) | 33 / 16 / 10 / 24 / 21 / 20 | 0.834 | 14/36 | 5 of 6 | 16.9 |
-| Jev-like adapter (qwen3.5:4b) | 36 / 34 / 22 / 34 / 35 / 24 | 0.219 | 28/36 | 1 of 6 | 100.2 |
+| keywords (rules) | 26 / 31 / 18 / 33 / 32 / 25 | 0.472 | 21/36 | 4 of 6 | 0 |
+| LLM writes JSON (qwen3:1.7b) | 21 / 33 / 13 / 33 / 30 / 26 | 0.556 | 19/36 | 6 of 6 | 12.3 |
+| Jev-like adapter (qwen3:1.7b) | 33 / 16 / 10 / 24 / 21 / 19 | 0.843 | 14/36 | 5 of 6 | 16.9 |
+| Jev-like adapter (qwen3.5:4b) | 36 / 34 / 22 / 34 / 35 / 25 | 0.214 | 28/36 | 1 of 6 | 100.2 |
 
 No engine sent an honest caller to investigations. TypeSafe Jev is not in the table: recording it
 needs an API key (`./run -l 10 record --backend typesafe`).
@@ -421,16 +425,16 @@ needs an API key (`./run -l 10 record --backend typesafe`).
 What the numbers say:
 
 - **The format is not magic. The model has to be up to it.** The simulated Jev on the 1.7B model
-  is the *worst* row: 14 of 36 actions, a Brier score of 0.834. On these longer transcripts the
+  is the *worst* row: 14 of 36 actions, a Brier score of 0.843. On these longer transcripts the
   small model falls back on favourite letters - it rates 33 of the 36 calls "minor", including a
-  motorway crash and a death claim. The same trick on the 4B model is the best row by a distance: 28 of 36, Brier 0.219.
+  motorway crash and a death claim. The same trick on the 4B model is the best row by a distance: 28 of 36, Brier 0.214.
   A System One answer is only as good as the model behind it, which is the whole case for a model
   trained to answer this way.
 - **The LLM that writes JSON never once smelled a rat.** All six suspicious claims went through
-  (6 of 6 missed), and it sent the gentleman in the upside-down car to an adjuster. It wrote
+  (6 of 6 missed), and it sent the calm caller in the upside-down car to an adjuster. It wrote
   perfectly valid JSON while doing so. Valid is not the same as right.
-- **The man who asked whether an ambulance is covered (K-1023)** got "self-service answer" from
-  the JSON arm: it answered the question he asked. Both adapters, and even the keyword rules,
+- **The caller who asked whether an ambulance is covered (K-1023)** got "self-service answer" from
+  the JSON arm: it answered the question that was asked. Both adapters, and even the keyword rules,
   sent help.
 - **Calibration is what makes the knob work.** Only the 4B adapter's answers move with `SIU`: no
   suspicious claim missed at 0.3, one at 0.6, three at 0.9 - and no honest caller investigated at
@@ -449,18 +453,19 @@ What the numbers say:
 
 | Engine | Right of 24 (topic / churn / refund) | Brier | Actions right | Retention desk: wrong / missed |
 |---|---|---|---|---|
-| keywords (rules) | 20 / 16 / 21 | 0.417 | 19/24 | 1 / 2 |
-| LLM writes JSON (qwen3:1.7b) | 16 / 9 / 18 | 0.789 | 17/24 | 4 / 1 |
-| Jev-like adapter (qwen3:1.7b) | 20 / 7 / 23 | 0.572 | 14/24 | 6 / 1 |
-| Jev-like adapter (qwen3.5:4b) | 22 / 9 / 22 | 0.343 | 13/24 | 10 / 0 |
+| keywords (rules) | 20 / 18 / 21 | 0.361 | 17/24 | 2 / 2 |
+| LLM writes JSON (qwen3:1.7b) | 16 / 3 / 18 | 0.956 | 16/24 | 5 / 1 |
+| Jev-like adapter (qwen3:1.7b) | 20 / 3 / 23 | 0.658 | 13/24 | 7 / 1 |
+| Jev-like adapter (qwen3.5:4b) | 22 / 8 / 22 | 0.360 | 12/24 | 10 / 0 |
 
-Here the **keyword rules win** on actions. Every model overrates churn: to a language model, anyone
-who phones a newspaper sounds like they are about to leave, including the man who has subscribed
-for thirty-one years. The 4B adapter is still the best calibrated (Brier 0.343) and misses no
-leaving reader, but it sends ten happy ones to the retention desk. Raise `RETAIN` from 0.5 to 0.9
-and that drops to four, with one missed - the knob again. And the JSON arm produced the lesson's
-only invalid answer: for the first call it wrote `"topic": "subscriber services"`, a seventh box
-it invented from the agent's greeting.
+Here the **keyword rules win** on actions. The models overrate churn: to a language model, almost
+anyone who phones a newspaper sounds like they are about to leave. The two small-model rows get
+churn right on 3 calls of 24, and rate even the reader of thirty-one years a medium or high risk.
+The 4B adapter knows that reader is staying, ties the rules on calibration (Brier 0.360) and misses no leaving
+reader, but it still sends ten happy ones to the retention desk. Raise `RETAIN` from 0.5 to 0.9 and
+that drops to four, with one missed - the knob again. And the JSON arm produced the lesson's only
+invalid answer: for the first call it wrote `"topic": "subscriber services"`, a seventh box it
+invented from the agent's greeting.
 
 Two lessons in one table: sometimes rules are enough, and "churn risk" needs a better question
 than the one written here. Exercise 3 is yours.
@@ -560,7 +565,7 @@ That is a real probability for every option, from one short forward pass: the Sy
 built from parts you already had. What it does not have is Jev's training for the job:
 
 - **Calibration.** A small model is often 100% sure and wrong. The Brier score shows it.
-- **Cost.** One model call per question. Jev answers up to 64 questions in one pass.
+- **Cost.** One model call per question. Jev answers all the questions of a request in one pass.
 - **Speed.** Seconds on a laptop CPU, per question.
 
 The server binds to `127.0.0.1` and refuses anything else: it has no authentication.
@@ -695,8 +700,9 @@ All three print the same scorecard, byte for byte.
 
 ## Exercises
 
-1. In the playground, drag `SIU` until no honest caller is investigated. How many suspicious claims
-   did that let through?
+1. In the playground, pick K-1017 (the tidy burglars) on the 4B adapter and drag `SIU` down until
+   the claim goes to investigations. Then look at the demo's SIU table: what does that setting do
+   to the other 35 calls?
 2. Add a question `language` (choice: en, es, de) to the insurance set and record it. Which engine
    handles it best?
 3. The newspaper's `churn_risk` question makes every model nervous. Rewrite its instructions and

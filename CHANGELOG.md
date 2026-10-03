@@ -13,7 +13,8 @@ All notable changes to this project are documented here. This project follows
   Jev-like adapter over Ollama, labelled simulated: there is no local Jev. `./run -l 10 check` verifies
   Ollama, the models and the API key; `./run -l 10 hello` makes one real call to Jev (or falls back
   to the adapter without a key); `./run -l 10 race` (and the playground's Race switch) times one
-  question asked as a chat prompt against the one-token answer. The rest is local: keyword rules, an LLM writing JSON and the
+  question asked as a chat prompt against the one-token answer. The rest is local: keyword rules,
+  an LLM writing JSON and the
   adapter on qwen3:1.7b and qwen3.5:4b, scored on two fake call centers (36 calls to an insurer's
   claims line, 24 to a newspaper's subscriber line) for accuracy, typed answers, Brier score and the
   cost of wrong investigations. A policy turns probabilities into actions. Recorded replies make the demo
