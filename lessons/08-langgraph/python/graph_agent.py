@@ -226,7 +226,7 @@ def run(graph, retriever, question: str, *, config: Optional[dict] = None,
     """Invoke the graph for one question and normalise the result.
 
     The return shape is identical to `loop_agent.run`'s, on purpose: the central
-    test compares the two dicts field for field.
+    test compares the two dicts on every scored field.
     """
     graph._retrieve_node.retriever = retriever
     cfg = config or {"configurable": {"thread_id": "lesson8"}}
