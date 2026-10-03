@@ -52,6 +52,24 @@ git clone https://github.com/nikolareljin/local-ai-lab.git
 cd local-ai-lab
 ```
 
+### 📥 Or let the setup script do it
+`setup.sh` (Linux, macOS) and `setup.ps1` (Windows) clone the repository, create the virtualenv,
+install `requirements.txt` and pull the local model if Ollama is installed:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nikolareljin/local-ai-lab/main/setup.sh | bash
+```
+```powershell
+irm https://raw.githubusercontent.com/nikolareljin/local-ai-lab/main/setup.ps1 | iex
+```
+
+Add `--with-system-packages` (`-WithSystemPackages`) to have it install Git and Python through
+your package manager; without it the script never runs `sudo`. `--dry-run` prints the commands
+only. The options are listed in the [README](./README.md#-install-in-one-line).
+
+On Ubuntu or Debian, [distrodeck](https://github.com/nikolareljin/distrodeck) or
+[NikOS](https://github.com/nikolareljin/nikos) set up the toolchains and Ollama in one go.
+
 ### Python 3.10+ (reference stack - recommended for everyone)
 - **Linux (Debian/Ubuntu):** `sudo apt install -y python3 python3-venv python3-pip`
 - **Linux (Fedora):** `sudo dnf install -y python3 python3-pip`

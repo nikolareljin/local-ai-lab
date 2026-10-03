@@ -7,6 +7,9 @@ All notable changes to this project are documented here. This project follows
 ## [Unreleased]
 
 ### Added
+- **`setup.sh` and `setup.ps1`**: one-line install. Clone over HTTPS, create the virtualenv, install
+  `requirements.txt`, pull `qwen3:1.7b` if Ollama is present. System packages only with
+  `--with-system-packages`; `--dry-run` prints the commands. `setup.ps1` has not been run on Windows yet.
 - **Lesson 10 · Jev and System One models** (special lesson, Python, Node.js and C#). A model that
   answers typed questions with a probability per option. TypeSafe's Jev through its official SDKs
   (`typesafe-sdk` pinned with hashes, `@typesafe-ai/sdk` pinned with provenance), and a loopback-only

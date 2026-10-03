@@ -194,6 +194,13 @@ halves:
 | `qwen3.5:4b` (3.4 GB), optional | the better, slower simulated Jev | `ollama pull qwen3.5:4b` |
 | A TypeSafe account and API key | the one real call (`./run -l 10 hello`) | steps below |
 
+**Why the local model?** Jev cannot be installed: TypeSafe serves it only as a hosted API. To
+keep the lesson local, a small chat model is made to answer like one (one token, read as
+probabilities). That is the *simulated Jev*, and it needs Ollama 0.12.11 or newer (older versions
+do not report log-probabilities) and `qwen3:1.7b`. The real Jev needs only a key and internet.
+The repo's `setup.sh` / `setup.ps1` pull the model for you (see the
+[root README](../../README.md#-install-in-one-line)).
+
 **Getting a TypeSafe key:**
 
 1. Open the [TypeSafe Playground](https://console.typesafe.ai/playground) and log in or create an

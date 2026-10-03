@@ -7,7 +7,7 @@
 [![Course site](https://img.shields.io/badge/course-live%20site-5b9dff)](https://nikolareljin.github.io/local-ai-lab/)
 [![Runs locally](https://img.shields.io/badge/runs-100%25%20local-3fb950)](./INSTALL.md)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=nodedotjs&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-22%2B-339933?logo=nodedotjs&logoColor=white)
 ![.NET](https://img.shields.io/badge/.NET-8-512BD4?logo=dotnet&logoColor=white)
 [![GitHub stars](https://img.shields.io/github/stars/nikolareljin/local-ai-lab?style=social)](https://github.com/nikolareljin/local-ai-lab/stargazers)
 
@@ -29,11 +29,72 @@ program, so you finish understanding how the thing actually works - not just how
 
 ---
 
+## 📥 Install in one line
+
+**Linux / macOS** - 📥 `setup.sh`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nikolareljin/local-ai-lab/main/setup.sh | bash
+```
+
+**Windows (PowerShell)** - 📥 `setup.ps1`:
+
+```powershell
+irm https://raw.githubusercontent.com/nikolareljin/local-ai-lab/main/setup.ps1 | iex
+```
+
+Both clone the repository over HTTPS into `./local-ai-lab`, create the Python virtualenv, install
+`requirements.txt` and, if [Ollama](https://ollama.com/download) is installed, pull the local model.
+They end with a table of what is ready and what is optional.
+
+Prefer to read a script before running it? Download it first:
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/nikolareljin/local-ai-lab/main/setup.sh
+less setup.sh && bash setup.sh --dry-run && bash setup.sh
+```
+
+| Option (`setup.sh` / `setup.ps1`) | What it does |
+|---|---|
+| `--dir PATH` / `-Dir PATH` | where to clone (default `./local-ai-lab`) |
+| `--ref TAG` / `-Ref TAG` | check out a release tag instead of `main` |
+| `--with-system-packages` / `-WithSystemPackages` | install Git and Python with apt, dnf, pacman or brew (winget on Windows, which also installs Ollama). Without it the script never runs `sudo` |
+| `--models none\|small\|all` / `-Models ...` | `small` pulls `qwen3:1.7b` (default), `all` adds `qwen3.5:4b` |
+| `--dry-run` / `-DryRun` | print the commands, change nothing |
+
+When piping, options go after `bash -s --`: `curl -fsSL .../setup.sh | bash -s -- --models all`.
+In PowerShell, `iex` cannot pass options; use
+`& ([scriptblock]::Create((irm .../setup.ps1))) -Models all`, or download the file and run it.
+The scripts never pipe another installer from the internet into a shell.
+
+**Why a local model is on the list.** The recorded demos (`./run -l 10 demo`) need no model.
+The live parts do: Lesson 10's *simulated Jev* is a small local model (`qwen3:1.7b`, 1.4 GB, served
+by Ollama) made to answer like a System One model, because TypeSafe's Jev exists only as a hosted
+API and cannot be installed. The same model is the LLM that Lesson 10 compares against, and it
+makes the tool calls in Lesson 9.
+
+| To run | You need |
+|---|---|
+| the simulated Jev (local) | [Ollama](https://ollama.com/download) 0.12.11 or newer (it reports log-probabilities) + `ollama pull qwen3:1.7b`; `qwen3.5:4b` is the slower, better option |
+| the real Jev (hosted) | a TypeSafe account and `TYPESAFE_API_KEY` from https://console.typesafe.ai/keys, and internet. The official SDK is optional (`./run -l 10 install-sdk`); plain HTTP works in all three languages |
+
+`./run -l 10 check` tells you which of these this machine has.
+
+**Starting from a bare machine?** On Ubuntu or Debian,
+[distrodeck](https://github.com/nikolareljin/distrodeck) installs and maintains the developer
+packages for you, and [NikOS](https://github.com/nikolareljin/nikos) turns Ubuntu 24.04 into a
+local-AI workstation (Ollama, llama.cpp, a Python AI stack) in one run. Either one covers the
+dependencies above before you run the setup script.
+
+---
+
 ## Quickstart
 
 Needs **Python 3.10+** (add **Node.js 22+** / **.NET 8 SDK** only for those ports). Node 18 and 20
 are both past end-of-life and no longer receive security fixes, so the ports target **Node 22**, with
 **Node 24 LTS** the better choice if you are installing fresh.
+
+Already cloned by hand? The manual steps:
 
 ```bash
 python -m venv venv && source venv/bin/activate    # Windows (PowerShell): .\venv\Scripts\Activate.ps1
