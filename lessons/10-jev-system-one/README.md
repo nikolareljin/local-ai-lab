@@ -60,6 +60,34 @@ makes:
 | `choice` | pick one of 2-255 labels | a probability per label, the top label, a confidence |
 | `score` | a rating on 2-10 ordered levels | a probability per level, a weighted score, a confidence |
 
+### The words this lesson uses
+
+Three of these are TypeSafe's own terms (**noul**, **choice**, **score**); the rest are ordinary
+words that mean something specific here.
+
+| Word | What it means here |
+|---|---|
+| **System One model** | A model that answers typed questions with probabilities instead of writing text. Named after "System 1", the fast, intuitive kind of thinking. |
+| **Jev** | TypeSafe's System One model. Hosted only; there is no local version. |
+| **state** | The thing being judged: here, one call transcript. It can be text or JSON. |
+| **question** | One judgement you want about the state. It has a type, `instructions` and `criteria`. TypeSafe also calls the question types *primitives*. |
+| **noul** | TypeSafe's word for a yes/no question whose answer is **not** a plain yes or no but the probability of yes: a number from 0 to 1. Near 1 is a strong yes, near 0 a strong no, near 0.5 means the model cannot tell. TypeSafe's docs do not explain the name; think of it as a boolean that admits it might be wrong. Example: "Does someone need help right now?" -> `0.93`. |
+| **choice** | A question whose answer is one label from a list you define, in no particular order (auto, home, health...). You get a probability for every label. |
+| **score** | A question whose answer is a level on an ordered scale you define (none, minor, moderate, major, catastrophic). You get a probability for every level, and a weighted average. |
+| **instructions** | The sentence that asks the question. |
+| **criteria** | The possible answers and what each one means: the labels of a choice, the levels of a score, or what counts as yes and no for a noul. |
+| **probabilities** | One number per option, adding up to 1: how likely the model thinks each answer is. |
+| **confidence** | One number, 0 to 1, summarising how lopsided those probabilities are. All the weight on one option is high confidence; spread evenly is low. |
+| **calibrated** | The probabilities can be taken at face value: of all the answers given with 0.8, about 8 in 10 are right. |
+| **threshold** | A number your code compares a probability with, for example "investigate when P(fraud signals) is 0.6 or more". |
+| **policy** | The code that turns answers into an action, using thresholds. It contains no model. |
+| **Brier score** | A grade for probabilities: the squared distance between what the model said and what was true. 0 is perfect; being certain and wrong costs 2. |
+| **token** | A piece of a word; language models read and write text in tokens. Writing them one by one is what makes a chat reply slow. |
+| **log-probability (logprob)** | How likely the model thought each possible next token was, as a logarithm. The local adapter turns the logprobs of the letters A, B, C... into the probabilities of the options. |
+| **adapter / simulated Jev** | This lesson's small local server. It accepts the same requests as Jev and answers with a local model through Ollama. It is an imitation for learning, not Jev. |
+| **recording (cassette)** | A saved set of real model replies that the demo replays, so it runs with no model installed. |
+| **trap** | A call written to be easy to get wrong: calm words for a serious event, loud words for a small one. |
+
 ### The same call, two ways
 
 This is call K-1004 from the lesson's data. The caller is very calm. The car is upside down.

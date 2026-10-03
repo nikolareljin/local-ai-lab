@@ -154,6 +154,33 @@
   <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>4</span></div>
 </section>
 
+<!-- vocabulary -->
+<section class="slide">
+  <div class="kicker">Vocabulary</div>
+  <h2>Noul, choice, score - and the other words we will use</h2>
+  <div class="two">
+    <div class="card hi">
+      <h3>noul <span class="pill">TypeSafe's word</span></h3>
+      <p>A yes/no question whose answer is <b>not</b> yes or no, but the <b>probability of yes</b>: 0 to 1.</p>
+      <p style="margin-top:8px">Near 1: a strong yes. Near 0: a strong no. Near 0.5: the model cannot tell.</p>
+      <p style="margin-top:8px">A boolean that admits it might be wrong. <i>Does someone need help right now?</i> -> 0.93</p>
+    </div>
+    <div>
+      <table class="prose">
+        <tr><td><b>choice</b></td><td>one label from an unordered list; a probability per label</td></tr>
+        <tr><td><b>score</b></td><td>a level on an ordered scale; a probability per level</td></tr>
+        <tr><td><b>state</b></td><td>the thing being judged: one call transcript</td></tr>
+        <tr><td><b>criteria</b></td><td>the possible answers, and what each means</td></tr>
+        <tr><td><b>confidence</b></td><td>how lopsided the probabilities are, 0 to 1</td></tr>
+        <tr><td><b>calibrated</b></td><td>"0.8" is right about 8 times in 10</td></tr>
+        <tr><td><b>policy</b></td><td>our code: probabilities + thresholds -> action</td></tr>
+        <tr><td><b>Brier score</b></td><td>a grade for probabilities; 0 is perfect</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>5</span></div>
+</section>
+
 <!-- 5 -->
 <section class="slide">
   <div class="kicker">The same call, two ways</div>
@@ -167,7 +194,7 @@
     <div><p class="small"><b>A local LLM asked for JSON</b> ({{LLM_MODEL}}, recorded) writes:</p><pre>{{LLM_REPLY}}</pre></div>
     <div><p class="small"><b>The simulated Jev</b> ({{JEV_MODEL}}, recorded) answers:</p><pre>{{JEV_REPLY}}</pre></div>
   </div>
-  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>5</span></div>
+  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>6</span></div>
 </section>
 
 <!-- 6 -->
@@ -184,7 +211,7 @@
     <tr><td><b>Speed, price</b> (TypeSafe's figures)</td><td>seconds; input and output tokens</td><td>70-500 ms; input tokens only</td></tr>
   </table>
   <div class="note">A good choice whenever the thing after the model is code. The wrong one whenever a person has to read the output.</div>
-  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>6</span></div>
+  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>7</span></div>
 </section>
 
 <!-- 7 -->
@@ -197,7 +224,7 @@
     <div class="card hi"><span class="num">3</span><h3>./run -l 10 check</h3><p>A yes/no table: Ollama, models, log-probabilities, key, SDK. Every "no" comes with the command that fixes it.</p></div>
   </div>
   <div class="note warn">Watch the name: <code>pip install qev</code> installs an unrelated project, nothing from TypeSafe. The official packages are <code>typesafe-sdk</code> and <code>@typesafe-ai/sdk</code>, pinned here.</div>
-  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>7</span></div>
+  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>8</span></div>
 </section>
 
 <!-- 8 -->
@@ -222,7 +249,7 @@ Authorization: Bearer $TYPESAFE_API_KEY
       <p class="muted small">noul: yes/no -> P(yes) · choice: 2-255 labels -> P per label · score: 2-10 levels -> P per level</p>
     </div>
   </div>
-  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>8</span></div>
+  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>9</span></div>
 </section>
 
 <!-- 9 -->
@@ -238,7 +265,7 @@ Authorization: Bearer $TYPESAFE_API_KEY
     <div class="card hi"><h3>What we get</h3><p>A valid option every time, and a real probability for each one. The official SDK cannot tell the difference.</p></div>
     <div class="card"><h3>What we do not get</h3><p>Jev's training: a small model is often 100% sure and wrong. And one call per question, not one pass for all of them.</p></div>
   </div>
-  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>9</span></div>
+  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>10</span></div>
 </section>
 
 <!-- 10 -->
@@ -267,7 +294,7 @@ Authorization: Bearer $TYPESAFE_API_KEY
       <p class="small muted" style="margin-top:10px">The labels judge what happened, not how loudly it was said.</p>
     </div>
   </div>
-  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>10</span></div>
+  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>11</span></div>
 </section>
 
 <!-- 11 -->
@@ -277,7 +304,7 @@ Authorization: Bearer $TYPESAFE_API_KEY
     <p class="big" style="margin: 22px 0;">The model answers. Our policy decides.</p>
     <p class="center muted">The model never says "send this to investigations". It says P(fraud signals) = 0.83.<br>Our code decides that 0.83 is enough.</p>
   </div>
-  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>11</span></div>
+  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>12</span></div>
 </section>
 
 <!-- 12 -->
@@ -301,7 +328,7 @@ any other new claim       -> assign adjuster</pre>
       <p>Move it and the behaviour changes - without retraining or re-prompting anything. Rules and written JSON are always 0 or 1: for them the knob is decorative.</p>
     </div>
   </div>
-  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>12</span></div>
+  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>13</span></div>
 </section>
 
 <!-- 13 -->
@@ -313,7 +340,7 @@ any other new claim       -> assign adjuster</pre>
     {{SCOREBOARD}}
   </table>
   <div class="note">Brier: 0 is perfect, 2 is certain and wrong. wrong / missed: honest callers investigated / suspicious claims not investigated. Measured on {{HARDWARE}}. No number on this slide is Jev's: the real Jev appears here once it is recorded with a key. {{MEDIA_NOTE}}</div>
-  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>13</span></div>
+  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>14</span></div>
 </section>
 
 <!-- 14 -->
@@ -325,7 +352,7 @@ any other new claim       -> assign adjuster</pre>
     {{KNOB}}
   </table>
   <div class="note">An engine with probabilities gives the business a dial. An engine without them gives it a switch.</div>
-  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>14</span></div>
+  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>15</span></div>
 </section>
 
 <!-- race -->
@@ -343,7 +370,7 @@ any other new claim       -> assign adjuster</pre>
     <div><p>A general chat model pays that prompt once per question. A model and a server built for this - one pass, many questions, nothing generated - is the part a laptop cannot simulate.</p>
     <p class="muted small">Measured 2026-10-03 on this lesson's laptop. TypeSafe quotes 70-500 ms for Jev; with a key, the race adds it as a third row.</p></div>
   </div>
-  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>15</span></div>
+  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>16</span></div>
 </section>
 
 <!-- 15 -->
@@ -358,7 +385,7 @@ any other new claim       -> assign adjuster</pre>
     <tr><td><b>Both</b></td><td>the LLM writes, the System One model checks</td><td>"does this drafted reply promise a payout?"</td></tr>
   </table>
   <div class="note">Poor fits for System One: anything that must be written, or explained to a person.</div>
-  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>16</span></div>
+  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>17</span></div>
 </section>
 
 <!-- 16 -->
@@ -385,7 +412,7 @@ any other new claim       -> assign adjuster</pre>
       <p class="muted small">Next: Lesson 11 · Microsoft Semantic Kernel - the Lesson 9 agent in C#.</p>
     </div>
   </div>
-  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>17</span></div>
+  <div class="foot"><span>Lesson 10 · Jev and System One models</span><span>18</span></div>
 </section>
 
 </body>
