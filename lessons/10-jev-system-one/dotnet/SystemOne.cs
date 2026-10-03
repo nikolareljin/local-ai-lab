@@ -91,17 +91,27 @@ public static class SystemOne
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(blob))).ToLowerInvariant()[..16];
     }
 
-    /// <summary>A wire response -> {question: Answer}, plus what was missing or malformed.</summary>
+    /// <summary>
+    /// Turn a System One response into {question: Answer}, plus what was missing or malformed.
+    ///
+    /// The three answer types arrive in three shapes. This gives them one: Pick is always a
+    /// label from Options() ("yes"/"no" for a noul, the level name for a score) and Probs maps
+    /// every label to its probability. The policy and the scorecard only see this shape, so
+    /// they cannot tell TypeSafe's Jev from a local adapter or the keyword rules.
+    /// With a real System One model the list of problems stays empty.
+    /// </summary>
     public static (Dictionary<string, Answer> Answers, List<string> Problems) ReadAnswers(Dict questions, object? response)
     {
         var answers = new Dictionary<string, Answer>();
         var problems = new List<string>();
+        // A reply that is not an object (or has no "answers" object) answers nothing.
         var got = response is Dict r0 && r0.Get("answers") is Dict g ? g : new Dict();
         foreach (var (name, value) in questions.Items)
         {
             var q = (Dict)value!;
             var kind = (string)q["type"]!;
             var labels = Options(q);
+            // The answer must be of the type that was asked: a noul for a noul, and so on.
             if (got.Get(name) is not Dict a || a.Get("type") as string != kind)
             {
                 problems.Add($"{name}: no {kind} answer");
@@ -112,6 +122,7 @@ public static class SystemOne
             double confidence;
             if (kind == "noul")
             {
+                // noul: one number, P(yes). Split it into yes/no so it looks like the other types.
                 var p = a.Get("noul");
                 if (!Py.IsProbability(p))
                 {
@@ -125,9 +136,11 @@ public static class SystemOne
             }
             else
             {
+                // choice and score: a probability per option.
                 var raw = a.Get("probabilities") is Dict r ? r : new Dict();
                 if (kind == "score")
                 {
+                    // A score's keys are level numbers ("0", "1", ...): translate them to level names.
                     var mapped = new Dict();
                     foreach (var (k, v) in raw.Items)
                     {
@@ -136,6 +149,7 @@ public static class SystemOne
                     }
                     raw = mapped;
                 }
+                // Valid means: exactly the question's options, each a real probability, summing to 1.
                 bool numeric = raw.Items.All(kv => Py.IsProbability(kv.Value));
                 bool sameSet = raw.Count == labels.Distinct().Count() && raw.Keys.All(labels.Contains);
                 if (!sameSet || !numeric || Math.Abs(Py.FSum(raw.Items.Select(kv => kv.Value)) - 1.0) > 0.01)
@@ -147,11 +161,11 @@ public static class SystemOne
                 object? chosen;
                 if (kind == "choice")
                 {
-                    chosen = a.Get("choice");
+                    chosen = a.Get("choice"); // the server names its pick
                 }
                 else
                 {
-                    var best = probs[0];
+                    var best = probs[0]; // a score has no "choice": take the most likely level
                     foreach (var kv in probs) if (kv.Value > best.Value) best = kv;
                     chosen = best.Key;
                 }
@@ -161,6 +175,7 @@ public static class SystemOne
                     continue;
                 }
                 pick = c;
+                // No usable confidence in the reply: fall back to the top probability.
                 confidence = Py.IsProbability(a.Get("confidence")) ? Py.Num(a["confidence"]) : probs.Max(kv => kv.Value);
             }
             answers[name] = new Answer(pick, probs, confidence);
@@ -214,18 +229,28 @@ public sealed class SystemOneClient
 {
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(120) };
 
-    /// <summary>POST one request; return (response, seconds).
+    /// <summary>
+    /// POST one System One request; return (response, seconds). This is the whole API:
+    ///
+    ///     POST {base}/v1/systemone
+    ///     Authorization: Bearer {TYPESAFE_API_KEY}
+    ///     {"model": "jev-latest", "state": "...", "questions": {...}}
+    ///
+    /// There is no official C# SDK, and none is needed: HttpClient is enough.
     /// A key is only ever sent to TypeSafe or to this machine: anything else is refused,
-    /// so a typo in TYPESAFE_BASE_URL cannot hand the key (or the calls) to a stranger.</summary>
+    /// so a typo in TYPESAFE_BASE_URL cannot hand the key (or the calls) to a stranger.
+    /// </summary>
     public async Task<(Dict Response, double Seconds)> PostAsync(string baseUrl, JsonObject body, string apiKey)
     {
         var root = baseUrl.TrimEnd('/');
+        // The destination rule comes first, before a request object even exists.
         if (!(root == SystemOne.TypeSafeUrl || SystemOne.IsLoopback(baseUrl)))
             throw new ArgumentException($"refusing {baseUrl}: only {SystemOne.TypeSafeUrl} or a loopback address");
         using var req = new HttpRequestMessage(HttpMethod.Post, root + SystemOne.Path)
         {
             Content = new StringContent(body.ToJsonString(), Encoding.UTF8, "application/json"),
         };
+        // The local adapter needs no key; TypeSafe does.
         if (apiKey.Length > 0) req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
         var started = Stopwatch.StartNew();
         string text;
@@ -235,6 +260,7 @@ public sealed class SystemOneClient
             text = await resp.Content.ReadAsStringAsync();
             if (!resp.IsSuccessStatusCode)
             {
+                // 401 bad key, 422 a malformed question, 429 rate limit: show what the server said.
                 var detail = text.Length > 300 ? text[..300] : text;
                 throw new InvalidOperationException($"HTTP {(int)resp.StatusCode} from {baseUrl}: {detail}");
             }

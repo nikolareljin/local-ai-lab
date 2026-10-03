@@ -554,8 +554,10 @@ const { answers } = await client.systemOne({ state: text, questions: {
 }});
 ```
 
-C# has no official SDK, so [`dotnet/SystemOne.cs`](./dotnet/SystemOne.cs) posts the same JSON with
-`HttpClient`. Point any of the three at the local adapter instead of TypeSafe by changing **one
+TypeSafe publishes SDKs for Python and JavaScript only. C# needs none: the API is one POST, so
+[`dotnet/SystemOne.cs`](./dotnet/SystemOne.cs) sends the same JSON with `HttpClient`, to the real
+Jev when `TYPESAFE_API_KEY` is set. ([`node/systemone.mjs`](./node/systemone.mjs) does the same
+with `fetch`, for anyone who prefers no SDK.) Point any of the three at the local adapter instead of TypeSafe by changing **one
 environment variable**:
 
 ```bash
@@ -597,6 +599,11 @@ built from parts you already had. What it does not have is Jev's training for th
 - **Speed.** Seconds on a laptop CPU, per question.
 
 The server binds to `127.0.0.1` and refuses anything else: it has no authentication.
+
+The same three steps exist in Node.js ([`node/local_adapter.mjs`](./node/local_adapter.mjs)) and
+C# ([`dotnet/LocalAdapter.cs`](./dotnet/LocalAdapter.cs)). They ask Ollama directly and build
+exactly the same prompt as the Python adapter; a test compares them. The HTTP server that speaks
+TypeSafe's API is the Python one.
 
 ## Concept 4 · The model answers; your policy decides
 
@@ -656,6 +663,8 @@ curl -s http://127.0.0.1:8765/v1/systemone -H 'Content-Type: application/json' -
 ./run -l 10 ask "Caller: I hit a deer. The car still drives, the headlight is gone." --backend local
 ./run -l 10 ask "Caller: Cancel everything unless it arrives before seven." --dataset media --backend local
 ./run -l 10 ask "Caller: I hit a deer." --backend keywords
+./run -l 10 --lang node ask "Caller: I hit a deer."       # the simulated Jev, from Node.js
+./run -l 10 --lang csharp ask "Caller: I hit a deer."     # and from C#
 ```
 
 ### Score engines on your machine - local and TypeSafe side by side
@@ -720,9 +729,16 @@ anything a keyword already decides.
 | | Python | Node.js | C# |
 |---|---|---|---|
 | demo (replay) | `python/jev.py` | `node/jev.mjs` | `dotnet/Program.cs` |
-| live call | `python/systemone.py`, official SDK | official SDK | `HttpClient` |
-| setup check, hello, live scoring, adapter server | `python/` | - | - |
-| tests | `python/test_jev.py` | demo byte-diff | demo byte-diff |
+| the API by hand (one POST) | `python/systemone.py` | `node/systemone.mjs` | `dotnet/SystemOne.cs` |
+| official SDK | `python/sdk_example.py` | `node/sdk_example.mjs` | none exists: `HttpClient` |
+| simulated Jev (ask a local model) | `python/local_adapter.py` | `node/local_adapter.mjs` | `dotnet/LocalAdapter.cs` |
+| policy, scorecard, JSON parsing | `python/policy.py`, `scorecard.py`, `engines.py` | in `node/jev.mjs` | in `dotnet/Program.cs` |
+| tools: setup check, hello, race, live scoring, recording, the server, the web form | `python/` | - | - |
+| tests | `python/test_jev.py` | demo byte-diff, prompt parity | demo byte-diff, prompt parity |
+
+The lesson page has a language switch: every code step and every per-language command (`demo`,
+`ask`, `install-sdk`, `sdk`, `test`) shows that language's own code. The lesson's tools are one
+Python program and are the same whichever language you read.
 
 All three print the same scorecard, byte for byte.
 

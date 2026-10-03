@@ -114,18 +114,32 @@ function isProbability(v) {
   return Number.isFinite(x) && x >= 0 && x <= 1;
 }
 
+/**
+ * Turn a System One response into { question: { pick, probs, confidence } }.
+ *
+ * The three answer types arrive in three shapes. This gives them one: `pick` is always a
+ * label from options() ("yes"/"no" for a noul, the level name for a score) and `probs` maps
+ * every label to its probability. The policy and the scorecard only ever see this shape, so
+ * they cannot tell TypeSafe's Jev from the local adapter or the keyword rules.
+ *
+ * An answer that is missing or does not match its question is left out and reported in
+ * `problems`. With a real System One model that list stays empty.
+ */
 function readAnswers(questions, response) {
   const answers = {}, problems = [];
+  // A reply that is not an object (or has no "answers" object) answers nothing.
   const got = isDict(response) && isDict(response.answers) ? response.answers : {};
   for (const [name, q] of Object.entries(questions)) {
     const a = Object.hasOwn(got, name) ? got[name] : undefined;
     const labels = options(q);
+    // The answer must be of the type that was asked: a noul for a noul, and so on.
     if (!isDict(a) || a.type !== q.type) {
       problems.push(`${name}: no ${q.type} answer`);
       continue;
     }
     let pick, probs, confidence;
     if (q.type === "noul") {
+      // noul: one number, P(yes). Split it into yes/no so it looks like the other types.
       if (!isProbability(a.noul)) {
         problems.push(`${name}: noul must be a number in [0, 1]`);
         continue;
@@ -135,14 +149,17 @@ function readAnswers(questions, response) {
       pick = p >= 0.5 ? "yes" : "no";
       confidence = Math.max(p, 1 - p);
     } else {
+      // choice and score: a probability per option.
       let raw = isDict(a.probabilities) ? a.probabilities : {};
       if (q.type === "score") {
+        // A score's keys are level numbers ("0", "1", ...): translate them to level names.
         const mapped = {};
         for (const [k, v] of Object.entries(raw)) {
           if (/^[0-9]+$/.test(k) && Number(k) < labels.length) mapped[labels[Number(k)]] = v;
         }
         raw = mapped;
       }
+      // Valid means: exactly the question's options, each a real probability, summing to 1.
       const keys = Object.keys(raw);
       const sameSet = keys.length === new Set(labels).size && keys.every((k) => labels.includes(k));
       const numeric = Object.values(raw).every(isProbability);
@@ -153,15 +170,16 @@ function readAnswers(questions, response) {
       probs = {};
       for (const label of labels) probs[label] = Number(num(raw[label]));
       if (q.type === "choice") {
-        pick = Object.hasOwn(a, "choice") ? a.choice : null;
+        pick = Object.hasOwn(a, "choice") ? a.choice : null; // the server names its pick
       } else {
-        pick = labels[0];
+        pick = labels[0]; // a score has no "choice": take the most likely level
         for (const label of labels) if (probs[label] > probs[pick]) pick = label;
       }
       if (!labels.includes(pick)) {
         problems.push(`${name}: ${repr(pick)} is not an option`);
         continue;
       }
+      // No usable confidence in the reply: fall back to the top probability.
       const c = Object.hasOwn(a, "confidence") ? a.confidence : null;
       confidence = isProbability(c) ? Number(num(c)) : Math.max(...Object.values(probs));
     }
@@ -207,8 +225,17 @@ function keywordsResponse(body, dataset = DEFAULT_DATASET) {
   return { model: "keywords", answers, usage: {} };
 }
 
+/**
+ * Read what a chat model wrote when asked for JSON, the way most code does it today.
+ *
+ * Nothing guarantees the text is JSON, or that a value is one of the options. A field
+ * the model got wrong, or left out, is a type error: it is reported and that question
+ * stays unanswered. Every valid answer gets probability 1.0 - a written answer carries
+ * no probability to put a threshold on.
+ */
 function parseLlmJson(body, text) {
   const errors = [];
+  // Models wrap JSON in prose or code fences: take the outermost {...} and try to parse it.
   const match = /\{.*\}/s.exec(text);
   let written = null;
   try {
@@ -221,11 +248,12 @@ function parseLlmJson(body, text) {
   for (const [name, q] of Object.entries(body.questions)) {
     let value = Object.hasOwn(written, name) ? written[name] : null;
     if (typeof value === "boolean") value = value ? "yes" : "no"; // {"emergency": true} is a fair reading
+    // "very bad" for a question whose levels are none..catastrophic is not an answer.
     if (typeof value !== "string" || !options(q).includes(strip(value).toLowerCase())) {
       errors.push(`${name}=${repr(value)}`);
       continue;
     }
-    answers[name] = certain(q, strip(value).toLowerCase());
+    answers[name] = certain(q, strip(value).toLowerCase()); // all the weight on its pick
   }
   return [{ model: "llm-json", answers, usage: {} }, errors];
 }
@@ -241,18 +269,31 @@ const REFUND = 0.8;     // P(wants money back) to draft a refund for approval
 
 const prob = (answers, name, label, dflt = 0.0) => answers[name]?.probs?.[label] ?? dflt;
 
-/** One action per insurance call, from the answers to the six questions. */
+/**
+ * One action per insurance call, from the answers to the six questions.
+ *
+ * The model never chooses the action. It says P(fraud signals) = 0.83; this function
+ * decides that 0.83 is enough. Moving a threshold changes what the business does without
+ * retraining or re-prompting anything. The order of the rules is the priority.
+ */
 function decide(answers, { siu = SIU, emergency = EMERGENCY, fast_track: fastTrack = FAST_TRACK, confident = CONFIDENT } = {}) {
   const intent = answers.intent;
-  if (prob(answers, "emergency", "yes") >= emergency) return "dispatch emergency help"; // first, whatever else
-  if (answers.emergency === undefined || intent === undefined || intent.confidence < confident) return "human agent"; // never guess
+  // 1. Someone needs help now: that comes first, whatever else the call is about.
+  if (prob(answers, "emergency", "yes") >= emergency) return "dispatch emergency help";
+  // 2. No usable answer, or the model is unsure what the caller wants: a person, never a guess.
+  if (answers.emergency === undefined || intent === undefined || intent.confidence < confident) return "human agent";
+  // 3. Complaints and cancellations are conversations, not forms.
   if (["complaint", "cancel_policy"].includes(intent.pick)) return "human agent";
+  // 4. Questions about a claim or about cover can be answered without a claim handler.
   if (["claim_status", "coverage_question"].includes(intent.pick)) return "self-service answer";
-  // a new claim
+  // 5. What is left is a new claim. A missing fraud answer counts as suspicious (default 1.0).
   const pFraud = prob(answers, "fraud_signals", "yes", 1.0);
   if (pFraud >= siu) return "special investigations";
+  // 6. Pay without a human only when the loss is small, nobody needs to inspect it,
+  //    and the claim is clean enough: P(no fraud) >= FAST_TRACK.
   const small = prob(answers, "severity", "none") + prob(answers, "severity", "minor") > 0.5;
   if (small && prob(answers, "needs_adjuster", "yes", 1.0) < 0.5 && 1 - pFraud >= fastTrack) return "fast-track payout";
+  // 7. Everything else is looked at by an adjuster.
   return "assign adjuster";
 }
 
@@ -287,11 +328,19 @@ function goldAnswers(questions, labels) {
   return out;
 }
 
+/**
+ * The Brier score of one answer: the squared distance between the probabilities and the truth.
+ *
+ * 0 is perfect. Certain and wrong costs 2 (1 on the wrong option, 1 on the right one).
+ * An unanswered question is scored as "every option equally likely". Accuracy only asks
+ * whether the top answer was right; this also asks whether the engine knew how sure to be,
+ * which is what a threshold in the policy relies on.
+ */
 function brier(q, answer, truth) {
   const labels = options(q);
   return fsum(labels.map((label) => {
     const p = answer === undefined ? 1.0 / labels.length : answer.probs[label];
-    const d = p - (label === truth ? 1.0 : 0.0);
+    const d = p - (label === truth ? 1.0 : 0.0); // the truth is 1 on the right label, 0 elsewhere
     return d * d;
   }));
 }
@@ -492,4 +541,10 @@ function main(argv) {
   }
 }
 
-process.exitCode = main(process.argv.slice(2));
+// The other Node files of this lesson reuse the parts that read answers and decide.
+export { DEFAULT_DATASET, POLICIES, buildRequest, loadDataset, options, readAnswers };
+
+// Run the demo only when this file is the program, not when it is imported.
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  process.exitCode = main(process.argv.slice(2));
+}

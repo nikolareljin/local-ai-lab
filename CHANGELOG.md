@@ -18,7 +18,9 @@ All notable changes to this project are documented here. This project follows
   adapter on qwen3:1.7b and qwen3.5:4b, scored on two fake call centers (36 calls to an insurer's
   claims line, 24 to a newspaper's subscriber line) for accuracy, typed answers, Brier score and the
   cost of wrong investigations. A policy turns probabilities into actions. Recorded replies make the demo
-  offline and byte-identical in all three languages; `./run -l 10 live --backend
+  offline and byte-identical in all three languages, the simulated Jev can be asked from each
+  (`./run -l 10 --lang node|csharp ask`), and every code step on the lesson page has its own
+  Python, Node.js and C# version; `./run -l 10 live --backend
   keywords,llm-json,local,typesafe` scores any mix live, side by side. Lesson PDF and a slide deck
   (`docs/pdf/LESSON10-SLIDES.pdf`, built by `lessons/10-jev-system-one/slides/build.py`).
 - Roadmap: five planned lessons listed in `roadmap/README.md` (MongoDB vector search, LoRA,

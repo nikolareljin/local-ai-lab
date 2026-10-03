@@ -536,12 +536,15 @@ def _symbol_range(path: Path, symbol: str) -> str:
     start = next(k for k, line in enumerate(lines)
                  if signature.search(line) and not line.rstrip().endswith(";")
                  and re.match(r"\s*(export |async |public |private |static |function )", line))
+    top = start  # the comment block above the signature belongs to the snippet
+    while top > 0 and re.match(r"\s*(///|//|/\*\*|\*)", lines[top - 1]):
+        top -= 1
     depth, opened = 0, False
     for k in range(start, len(lines)):  # JavaScript and C#: the matching closing brace
         depth += lines[k].count("{") - lines[k].count("}")
         opened = opened or "{" in lines[k]
         if opened and depth == 0:
-            return f"{start + 1}-{k + 1}"
+            return f"{top + 1}-{k + 1}"
     raise AssertionError(f"{symbol}: no closing brace in {path.name}")
 
 
@@ -559,21 +562,66 @@ def test_lesson_code_steps_show_the_function_they_name():
         assert el["lines"] == want, f"{el['file']} {el['symbol']}: lines should be {want}"
 
 
-def test_a_step_with_ports_shows_each_language_its_own_code():
-    """A grouped code step has one variant per language of the lesson, each from that
-    language's sources. An ungrouped step is Python-only on purpose (the adapter)."""
+def test_every_step_shows_each_language_its_own_code():
+    """No step may show Python to a reader who picked Node.js or C#.
+
+    Every code step is a group with one variant per language of the lesson, each from that
+    language's own folder. Commands that exist per language (demo, ask, the SDK, the test)
+    are groups too. The only single-language commands are the lesson's Python tools.
+    """
     lesson = json.loads((HERE.parent / "lesson.json").read_text(encoding="utf-8"))
+    folder = {"python": "python/", "node": "node/", "csharp": "dotnet/"}
     groups: dict[str, dict] = {}
     for el in lesson["elements"]:
-        if el.get("type") == "code" and el.get("group"):
+        if el.get("type") == "code":
+            assert el.get("group"), f"code step {el.get('title')} has no language variants"
             groups.setdefault(el["group"], {})[el["lang"]] = el["file"]
-    assert len(groups) >= 6
+    assert len(groups) == 8
     for name, variants in groups.items():
         assert set(variants) == set(lesson["languages"]), name
-        assert variants["python"].startswith("python/")
-        assert variants["node"].startswith("node/") and variants["csharp"].startswith("dotnet/")
-    alone = [el for el in lesson["elements"] if el.get("type") == "code" and not el.get("group")]
-    assert {el["file"] for el in alone} == {"python/local_adapter.py"}
+        for lang, file in variants.items():
+            assert file.startswith(folder[lang]), (name, lang, file)
+    commands: dict[str, set] = {}
+    for el in lesson["elements"]:
+        if el.get("type") == "command" and el.get("action"):
+            commands.setdefault(el["action"], set()).add(el["lang"])
+    for action in ("demo", "ask", "install-sdk", "sdk", "test"):
+        assert commands[action] == set(lesson["languages"]), action
+    tools = {a for a, langs in commands.items() if langs == {"python"}}
+    assert tools == {"check", "hello", "race", "live", "serve", "record", "web"}
+
+
+def _port_command(lang: str) -> list[str] | None:
+    """How to run a port's adapter hooks, or None when that toolchain is not installed."""
+    import shutil
+    if lang == "node":
+        return ["node", "node/local_adapter.mjs"] if shutil.which("node") else None
+    dotnet = shutil.which("dotnet") or str(Path.home() / ".dotnet" / "dotnet")
+    if not Path(dotnet).exists():
+        return None
+    return [dotnet, "run", "--project", "dotnet", "-c", "Release", "--nologo", "--"]
+
+
+@pytest.mark.parametrize("lang", ["node", "csharp"])
+def test_the_ports_build_the_same_prompt_and_probabilities_as_python(lang):
+    """The simulated Jev exists in three languages; they must put the same question to the model."""
+    base = _port_command(lang)
+    if base is None:
+        pytest.skip(f"{lang} toolchain not installed")
+    run = lambda args: json.loads(subprocess.run(  # noqa: E731
+        base + args, cwd=HERE.parent, capture_output=True, text=True, check=True).stdout)
+    for dataset, questions, records in (("insurance", QUESTIONS, RECORDS), ("media", MEDIA_Q, MEDIA)):
+        text = records[-1]["text"]
+        for name, q in questions.items():
+            args = (["--dataset", dataset, "--prompt", name, text] if lang == "node"
+                    else ["prompt", dataset, name, text])
+            assert run(args) == local_adapter.prompt_for(text, q), (dataset, name)
+    top = [("A", -0.1), (" a", -2.0), ("B", -1.0), ("The", -0.5)]
+    want = local_adapter.letter_probabilities([{"token": t, "logprob": p} for t, p in top], 3)
+    args = (["--probs", json.dumps([{"token": t, "logprob": p} for t, p in top]), "3"] if lang == "node"
+            else ["probs", "3"] + [x for t, p in top for x in (t, str(p))])
+    assert run(args) == pytest.approx(want)
+
 
 
 def test_only_typesafe_keys_are_read_from_dotenv(tmp_path, monkeypatch):

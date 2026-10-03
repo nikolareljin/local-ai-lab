@@ -49,7 +49,7 @@
       "type": "command",
       "kicker": "Setup",
       "title": "Before you start",
-      "body": "**The demo needs nothing.** For the local session you need [Ollama](https://ollama.com/download) and `qwen3:1.7b`. For the one real call you need a TypeSafe key: log in or create an account at the [Playground](https://console.typesafe.ai/playground), create a key on the [keys page](https://console.typesafe.ai/keys), and `export TYPESAFE_API_KEY=...` (the Python commands also read it from the repo's `.env`). Jev is in early access: if signing up puts you on a waitlist, carry on - every step runs without a key, on the simulated Jev. The [quick start](https://docs.typesafe.ai/introduction/quickstart) and the [models page](https://docs.typesafe.ai/models) are worth a skim. Run everything from the repo root:",
+      "body": "**The demo needs nothing.** For the local session you need [Ollama](https://ollama.com/download) and `qwen3:1.7b`. For the one real call you need a TypeSafe key: log in or create an account at the [Playground](https://console.typesafe.ai/playground), create a key on the [keys page](https://console.typesafe.ai/keys), and `export TYPESAFE_API_KEY=...` (the Python commands also read it from the repo's `.env`). Jev is in early access: if signing up puts you on a waitlist, carry on - every step runs without a key, on the simulated Jev. The [quick start](https://docs.typesafe.ai/introduction/quickstart) and the [models page](https://docs.typesafe.ai/models) are worth a skim. Run everything from the repo root:\n\nThe language buttons change the code you read and the demo, adapter and SDK examples you run. The lesson's tools - `check`, `hello`, `race`, `live`, `record` and the web form - are one Python program and stay the same in every language.",
       "shell": "ollama pull qwen3:1.7b            # the local model (1.4 GB)\nollama pull qwen3.5:4b            # optional: slower, better (3.4 GB)\nexport TYPESAFE_API_KEY=...       # optional: only the one real call needs it\n./run -l 10 check                 # is this machine ready?"
     },
     {
@@ -89,24 +89,24 @@
       "lines": "221-243",
       "kicker": "How it works",
       "title": "The whole API: one POST",
-      "body": "`POST /v1/systemone` with `{model, state, questions}` and a Bearer key. Python uses the standard library and C# uses `HttpClient`; in Node.js the official SDK is the client, so its tab shows the destination check that runs before the SDK is given a URL.",
+      "body": "`POST /v1/systemone` with `{model, state, questions}` and a Bearer key. No SDK is needed in any language: the standard library in Python, `fetch` in Node.js, `HttpClient` in C#.",
       "why": "The function refuses any destination except `https://api.typesafe.ai` or a loopback address. A typo in `TYPESAFE_BASE_URL` cannot send your key - or your callers - to a stranger.",
       "symbol": "post",
       "group": "post"
     },
     {
       "type": "code",
-      "file": "node/sdk_example.mjs",
+      "file": "node/systemone.mjs",
       "lang": "node",
-      "lines": "29-48",
-      "symbol": "isLoopback",
+      "lines": "54-79",
+      "symbol": "post",
       "group": "post"
     },
     {
       "type": "code",
       "file": "dotnet/SystemOne.cs",
       "lang": "csharp",
-      "lines": "220-248",
+      "lines": "232-274",
       "symbol": "PostAsync",
       "group": "post"
     },
@@ -126,7 +126,7 @@
       "type": "code",
       "file": "node/jev.mjs",
       "lang": "node",
-      "lines": "117-171",
+      "lines": "117-189",
       "symbol": "readAnswers",
       "group": "read-answers"
     },
@@ -134,7 +134,7 @@
       "type": "code",
       "file": "dotnet/SystemOne.cs",
       "lang": "csharp",
-      "lines": "95-169",
+      "lines": "94-184",
       "symbol": "ReadAnswers",
       "group": "read-answers"
     },
@@ -154,7 +154,7 @@
       "type": "code",
       "file": "node/sdk_example.mjs",
       "lang": "node",
-      "lines": "63-81",
+      "lines": "39-57",
       "symbol": "marker:",
       "group": "sdk"
     },
@@ -162,7 +162,7 @@
       "type": "code",
       "file": "dotnet/Program.cs",
       "lang": "csharp",
-      "lines": "424-461",
+      "lines": "457-492",
       "symbol": "Ask",
       "group": "sdk"
     },
@@ -173,9 +173,26 @@
       "lines": "52-68",
       "kicker": "How it works",
       "title": "Making a local LLM answer like Jev",
-      "body": "Each question becomes a lettered multiple-choice prompt, with the transcript fenced as data and an instruction to ignore instructions inside it (Lesson 4). Two callers in the data read such instructions out loud. The adapter is written in Python only; Node.js and C# reach it over HTTP like any System One server.",
+      "body": "Each question becomes a lettered multiple-choice prompt, with the transcript fenced as data and an instruction to ignore instructions inside it (Lesson 4). Two callers in the data read such instructions out loud. All three languages build exactly the same prompt; a test compares them.",
       "why": "This is the simulated part. The adapter serves the same API, so the SDK works against it unchanged, but the model was never trained for this. It is a way to learn the idea locally, not a stand-in for Jev's quality.",
-      "symbol": "prompt_for"
+      "symbol": "prompt_for",
+      "group": "adapter-prompt"
+    },
+    {
+      "type": "code",
+      "file": "node/local_adapter.mjs",
+      "lang": "node",
+      "lines": "34-60",
+      "symbol": "promptFor",
+      "group": "adapter-prompt"
+    },
+    {
+      "type": "code",
+      "file": "dotnet/LocalAdapter.cs",
+      "lang": "csharp",
+      "lines": "37-66",
+      "symbol": "PromptFor",
+      "group": "adapter-prompt"
     },
     {
       "type": "code",
@@ -184,9 +201,26 @@
       "lines": "83-98",
       "kicker": "How it works",
       "title": "One token, a probability per option",
-      "body": "The model may write exactly one token. Ollama returns the log-probabilities of the top 20 candidates for it; each option gets the probability of its letter, renormalised. One short forward pass per question. (Python only, like the rest of the adapter.)",
+      "body": "The model may write exactly one token. Ollama returns the log-probabilities of the top 20 candidates for it; each option gets the probability of its letter, renormalised. One short forward pass per question.",
       "why": "Jev answers all the questions of a request in one pass. The adapter needs one call per question - six per insurance call - and a small model is often 100% sure and wrong. The scorecard measures both.",
-      "symbol": "letter_probabilities"
+      "symbol": "letter_probabilities",
+      "group": "adapter-letters"
+    },
+    {
+      "type": "code",
+      "file": "node/local_adapter.mjs",
+      "lang": "node",
+      "lines": "62-81",
+      "symbol": "letterProbabilities",
+      "group": "adapter-letters"
+    },
+    {
+      "type": "code",
+      "file": "dotnet/LocalAdapter.cs",
+      "lang": "csharp",
+      "lines": "68-89",
+      "symbol": "LetterProbabilities",
+      "group": "adapter-letters"
     },
     {
       "type": "code",
@@ -204,7 +238,7 @@
       "type": "code",
       "file": "node/jev.mjs",
       "lang": "node",
-      "lines": "245-257",
+      "lines": "272-298",
       "symbol": "decide",
       "group": "policy"
     },
@@ -212,7 +246,7 @@
       "type": "code",
       "file": "dotnet/Program.cs",
       "lang": "csharp",
-      "lines": "173-186",
+      "lines": "185-212",
       "symbol": "Decide",
       "group": "policy"
     },
@@ -232,7 +266,7 @@
       "type": "code",
       "file": "node/jev.mjs",
       "lang": "node",
-      "lines": "210-231",
+      "lines": "228-259",
       "symbol": "parseLlmJson",
       "group": "parse-llm"
     },
@@ -240,7 +274,7 @@
       "type": "code",
       "file": "dotnet/Program.cs",
       "lang": "csharp",
-      "lines": "129-158",
+      "lines": "132-171",
       "symbol": "ParseLlmJson",
       "group": "parse-llm"
     },
@@ -260,7 +294,7 @@
       "type": "code",
       "file": "node/jev.mjs",
       "lang": "node",
-      "lines": "290-297",
+      "lines": "331-346",
       "symbol": "brier",
       "group": "brier"
     },
@@ -268,7 +302,7 @@
       "type": "code",
       "file": "dotnet/Program.cs",
       "lang": "csharp",
-      "lines": "225-234",
+      "lines": "251-268",
       "symbol": "Brier",
       "group": "brier"
     },
@@ -335,8 +369,25 @@
       "display": "./run -l 10 ask \"Caller: I hit a deer. The car still drives.\" --backend local",
       "shell": "python python/jev.py ask",
       "kicker": "Try it",
-      "title": "One call, any engine",
-      "body": "Prints the probability of every option for every question, and the action the policy takes. `--backend keywords`, `llm-json`, `local` or `typesafe`; `--dataset media` for the newspaper questions."
+      "title": "One call, live, in your language",
+      "body": "Ask the simulated Jev about one call and see the probability of every option for every question, then the action the policy takes. Python's `ask` also takes `--backend keywords`, `llm-json` or `typesafe`, and `--dataset media`. Node.js and C# have their own adapter (`node/local_adapter.mjs`, `dotnet/LocalAdapter.cs`) and ask the same local model.",
+      "group": "ask"
+    },
+    {
+      "type": "command",
+      "action": "ask",
+      "lang": "node",
+      "group": "ask",
+      "display": "./run -l 10 --lang node ask \"Caller: I hit a deer. The car still drives.\"",
+      "shell": "node node/local_adapter.mjs"
+    },
+    {
+      "type": "command",
+      "action": "ask",
+      "lang": "csharp",
+      "group": "ask",
+      "display": "./run -l 10 --lang csharp ask \"Caller: I hit a deer. The car still drives.\"",
+      "shell": "dotnet run --project dotnet -c Release --nologo -- ask-local"
     },
     {
       "type": "command",
@@ -357,8 +408,25 @@
       "display": "./run -l 10 install-sdk",
       "shell": "python python/install_sdk.py",
       "kicker": "Try it",
-      "title": "Install the official SDK, hash-checked",
-      "body": "`typesafe-sdk` 0.7.2 and its dependencies into `lessons/10-jev-system-one/.venv-sdk`, every file checked against a sha256 in `requirements-sdk.txt`."
+      "title": "Install the official SDK, checked",
+      "body": "**Python:** `typesafe-sdk` 0.7.2 and its dependencies into `lessons/10-jev-system-one/.venv-sdk`, every file checked against a sha256 in `requirements-sdk.txt`. **Node.js:** `@typesafe-ai/sdk` 0.6.0 exactly as the lockfile pins it, then `npm audit signatures` verifies the registry signature and the provenance attestation. **C#:** TypeSafe publishes no C# SDK, and none is needed - `HttpClient` is in the standard library, so there is nothing to install.",
+      "group": "install-sdk"
+    },
+    {
+      "type": "command",
+      "action": "install-sdk",
+      "lang": "node",
+      "group": "install-sdk",
+      "display": "./run -l 10 --lang node install-sdk",
+      "shell": "npm --prefix node ci --ignore-scripts && npm --prefix node audit signatures"
+    },
+    {
+      "type": "command",
+      "action": "install-sdk",
+      "lang": "csharp",
+      "group": "install-sdk",
+      "display": "./run -l 10 --lang csharp install-sdk   # nothing to install: this only builds",
+      "shell": "dotnet build dotnet -c Release --nologo"
     },
     {
       "type": "command",
@@ -368,8 +436,25 @@
       "display": "./run -l 10 sdk \"Caller: someone dented my parked car, I have a photo\"",
       "shell": "python python/sdk_example.py",
       "kicker": "Try it",
-      "title": "Call Jev with the official SDK",
-      "body": "Needs `TYPESAFE_API_KEY` for TypeSafe, or `TYPESAFE_BASE_URL=http://127.0.0.1:8765` for the local adapter. Fake data only when it goes to TypeSafe."
+      "title": "Call Jev from your language",
+      "body": "Needs `TYPESAFE_API_KEY` for TypeSafe, or `TYPESAFE_BASE_URL=http://127.0.0.1:8765` for the local adapter (`./run -l 10 serve`). Python and Node.js use the official SDK; C# sends the same request with `HttpClient`. Fake data only when it goes to TypeSafe.",
+      "group": "sdk-run"
+    },
+    {
+      "type": "command",
+      "action": "sdk",
+      "lang": "node",
+      "group": "sdk-run",
+      "display": "./run -l 10 --lang node sdk \"Caller: someone dented my parked car, I have a photo\"",
+      "shell": "node node/sdk_example.mjs"
+    },
+    {
+      "type": "command",
+      "action": "sdk",
+      "lang": "csharp",
+      "group": "sdk-run",
+      "display": "./run -l 10 --lang csharp sdk \"Caller: someone dented my parked car, I have a photo\"",
+      "shell": "dotnet run --project dotnet -c Release --nologo -- ask"
     },
     {
       "type": "command",
@@ -391,7 +476,24 @@
       "shell": "python -m pytest -q python/test_jev.py",
       "kicker": "Try it",
       "title": "Confirm it with the tests",
-      "body": "Offline: a fake Ollama stands in for the model, and a fixture fails any test that tries to leave the machine. The test that runs the official SDK against the adapter is skipped unless the SDK is installed."
+      "body": "Python: offline tests; a fake Ollama stands in for the model, and a fixture fails any test that tries to leave the machine. Node.js and C#: the demo must print the same bytes as the committed output, which Python's tests pin.",
+      "group": "test"
+    },
+    {
+      "type": "command",
+      "action": "test",
+      "lang": "node",
+      "group": "test",
+      "display": "./run -l 10 --lang node test",
+      "shell": "node node/jev.mjs | cmp - expected-output.txt && echo 'Node.js prints the same bytes as the committed output'"
+    },
+    {
+      "type": "command",
+      "action": "test",
+      "lang": "csharp",
+      "group": "test",
+      "display": "./run -l 10 --lang csharp test",
+      "shell": "dotnet run --project dotnet -c Release --nologo | cmp - expected-output.txt && echo 'C# prints the same bytes as the committed output'"
     },
     {
       "type": "command",
