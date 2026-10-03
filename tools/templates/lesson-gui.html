@@ -246,13 +246,15 @@
       wrap.className = "busy"; wrap.id = "busy"; wrap.setAttribute("role", "status");
       const spin = document.createElement("div"); spin.className = "spinner";
       const text = document.createElement("span"); text.textContent = "Working...";
-      wrap.append(spin, text);
+      // The seconds are for the eye only: a screen reader would announce every tick.
+      const secs = document.createElement("span"); secs.setAttribute("aria-hidden", "true");
+      wrap.append(spin, text, secs);
       box.appendChild(wrap);
       $("breakdown").classList.add("stale");  // the old numbers stay readable, but dimmed
       $("go").classList.add("working");
       clearInterval(busyTick);
       busyTick = setInterval(() => {
-        text.textContent = "Working... " + Math.round((Date.now() - started) / 1000) + " s";
+        secs.textContent = Math.round((Date.now() - started) / 1000) + " s";
       }, 1000);
     }
     function startBusy(now) {

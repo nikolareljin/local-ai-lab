@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -42,6 +43,20 @@ def test_dry_run_changes_nothing(tmp_path):
     assert "would run: git clone --recurse-submodules" in out.stdout
     assert "sudo" not in out.stdout  # never without --with-system-packages
     assert list(tmp_path.iterdir()) == []
+
+
+def test_python_without_venv_is_reported_before_anything_is_cloned(tmp_path):
+    """Debian's python3 has no venv module until python3-venv is installed."""
+    shadow = tmp_path / "shadow"
+    shadow.mkdir()
+    (shadow / "ensurepip.py").write_text("raise ImportError('no ensurepip here')\n")
+    work = tmp_path / "work"
+    work.mkdir()
+    out = subprocess.run(["bash", str(SETUP), "--models", "none"], cwd=work, capture_output=True,
+                         text=True, timeout=60, env={**os.environ, "PYTHONPATH": str(shadow)})
+    assert out.returncode == 1
+    assert "venv module" in out.stderr and "python3-venv" in out.stderr
+    assert list(work.iterdir()) == []
 
 
 def test_ps1_and_sh_offer_the_same_options():

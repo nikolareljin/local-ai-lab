@@ -728,6 +728,20 @@ def test_ask_and_live_limits_fail_cleanly(monkeypatch, capsys):
         jev.main(["live", "--backend", "keywords", "--limit", "-1"])
 
 
+def test_ask_labels_the_adapter_as_simulated_in_every_language(monkeypatch):
+    """The stand-in must never read as the real Jev, whichever port printed it."""
+    monkeypatch.setattr(jev, "run_live", lambda backend, body, model, dataset: {
+        "response": engines.keywords_response(body, dataset), "seconds": 0.0, "calls": 6})
+    out = io.StringIO()
+    assert jev.ask("Caller: hello", "local", "qwen3:1.7b", out=out) == 0
+    header = "Jev-like adapter (qwen3:1.7b, simulated)  "
+    assert out.getvalue().startswith(header)
+    node = (HERE.parent / "node" / "local_adapter.mjs").read_text()
+    csharp = (HERE.parent / "dotnet" / "Program.cs").read_text()
+    assert "Jev-like adapter (${model}, simulated)  " in node
+    assert '$"Jev-like adapter ({model}, simulated)"' in csharp
+
+
 def test_keyword_rules_match_at_the_start_of_a_word():
     rules = [["digital_access", ["app"]], ["delivery", [""]]]
     assert engines._rule_pick("what happened to my paper", rules) == "delivery"

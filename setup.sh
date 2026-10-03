@@ -80,10 +80,12 @@ done
 case "$MODELS" in none|small|all) ;; *) die "--models must be none, small or all" ;; esac
 
 # --------------------------------------------------------------------------- 1. tools
+# Python 3.10+ that can also build a virtualenv. Debian and Ubuntu ship python3 without
+# the venv module (it is the python3-venv package), and step 3 would fail halfway.
 python_ok() {
   local py
   for py in python3 python; do
-    if have "$py" && "$py" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' 2>/dev/null; then
+    if have "$py" && "$py" -c 'import sys, venv, ensurepip; sys.exit(0 if sys.version_info >= (3, 10) else 1)' 2>/dev/null; then
       PYTHON="$py"; return 0
     fi
   done
@@ -108,7 +110,7 @@ if ! have git || ! python_ok; then
     [[ $DRY_RUN -eq 1 ]] || { have git && python_ok; } || die "git or Python 3.10+ is still missing after the install"
   else
     have git  || warn "git is missing."
-    python_ok || warn "Python 3.10 or newer is missing."
+    python_ok || warn "Python 3.10 or newer, with its venv module, is missing."
     warn "Install them, or run again with --with-system-packages:"
     warn "  Debian/Ubuntu: sudo apt-get install -y git python3 python3-venv python3-pip"
     warn "  Fedora:        sudo dnf install -y git python3 python3-pip"

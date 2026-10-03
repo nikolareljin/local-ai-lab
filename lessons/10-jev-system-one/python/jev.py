@@ -355,8 +355,10 @@ def ask(text: str, backend: str, model: str, dataset: str = DEFAULT_DATASET, out
         print(f"{label_for(backend, None, wire_model)} did not answer: {err}", file=out)
         print("Run ./run -l 10 check to see what is missing.", file=out)
         return 1
-    print(f"{label_for(backend, None, wire_model)}  {run['seconds']:.1f}s, "
-          f"{run['calls']} model call(s)", file=out)
+    label = label_for(backend, None, wire_model)
+    if backend == "local":  # as the Node.js and C# ports print it: never pass for the real Jev
+        label = label.removesuffix(")") + ", simulated)"
+    print(f"{label}  {run['seconds']:.1f}s, {run['calls']} model call(s)", file=out)
     print_answers(questions, run, out)
     print(f"  -> action: {policy.POLICIES[dataset].decide(run['answers'])}", file=out)
     return 0
