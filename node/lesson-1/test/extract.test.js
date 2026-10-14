@@ -29,3 +29,17 @@ test("extractPages reads DOCX paragraphs, tabs, and line breaks", async () => {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("extractPages refuses an oversized DOCX document XML before extraction", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "local-ai-lab-docx-"));
+  const docxPath = path.join(dir, "oversized.docx");
+  fs.writeFileSync(docxPath, zipSync({
+    "word/document.xml": strToU8("x".repeat(8 * 1024 * 1024 + 1)),
+  }));
+
+  try {
+    await assert.rejects(extractPages(docxPath), /exceeds the 8 MB limit/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

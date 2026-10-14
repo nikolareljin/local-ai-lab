@@ -10,6 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 export const SUPPORTED_EXTS = new Set([".pdf", ".docx", ".txt", ".md", ".markdown"]);
+const MAX_DOCX_XML_BYTES = 8 * 1024 * 1024;
 
 function readTextFile(filePath) {
   // Node reads UTF-8 by default; latin-1 fallback is unnecessary for utf-8 files.
@@ -31,10 +32,20 @@ async function extractDocx(filePath) {
     import("fflate"),
   ]);
   let entries;
+  let documentXmlTooLarge = false;
   try {
-    entries = unzipSync(fs.readFileSync(filePath));
+    entries = unzipSync(fs.readFileSync(filePath), {
+      filter: (file) => {
+        if (file.name !== "word/document.xml") return false;
+        documentXmlTooLarge = file.originalSize > MAX_DOCX_XML_BYTES;
+        return !documentXmlTooLarge;
+      },
+    });
   } catch {
     throw new Error(`Could not read DOCX archive: ${path.basename(filePath)}`);
+  }
+  if (documentXmlTooLarge) {
+    throw new Error(`DOCX document XML exceeds the 8 MB limit: ${path.basename(filePath)}`);
   }
   const documentXml = entries["word/document.xml"];
   if (!documentXml) return [];
