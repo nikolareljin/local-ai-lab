@@ -37,7 +37,7 @@ if [[ ! -d "node_modules" ]]; then
 fi
 
 # The server reuses Lesson 1's engine (config/engine/extract). Its extractor
-# dynamically imports pdf-parse/mammoth, which resolve from node/lesson-1's own
+# imports its PDF and DOCX dependencies from node/lesson-1's own
 # node_modules — so any corpus with a .pdf/.docx fails on a fresh checkout unless
 # Lesson 1 is installed too. Install it here so Lesson 2 is runnable standalone.
 lesson1_dir="$rootDir/node/lesson-1"

@@ -3,7 +3,7 @@
 // Mirrors python/lesson_core.py. The retriever is Lesson 1's Node engine
 // (node/lesson-1/src), imported by path: its chunker, extractor, BM25 and
 // config loader import nothing from npm at module load (extract.js reaches for
-// pdf-parse and mammoth lazily, only for .pdf and .docx), so this lesson still
+// PDF and DOCX dependencies lazily, only for .pdf and .docx), so this lesson still
 // needs no `npm install`. The corpus is Lesson 7's plus this lesson's one
 // poisoned note, exactly as in Python.
 
