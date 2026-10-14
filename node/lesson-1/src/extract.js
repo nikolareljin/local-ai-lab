@@ -26,11 +26,34 @@ async function extractPdf(filePath) {
 }
 
 async function extractDocx(filePath) {
-  const { default: mammoth } = await import("mammoth");
-  const { value } = await mammoth.extractRawText({ path: filePath });
-  const text = (value || "").trim();
+  const [{ DOMParser }, { strFromU8, unzipSync }] = await Promise.all([
+    import("@xmldom/xmldom"),
+    import("fflate"),
+  ]);
+  let entries;
+  try {
+    entries = unzipSync(fs.readFileSync(filePath));
+  } catch {
+    throw new Error(`Could not read DOCX archive: ${path.basename(filePath)}`);
+  }
+  const documentXml = entries["word/document.xml"];
+  if (!documentXml) return [];
+
+  const doc = new DOMParser().parseFromString(strFromU8(documentXml), "application/xml");
+  if (doc.getElementsByTagName("parsererror").length > 0) {
+    throw new Error(`Could not read DOCX document XML: ${path.basename(filePath)}`);
+  }
+  const paragraphs = Array.from(doc.getElementsByTagName("w:p"));
+  const text = paragraphs.map(docxNodeText).join("\n").trim();
   if (!text) return [];
   return [{ source: path.basename(filePath), page_number: 1, text }];
+}
+
+function docxNodeText(node) {
+  if (node.nodeName === "w:t") return node.textContent || "";
+  if (node.nodeName === "w:tab") return "\t";
+  if (node.nodeName === "w:br" || node.nodeName === "w:cr") return "\n";
+  return Array.from(node.childNodes || []).map(docxNodeText).join("");
 }
 
 export async function extractPages(filePath) {

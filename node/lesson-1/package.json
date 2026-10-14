@@ -8,14 +8,16 @@
   "scripts": {
     "index": "node src/cli.js index",
     "ask": "node src/cli.js ask",
-    "web": "node src/cli.js web"
+    "web": "node src/cli.js web",
+    "test": "node --test test/*.test.js"
   },
   "engines": {
     "node": ">=24"
   },
   "dependencies": {
+    "@xmldom/xmldom": "^0.9.12",
     "express": "^5.2.1",
-    "mammoth": "^1.12.1",
+    "fflate": "^0.8.3",
     "multer": "^2.3.0",
     "pdf-parse": "^1.1.1"
   }

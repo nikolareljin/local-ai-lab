@@ -18,6 +18,9 @@ All notable changes to this project are documented here. This project follows
   workflow now runs when a lesson's source changes, not only its `lesson.json`.
 
 ### Security
+- Mammoth is removed from the Lesson 1 Node.js port because its `argparse` dependency requires
+  unpatchable `sprintf-js`. DOCX text extraction now reads the document XML with `fflate` and
+  `@xmldom/xmldom`, with a focused extraction test.
 - `fast-uri` 3.1.8 and `ip-address` 10.7.3 in the Lesson 2 Node.js port (lockfile only).
 - `DocumentFormat.OpenXml` 3.3.0 in the Lesson 1 and 2 C# ports: it brings `System.IO.Packaging`
   8.0.1, which fixes GHSA-f32c-w444-8ppv and GHSA-qj66-m88j-hmgj.
