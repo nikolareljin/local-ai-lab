@@ -54,7 +54,8 @@ case "$action" in
     exec node "$cli" index --reindex
     ;;
   test)
-    # Smoke test: rebuild the index over the committed sample corpus. Exit 0 offline.
+    # Verify DOCX extraction, then rebuild the index over the committed sample corpus.
+    npm test
     exec node "$cli" index --reindex
     ;;
   *)
