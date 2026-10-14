@@ -18,8 +18,9 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 
 // Reuse the Lesson 1 engine, module-for-module — MCP is a new doorway onto the
-// same retriever. Each imported module resolves its own deps from
-// node/lesson-1/node_modules, so this port only needs the MCP SDK itself.
+// same retriever. Markdown works with this port's MCP SDK alone; PDF and DOCX
+// corpus files also need node/lesson-1/node_modules. run.sh installs both so
+// the standalone server supports every Lesson 1 document type.
 import { loadConfig } from "../../lesson-1/src/config.js";
 import { getRetriever } from "../../lesson-1/src/engine.js";
 import { discoverFiles } from "../../lesson-1/src/extract.js";

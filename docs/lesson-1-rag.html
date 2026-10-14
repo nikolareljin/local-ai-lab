@@ -222,7 +222,11 @@ def extract_pages(path: Path) -&gt; List[Page]:
     return []</code></pre></div>
         </div>
         <div class="lang lang-node">
-          <div class="block"><div class="label">node/lesson-1/src/extract.js</div><pre><code>export const SUPPORTED_EXTS = new Set([".pdf", ".docx", ".txt", ".md", ".markdown"]);
+          <p>The Node port reads only <code>word/document.xml</code> from a DOCX archive. It loads
+            <code>fflate</code> and <code>@xmldom/xmldom</code> only for DOCX files, rejects XML above
+            8 MB before extraction, and returns the same single page shape as the other ports.</p>
+          <div class="block"><div class="label">node/lesson-1/src/extract.js (DOCX path)</div><pre><code>export const SUPPORTED_EXTS = new Set([".pdf", ".docx", ".txt", ".md", ".markdown"]);
+const MAX_DOCX_XML_BYTES = 8 * 1024 * 1024;
 
 async function extractPdf(filePath) {
   const { default: pdfParse } = await import("pdf-parse");
@@ -230,6 +234,40 @@ async function extractPdf(filePath) {
   const text = (data.text || "").trim();
   if (!text) return [];
   return [{ source: path.basename(filePath), page_number: 1, text }];
+}
+
+async function extractDocx(filePath) {
+  const [{ DOMParser }, { strFromU8, unzipSync }] = await Promise.all([
+    import("@xmldom/xmldom"), import("fflate"),
+  ]);
+  let documentXmlTooLarge = false;
+  const entries = unzipSync(fs.readFileSync(filePath), {
+    filter: (file) => {
+      if (file.name !== "word/document.xml") return false;
+      documentXmlTooLarge = file.originalSize > MAX_DOCX_XML_BYTES;
+      return !documentXmlTooLarge;
+    },
+  });
+  if (documentXmlTooLarge) throw new Error("DOCX document XML exceeds the 8 MB limit");
+  const documentXml = entries["word/document.xml"];
+  if (!documentXml) return [];
+  const doc = new DOMParser({ onError: (level, message) => {
+    if (level !== "warning") throw new Error(message);
+  }}).parseFromString(strFromU8(documentXml), "application/xml");
+  const text = Array.from(doc.getElementsByTagName("w:p")).map(docxNodeText).join("\n").trim();
+  return text ? [{ source: path.basename(filePath), page_number: 1, text }] : [];
+}
+
+function docxNodeText(node) {
+  const parts = [], stack = [node];
+  while (stack.length) {
+    const current = stack.pop();
+    if (current.nodeName === "w:t") parts.push(current.textContent || "");
+    else if (current.nodeName === "w:tab") parts.push("\t");
+    else if (current.nodeName === "w:br" || current.nodeName === "w:cr") parts.push("\n");
+    else for (let index = current.childNodes.length - 1; index >= 0; index--) stack.push(current.childNodes[index]);
+  }
+  return parts.join("");
 }
 
 export async function extractPages(filePath) {

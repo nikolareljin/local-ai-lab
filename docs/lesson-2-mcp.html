@@ -125,13 +125,16 @@
           <div class="block"><div class="label">Type this</div><pre class="cmd"><code>pip install mcp        # the official Model Context Protocol Python SDK</code></pre></div>
         </div>
         <div class="lang lang-node">
-          <div class="block"><div class="label">./run installs this for you on first use</div><pre class="cmd"><code>cd node/lesson-2 &amp;&amp; npm install    # @modelcontextprotocol/sdk + zod</code></pre></div>
+          <div class="block"><div class="label">./run installs these for you on first use</div><pre class="cmd"><code>cd node/lesson-2 &amp;&amp; npm install    # @modelcontextprotocol/sdk + zod
+cd ../lesson-1 &amp;&amp; npm install         # PDF/DOCX extractor reused by the server</code></pre></div>
         </div>
         <div class="lang lang-csharp">
           <div class="block"><div class="label">./run restores this for you on first use</div><pre class="cmd"><code>cd dotnet/lesson-2 &amp;&amp; dotnet restore    # ModelContextProtocol 1.4.0</code></pre></div>
         </div>
         <div class="why">Every SDK ships both a <b>server</b> API and an <b>stdio client</b> we'll use
-          to test. You also need the Claude Code CLI to register the server at the end.</div>
+          to test. The Node server delegates document extraction to Lesson 1, so its runner installs
+          both packages and supports Markdown, PDF and DOCX corpora. You also need the Claude Code CLI
+          to register the server at the end.</div>
       </section>
 
       <!-- 3b · Install -->
