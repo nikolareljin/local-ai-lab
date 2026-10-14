@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Lesson 4 - RAG safety & prompt injection, Node.js port",
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "scripts": {
     "start": "node safe_rag_demo.mjs"

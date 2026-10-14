@@ -90,8 +90,8 @@ dependencies above before you run the setup script.
 
 ## Quickstart
 
-Needs **Python 3.10+** (add **Node.js 22+** / **.NET 8 SDK** only for those ports). Node 18 and 20
-are both past end-of-life and no longer receive security fixes, so the ports target **Node 22**, with
+Needs **Python 3.10+** (add **Node.js 24+** / **.NET 8 SDK** only for those ports). Node 18 and 20
+are both past end-of-life and no longer receive security fixes, so the ports target **Node 24**, with
 **Node 24 LTS** the better choice if you are installing fresh.
 
 Already cloned by hand? The manual steps:

@@ -36,6 +36,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+NODE_FLOOR = ">=24"
 
 SKIP_DIRS = {"node_modules", ".git", "venv", ".venv", "__pycache__", ".pytest_cache"}
 LINK = re.compile(r"\]\((\.{1,2}/[^)#\s]+)")
@@ -198,6 +199,35 @@ def check_code_excerpts() -> list[str]:
     return lesson_lines.published_problems()
 
 
+def check_node_floor() -> list[str]:
+    """Every first-party Node package and course page names the supported floor."""
+    problems = []
+    packages = sorted(path for path in ROOT.rglob("package.json")
+                      if "node_modules" not in path.parts)
+    for path in packages:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        floor = data.get("engines", {}).get("node")
+        if floor != NODE_FLOOR:
+            problems.append(f"{path.relative_to(ROOT)} declares {floor!r}; expected {NODE_FLOOR!r}")
+
+    claims = {
+        "Node.js 18+": "Node.js 18+",
+        "Node.js 22+": "Node.js 22+",
+        "Node 22": "Node 22",
+        "engines: node >=22": "engines: node >=22",
+    }
+    for path in ROOT.rglob("*"):
+        if (not path.is_file() or "node_modules" in path.parts or path.name == "CHANGELOG.md"
+                or path.name in {"package.json", "package-lock.json"}
+                or path.suffix not in {".md", ".html", ".json"}):
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for label, stale in claims.items():
+            if stale in text:
+                problems.append(f"{path.relative_to(ROOT)} still presents {label}")
+    return problems
+
+
 CHECKS = (
     ("relative links", check_links),
     ("README downloads table", check_readme_table),
@@ -205,6 +235,7 @@ CHECKS = (
     ("published lesson pages", check_published_pages),
     ("SEO metadata", check_seo),
     ("code excerpts", check_code_excerpts),
+    ("Node.js runtime floor", check_node_floor),
 )
 
 

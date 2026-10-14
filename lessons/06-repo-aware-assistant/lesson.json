@@ -28,7 +28,7 @@
       "type": "command",
       "kicker": "Setup",
       "title": "What you need",
-      "body": "You follow this lesson by **reading and running** - there's nothing to write. The sample repo, the questions and the assistant all live in the repo. It is **offline and dependency-free** (nothing to install for Python; for the other ports you only need **Node.js 18+** or the **.NET 8 SDK**). Run it from the repo root. Bare `./run -l 6` opens the interactive playground; add `demo` for the one-shot print-and-exit. The Node and C# ports are one-shot only:",
+      "body": "You follow this lesson by **reading and running** - there's nothing to write. The sample repo, the questions and the assistant all live in the repo. It is **offline and dependency-free** (nothing to install for Python; for the other ports you only need **Node.js 24+** or the **.NET 8 SDK**). Run it from the repo root. Bare `./run -l 6` opens the interactive playground; add `demo` for the one-shot print-and-exit. The Node and C# ports are one-shot only:",
       "shell": "./run -l 6                 # Python: interactive assistant playground\n./run -l 6 demo            # Python: one-shot, print and exit\n./run -l 6 --lang node     # Node one-shot  (or: --lang csharp)"
     },
     {

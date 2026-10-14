@@ -18,6 +18,7 @@ on:
       # All of a lesson, not only its lesson.json: the pages show code cut from the
       # lesson's source files, so an edit to one of those can make a page wrong.
       - "lessons/**"
+      - "node/**"
       # check_docs.py shells out to the generators, so a change to one of them can
       # break the check without touching anything else in these filters.
       - "tools/**"
@@ -30,6 +31,7 @@ on:
       # All of a lesson, not only its lesson.json: the pages show code cut from the
       # lesson's source files, so an edit to one of those can make a page wrong.
       - "lessons/**"
+      - "node/**"
       # check_docs.py shells out to the generators, so a change to one of them can
       # break the check without touching anything else in these filters.
       - "tools/**"
@@ -71,7 +73,7 @@ jobs:
           python-version: "3.12"
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
           cache: npm
           cache-dependency-path: e2e/package-lock.json
       - name: Install Playwright

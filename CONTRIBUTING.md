@@ -75,7 +75,7 @@ python3 tools/lesson_lines.py --write   # recompute the ranges
 
 `check_docs.py` fails when a range no longer matches its symbol or a page was not rebuilt.
 
-The published pages also have browser tests (Playwright, Node 22+):
+The published pages also have browser tests (Playwright, Node 24+):
 
 ```bash
 npm --prefix e2e ci && npx --prefix e2e playwright install chromium   # once

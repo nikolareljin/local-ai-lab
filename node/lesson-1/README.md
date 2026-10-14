@@ -1,6 +1,6 @@
 # Lesson 1 (Node.js) - Tiny local RAG
 
-A faithful Node.js (ESM, Node 18+) port of [Lesson 1](../../LESSON1.md) of
+A faithful Node.js (ESM, Node 24+) port of [Lesson 1](../../LESSON1.md) of
 **local-ai-lab**. Drop documents into `documents/`, ask questions, and get
 answers grounded in your files with cited `[filename:page]` sources.
 
