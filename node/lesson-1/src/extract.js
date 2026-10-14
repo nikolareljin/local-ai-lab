@@ -70,10 +70,22 @@ async function extractDocx(filePath) {
 }
 
 function docxNodeText(node) {
-  if (node.nodeName === "w:t") return node.textContent || "";
-  if (node.nodeName === "w:tab") return "\t";
-  if (node.nodeName === "w:br" || node.nodeName === "w:cr") return "\n";
-  return Array.from(node.childNodes || []).map(docxNodeText).join("");
+  const parts = [];
+  const stack = [node];
+  while (stack.length) {
+    const current = stack.pop();
+    if (current.nodeName === "w:t") {
+      parts.push(current.textContent || "");
+    } else if (current.nodeName === "w:tab") {
+      parts.push("\t");
+    } else if (current.nodeName === "w:br" || current.nodeName === "w:cr") {
+      parts.push("\n");
+    } else {
+      const children = current.childNodes || [];
+      for (let index = children.length - 1; index >= 0; index--) stack.push(children[index]);
+    }
+  }
+  return parts.join("");
 }
 
 export async function extractPages(filePath) {

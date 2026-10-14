@@ -58,3 +58,19 @@ test("extractPages reports malformed DOCX document XML", async () => {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("extractPages handles deeply nested DOCX text", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "local-ai-lab-docx-"));
+  const docxPath = path.join(dir, "deep.docx");
+  const depth = 15_000;
+  const xml = `<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+    <w:body><w:p>${"<w:r>".repeat(depth)}<w:t>deep</w:t>${"</w:r>".repeat(depth)}</w:p></w:body>
+  </w:document>`;
+  fs.writeFileSync(docxPath, zipSync({ "word/document.xml": strToU8(xml) }));
+
+  try {
+    assert.equal((await extractPages(docxPath))[0].text, "deep");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
