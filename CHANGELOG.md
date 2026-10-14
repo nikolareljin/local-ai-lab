@@ -7,6 +7,9 @@ All notable changes to this project are documented here. This project follows
 ## [Unreleased]
 
 ### Fixed
+- **Node.js 24 is the course runtime floor.** Every first-party Node package and the browser
+  workflow require Node.js 24; lesson sources and published pages no longer recommend an older
+  runtime. `tools/check_docs.py` rejects a manifest or course page that drifts from that floor.
 - **Lesson pages showed the wrong lines of code.** Code steps cut their excerpt by a line range
   typed into `lesson.json`; after the source files changed, Lessons 6, 7 and 8 showed fragments
   that started mid-function (48 of 89 ranges were off, in Python, Node.js and C#). Every code step

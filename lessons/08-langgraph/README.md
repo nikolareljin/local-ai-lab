@@ -701,7 +701,7 @@ The bill deliberately is not identical:
 | Runtime | Packages | Install size | Notes |
 |---|---|---|---|
 | Python (`langgraph`) | +23, to 71 | ~43 MB | +5 only if you already did Lesson 7 |
-| Node (`@langchain/langgraph`) | +23, to 23 | ~63 MB | from nothing at all; needs Node 22 |
+| Node (`@langchain/langgraph`) | +23, to 23 | ~63 MB | from nothing at all; needs Node 24 |
 
 One genuine API difference, worth knowing before you port anything: **the JavaScript `StateGraph`
 refuses to let a state channel share a name with a node.** The Python state has a `grade` field and a

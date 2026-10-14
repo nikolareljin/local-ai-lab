@@ -1,5 +1,5 @@
 // Local Ollama provider: chat via /api/chat. Mirrors localrag/providers/ollama.py.
-// Uses the Node 18+ built-in fetch. (Embeddings are out of scope in this port.)
+// Uses the Node 24+ built-in fetch. (Embeddings are out of scope in this port.)
 
 export class OllamaProvider {
   constructor(config) {

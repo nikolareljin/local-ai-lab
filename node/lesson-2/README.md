@@ -1,6 +1,6 @@
 # Lesson 2 (Node.js) - an MCP server
 
-A faithful Node.js (ESM, Node 18+) port of [Lesson 2](../../LESSON2.md) of
+A faithful Node.js (ESM, Node 24+) port of [Lesson 2](../../LESSON2.md) of
 **local-ai-lab**. It exposes the Lesson 1 document search as **Model Context
 Protocol** tools (`search_docs`, `list_documents`) over **stdio**, so an MCP
 host like Claude Code can search your local `documents/` folder natively.

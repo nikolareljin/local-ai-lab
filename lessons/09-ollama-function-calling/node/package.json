@@ -8,6 +8,6 @@
     "start": "node function_calling.mjs"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   }
 }

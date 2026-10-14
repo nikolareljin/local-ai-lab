@@ -39,9 +39,9 @@ tour. Lessons 11-16 are on the roadmap, with outlines under [`roadmap/`](./roadm
 ## Course prerequisites
 
 - **Python 3.10+** (required for every lesson and for `./run`).
-- **Node.js 22+** and/or **.NET 8 SDK** - only if you want to follow the Node / C# ports. Node 18
+- **Node.js 24+** and/or **.NET 8 SDK** - only if you want to follow the Node / C# ports. Node 18
   (EOL April 2025) and Node 20 (EOL April 2026) no longer get security fixes, so every Node port
-  declares `engines: node >=22`. Node 24 is the current LTS and is the better choice for a fresh
+  declares `engines: node >=24`. Node 24 is the current LTS and is the better choice for a fresh
   install.
 - A text editor and a terminal. The default AI provider is **Claude Code** (no API key); Ollama,
   Gemini, and OpenAI are optional alternatives - see [INSTALL.md](./INSTALL.md).

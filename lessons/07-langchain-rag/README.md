@@ -121,7 +121,7 @@ From the repo root. The first run installs this lesson's dependencies into the c
 > both declare `node >= 20`, so taking them would have ruled out Node 18 - which the course used to
 > recommend - even though this lesson's Python half runs happily on 3.10. That cost is real and worth
 > watching for. It happens not to bind here: Node 18 and 20 are both end-of-life now, so the whole
-> course targets **Node 22** regardless, and every port declares that engine. Check this on your own
+> course targets **Node 24** regardless, and every port declares that engine. Check this on your own
 > projects, where the arithmetic often comes out the other way.
 
 Output:

@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Lesson 3 - hybrid retrieval (BM25 + semantic + RRF), Node.js port",
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "scripts": {
     "start": "node hybrid_demo.mjs"
