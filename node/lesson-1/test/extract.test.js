@@ -43,3 +43,18 @@ test("extractPages refuses an oversized DOCX document XML before extraction", as
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("extractPages reports malformed DOCX document XML", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "local-ai-lab-docx-"));
+  const docxPath = path.join(dir, "malformed.docx");
+  const xml = `<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+    <w:body><w:p></w:body>
+  </w:document>`;
+  fs.writeFileSync(docxPath, zipSync({ "word/document.xml": strToU8(xml) }));
+
+  try {
+    await assert.rejects(extractPages(docxPath), /Could not read DOCX document XML/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

@@ -50,7 +50,16 @@ async function extractDocx(filePath) {
   const documentXml = entries["word/document.xml"];
   if (!documentXml) return [];
 
-  const doc = new DOMParser().parseFromString(strFromU8(documentXml), "application/xml");
+  let doc;
+  try {
+    doc = new DOMParser({
+      onError: (level, message) => {
+        if (level !== "warning") throw new Error(message);
+      },
+    }).parseFromString(strFromU8(documentXml), "application/xml");
+  } catch {
+    throw new Error(`Could not read DOCX document XML: ${path.basename(filePath)}`);
+  }
   if (doc.getElementsByTagName("parsererror").length > 0) {
     throw new Error(`Could not read DOCX document XML: ${path.basename(filePath)}`);
   }
