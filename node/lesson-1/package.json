@@ -18,7 +18,7 @@
     "@xmldom/xmldom": "^0.9.12",
     "express": "^5.2.1",
     "fflate": "^0.8.3",
-    "multer": "^2.3.0",
+    "multer": "^2.5.0",
     "pdf-parse": "^1.1.1"
   }
 }
